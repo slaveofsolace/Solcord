@@ -215,9 +215,9 @@
     },
     "Updater": {
         "updateFailed": "Päivitys epäonnistui",
-        "updateFailedMessage": "BetterDiscordin päivitys epäonnistui. Lataa asennusohjelman uusin versio verkkosivustoltamme (https://betterdiscord.app/) ja asenna se uudelleen.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Päivittäminen onnistui!",
-        "updateAvailable": "BetterDiscordilla on uusi päivitys",
+        "updateAvailable": "SoulCordilla on uusi päivitys",
         "addonUpdated": "{{name}} on päivitetty versioon {{version}}!",
         "checking": "Tarkistetaan päivityksiä!",
         "finishedChecking": "Päivitysten tarkistaminen on valmis!",

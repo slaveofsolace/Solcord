@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">SoulCord</title>
+  <desc id="description">SoulCord social preview with a graphite field and signal accents.</desc>
+  <rect width="1200" height="630" fill="#171a1c"/>
+  <path d="M0 500H370L405 465H805L845 500H1200" fill="none" stroke="#2b3336" stroke-width="2"/>
+  <g transform="translate(96 118) scale(4.2)">
+    <rect width="64" height="64" rx="13" fill="#22272a" stroke="#4ecdc4" stroke-width=".7"/>
+    <path d="M49 13C42 7 29 6 20 11C10 16 11 28 21 32L39 39C44 41 43 47 37 50C30 53 20 50 14 45L8 52C17 61 33 64 45 58C57 52 58 39 48 34L28 26C23 24 24 19 29 17C34 15 41 17 45 21Z" fill="#f2eadf"/>
+    <path d="M7 20H18L21 24H7Z" fill="#ff735f"/><path d="M43 25H58V29H47Z" fill="#4ecdc4"/><path d="M5 37H18L22 41H5Z" fill="#f4b860"/>
+  </g>
+  <text x="430" y="295" fill="#f2eadf" font-family="Inter, Segoe UI, sans-serif" font-size="104" font-weight="760" letter-spacing="-5">SoulCord</text>
+  <text x="435" y="354" fill="#9ba4a8" font-family="Inter, Segoe UI, sans-serif" font-size="29" letter-spacing="1">RELIABILITY · PRIVACY · ACTIVITIES</text>
+  <path d="M438 398H607" stroke="#ff735f" stroke-width="8"/><path d="M623 398H744" stroke="#4ecdc4" stroke-width="8"/><path d="M760 398H841" stroke="#f4b860" stroke-width="8"/>
+</svg>

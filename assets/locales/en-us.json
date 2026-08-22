@@ -39,7 +39,7 @@
                 "name": "Addon Store",
                 "bdAddonStore": {
                     "name": "Enable Addon Store",
-                    "note": "Enables the BetterDiscord Addon Store."
+                    "note": "Enables the upstream BetterDiscord Addon Store for ecosystem compatibility."
                 },
                 "alwaysEnable": {
                     "name": "Always Enable",
@@ -398,9 +398,9 @@
     },
     "Updater": {
         "updateFailed": "Update Failed!",
-        "updateFailedMessage": "BetterDiscord failed to update. Please download the latest version of the installer from our website (https://betterdiscord.app/) and reinstall.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Update Successful!",
-        "updateAvailable": "BetterDiscord has a new update (v{{version}})",
+        "updateAvailable": "SoulCord has a verified update (v{{version}})",
         "viewUpdates": "View Updates",
         "addonUpdaterNotificationTitle": "Addon Updater",
         "addonUpdatesAvailable": {

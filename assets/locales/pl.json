@@ -221,9 +221,9 @@
     },
     "Updater": {
         "updateFailed": "Aktualizacja nie powiodła się!",
-        "updateFailedMessage": "Nie udało się zaktualizować BetterDiscorda. Pobierz najnowszy instalator z naszej strony (https://betterdiscord.app/) i zainstaluj aplikację ponownie.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Aktualizacja powiodła się!",
-        "updateAvailable": "Dostępna jest nowa aktualizacja BetterDiscorda (wersja {{version}})",
+        "updateAvailable": "Dostępna jest nowa aktualizacja SoulCorda (wersja {{version}})",
         "addonUpdated": "Dodatek {{name}} został zaktualizowany do wersji {{version}}!",
         "checking": "Sprawdzanie dostępności aktualizacji!",
         "finishedChecking": "Zakończono sprawdzanie dostępności aktualizacji!",

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" role="img" aria-labelledby="title description">
+  <title id="title">SoulCord</title>
+  <desc id="description">SoulCord mark and wordmark on a transparent background.</desc>
+  <g transform="translate(16 16) scale(2)">
+    <rect width="64" height="64" rx="13" fill="#171a1c"/>
+    <path d="M49 13C42 7 29 6 20 11C10 16 11 28 21 32L39 39C44 41 43 47 37 50C30 53 20 50 14 45L8 52C17 61 33 64 45 58C57 52 58 39 48 34L28 26C23 24 24 19 29 17C34 15 41 17 45 21Z" fill="#f2eadf"/>
+    <path d="M7 20H18L21 24H7Z" fill="#ff735f"/><path d="M43 25H58V29H47Z" fill="#4ecdc4"/><path d="M5 37H18L22 41H5Z" fill="#f4b860"/>
+  </g>
+  <text x="176" y="105" fill="#171a1c" font-family="Inter, Segoe UI, sans-serif" font-size="72" font-weight="760" letter-spacing="-3">SoulCord</text>
+  <path d="M180 122H278" stroke="#ff735f" stroke-width="5"/><path d="M286 122H353" stroke="#4ecdc4" stroke-width="5"/><path d="M361 122H405" stroke="#f4b860" stroke-width="5"/>
+</svg>

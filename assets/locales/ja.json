@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "アップデートに失敗しました！",
-        "updateFailedMessage": "BetterDiscordのアップデートに失敗しました。ホームページ(https://betterdiscord.app/)から最新版のインストーラーをダウンロードして、再インストールしてください。",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "アップデートに成功しました！",
-        "updateAvailable": "BetterDiscordに新しいアップデート(v{{version}})があります。",
+        "updateAvailable": "SoulCordに新しいアップデート(v{{version}})があります。",
         "addonUpdated": "{{name}}がバージョン{{version}}にアップデートされました！",
         "checking": "アップデートを確認",
         "finishedChecking": "アップデートの確認が終了しました！",

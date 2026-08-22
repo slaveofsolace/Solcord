@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "Ошибка обновления",
-        "updateFailedMessage": "Не удалось обновить BetterDiscord. Пожалуйста скачайте последнюю версию загрузчика с нашего сайта (https://betterdiscord.app/) и переустановите программу.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Обновление успешно!",
-        "updateAvailable": "BetterDiscord имеет обновление (v{{version}})",
+        "updateAvailable": "SoulCord имеет обновление (v{{version}})",
         "addonUpdated": "{{name}} был обновлен до версии {{version}}",
         "checking": "Проверить обновления!",
         "finishedChecking": "Проверка обновлений завершена!",

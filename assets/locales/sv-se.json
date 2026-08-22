@@ -166,7 +166,7 @@
     },
     "Updater": {
         "updateFailed": "Uppdateringen misslyckades!",
-        "updateFailedMessage": "BetterDiscord kunde inte uppdateras. Ladda ned den senaste versionen av installationsprogrammet från vår webbplats (https://betterdiscord.app/) och installera om BetterDiscord.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Uppdateringen lyckades!",
         "checking": "Söker efter uppdateringar!",
         "finishedChecking": "Sökningen efter uppdateringar är slutförd!",

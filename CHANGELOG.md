@@ -1,4 +1,25 @@
-# BetterDiscord Changelog
+# SoulCord Changelog
+
+## 1.0.0 — V1 review build
+
+### Added
+
+- Restricted same-package Discord Activity preload policy and sanitized Activity Bridge ledger.
+- Plugin Doctor quarantine, structural Drift Radar, measured Performance HUD, profiles with rollback, Command Deck, Link Lens, Stream Shield preview, local Screenshot Scrubber, Settings Time Machine, and accessibility controls.
+- Original SoulCord visual system, security/privacy documentation, provenance registry, and reversible Windows install procedure.
+
+### Changed
+
+- Human-facing product branding is SoulCord. Stable BetterDiscord API, path, protocol, CSS, and type identifiers remain for addon compatibility.
+- The production artifact is `soulcord.asar`; installation uses the legacy `betterdiscord.asar` target required by the existing injector.
+- Core updates fail closed until SoulCord-owned signed integrity metadata exists.
+
+### Not yet claimed
+
+- Live Codenames and second-Activity acceptance remain owner actions after installed launch.
+- Stream Shield Go Live detection and the accessibility surface remain preview until installed Discord validation and Human Eye review pass.
+
+The entries below are the preserved BetterDiscord upstream changelog and attribution history.
 
 This changelog starts with the restructured 1.0.0 release that happened after context isolation changes. The changelogs here should more-or-less mirror the ones that get shown in the client but probably with less formatting and pizzazz.
 

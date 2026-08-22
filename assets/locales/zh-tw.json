@@ -220,9 +220,9 @@
     },
     "Updater": {
         "updateFailed": "更新失敗！",
-        "updateFailedMessage": "BetterDiscord 更新失敗。請從我們的網站 (https://betterdiscord.app/) 下載最新版本的安裝程式並重新安裝。",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "更新成功！",
-        "updateAvailable": "BetterDiscord 已有新的版本 ({{version}})",
+        "updateAvailable": "SoulCord 已有新的版本 ({{version}})",
         "addonUpdated": "{{name}} 已更新到版本 {{version}}！",
         "checking": "正在檢查更新！",
         "finishedChecking": "已完成檢查更新！",

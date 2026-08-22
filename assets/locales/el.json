@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "Η ενημέρωση Απέτυχε!",
-        "updateFailedMessage": "Το BetterDiscord απέτυχε να ενημερωθεί. Λάβετε την τελευταία έκδοση του προγράμματος εγκατάστασης από την ιστοσελίδα μας (https://betterdiscord.app/) και κάντε επανεγκατάσταση.",
+        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Η Ενημέρωση ήταν Επιτυχής!",
-        "updateAvailable": "Το BetterDiscord έχει μια νέα ενημερωση (v{{version}})",
+        "updateAvailable": "Το SoulCord έχει μια νέα ενημερωση (v{{version}})",
         "addonUpdated": "Το {{name}} έχει ενημερωθεί στην έκδοση {{version}}!",
         "checking": "Έλεγχος για ενημερώσεις!",
         "finishedChecking": "Ολοκλήρωση ελέγχου για ενημερώσεις!",

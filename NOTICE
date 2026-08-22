@@ -1,0 +1,17 @@
+SoulCord
+Copyright 2026 SoulCord contributors
+
+SoulCord is based on BetterDiscord and preserves the BetterDiscord repository
+history and contributors. BetterDiscord is licensed under the Apache License,
+Version 2.0. See LICENSE and the upstream project at:
+https://github.com/BetterDiscord/BetterDiscord
+
+Discord is a trademark of Discord Inc. It is referenced only to describe
+compatibility. SoulCord is not affiliated with or endorsed by Discord Inc.
+
+The SoulCord signal-S mark and brand assets in assets/branding are original
+project contributions. No BetterDiscord or Discord logo is included as the
+SoulCord mark.
+
+No Vencord, DiscordFreeEmojis, AutoIdleOnAFK, or BetterDiscord catalog plugin
+source or asset is included in SoulCord V1. See docs/PROVENANCE_REGISTRY.md.
