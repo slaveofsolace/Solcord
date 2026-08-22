@@ -1,4 +1,4 @@
-name: Crowdin Action
+name: Upstream Crowdin Sync
 
 on:
   workflow_dispatch:
@@ -11,6 +11,7 @@ on:
 
 jobs:
   synchronize-with-crowdin:
+    if: ${{github.repository == 'BetterDiscord/BetterDiscord'}}
     runs-on: ubuntu-latest
 
     steps:

@@ -1,4 +1,4 @@
-name: Publish Types
+name: Upstream Types Publish
 
 on:
   # Publish when a types release is created (tag prefixed with "@betterdiscord/types@", e.g. @betterdiscord/types@1.0.0).
@@ -14,6 +14,7 @@ on:
 
 jobs:
   publish:
+    if: ${{github.repository == 'BetterDiscord/BetterDiscord'}}
     runs-on: ubuntu-latest
 
     permissions:
@@ -27,7 +28,7 @@ jobs:
       - name: Prepare Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.0
 
       - name: Prepare Node
         uses: actions/setup-node@v6 # v7 is available but just released yesterday and may have issues with the npm registry
@@ -36,7 +37,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Generate types
         run: bun run generate-types

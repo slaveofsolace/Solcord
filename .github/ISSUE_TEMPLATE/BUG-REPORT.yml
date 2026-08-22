@@ -55,8 +55,8 @@ body:
     required: true
 - type: input
   attributes:
-    label: BetterDiscord Version
-    description: This is found in `Settings > Updater` and will be labelled as the `Core` version.
+    label: SoulCord Version
+    description: This is shown in `Settings > Updater` as the SoulCord Core version.
     placeholder: v1.x.x
   validations:
     required: true

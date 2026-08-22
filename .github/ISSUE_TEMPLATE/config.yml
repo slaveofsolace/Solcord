@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: BetterDiscord Support Server
-    url: https://betterdiscord.app/invite
-    about: The best place to get immediate support.
-  - name: Troubleshooting Guide
+  - name: SoulCord security and privacy
+    url: https://github.com/slaveofsolace/Solcord/blob/fork/scaffold-baseline/SECURITY.md
+    about: Review the private-data boundary before sharing diagnostics.
+  - name: Upstream BetterDiscord troubleshooting
     url: https://docs.betterdiscord.app/users/getting-started/troubleshooting
-    about: The user troubleshooting guide from the documentation.
+    about: Upstream reference for shared plugin, theme, and injector behavior.

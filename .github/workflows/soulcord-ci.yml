@@ -1,0 +1,68 @@
+name: SoulCord V1 CI
+
+on:
+  push:
+    branches: ["fork/**"]
+  pull_request:
+    branches: ["development"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify source and production package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Prepare pinned Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Test
+        run: bun run test
+      - name: Lint TypeScript
+        run: bun run lint
+      - name: Lint SoulCord CSS
+        run: bun run lint-css:soulcord
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Generate public compatibility types
+        run: bun run generate-types
+      - name: Check circular dependencies
+        run: bun run circulars
+      - name: Build and package
+        run: bun run dist
+        env:
+          BRANCH_NAME: ${{github.head_ref || github.ref_name}}
+          COMMIT_HASH: ${{github.sha}}
+      - name: Upload review artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: soulcord-review-${{github.sha}}
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+          path: |
+            dist/soulcord.asar
+            dist/checksums.txt
+
+  windows-policy:
+    name: Windows preload and safety fixtures
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Prepare pinned Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Run Windows-sensitive fixtures
+        run: bun test tests/electron/preload-policy.test.ts tests/electron/original-preload.test.ts tests/soulcord/safety.test.ts tests/soulcord/settings.test.ts
+      - name: Typecheck
+        run: bun run typecheck
