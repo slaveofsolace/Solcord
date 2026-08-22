@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
 
 import {runStructuralProbes} from "../../src/betterdiscord/modules/soulcord/drift";
-import {inspectLink} from "../../src/betterdiscord/modules/soulcord/link-lens";
+import {inspectLink, isDiscordInternalNavigation, shouldInterceptLink} from "../../src/betterdiscord/modules/soulcord/link-lens";
 import {BoundedPerformanceSampler} from "../../src/betterdiscord/modules/soulcord/performance";
 import {evaluateCrashGuard} from "../../src/betterdiscord/modules/soulcord/crash-guard";
 import {SoulCordDisposalScope} from "../../src/betterdiscord/modules/soulcord/disposal";
@@ -25,6 +25,23 @@ describe("SoulCord safety adapters", () => {
     test("flags insecure and punycode links and identifies invites without fetching", () => {
         expect(inspectLink("http://xn--e1awd7f.com/").warnings.length).toBeGreaterThanOrEqual(2);
         expect(inspectLink("https://discord.gg/local-test")).toMatchObject({inviteCode: "local-test", requiresConfirmation: true});
+        expect(inspectLink("https://discord.com/invite/local-test")).toMatchObject({inviteCode: "local-test", requiresConfirmation: true});
+    });
+
+    test("never mistakes Discord application routes for invite codes or external links", () => {
+        const dm = "https://discord.com/channels/@me/123456789012345678";
+        const inspection = inspectLink(dm);
+        expect(inspection).toMatchObject({valid: true, inviteCode: undefined, requiresConfirmation: false});
+        expect(isDiscordInternalNavigation(dm, "https://discord.com/channels/@me")).toBeTrue();
+        expect(shouldInterceptLink(dm, inspection, "https://discord.com/channels/@me", true)).toBeFalse();
+    });
+
+    test("reviews only external links selected by the warning policy", () => {
+        const safe = "https://example.com/path";
+        const risky = "http://example.com/path?utm_source=test";
+        expect(shouldInterceptLink(safe, inspectLink(safe), "https://discord.com/channels/@me", false)).toBeFalse();
+        expect(shouldInterceptLink(safe, inspectLink(safe), "https://discord.com/channels/@me", true)).toBeTrue();
+        expect(shouldInterceptLink(risky, inspectLink(risky), "https://discord.com/channels/@me", false)).toBeTrue();
     });
 
     test("structural probes fail closed when a validator throws", () => {

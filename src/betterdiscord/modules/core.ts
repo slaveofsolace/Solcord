@@ -58,7 +58,7 @@ export default new class Core {
             order: 0,
             icon: ShieldCheckIcon,
             element: SoulCordPanel,
-            searchable: () => ["SoulCord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery"]
+            searchable: () => ["SoulCord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
         });
         SettingsRenderer.initialize();
 

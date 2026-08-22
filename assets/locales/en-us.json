@@ -3,7 +3,8 @@
         "plugins": "Plugins",
         "themes": "Themes",
         "customcss": "Custom CSS",
-        "updates": "Updates"
+        "updates": "Updates",
+        "soulcord": "SoulCord Suite"
     },
     "Collections": {
         "settings": {

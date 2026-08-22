@@ -11,7 +11,7 @@ import {SoulCordDisposalScope} from "./disposal";
 import SoulCordSettings from "./store";
 import PluginDoctor from "./doctor";
 import {runStructuralProbes, type StructuralProbeResult} from "./drift";
-import {inspectLink, type LinkInspection} from "./link-lens";
+import {inspectLink, shouldInterceptLink, type LinkInspection} from "./link-lens";
 import {BoundedPerformanceSampler, type PerformanceSample} from "./performance";
 import {evaluateCrashGuard, type CrashGuardDocument} from "./crash-guard";
 
@@ -472,7 +472,7 @@ class SoulCordRuntimeStore extends Store {
             if (!anchor?.href) return;
             const inspection = inspectLink(anchor.href);
             const settings = SoulCordSettings.module("link-lens").values;
-            if (!inspection.valid || (!inspection.requiresConfirmation && settings.confirmAllExternal !== true)) return;
+            if (!shouldInterceptLink(anchor.href, inspection, window.location.href, settings.confirmAllExternal === true)) return;
             mouse.preventDefault();
             mouse.stopPropagation();
             const destination = settings.removeTrackers === false ? anchor.href : inspection.cleanedUrl!;
@@ -489,11 +489,12 @@ class SoulCordRuntimeStore extends Store {
         dialog.setAttribute("role", "alertdialog");
         dialog.setAttribute("aria-modal", "true");
         dialog.setAttribute("aria-label", "Review link destination");
-        dialog.append(textElement("h2", "Review link"));
-        dialog.append(textElement("p", `Visible host: ${inspection.host ?? "invalid"}`));
+        dialog.append(textElement("h2", "Review external link"));
+        dialog.append(textElement("p", `Destination host: ${inspection.host ?? "invalid"}`));
         if (inspection.finalHost && inspection.finalHost !== inspection.host) dialog.append(textElement("p", `Declared final host: ${inspection.finalHost}`));
         const warnings = document.createElement("ul");
         for (const warning of inspection.warnings) warnings.append(textElement("li", warning));
+        if (!inspection.warnings.length) warnings.append(textElement("li", "No local warning rules matched. Confirmation is enabled for every external link."));
         dialog.append(warnings);
         const actions = document.createElement("div");
         actions.className = "soulcord-dialog-actions";

@@ -1,4 +1,5 @@
 import React from "react";
+import soulCordMark from "@assets/branding/soulcord-mark-v2.png";
 
 import {useStateFromStores} from "@ui/hooks";
 import PluginManager from "@modules/pluginmanager";
@@ -9,6 +10,12 @@ import type {SoulCordModuleId} from "@modules/soulcord/contracts";
 import type {LinkInspection} from "@modules/soulcord/link-lens";
 
 const {useRef, useState} = React;
+
+const OWNER_DAILY_ADDONS = [
+    {id: "DoNotTrack", name: "Do Not Track", summary: "Suppresses Discord analytics and process monitoring. Exact catalog-pinned local file; permissive source license."},
+    {id: "InvisibleTyping", name: "Invisible Typing", summary: "Prevents the typing indicator unless you opt a channel back in. Exact catalog-pinned local file; not redistributed by SoulCord."},
+    {id: "DoubleClickToReply", name: "Double Click to Reply", summary: "Double-click another person’s message to open Discord’s normal reply composer. It never sends automatically."}
+] as const;
 
 function timestamp(value?: number | string): string {
     if (!value) return "never";
@@ -57,6 +64,27 @@ function ModuleTable() {
             </div>;
         })}
     </div>;
+}
+
+function DailyAddonSet() {
+    const addons = useStateFromStores(PluginManager, () => OWNER_DAILY_ADDONS.map(item => {
+        const addon = PluginManager.resolveAddon(item.id);
+        return {...item, installed: Boolean(addon), version: addon?.version, enabled: Boolean(addon && PluginManager.isEnabled(item.id))};
+    }));
+    return <Section title="Daily add-on set" summary="These are the owner’s existing local plugin files, selected for this Windows profile. SoulCord verifies and manages them but does not copy unlicensed source into the fork.">
+        <div className="soulcord-daily-grid">
+            {addons.map(addon => <div className="soulcord-daily-row" key={addon.id}>
+                <div>
+                    <div className="soulcord-module-name"><strong>{addon.name}</strong><span className="soulcord-maturity">{addon.installed ? `local ${addon.version ?? "installed"}` : "not installed"}</span></div>
+                    <p>{addon.summary}</p>
+                </div>
+                <label className="soulcord-toggle">
+                    <input type="checkbox" checked={addon.enabled} disabled={!addon.installed} onChange={() => PluginManager.toggleAddon(addon.id)} />
+                    <span>{addon.enabled ? "On" : "Off"}</span>
+                </label>
+            </div>)}
+        </div>
+    </Section>;
 }
 
 function ActivityBridge() {
@@ -411,13 +439,14 @@ export default function SoulCordPanel() {
     const recoveryMode = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.recoveryMode);
     return <main className="soulcord-panel">
         <header className="soulcord-header">
-            <div className="soulcord-mark" aria-hidden="true"><span>S</span><i /></div>
+            <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
             <div><p className="soulcord-eyebrow">Local power fork · V1</p><h1>SoulCord Suite</h1><p>Compatibility you can inspect. Recovery you control.</p></div>
         </header>
         {recoveryMode && <div className="soulcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
             <ActionButton tone="danger" onClick={() => void SoulCordRuntime.leaveRecoveryMode()}>Try normal startup</ActionButton>
         </div>}
+        <DailyAddonSet />
         <ActivityBridge />
         <Section title="Module status" summary="Ready means a live adapter is attached. Preview means useful behavior exists but a volatile Discord lookup or a human visual gate is still pending."><ModuleTable /></Section>
         <PluginRecovery />

@@ -19,19 +19,23 @@ The graphite, warm-cream, and coral direction was selected after inspecting the 
 
 ## Mark
 
-The original mark is an angular `S` crossed by three offset signal lines. It refers to an inspected compatibility bridge, not Discord’s controller shape or BetterDiscord’s `BD` monogram. Source assets:
+The active V2 mark is an original faceted quartz core with one restrained orbital line and a small checkpoint light. Its graphite, warm-cream, sea, coral, and amber faces preserve the functional palette without resembling Discord’s controller shape, BetterDiscord’s `BD` monogram, a cryptocurrency coin, or a game-rank badge. Active runtime asset:
+
+- `assets/branding/soulcord-mark-v2.png`
+
+The first angular `S` direction is retained as a historical, reversible source set but is no longer used by the Suite header or settings icon:
 
 - `assets/branding/soulcord-mark.svg`
 - `assets/branding/soulcord-wordmark.svg`
 - `assets/branding/soulcord-social-preview.svg`
 
-The SVG view boxes scale cleanly at 16, 24, 32, 64, and 256 pixels. At 16–24 pixels use the mark only; do not use the wordmark. Maintain a clear area equal to one signal-line height. Do not recolor the three signals to Discord blurple or place the mark inside a Discord-shaped silhouette.
+At 16–24 pixels use the V2 mark only; do not use the wordmark. Maintain a clear area equal to the amber checkpoint diameter. Do not recolor it to Discord blurple or place it inside a Discord-shaped silhouette.
 
 ## Asset provenance
 
-The assets were constructed as original SVG paths in this repository on 2026-08-22. Design brief: “Create an angular S made from a continuous light ribbon, crossed by three short signal bars in coral, sea, and amber; graphite field; no Discord controller, chat bubble, BetterDiscord monogram, gradient blob, stock icon, or third-party font dependency.”
+The V2 PNG was generated with OpenAI Image Generation on 2026-08-22 from a text-only SoulCord brief. No reference image was supplied. Prompt brief: “A compact, quiet power-tool mark: a single faceted quartz core in graphite, warm cream, sea, and coral; one precise orbital line and one small amber checkpoint; transparent background; crisp silhouette at small sizes; no lettering, coin, shield, game-rank badge, Discord controller, BetterDiscord monogram, gradient blob, stock icon, or cyber cliché.” The first output was rejected during review as too close to a game/crypto emblem and is not included. The retained V2 file is RGBA, 1254 × 1254, and has SHA-256 `c25742e5925e93cb7f9ee45fe1bf62b5f76892daa239c1d979bb14b0211afffc`.
 
-No generative model output, icon pack, Discord asset, BetterDiscord asset, or downloaded image is embedded. SHA-256 values are generated in the build evidence manifest.
+The historical SVG assets were constructed as original paths in this repository on 2026-08-22. No icon pack, Discord asset, BetterDiscord asset, third-party font, or user-submitted image is embedded.
 
 ## UI rules
 

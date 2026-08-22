@@ -71,7 +71,10 @@ class SettingsManager extends Store {
             id,
             type,
             order,
-            get label() {return t(`Panels.${id}`) || name;},
+            get label() {
+                const translated = t(`Panels.${id}`);
+                return translated === "String not found!" ? name : translated || name;
+            },
             section: id,
             icon: options.icon,
             searchable: options.searchable

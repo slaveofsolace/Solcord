@@ -3,7 +3,8 @@ const TRACKING_PARAMETERS = new Set([
     "utm_campaign", "utm_content", "utm_id", "utm_medium", "utm_name", "utm_reader", "utm_source", "utm_term"
 ]);
 const REDIRECT_PARAMETERS = ["redirect", "redirect_url", "redirect_uri", "target", "url"];
-const INVITE_HOSTS = new Set(["discord.gg", "discord.com", "www.discord.com", "discordapp.com", "www.discordapp.com"]);
+const INVITE_SHORT_HOSTS = new Set(["discord.gg"]);
+const DISCORD_WEB_HOSTS = new Set(["discord.com", "www.discord.com", "discordapp.com", "www.discordapp.com"]);
 
 export interface LinkInspection {
     input: string;
@@ -28,11 +29,31 @@ function safeUrl(value: string): URL | null {
     }
 }
 
-function detectInvite(url: URL): string | undefined {
-    if (!INVITE_HOSTS.has(url.hostname.toLowerCase())) return;
+export function detectInvite(url: URL): string | undefined {
+    const host = url.hostname.toLowerCase();
     const parts = url.pathname.split("/").filter(Boolean);
-    const candidate = parts[0] === "invite" ? parts[1] : parts[0];
+    const candidate = INVITE_SHORT_HOSTS.has(host)
+        ? parts[0]
+        : DISCORD_WEB_HOSTS.has(host) && parts[0]?.toLowerCase() === "invite"
+            ? parts[1]
+            : undefined;
     return candidate && /^[\w-]{2,64}$/.test(candidate) ? candidate : undefined;
+}
+
+export function isDiscordInternalNavigation(input: string, currentHref?: string): boolean {
+    const target = safeUrl(input.trim());
+    if (!target || detectInvite(target)) return false;
+
+    const host = target.hostname.toLowerCase();
+    if (DISCORD_WEB_HOSTS.has(host)) return true;
+
+    const current = currentHref ? safeUrl(currentHref) : null;
+    return Boolean(current && target.origin === current.origin);
+}
+
+export function shouldInterceptLink(input: string, inspection: LinkInspection, currentHref: string | undefined, confirmAllExternal: boolean): boolean {
+    if (!inspection.valid || isDiscordInternalNavigation(input, currentHref)) return false;
+    return inspection.requiresConfirmation || confirmAllExternal;
 }
 
 export function inspectLink(input: string): LinkInspection {

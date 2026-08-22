@@ -1,4 +1,5 @@
 import React from "react";
+import soulCordMark from "@assets/branding/soulcord-mark-v2.png";
 import {lucideToDiscordIcon} from "@utils/icon";
 import clsx from "clsx";
 import {Icon, type LucideProps} from "lucide-react";
@@ -11,31 +12,13 @@ const IconRenderer: React.FC<React.ComponentProps<typeof Icon>> = typeof (Icon a
     : Icon;
 
 
-const makeNode = (d: string, color: React.CSSProperties["color"] | undefined | null): [elementName: "circle" | "ellipse" | "g" | "line" | "path" | "polygon" | "polyline" | "rect", attrs: Record<string, string>] => {
-    const nProps: Record<string, string> = {d};
-
-    if (typeof color === "string") nProps.fill = color;
-
-    return [
-        "path",
-        nProps
-    ];
-};
-
 const SoulCordLogo = ((props: Props) => {
     const element = IconRenderer(
         {
             ...props,
             className: clsx("lucide-soulcord", props.className),
             iconNode: [
-                makeNode(
-                    "M49 13C42 7 29 6 20 11C10 16 11 28 21 32L39 39C44 41 43 47 37 50C30 53 20 50 14 45L8 52C17 61 33 64 45 58C57 52 58 39 48 34L28 26C23 24 24 19 29 17C34 15 41 17 45 21Z",
-                    props.accent ? "var(--bd-brand)" : props.color || "currentcolor"
-                ),
-                makeNode(
-                    "M7 20H18L21 24H7ZM43 25H58V29H47ZM5 37H18L22 41H5Z",
-                    props.secondaryColor || props.color || "currentcolor"
-                )
+                ["image", {href: soulCordMark, x: "0", y: "0", width: "64", height: "64", preserveAspectRatio: "xMidYMid meet"}]
             ]
         },
         // @ts-expect-error Ignore cause react 19
@@ -45,7 +28,7 @@ const SoulCordLogo = ((props: Props) => {
     return React.cloneElement(element, {
         viewBox: "0 0 64 64",
         enableBackground: "new 0 0 64 64",
-        stoke: undefined
+        stroke: "none"
     });
 }) as PsuedoLucideIcon;
 

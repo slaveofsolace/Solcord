@@ -14,9 +14,8 @@
 .soulcord-header h1 { font-size: 30px; line-height: 1.1; margin: 2px 0 6px; letter-spacing: -0.035em; }
 .soulcord-header p { margin: 0; color: var(--text-muted); }
 .soulcord-eyebrow { color: var(--soulcord-coral) !important; font: 700 11px/1.2 var(--font-primary); text-transform: uppercase; letter-spacing: 0.12em; }
-.soulcord-mark { position: relative; display: grid; place-items: center; width: 52px; height: 52px; flex: 0 0 52px; color: var(--soulcord-cream); background: var(--soulcord-graphite); border: 1px solid color-mix(in srgb, var(--soulcord-sea) 60%, transparent); border-radius: 12px; overflow: hidden; }
-.soulcord-mark span { font: 800 26px/1 var(--font-primary); z-index: 1; }
-.soulcord-mark i { position: absolute; width: 70px; height: 2px; background: var(--soulcord-coral); transform: rotate(-23deg); box-shadow: 0 8px 0 var(--soulcord-sea), 0 -8px 0 var(--soulcord-amber); }
+.soulcord-mark { display: grid; place-items: center; width: 58px; height: 58px; flex: 0 0 58px; padding: 3px; background: #111416; border: 1px solid color-mix(in srgb, var(--soulcord-sea) 58%, transparent); border-radius: 13px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%); overflow: hidden; }
+.soulcord-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .soulcord-section { padding: 24px 0; border-bottom: 1px solid var(--border-subtle); }
 .soulcord-section-heading { display: grid; grid-template-columns: minmax(190px, 0.4fr) minmax(280px, 1fr); gap: 20px; align-items: start; margin-bottom: 16px; }
 .soulcord-section-heading h2 { font-size: 18px; margin: 0; }
@@ -31,6 +30,9 @@
 .soulcord-ledger-row time,
 .soulcord-ledger-row span { color: var(--text-muted); }
 .soulcord-module-table { border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; }
+.soulcord-daily-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.soulcord-daily-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; padding: 13px; background: var(--background-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; }
+.soulcord-daily-row p { margin: 7px 0 0; color: var(--text-muted); line-height: 1.42; }
 .soulcord-module-row { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 14px; background: var(--background-secondary); }
 .soulcord-module-row + .soulcord-module-row { border-top: 1px solid var(--border-subtle); }
 .soulcord-module-primary p { margin: 5px 0; color: var(--text-muted); }
@@ -99,9 +101,15 @@
 .soulcord-empty { color: var(--text-muted); font-style: italic; }
 .soulcord-error { color: var(--status-danger); font-weight: 600; }
 .soulcord-local-overlay { position: fixed; z-index: 2147483646; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 68%); }
-.soulcord-local-dialog { width: min(520px, 100%); max-height: min(680px, 90vh); overflow: auto; padding: 20px; color: var(--text-normal); background: var(--background-primary); border: 1px solid var(--border-subtle); border-top: 3px solid var(--soulcord-coral); border-radius: 7px; box-shadow: 0 16px 46px rgb(0 0 0 / 45%); }
+.soulcord-local-dialog { width: min(520px, 100%); max-height: min(680px, 90vh); overflow: auto; isolation: isolate; color-scheme: dark; padding: 20px; color: #F2F4F7; background: #181B1F; border: 1px solid #414750; border-top: 3px solid var(--soulcord-coral); border-radius: 7px; box-shadow: 0 16px 46px rgb(0 0 0 / 58%); }
 .soulcord-local-dialog h2 { margin: 0 0 8px; }
-.soulcord-local-dialog p { color: var(--text-muted); }
+.soulcord-local-dialog p,
+.soulcord-local-dialog li { color: #C7CDD5; line-height: 1.45; }
+.soulcord-local-dialog .soulcord-local-button { color: #F2F4F7; background: #282D33; border-color: #505862; }
+.theme-light .soulcord-local-dialog { color-scheme: light; color: #20242A; background: #FFFFFF; border-color: #C8CDD4; box-shadow: 0 16px 42px rgb(20 24 28 / 24%); }
+.theme-light .soulcord-local-dialog p,
+.theme-light .soulcord-local-dialog li { color: #4F5660; }
+.theme-light .soulcord-local-dialog .soulcord-local-button { color: #20242A; background: #F0F2F5; border-color: #B7BDC5; }
 .soulcord-command-list { display: grid; gap: 5px; margin-top: 10px; }
 .soulcord-command-list button { text-align: left; }
 .soulcord-local-dialog input { box-sizing: border-box; width: 100%; padding: 9px; color: var(--text-normal); background: var(--input-background); border: 1px solid var(--border-subtle); border-radius: 4px; }
@@ -109,6 +117,7 @@
 
 @media (max-width: 900px) {
     .soulcord-control-grid { grid-template-columns: 1fr 1fr; }
+    .soulcord-daily-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
