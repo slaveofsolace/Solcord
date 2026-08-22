@@ -6,7 +6,7 @@ let title = window.Editor.filename;
 if (window.Editor.type === "custom-css") {
     title = "Custom CSS";
 }
-document.title = `${title} - BetterDiscord Editor`;
+document.title = `${title} - SoulCord Editor`;
 
 document.getElementById("language")!.textContent = window.Editor.type === "plugin" ? " JavaScript" : " CSS";
 

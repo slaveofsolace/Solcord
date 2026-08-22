@@ -7,6 +7,7 @@ import AddonManager from "./addonmanager";
 import {type Addon} from "@typed/addon";
 import {t} from "@common/i18n";
 import Events from "./emitter";
+import PluginDoctor, {type AddonFailure} from "./soulcord/doctor";
 
 type PluginLoadPoint = "connection" | "idle";
 
@@ -60,6 +61,11 @@ class PluginManager extends AddonManager<Plugin> {
 
         for (const addon of this.addonList) {
             if (addon.runAt !== point || !(this.state[addon.id] || addon.filename === "0BDFDB.plugin.js")) continue;
+            if (PluginDoctor.isQuarantined(addon.id)) {
+                this.state[addon.id] = false;
+                this.saveState();
+                continue;
+            }
             this.startAddon(addon);
         }
 
@@ -81,6 +87,7 @@ class PluginManager extends AddonManager<Plugin> {
             delete plugin.fileContent;
         }
         catch (err) {
+            this.recordDoctorFailure(plugin, "compile", err);
             this.showAddonError(plugin, t("Addons.compileError"), {
                 message: (err as Error).message,
                 stack: (err as Error).stack
@@ -144,6 +151,7 @@ class PluginManager extends AddonManager<Plugin> {
                 return true;
             }
             catch (err) {
+                this.recordDoctorFailure(plugin, "load", err);
                 this.state[plugin.id] = false;
                 this.showAddonError(plugin, t("Addons.methodError", {method: "load()"}), {
                     message: (err as Error).message,
@@ -153,6 +161,7 @@ class PluginManager extends AddonManager<Plugin> {
             }
         }
         catch (err) {
+            this.recordDoctorFailure(plugin, "construct", err);
             this.showAddonError(plugin, t("Addons.methodError", {method: "Plugin constructor()"}), {
                 message: (err as Error).message,
                 stack: (err as Error).stack
@@ -164,6 +173,12 @@ class PluginManager extends AddonManager<Plugin> {
     startAddon(idOrAddon: string | Plugin) {
         const plugin = this.resolveAddon(idOrAddon);
         if (!plugin) return false;
+        if (PluginDoctor.isQuarantined(plugin.id)) {
+            this.state[plugin.id] = false;
+            this.saveState();
+            Toasts.warning(`${plugin.name} is quarantined by SoulCord. Retry it manually from SoulCord Suite.`);
+            return false;
+        }
 
         if (!plugin.instance) {
             const loaded = this.loadAddon(plugin);
@@ -174,6 +189,7 @@ class PluginManager extends AddonManager<Plugin> {
             plugin.instance.start();
         }
         catch (err) {
+            this.recordDoctorFailure(plugin, "start", err);
             // Disable the addon if it can't be started
             this.state[plugin.id] = false;
             this.trigger("disabled", plugin);
@@ -189,6 +205,7 @@ class PluginManager extends AddonManager<Plugin> {
         }
 
         this.trigger("started", plugin.id);
+        PluginDoctor.recordSuccessfulStart(plugin.id);
         if (this.hasInitialized) Toasts.success(t("Addons.enabled", {name: plugin.name, version: plugin.version}));
         else this.initialAddonsLoaded++;
 
@@ -203,6 +220,7 @@ class PluginManager extends AddonManager<Plugin> {
             plugin.instance?.stop();
         }
         catch (err) {
+            this.recordDoctorFailure(plugin, "stop", err);
             this.state[plugin.id] = false;
             Toasts.warning(t("Addons.couldNotStop", {name: plugin.name, version: plugin.version}));
             Logger.stacktrace(this.name, `${plugin.name} v${plugin.version} could not be stopped.`, err as Error);
@@ -238,7 +256,10 @@ class PluginManager extends AddonManager<Plugin> {
                     plugin.onSwitch();
                 }
             }
-            catch (err) {Logger.stacktrace(this.name, `Unable to fire onSwitch for ${this.addonList[i].name} v${this.addonList[i].version}`, err as Error);}
+            catch (err) {
+                this.recordDoctorFailure(this.addonList[i], "switch", err);
+                Logger.stacktrace(this.name, `Unable to fire onSwitch for ${this.addonList[i].name} v${this.addonList[i].version}`, err as Error);
+            }
         }
     }
 
@@ -251,8 +272,26 @@ class PluginManager extends AddonManager<Plugin> {
                     plugin.observer(mutation);
                 }
             }
-            catch (err) {Logger.stacktrace(this.name, `Unable to fire observer for ${this.addonList[i].name} v${this.addonList[i].version}`, err as Error);}
+            catch (err) {
+                this.recordDoctorFailure(this.addonList[i], "mutation", err);
+                Logger.stacktrace(this.name, `Unable to fire observer for ${this.addonList[i].name} v${this.addonList[i].version}`, err as Error);
+            }
         }
+    }
+
+    private recordDoctorFailure(plugin: Plugin, phase: AddonFailure["phase"], error: unknown) {
+        const quarantined = PluginDoctor.recordFailure(plugin.id, phase, error);
+        if (!quarantined) return;
+        this.state[plugin.id] = false;
+        this.saveState();
+        if (phase !== "stop" && typeof plugin.instance?.stop === "function") {
+            try {plugin.instance.stop();}
+            catch (cleanupError) {
+                PluginDoctor.recordFailure(plugin.id, "stop", cleanupError);
+                Logger.stacktrace(this.name, `Quarantine cleanup failed for ${plugin.name}.`, cleanupError as Error);
+            }
+        }
+        this.trigger("disabled", plugin);
     }
 }
 

@@ -4,6 +4,7 @@ import {ipcMain as ipc, BrowserWindow, app, dialog, shell, type IpcMainInvokeEve
 import * as IPCEvents from "@common/constants/ipcevents";
 import Editor from "./editor";
 import BetterDiscord from "./betterdiscord";
+import ActivityCompatibility from "./activity-compatibility";
 import type {DialogOptions} from "@common/types/ipc";
 
 const getPath = (event: IpcMainEvent, pathReq: string) => {
@@ -191,8 +192,11 @@ const getAllowPreloadOverride = (_: IpcMainInvokeEvent) => {
     return BetterDiscord.clientModCompatibility.allowPreloadOverride();
 };
 const setAllowPreloadOverride = (_: IpcMainInvokeEvent, value: boolean) => {
-    return BetterDiscord.clientModCompatibility.setAllowPreloadOverride(value);
+    BetterDiscord.clientModCompatibility.setAllowPreloadOverride(value);
+    ActivityCompatibility.setUnrestrictedOverride(value);
 };
+
+const getActivityCompatibility = () => ActivityCompatibility.snapshot();
 
 const runRenderer = (event: IpcMainInvokeEvent) => {
     BetterDiscord.injectRenderer(BrowserWindow.fromWebContents(event.sender)!);
@@ -222,6 +226,7 @@ export default class IPCMain {
             ipc.handle(IPCEvents.GET_ALLOW_PRELOAD_OVERRIDE, getAllowPreloadOverride);
             ipc.handle(IPCEvents.SET_ALLOW_PRELOAD_OVERRIDE, setAllowPreloadOverride);
             ipc.handle(IPCEvents.RUN_RENDERER, runRenderer);
+            ipc.handle(IPCEvents.GET_ACTIVITY_COMPATIBILITY, getActivityCompatibility);
         }
         catch (err) {
             // eslint-disable-next-line no-console

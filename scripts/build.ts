@@ -11,7 +11,7 @@ const isProduction = process.argv.includes("--minify");
 
 const BRANCH_NAME = Bun.env.BRANCH_NAME ?? (await $`git symbolic-ref --short HEAD`.quiet().nothrow().text()).trim();
 const COMMIT_HASH = Bun.env.COMMIT_HASH ?? (await $`git rev-parse --short HEAD`.quiet().nothrow().text()).trim();
-const DEVELOPMENT = Bun.env.NODE_ENV ?? "development";
+const DEVELOPMENT = process.argv.includes("--production") ? "production" : Bun.env.NODE_ENV ?? "development";
 
 interface EntryPoint {
     in: string;
@@ -19,7 +19,7 @@ interface EntryPoint {
 }
 
 const moduleConfigs: Record<string, EntryPoint> = {
-    betterdiscord: {"in": "src/betterdiscord/index.ts", "out": "betterdiscord"},
+    soulcord: {"in": "src/betterdiscord/index.ts", "out": "soulcord"},
     main: {"in": "src/electron/main/index.ts", "out": "main"},
     preload: {"in": "src/electron/preload/index.ts", "out": "preload"},
     earlyRenderer: {"in": "src/electron/preload/early/index.ts", "out": "earlyRenderer"},
@@ -43,7 +43,7 @@ function buildOptions() {
         alias: {
             react: "@modules/react",
         },
-        external: ["fs", "node:inspector", "original-fs", "path", "vm", "electron", "@electron/remote", "module", "request", "events", "child_process", "net", "http", "https", "crypto", "os", "url", "util/types"],
+        external: ["fs", "node:fs", "node:inspector", "original-fs", "path", "node:path", "vm", "electron", "@electron/remote", "module", "request", "events", "child_process", "net", "http", "https", "crypto", "node:crypto", "os", "url", "util/types"],
         target: ["chrome128", "node20"],
         loader: {
             ".js": "jsx",
@@ -91,4 +91,4 @@ async function runBuild() {
     console.log("");
 }
 
-runBuild().catch(console.error);
+await runBuild();

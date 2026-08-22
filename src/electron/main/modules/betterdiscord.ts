@@ -5,9 +5,11 @@ import {spawn} from "child_process";
 
 import ReactDevTools from "./reactdevtools";
 import * as IPCEvents from "@common/constants/ipcevents";
+import ActivityCompatibility from "./activity-compatibility";
 
 // Build info file only exists for non-linux (for current injection)
 const appPath = electron.app.getAppPath();
+const discordTrustRoot = path.dirname(process.resourcesPath);
 const buildInfoFile = path.resolve(appPath, "..", "build_info.json");
 
 // Locate data path to find transparency settings
@@ -21,6 +23,13 @@ const BD_ACCENT_COLOR = "#3E82E5";
 let hasCrashed = false;
 export default class BetterDiscord {
     static _settings: Record<string, Record<string, any>>;
+    private static initializedWindows = new WeakSet<BrowserWindow>();
+    private static injectedWebContents = new WeakSet<Electron.WebContents>();
+    private static protocolListenersRegistered = false;
+
+    static getDiscordTrustRoot(): string {
+        return discordTrustRoot;
+    }
 
     static getSetting(category: string, key: string) {
         if (this._settings) return this._settings[category]?.[key];
@@ -102,24 +111,41 @@ export default class BetterDiscord {
 
     static async injectRenderer(browserWindow: BrowserWindow) {
         if (hasCrashed) return;
+        if (this.injectedWebContents.has(browserWindow.webContents)) return;
+        this.injectedWebContents.add(browserWindow.webContents);
 
-        const location = path.join(__dirname, "betterdiscord.js");
-        if (!fs.existsSync(location)) return; // TODO: cut a fatal log
+        const location = path.join(__dirname, "soulcord.js");
+        if (!fs.existsSync(location)) {
+            this.injectedWebContents.delete(browserWindow.webContents);
+            return; // TODO: cut a fatal log
+        }
         const content = fs.readFileSync(location).toString();
-        const success = await browserWindow.webContents.executeJavaScript(`
-            (() => {
-                try {
-                    ${content}
-                    return true;
-                } catch(error) {
-                    console.error(error);
-                    return false;
-                }
-            })();
-            //# sourceURL=betterdiscord/betterdiscord.js
-        `);
+        let success = false;
+        try {
+            success = await browserWindow.webContents.executeJavaScript(`
+                (() => {
+                    try {
+                        ${content}
+                        return true;
+                    } catch(error) {
+                        console.error(error);
+                        return false;
+                    }
+                })();
+                //# sourceURL=soulcord/soulcord.js
+            `);
+        }
+        catch {
+            this.injectedWebContents.delete(browserWindow.webContents);
+            throw new Error("SoulCord renderer injection failed.");
+        }
 
-        if (!success) return; // TODO: cut a fatal log
+        if (!success) {
+            this.injectedWebContents.delete(browserWindow.webContents);
+            return; // TODO: cut a fatal log
+        }
+        // @ts-expect-error SoulCord adds an internal non-enumerable window token.
+        ActivityCompatibility.injection(browserWindow.__soulcordWindowToken);
     }
 
     private static getAccentColor() {
@@ -139,6 +165,9 @@ export default class BetterDiscord {
     }
 
     static setup(browserWindow: BrowserWindow) {
+        if (this.initializedWindows.has(browserWindow)) return;
+        this.initializedWindows.add(browserWindow);
+
         // Setup some useful vars to avoid blocking IPC calls
         try {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -181,10 +210,10 @@ export default class BetterDiscord {
 
             // If a previous crash was detected, show a message explaining why BD isn't there
             electron.dialog.showMessageBox({
-                title: "Discord Crashed",
+                title: "SoulCord startup recovery",
                 type: "warning",
-                message: "Something crashed your Discord Client",
-                detail: "BetterDiscord has automatically disabled itself just in case. To enable it again, restart Discord or click the button below.\n\nThis may have been caused by a plugin. Try moving all of your plugins outside the plugin folder and see if Discord still crashed.",
+                message: "SoulCord detected an interrupted Discord renderer",
+                detail: "SoulCord stopped renderer injection after an interrupted startup. Restart Discord or use the recovery action below.\n\nA third-party plugin may be responsible. Plugin Doctor can quarantine repeated failures without deleting your plugin files.",
                 buttons: ["Try Again", "Open Plugins Folder", "Cancel"],
             }).then((result) => {
                 if (result.response === 0) {
@@ -209,7 +238,8 @@ export default class BetterDiscord {
         });
 
         // Seems to be windows exclusive. MacOS requires a build plist change
-        if (electron.app.setAsDefaultProtocolClient("betterdiscord")) {
+        if (!this.protocolListenersRegistered && electron.app.setAsDefaultProtocolClient("betterdiscord")) {
+            this.protocolListenersRegistered = true;
             // If application was opened via protocol, set process.env.BETTERDISCORD_PROTOCOL
             const protocol = process.argv.find((arg) => arg.startsWith("betterdiscord://"));
             if (protocol) {

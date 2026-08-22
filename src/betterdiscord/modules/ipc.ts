@@ -73,4 +73,8 @@ export default new class IPCRenderer {
             await ipc.invoke(IPCEvents.SET_ALLOW_PRELOAD_OVERRIDE, !await this.get());
         }
     };
+
+    getActivityCompatibilityHealth() {
+        return ipc.invoke(IPCEvents.GET_ACTIVITY_COMPATIBILITY);
+    }
 };

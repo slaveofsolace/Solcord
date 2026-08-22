@@ -33,3 +33,8 @@ export function addProtocolListener(callback: (a: string) => void) {
 export function setDevToolsWarningState(value: boolean) {
     DiscordNativePatch.setDevToolsWarningState(value);
 }
+
+/** Internal SoulCord health bridge. It returns only bounded, sanitized process facts. */
+export function getActivityCompatibilityHealth() {
+    return electron.ipcRenderer.invoke(IPCEvents.GET_ACTIVITY_COMPATIBILITY);
+}

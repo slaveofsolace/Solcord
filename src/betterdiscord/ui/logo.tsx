@@ -22,18 +22,18 @@ const makeNode = (d: string, color: React.CSSProperties["color"] | undefined | n
     ];
 };
 
-const BDLogo = ((props: Props) => {
+const SoulCordLogo = ((props: Props) => {
     const element = IconRenderer(
         {
             ...props,
-            className: clsx("lucide-betterdiscord", props.className),
+            className: clsx("lucide-soulcord", props.className),
             iconNode: [
                 makeNode(
-                    "M1402.2,631.7c-9.7-353.4-286.2-496-642.6-496H68.4v714.1l442,398V490.7h257c274.5,0,274.5,344.9,0,344.9H597.6v329.5h169.8c274.5,0,274.5,344.8,0,344.8h-699v354.9h691.2c356.3,0,632.8-142.6,642.6-496c0-162.6-44.5-284.1-122.9-368.6C1357.7,915.8,1402.2,794.3,1402.2,631.7z",
+                    "M49 13C42 7 29 6 20 11C10 16 11 28 21 32L39 39C44 41 43 47 37 50C30 53 20 50 14 45L8 52C17 61 33 64 45 58C57 52 58 39 48 34L28 26C23 24 24 19 29 17C34 15 41 17 45 21Z",
                     props.accent ? "var(--bd-brand)" : props.color || "currentcolor"
                 ),
                 makeNode(
-                    "M1262.5,135.2L1262.5,135.2l-76.8,0c26.6,13.3,51.7,28.1,75,44.3c70.7,49.1,126.1,111.5,164.6,185.3c39.9,76.6,61.5,165.6,64.3,264.6l0,1.2v1.2c0,141.1,0,596.1,0,737.1v1.2l0,1.2c-2.7,99-24.3,188-64.3,264.6c-38.5,73.8-93.8,136.2-164.6,185.3c-22.6,15.7-46.9,30.1-72.6,43.1h72.5c346.2,1.9,671-171.2,671-567.9V716.7C1933.5,312.2,1608.7,135.2,1262.5,135.2z",
+                    "M7 20H18L21 24H7ZM43 25H58V29H47ZM5 37H18L22 41H5Z",
                     props.secondaryColor || props.color || "currentcolor"
                 )
             ]
@@ -43,13 +43,13 @@ const BDLogo = ((props: Props) => {
     ) as React.ReactElement<any, any>;
 
     return React.cloneElement(element, {
-        viewBox: "0 0 2000 2000",
-        enableBackground: "new 0 0 2000 2000",
+        viewBox: "0 0 64 64",
+        enableBackground: "new 0 0 64 64",
         stoke: undefined
     });
 }) as PsuedoLucideIcon;
 
-export const Logo = Object.assign(BDLogo, {
-    Discord: lucideToDiscordIcon(BDLogo),
-    DiscordAccented: lucideToDiscordIcon(BDLogo, (m) => ({...m, accent: true}))
+export const Logo = Object.assign(SoulCordLogo, {
+    Discord: lucideToDiscordIcon(SoulCordLogo),
+    DiscordAccented: lucideToDiscordIcon(SoulCordLogo, (m) => ({...m, accent: true}))
 });

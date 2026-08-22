@@ -8,7 +8,7 @@ import buildPackage from "./helpers/package";
 
 
 const dist = path.resolve(__dirname, "..", "dist");
-const bundleFile = path.join(dist, "betterdiscord.asar");
+const bundleFile = path.join(dist, "soulcord.asar");
 const checksumsFile = path.join(dist, "checksums.txt");
 
 const files = [
@@ -16,46 +16,40 @@ const files = [
     "dist/package.json",
     "dist/preload.js",
     "dist/earlyRenderer.js",
-    "dist/betterdiscord.js",
+    "dist/soulcord.js",
     "dist/editor/preload.js",
     "dist/editor/script.js",
     "dist/editor/index.html"
 ];
 
 const makeHash = () => {
-    try {
-        const arr = Array<string>(files.length);
+    const arr = Array<string>(files.length);
 
-        for (let index = 0; index < files.length; index++) {
-            const fp = files[index];
+    for (let index = 0; index < files.length; index++) {
+        const fp = files[index];
 
-            const buffer = fs.readFileSync(fp);
+        const buffer = fs.readFileSync(fp);
 
-            const sha256 = crypto.createHash("sha256").update(buffer).digest().toString("hex");
+        const sha256 = crypto.createHash("sha256").update(buffer).digest().toString("hex");
 
-            arr[index] = `${sha256}  ${fp.slice(5)}`;
-        }
-
-        fs.writeFileSync(checksumsFile, arr.join("\n"));
-        console.log(`    ✅ Successfully created checksums ${checksumsFile}`);
+        arr[index] = `${sha256}  ${fp.slice(5)}`;
     }
-    catch (err) {
-        console.log(`    ❌ Could not create checksums: ${err instanceof Error ? err.message : String(err)}`);
-    }
+
+    fs.writeFileSync(checksumsFile, `${arr.join("\n")}\n`);
+    console.log(`    ✅ Successfully created checksums ${checksumsFile}`);
 };
 
-const makeBundle = function () {
+const makeBundle = async function () {
     console.log("");
     console.log("Generating bundle");
-    asar.createPackageFromFiles(dist, bundleFile, files).then(() => {
-        console.log(`    ✅ Successfully created bundle ${bundleFile}`);
-        makeHash();
-    }).catch(err => {
-        console.log(`    ❌ Could not build bundle: ${err.message}`);
-    });
+    await asar.createPackageFromFiles(dist, bundleFile, files);
+    const bundleStats = fs.statSync(bundleFile);
+    if (!bundleStats.isFile() || bundleStats.size === 0) throw new Error("The generated SoulCord asar is empty.");
+    console.log(`    ✅ Successfully created bundle ${bundleFile}`);
+    makeHash();
 };
 
 doSanityChecks(dist);
 buildPackage(dist);
 // cleanOldAsar();
-makeBundle();
+await makeBundle();

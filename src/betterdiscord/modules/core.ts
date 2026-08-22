@@ -27,6 +27,9 @@ import CommandManager from "./commandmanager";
 import InstallCSS from "@ui/customcss/mdinstallcss";
 import {allModulesLoaded, getStore, Stores} from "@webpack";
 import Patcher from "./patcher";
+import SoulCordRuntime from "./soulcord/runtime";
+import SoulCordPanel from "@ui/soulcord/panel";
+import {ShieldCheckIcon} from "lucide-react";
 
 export default new class Core {
     hasStarted = false;
@@ -50,6 +53,13 @@ export default new class Core {
 
         Logger.log("Startup", "Initializing Settings");
         Settings.initialize();
+        SoulCordRuntime.initialize();
+        Settings.registerPanel("soulcord", "SoulCord Suite", {
+            order: 0,
+            icon: ShieldCheckIcon,
+            element: SoulCordPanel,
+            searchable: () => ["SoulCord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery"]
+        });
         SettingsRenderer.initialize();
 
         Logger.log("Startup", "Initializing AddonStore");
@@ -69,6 +79,9 @@ export default new class Core {
 
         Logger.log("Startup", "Initializing Toasts");
         Toasts.initialize();
+
+        Logger.log("Startup", "Starting SoulCord safety modules");
+        await SoulCordRuntime.start();
 
         Logger.log("Startup", "Initializing Builtins");
         for (const module in Builtins) {

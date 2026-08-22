@@ -97,7 +97,7 @@ export function getAddonInfo() {
 export default function getDebugInfo() {
     return [
         `## Discord Info\n${getDiscordInfo()}\n`,
-        `## BetterDiscord`,
+        `## SoulCord`,
         getCoreInfo(),
         getAddonInfo(),
     ].join("\n");

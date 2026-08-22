@@ -36,11 +36,12 @@
 @import "./spinner.css";
 @import "./search.css";
 @import "./text.css";
+@import "./soulcord.css";
 
 :root {
-    --bd-brand: #3E82E5;
-    --bd-brand-hover: #3875CE;
-    --bd-brand-active: #3268B7;
+    --bd-brand: #4ECDC4;
+    --bd-brand-hover: #48BBB3;
+    --bd-brand-active: #3FA69F;
 }
 
 .bd-chat-badge {

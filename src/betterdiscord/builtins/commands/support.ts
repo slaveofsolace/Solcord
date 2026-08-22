@@ -1,13 +1,13 @@
 import type {Command} from "@modules/commandmanager";
-import Modals from "@ui/modals";
+import SettingsRenderer from "@ui/settings";
 
 
 export default {
     id: "support",
     name: "support",
-    description: "Get help and support for BetterDiscord",
+    description: "Open SoulCord health, recovery, and support information",
     options: [],
     execute: async () => {
-        Modals.showGuildJoinModal("rC8b2H6SCt");
+        SettingsRenderer.openSettingsPage("soulcord");
     }
 } satisfies Command;

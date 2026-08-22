@@ -3,26 +3,28 @@ import type {ChangelogProps} from "@ui/modals/changelog";
 
 // fixed, improved, added, progress
 export default {
-    title: "BetterDiscord",
+    title: "SoulCord",
     subtitle: `v${config.get("version")}`,
     // https://youtu.be/BZq1eb9d0HI?si=67V2eArlF4atnGnz
     // video: "https://www.youtube.com/embed/BZq1eb9d0HI?si=67V2eArlF4atnGnz&vq=hd720p&hd=1&rel=0&showinfo=0&mute=0&loop=1&autohide=1",
     // banner: "https://i.imgur.com/wuh5yMK.png",
-    blurb: "Hot Fixes.",
+    blurb: "V1 compatibility and recovery baseline.",
     changes: [
         {
             type: "improved",
-            title: "Performance Improvements",
+            title: "Measured reliability",
             items: [
-                "Improved start up times"
+                "Added bounded module timing and resource ownership reporting",
+                "Added fail-closed structural drift checks"
             ]
         },
         {
-            title: "Fixes",
-            type: "fixed",
+            title: "Activity compatibility",
+            type: "added",
             items: [
-                "Theme Attributes is fixed",
-                "BetterDiscords version now shows"
+                "Added a restricted same-package late-preload policy",
+                "Added a sanitized Activity Bridge health ledger",
+                "Kept the global unrestricted preload override off by default"
             ]
         }
     ]

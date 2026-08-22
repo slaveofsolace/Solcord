@@ -87,7 +87,7 @@ export default class Logger {
     static _log(module: string, message: any, type: keyof typeof LogTypes = "log") {
         const parsedType = Logger.parseType(type);
         if (!Array.isArray(message)) message = [message];
-        console[parsedType](`%c[BetterDiscord]%c [${module}]%c`, "color: #3E82E5; font-weight: 700;", "color: #3a71c1;", "", ...message);
+        console[parsedType](`%c[SoulCord]%c [${module}]%c`, "color: #ff735f; font-weight: 700;", "color: #4ecdc4;", "", ...message);
     }
 
     static parseType(type: keyof typeof LogTypes): ConsoleLogTypes {

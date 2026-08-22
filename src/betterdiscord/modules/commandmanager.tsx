@@ -111,6 +111,8 @@ const isValidImageUrl = (url: string) => {
     }
 };
 
+const SOULCORD_COMMAND_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23171a1c'/%3E%3Cpath d='M49 13C42 7 29 6 20 11C10 16 11 28 21 32L39 39C44 41 43 47 37 50C30 53 20 50 14 45L8 52C17 61 33 64 45 58C57 52 58 39 48 34L28 26C23 24 24 19 29 17C34 15 41 17 45 21Z' fill='%23f2eadf'/%3E%3Cpath d='M7 20H18L21 24H7Z' fill='%23ff735f'/%3E%3Cpath d='M43 25H58V29H47Z' fill='%234ecdc4'/%3E%3Cpath d='M5 37H18L22 41H5Z' fill='%23f4b860'/%3E%3C/svg%3E";
+
 class CommandManager {
     static #commands = new Map<string, Map<string, Command>>();
     static #sections = new Map<string, {
@@ -134,10 +136,10 @@ class CommandManager {
 
     static #patchCommandSystem() {
         this.localBDBot = new this.User({
-            avatar: "betterdiscord",
+            avatar: "soulcord",
             id: "676620914632294467",
             bot: true,
-            username: "BetterDiscord",
+            username: "SoulCord",
             system: true,
         });
 
@@ -147,7 +149,7 @@ class CommandManager {
         this.#patchIndexStore();
         this.#patchAuthorizer();
 
-        this.IconsModule.BOT_AVATARS.betterdiscord = "https://github.com/BetterDiscord.png";
+        this.IconsModule.BOT_AVATARS.soulcord = SOULCORD_COMMAND_ICON;
     }
 
     static #patchSidebarModule() {
@@ -353,7 +355,7 @@ class CommandManager {
 
         return {
             integrationType: 0,
-            integrationTitle: caller,
+            integrationTitle: caller === "BetterDiscord" ? "SoulCord" : caller,
             inputType: InputTypes.BUILT_IN,
             get id() {return commandId;},
             get __registerId() {return commandId;},
@@ -405,10 +407,10 @@ class CommandManager {
         if (!this.#sections.has(caller)) {
             this.#sections.set(caller, {
                 id: caller,
-                name: caller,
+                name: caller === "BetterDiscord" ? "SoulCord" : caller,
                 type: 1,
                 key: "1",
-                icon: caller === "BetterDiscord" ? "https://github.com/BetterDiscord.png" : null,
+                icon: caller === "BetterDiscord" ? SOULCORD_COMMAND_ICON : null,
                 isBD: true
             });
         }

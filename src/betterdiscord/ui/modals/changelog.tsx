@@ -1,4 +1,4 @@
-import React, {type MouseEvent, type ReactNode} from "react";
+import React, {type ReactNode} from "react";
 import DiscordModules from "@modules/discordmodules";
 import {t} from "@common/i18n";
 
@@ -12,10 +12,8 @@ import Text from "../base/text";
 import CloseButton from "./close";
 
 import SimpleMarkdownExt from "@structs/markdown";
-import Modals from "@ui/modals";
-import {GithubIcon, TwitterIcon} from "lucide-react";
+import {GithubIcon} from "lucide-react";
 import {getByKeys} from "@webpack";
-import ipc from "@modules/ipc";
 
 const {useMemo} = React;
 
@@ -25,35 +23,14 @@ const AnchorClasses: {anchor: string; anchorUnderlineOnHover: string;} = getByKe
     cacheId: "core-changelog-anchorClasses"
 }) || {anchor: "anchor-3Z-8Bb", anchorUnderlineOnHover: "anchorUnderlineOnHover-2ESHQB"};
 
-const joinSupportServer = (click: MouseEvent) => {
-    click.preventDefault();
-    click.stopPropagation();
-    Modals.showGuildJoinModal("pwXhuRkmgy");
-    DiscordModules.Dispatcher?.dispatch({type: "LAYER_POP"});
-};
-
-const toggleAllowingOtherClientMods = async (click: MouseEvent) => {
-    // if triple click toggle it
-    if (click.detail === 3) {
-        click.preventDefault();
-        click.stopPropagation();
-
-        await ipc.allowPreloadOverride.toggle();
-        ipc.relaunch();
-    }
-};
-
-const supportLink = <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} onClick={joinSupportServer}>Join our Discord Server.</a>;
-const defaultFooter = <Text><span onClick={toggleAllowingOtherClientMods}>Need support?</span> {supportLink}</Text>;
-
-const twitter = <DiscordModules.Tooltip color="primary" position="top" text={t("Socials.twitter")}>
-    {p => <a {...p} className="bd-social" href="https://x.com/_BetterDiscord_" rel="noopener noreferrer" target="_blank">
-        <TwitterIcon size="18px" />
-    </a>}
-</DiscordModules.Tooltip>;
+const defaultFooter = <Text>
+    <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} href="https://github.com/slaveofsolace/Solcord/issues" rel="noopener noreferrer" target="_blank">SoulCord issues</a>
+    {" · "}
+    <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} href="https://github.com/BetterDiscord/BetterDiscord" rel="noopener noreferrer" target="_blank">Based on BetterDiscord</a>
+</Text>;
 
 const github = <DiscordModules.Tooltip color="primary" position="top" text={t("Socials.github")}>
-    {p => <a {...p} className="bd-social" href="https://github.com/BetterDiscord/BetterDiscord" rel="noopener noreferrer" target="_blank">
+    {p => <a {...p} className="bd-social" href="https://github.com/slaveofsolace/Solcord" rel="noopener noreferrer" target="_blank">
         <GithubIcon size="18px" />
     </a>}
 </DiscordModules.Tooltip>;
@@ -118,7 +95,6 @@ export default function ChangelogModal({transitionState, footer, title, subtitle
             {footer ? footer : defaultFooter}
         </Flex.Child>
         {!footer && <Flex.Child grow="0" shrink="0">
-            {twitter}
             {github}
         </Flex.Child>}
     </Footer>, [footer]);
@@ -145,6 +121,6 @@ export default function ChangelogModal({transitionState, footer, title, subtitle
     return <Root className="bd-changelog-modal" transitionState={transitionState} size={Root.Sizes.MEDIUM} style={Root.Styles.STANDARD}>
         {ChangelogHeader}
         <Content>{changelogItems}</Content>
-        {(footer || title === "BetterDiscord") && ChangelogFooter}
+        {(footer || title === "SoulCord") && ChangelogFooter}
     </Root>;
 }

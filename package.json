@@ -1,23 +1,30 @@
 {
-    "name": "betterdiscord",
-    "version": "1.13.14",
-    "description": "Enhances Discord by adding functionality and themes.",
+    "name": "soulcord",
+    "version": "1.0.0",
+    "description": "A reliability, privacy, and productivity fork of BetterDiscord with bounded Discord Activities compatibility.",
+    "private": true,
+    "repository": {"type": "git", "url": "https://github.com/slaveofsolace/Solcord.git"},
+    "homepage": "https://github.com/slaveofsolace/Solcord#readme",
+    "bugs": {"url": "https://github.com/slaveofsolace/Solcord/issues"},
+    "packageManager": "bun@1.4.0",
     "type": "module",
     "scripts": {
         "build": "bun scripts/build.ts",
         "watch": "bun scripts/build.ts --watch",
         "build:main": "bun run build --module=main",
         "build:preload": "bun run build --module=preload",
-        "build:betterdiscord": "bun run build --module=betterdiscord",
-        "build:production": "NODE_ENV=production bun run build --minify",
-        "inject": "bun scripts/inject.js",
+        "build:soulcord": "bun run build --module=soulcord",
+        "build:betterdiscord": "bun run build:soulcord",
+        "build:production": "bun scripts/build.ts --minify --production",
+        "inject": "bun scripts/inject.ts",
         "lint": "bun run --bun eslint",
         "lint-css": "stylelint src/betterdiscord/styles/*.css && stylelint src/betterdiscord/styles/**/*.css",
+        "lint-css:soulcord": "stylelint src/betterdiscord/styles/index.css src/betterdiscord/styles/soulcord.css",
         "test": "bun test tests/",
-        "dist": "bun run build:production && bun scripts/pack.js",
-        "api": "bun run --bun jsdoc -X -r renderer/src/modules/api/ > dist/jsdoc-ast.json",
-        "translations": "bun -r dotenv/config scripts/translations.js",
-        "circulars": "bun run --bun dpdm -T --no-warning --no-tree src/betterdiscord/index.js",
+        "dist": "bun run build:production && bun scripts/pack.ts",
+        "api": "bun run --bun jsdoc -X -r src/betterdiscord/api/ > dist/jsdoc-ast.json",
+        "translations": "bun -r dotenv/config scripts/translations.ts",
+        "circulars": "bun run --bun dpdm -T --no-warning --no-tree src/betterdiscord/index.ts",
         "typecheck": "tsc",
         "generate-types": "bun scripts/types",
         "publish-types": "bun run generate-types && npm publish ./dist/types"
@@ -54,6 +61,6 @@
         "monaco-editor": "0.52.2"
     },
     "engines": {
-        "bun": ">=1.2"
+        "bun": "1.4.0"
     }
 }

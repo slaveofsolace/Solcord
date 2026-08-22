@@ -1,8 +1,11 @@
 import electron, {type BrowserWindowConstructorOptions, type HandlerDetails} from "electron";
+import fs from "node:fs";
 import path from "path";
 
 import BetterDiscord from "./betterdiscord";
 import Editor from "./editor";
+import ActivityCompatibility from "./activity-compatibility";
+import {installPreloadAssignmentPolicy, preloadTrustRoot} from "./preload-policy";
 import * as IPCEvents from "@common/constants/ipcevents";
 import {isProxy} from "util/types";
 
@@ -21,6 +24,7 @@ function maybeHasOtherClientMod() {
 
 class BrowserWindow extends electron.BrowserWindow {
     public __originalPreload?: string;
+    public __soulcordWindowToken?: number;
 
     constructor(options: BrowserWindowConstructorOptions) {
         // @ts-expect-error super's type returns undefined for some reason
@@ -30,8 +34,8 @@ class BrowserWindow extends electron.BrowserWindow {
             // Not i18n but the i18n system doesn't exist here
             electron.dialog.showMessageBox({
                 type: "warning",
-                title: "BetterDiscord Compatibility Warning",
-                message: "BetterDiscord has detected another client mod. This may cause issues with BetterDiscord and/or the other mod. Please remove any other client mods to ensure the best experience.",
+                title: "SoulCord Compatibility Warning",
+                message: "SoulCord detected another desktop client modification. Running both may change window or preload behavior. Review the other modification before continuing.",
                 checkboxLabel: "Don't show this again",
                 buttons: ["OK"],
                 defaultId: 0
@@ -43,17 +47,22 @@ class BrowserWindow extends electron.BrowserWindow {
         }
 
         const originalPreload = options.webPreferences.preload;
-
-        let preload = options.webPreferences.preload = path.join(__dirname, "preload.js");
-
-        Object.defineProperty(options.webPreferences, "preload", {
-            get: () => preload,
-            set(newPreload) {
-                if (BetterDiscord.clientModCompatibility.allowPreloadOverride()) {
-                    preload = newPreload;
+        const injectedPreload = path.join(__dirname, "preload.js");
+        const packageRoot = preloadTrustRoot(originalPreload);
+        ActivityCompatibility.setUnrestrictedOverride(BetterDiscord.clientModCompatibility.allowPreloadOverride());
+        const windowToken = ActivityCompatibility.beginWindow(options.title, originalPreload, packageRoot);
+        installPreloadAssignmentPolicy(options.webPreferences, originalPreload, injectedPreload, {
+            discordTrustRoot: BetterDiscord.getDiscordTrustRoot(),
+            canonicalizeRoot(root) {
+                try {
+                    return fs.realpathSync.native(root);
+                }
+                catch {
+                    return undefined;
                 }
             }
-        });
+        }, () => BetterDiscord.clientModCompatibility.allowPreloadOverride(),
+        (result, unrestricted) => ActivityCompatibility.assignment(windowToken, result, unrestricted));
 
         // Don't allow just "truthy" values
         const shouldBeTransparent = BetterDiscord.getSetting("window", "transparency");
@@ -83,6 +92,16 @@ class BrowserWindow extends electron.BrowserWindow {
             this.setMinimumSize = () => {};
         }
         this.__originalPreload = originalPreload;
+        Object.defineProperty(this, "__soulcordWindowToken", {
+            configurable: false,
+            enumerable: false,
+            value: windowToken,
+            writable: false
+        });
+        const webContentsId = this.webContents.id;
+        ActivityCompatibility.ready(windowToken, webContentsId);
+        this.webContents.on("preload-error", (_, __, error) => ActivityCompatibility.preloadError(windowToken, error));
+        this.once("closed", () => ActivityCompatibility.destroyed(windowToken, webContentsId));
         BetterDiscord.setup(this);
         Editor.initialize(this);
 

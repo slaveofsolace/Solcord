@@ -299,7 +299,7 @@ const SettingsRenderer = new class SettingsRenderer {
 
                 return layouts;
             },
-            useTitle: () => Object.assign(<LayerSettingTitle />, {toString: () => "BetterDiscord"}),
+            useTitle: () => Object.assign(<LayerSettingTitle />, {toString: () => "SoulCord"}),
         });
 
         Patcher.after("SettingsManager", rootLayout, "buildLayout", (_, __, res) => {
@@ -508,7 +508,7 @@ function LayerSettingTitle() {
                     return setNode;
                 }}
             >
-                BetterDiscord
+                SoulCord
             </div>
             {!!node && ReactDOM.createPortal(
                 <DiscordModules.Tooltip color="primary" position="top" text={t("Modals.changelog")}>

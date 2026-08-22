@@ -9,10 +9,10 @@ import buildPackage from "./helpers/package";
 import copyFiles from "./helpers/copy";
 import {comparator} from "../src/common/semver";
 
-const useBdRelease = args[2] && args[2].toLowerCase() === "release";
-const releaseInput = useBdRelease ? args[3] && args[3].toLowerCase() : args[2] && args[2].toLowerCase();
+const useSoulCordRelease = args[2] && args[2].toLowerCase() === "release";
+const releaseInput = useSoulCordRelease ? args[3] && args[3].toLowerCase() : args[2] && args[2].toLowerCase();
 const release = releaseInput === "canary" ? "Discord Canary" : releaseInput === "ptb" ? "Discord PTB" : "Discord";
-const bdPath = useBdRelease ? path.resolve(__dirname, "..", "dist", "betterdiscord.asar") : path.resolve(__dirname, "..", "dist");
+const soulCordPath = useSoulCordRelease ? path.resolve(__dirname, "..", "dist", "soulcord.asar") : path.resolve(__dirname, "..", "dist");
 
 const resources = await (async function () {
     let basedir = "";
@@ -51,8 +51,15 @@ const resources = await (async function () {
     return path.join(basedir, `app-${latest}`, "resources");
 })();
 
-doSanityChecks(bdPath);
-buildPackage(bdPath);
+if (useSoulCordRelease) {
+    if (!fs.existsSync(soulCordPath) || !fs.statSync(soulCordPath).isFile() || fs.statSync(soulCordPath).size === 0) {
+        throw new Error(`SoulCord release artifact is missing or empty: ${soulCordPath}`);
+    }
+}
+else {
+    doSanityChecks(soulCordPath);
+    buildPackage(soulCordPath);
+}
 console.log("");
 
 console.log(`Injecting into ${release}`);
@@ -85,11 +92,18 @@ const indexJs = path.join(asarDir, "index.js");
 
 let requirePath: string;
 if (process.env.WSL_DISTRO_NAME) {
-    copyFiles(bdPath, path.join(asarDir, "..", "..", "betterdiscord"));
-    requirePath = "../../betterdiscord";
+    if (useSoulCordRelease) {
+        const target = path.join(asarDir, "..", "..", "soulcord.asar");
+        fs.copyFileSync(soulCordPath, target);
+        requirePath = "../../soulcord.asar";
+    }
+    else {
+        copyFiles(soulCordPath, path.join(asarDir, "..", "..", "betterdiscord"));
+        requirePath = "../../betterdiscord";
+    }
 }
 else {
-    requirePath = bdPath;
+    requirePath = soulCordPath;
 }
 
 
@@ -111,4 +125,4 @@ if (!fs.existsSync(path.join(asarDir, "package.json"))) {
 
 console.log("");
 
-console.log(`Injection successful, please restart ${release}.`);
+console.log(`SoulCord injection successful. Restart ${release} when you are ready to test.`);
