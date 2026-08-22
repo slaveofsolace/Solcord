@@ -7,12 +7,14 @@ import bun from "bun";
 import doSanityChecks from "./helpers/validate";
 import buildPackage from "./helpers/package";
 import copyFiles from "./helpers/copy";
+import {stageReleaseArtifact} from "./helpers/install";
 import {comparator} from "../src/common/semver";
 
 const useSoulCordRelease = args[2] && args[2].toLowerCase() === "release";
 const releaseInput = useSoulCordRelease ? args[3] && args[3].toLowerCase() : args[2] && args[2].toLowerCase();
 const release = releaseInput === "canary" ? "Discord Canary" : releaseInput === "ptb" ? "Discord PTB" : "Discord";
 const soulCordPath = useSoulCordRelease ? path.resolve(__dirname, "..", "dist", "soulcord.asar") : path.resolve(__dirname, "..", "dist");
+let installedSoulCordPath = soulCordPath;
 
 const resources = await (async function () {
     let basedir = "";
@@ -54,6 +56,13 @@ const resources = await (async function () {
 if (useSoulCordRelease) {
     if (!fs.existsSync(soulCordPath) || !fs.statSync(soulCordPath).isFile() || fs.statSync(soulCordPath).size === 0) {
         throw new Error(`SoulCord release artifact is missing or empty: ${soulCordPath}`);
+    }
+    if (process.platform === "win32") {
+        const appData = process.env.APPDATA;
+        if (!appData || !path.isAbsolute(appData)) throw new Error("APPDATA did not resolve to an absolute Windows path.");
+        installedSoulCordPath = path.join(appData, "BetterDiscord", "data", "betterdiscord.asar");
+        const sha256 = stageReleaseArtifact(soulCordPath, installedSoulCordPath);
+        console.log(`    ✅ Staged SoulCord ${sha256.slice(0, 12)}… at the compatibility target`);
     }
 }
 else {
@@ -103,7 +112,7 @@ if (process.env.WSL_DISTRO_NAME) {
     }
 }
 else {
-    requirePath = soulCordPath;
+    requirePath = installedSoulCordPath;
 }
 
 

@@ -30,7 +30,7 @@ The installed filename remains `betterdiscord.asar` because that is the existing
 4. Copy, without deleting originals, the current injector entry point, installed core asar, stable settings, plugin files, theme files, Custom CSS, and compatibility state. Record SHA-256 values and relative paths.
 5. Preserve the vanilla launcher unchanged and hash it.
 6. Copy the verified `soulcord.asar` to a staged install path; hash again and require equality.
-7. Replace only `%APPDATA%\BetterDiscord\data\betterdiscord.asar` using an atomic same-directory temporary file and rename. Do not overwrite plugins, themes, settings, or Custom CSS.
+7. Run `bun run inject release stable`. Release mode verifies and atomically stages `dist/soulcord.asar` to `%APPDATA%\BetterDiscord\data\betterdiscord.asar`, then creates the standard Discord resource injector pointing at that compatibility target. Do not overwrite plugins, themes, settings, or Custom CSS.
 8. Launch Discord Stable normally. Do not start an Activity, join voice, send, upload, or authorize anything.
 9. Confirm Discord stays open, SoulCord settings/About render, Activity Bridge reports the restricted policy, and no crash loop or duplicate injection is visible.
 10. Leave Discord open for the owner.
