@@ -1,0 +1,159 @@
+{
+  "records": [
+    {
+      "acquisition": {
+        "acquired_at": "",
+        "evidence": "",
+        "original_archive_unchanged": false,
+        "quarantine_root": "",
+        "status": "not-started"
+      },
+      "adaptation_plan": {
+        "acceptance_evidence": [],
+        "actions": [],
+        "clean_room_required": false,
+        "status": "not-started",
+        "summary": ""
+      },
+      "ai_flags": {
+        "evidence": "",
+        "external_ai_input_allowed": "unknown",
+        "generated_ai": "unknown",
+        "no_ai": "unknown"
+      },
+      "archive_scan": {
+        "active_content_executed": false,
+        "active_content_review": {
+          "evidence": "",
+          "reviewed_at": "",
+          "reviewer": "",
+          "scope": "",
+          "status": "not-reviewed"
+        },
+        "encrypted_entries": [],
+        "executables_or_active_content": [],
+        "inventory_path": "",
+        "path_traversal_detected": false,
+        "review_disposition": "pending",
+        "scanned_at": "",
+        "status": "not-started",
+        "suspicious_entries": [],
+        "symlinks_detected": false
+      },
+      "attribution": {
+        "placement": "",
+        "required": "unknown",
+        "text": ""
+      },
+      "brief_id": "soulcord-v1-wave",
+      "candidate_id": "betterdiscord-catalog",
+      "checksums": {},
+      "comparison": {
+        "abandonment_risk_inverse": null,
+        "adaptation_cost_inverse": null,
+        "coherence": null,
+        "fit": null,
+        "provenance_confidence": null,
+        "representative_group": "",
+        "runtime_cost_inverse": null,
+        "weighted_score": null
+      },
+      "downloaded_paths": [],
+      "entitlement": {
+        "account_or_ownership_basis": "",
+        "action_time_confirmation": {
+          "confirmed_at": "",
+          "evidence": "",
+          "required": false,
+          "scope": "",
+          "status": "not-evaluated"
+        },
+        "confirmed_at": "",
+        "evidence": "",
+        "status": "unknown"
+      },
+      "formats": [],
+      "human": {
+        "evidence": "",
+        "reviewed_at": "",
+        "reviewer": "",
+        "verdict": "pending"
+      },
+      "inspection": {
+        "delivered_payload_inspected": false,
+        "embedded_urls": [],
+        "evidence_paths": [],
+        "external_services": [],
+        "generative_tools_used": false,
+        "hidden_dependencies": [],
+        "metrics": {},
+        "result": "",
+        "route": "unassigned",
+        "status": "not-started",
+        "tools_and_versions": []
+      },
+      "isolation": {
+        "candidate_path": "",
+        "evidence_paths": [],
+        "product_tree_unchanged": true,
+        "status": "not-started"
+      },
+      "known_nonclaims": [
+        "Discovery does not prove license, entitlement, safety, technical fit, runtime fit, or acceptance."
+      ],
+      "license": {
+        "name_version": "unknown",
+        "snapshot_path": "",
+        "snapshot_sha256": "",
+        "status": "unknown",
+        "text": "",
+        "url": "",
+        "verified_at": ""
+      },
+      "next_action": "Verify canonical metadata and controlling rights.",
+      "permitted_uses": [],
+      "recommendation": "HOLD",
+      "release": {
+        "attribution_delivery_path": "",
+        "ledger_path": "",
+        "released_at": "",
+        "status": "not-recorded"
+      },
+      "required_owner_decision": "Decide whether metadata verification should continue.",
+      "runtime": {
+        "disposition": "not-tested",
+        "environment": "",
+        "evidence_paths": [],
+        "measured_budgets": {}
+      },
+      "schema_version": "1.0",
+      "source": {
+        "access_scope": "unknown",
+        "author_publisher": "unknown",
+        "canonical_url": "https://api.betterdiscord.app/v3/store/plugins",
+        "kind": "unknown",
+        "listing_date": "unknown",
+        "listing_snapshot_path": "",
+        "listing_version": "unknown",
+        "local_path": "",
+        "metadata_checked_at": "",
+        "price": {
+          "amount": null,
+          "currency": "",
+          "label": "unknown",
+          "tier": "unknown"
+        }
+      },
+      "stage": "discovered",
+      "stage_history": [
+        {
+          "at": "",
+          "evidence": "Registry initialized; no rights or entitlement inferred.",
+          "stage": "discovered"
+        }
+      ],
+      "title": "BetterDiscord-Catalog-Snapshot"
+    }
+  ],
+  "schema_version": "1.0"
+}

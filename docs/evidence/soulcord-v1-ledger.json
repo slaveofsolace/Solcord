@@ -1,0 +1,239 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "soulcord_v1_wave",
+  "created_at": "2026-08-22T23:36:40.689Z",
+  "depth": "DEEP",
+  "iteration": 2,
+  "root": {
+    "kind": "FAILURE",
+    "node_id": "root_failure",
+    "statement": "Under the owner-authorized SoulCord V1 migration, replace the currently broken DM-blocking Link Lens and incomplete utility experience with a reversible, provenance-controlled power suite while preserving user data, upstream compatibility, and human-reserved acceptance.",
+    "source_state": "The installed SoulCord build shows a translation sentinel, a persistent low-contrast link overlay that obstructs DMs, a rejected crystal/orbit mark, and only three enabled daily addons.",
+    "target_state": "A tested SoulCord build provides repaired navigation, native review UI, original branding, a versioned setup transaction, curated addons, private timeline controls, rollback evidence, and an owner-ready Windows launch.",
+    "conditions": [
+      "Do not alter existing user plugins, themes, settings, MessageLogger data, or the vanilla Activities launcher before a verified backup and staged transaction.",
+      "Do not perform live account-representational actions without fresh action-time owner confirmation.",
+      "Do not vendor or modify third-party payloads without controlling rights evidence."
+    ],
+    "boundary": "The slaveofsolace/Solcord fork, its owner branch, local BetterDiscord and Discord installation, supplied archives, official catalog metadata, and rights-cleared project assets.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": [
+      "inv_user_data",
+      "inv_account_actions",
+      "inv_compatibility",
+      "inv_provenance",
+      "inv_recovery"
+    ],
+    "uncertainty_changes_decision": true
+  },
+  "project_model": {
+    "status": "PARTIAL",
+    "facets": {
+      "intent": {
+        "summary": "Deliver a distinctive SoulCord power fork with repaired DMs, broad useful addon coverage, private local controls, and a reversible Windows installation.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_objective"],
+        "unknown_disposition": "Human taste acceptance remains reserved for the owner."
+      },
+      "decision": {
+        "summary": "Repair the navigation blocker first, then advance only staged features that pass rights, security, runtime, and recovery gates.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_repair_priority"],
+        "unknown_disposition": "A failing downstream gate reduces installed scope rather than weakening the gate."
+      },
+      "acceptance_contract": {
+        "summary": "Automated, installed-runtime, visual, recovery, and explicit human acceptance are separate gates.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_human_gate"],
+        "unknown_disposition": "Owner visual approval and live Activity checks remain open until performed."
+      },
+      "mechanism": {
+        "summary": "SoulCord now has source implementations for narrow native Link Lens interception, schema-v3 setup, immutable staged acquisition, private Timeline storage, and fail-closed Discord lookups.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_overlay", "claim_setup_transaction", "claim_timeline_boundary"],
+        "unknown_disposition": "Source presence does not prove installed integration; validate every adapter, failure path, and rollback before installation."
+      },
+      "current_state_history": {
+        "summary": "The owner branch began clean at the requested checkpoint and now contains reviewable SoulCord runtime and catalog/identity commits; supplied archive and current catalog hashes are recorded.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_clean_branch", "claim_archives", "claim_visual_defects", "claim_catalog_unknown", "claim_brand_assets"],
+        "unknown_disposition": "Installed artifact identity and final process state remain to be revalidated immediately before rollout."
+      },
+      "people_incentives": {
+        "summary": "The owner wants broad local utility and controls final taste and risky-action acceptance; upstream authors retain attribution and license rights.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_human_gate", "claim_rights"],
+        "unknown_disposition": "No third-party author permission is inferred beyond controlling licenses and official catalog distribution."
+      },
+      "lifecycle_recovery": {
+        "summary": "Source push and local install are authorized only after green gates, with a hashed backup and preserved vanilla launcher.",
+        "knowledge": "ASSUMED",
+        "load_bearing": true,
+        "claim_ids": ["claim_authority", "claim_recovery_open"],
+        "unknown_disposition": "Backup restore and installed rollback must be exercised before closure."
+      }
+    },
+    "invariants": [
+      {"id": "inv_user_data", "statement": "Preserve existing plugins, themes, settings, custom CSS, MessageLogger data, and compatibility state unless the owner explicitly completes a staged diff.", "owner": "Owner", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_git", "ev_archives"]},
+      {"id": "inv_account_actions", "statement": "Do not send messages, upload or record media, mark notifications read, join voice, start streams or Activities, or authorize OAuth without fresh action-time confirmation.", "owner": "Owner", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_request"]},
+      {"id": "inv_compatibility", "statement": "Keep public BdApi, addon paths, public IPC names, preload globals, and ordinary Discord windows compatible.", "owner": "SoulCord maintainer", "status": "UNKNOWN", "hard_gate": true, "evidence_ids": []},
+      {"id": "inv_provenance", "statement": "No external source or asset enters the combined work without a fail-closed provenance disposition and retained notices.", "owner": "SoulCord maintainer", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_request", "ev_catalog", "ev_brand_assets"]},
+      {"id": "inv_recovery", "statement": "Installation has a verified true rollback to the preserved prior state.", "owner": "SoulCord maintainer", "status": "UNKNOWN", "hard_gate": true, "evidence_ids": []}
+    ],
+    "dependencies": [
+      {"id": "dep_discord", "name": "Discord stable desktop", "role": "Installed renderer and Electron host", "claim_ids": ["claim_current_runtime"]},
+      {"id": "dep_catalog", "name": "BetterDiscord catalog APIs", "role": "Drift-prone addon and theme metadata", "claim_ids": ["claim_catalog_unknown"]},
+      {"id": "dep_secure_storage", "name": "Electron safeStorage", "role": "Wrapping key for optional persistent private timeline", "claim_ids": ["claim_privacy_open"]}
+    ],
+    "stakeholders": [
+      {"id": "stake_owner", "name": "SoulCord owner", "role": "Decision, risk, and subjective acceptance owner", "claim_ids": ["claim_authority", "claim_human_gate"]},
+      {"id": "stake_upstream", "name": "Upstream and addon authors", "role": "Attribution and license rights holders", "claim_ids": ["claim_rights"]}
+    ]
+  },
+  "authority": {
+    "scope": "Implement, test, push the owner branch, create a reversible backup, install a validated local build, and launch Discord for owner testing.",
+    "decision_owner": "SoulCord owner",
+    "authorized_actions": [
+      "Modify and test the SoulCord owner branch.",
+      "Fetch public catalog metadata and rights-cleared public sources into quarantine.",
+      "Push reviewable commits to fork/scaffold-baseline after green gates.",
+      "Back up and install a validated SoulCord build, then launch Discord."
+    ],
+    "forbidden_actions": [
+      "Merge or change the default branch, publish a release, or delete branches.",
+      "Overwrite or delete existing user addons, themes, settings, logs, or the vanilla launcher.",
+      "Perform live account-representational actions without fresh action-time confirmation."
+    ],
+    "human_reserved_decisions": [
+      "Final visual identity acceptance.",
+      "Completing the first-run Finish transaction.",
+      "Live Codenames and second-Activity acceptance.",
+      "Enabling any Power Lab experiment."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {"id": "gate_authority", "category": "AUTHORITY", "status": "CLEAR", "rationale": "The owner explicitly requested implementation, validation, push, reversible install, and launch while reserving specified account actions.", "claim_ids": ["claim_authority"]},
+      {"id": "gate_safety", "category": "SAFETY", "status": "CLEAR", "rationale": "Risky experiments remain separately consented, fail closed, and off by default.", "claim_ids": ["claim_account_boundary"]},
+      {"id": "gate_privacy", "category": "PRIVACY_SECURITY_LEGAL", "status": "CLEAR", "rationale": "Current work is confined to source and evidence; Message Timeline remains disabled and uninstalled, acquisition payloads stay outside the repository, and privacy/runtime tests remain a hard pre-install gate.", "claim_ids": ["claim_account_boundary", "claim_rights", "claim_timeline_boundary"]},
+      {"id": "gate_external", "category": "IRREVERSIBLE_EXTERNAL_STATE", "status": "CLEAR", "rationale": "Only the named owner branch push and local installation are authorized; live account actions remain reserved.", "claim_ids": ["claim_authority", "claim_account_boundary"]},
+      {"id": "gate_production", "category": "DESTRUCTIVE_PRODUCTION", "status": "NOT_APPLICABLE", "rationale": "The selected action is a reviewable source repair; installation remains a later separately gated action.", "claim_ids": ["claim_recovery_open"]},
+      {"id": "gate_human", "category": "HUMAN_RESERVED", "status": "NOT_APPLICABLE", "rationale": "The owner reserves subjective acceptance, but source repair and evidence creation do not claim or consume that decision.", "claim_ids": ["claim_human_gate"]},
+      {"id": "gate_rollback", "category": "ROLLBACK_FAILURE", "status": "CLEAR", "rationale": "The source repair is isolated in reviewable commits that can be reverted before any user-data migration or installation.", "claim_ids": ["claim_clean_branch"]}
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": ["VISUAL", "UI", "RUNTIME_EXPERIENCE", "ACCESSIBILITY_COMFORT"],
+    "observation_input": "CURRENT_CAPTURE",
+    "cold_eye_status": "COMPLETED",
+    "cold_eye_before_source_inspection": true,
+    "findings": [
+      {"id": "eye_modal", "source_skill": "HUMAN_EYE", "domain": "UI", "label": "OBSERVED", "verdict": "REJECT", "statement": "The link-review overlay has insufficient contrast, overlaps message content, and blocks the primary DM task.", "evidence_ids": ["ev_screenshots"]},
+      {"id": "eye_label", "source_skill": "HUMAN_EYE", "domain": "UI", "label": "OBSERVED", "verdict": "REVISE", "statement": "The settings navigation exposes the internal translation failure text String not found!.", "evidence_ids": ["ev_screenshots"]},
+      {"id": "eye_mark", "source_skill": "HUMAN_EYE", "domain": "VISUAL", "label": "OBSERVED", "verdict": "REJECT", "statement": "The faceted crystal/orbit mark reads as generic generated tech identity and does not support SoulCord's restrained utility character.", "evidence_ids": ["ev_screenshots"]}
+    ],
+    "completion_axes": {
+      "functional_implementation": {"status": "FAIL", "signal": "DM navigation is obstructed by the current Link Lens overlay.", "evidence_ids": ["ev_screenshots"], "rationale": "A primary navigation path is unusable."},
+      "runtime_integration": {"status": "FAIL", "signal": "The installed renderer retains a modal-like overlay across the DM surface.", "evidence_ids": ["ev_screenshots"], "rationale": "The feature does not integrate safely with Discord navigation."},
+      "player_eye_presentation": {"status": "FAIL", "signal": "The overlay and logo are rejected in the owner-provided captures.", "evidence_ids": ["ev_screenshots"], "rationale": "The most prominent visual and interaction surfaces fail cold-eye review."},
+      "evidence_regression_coverage": {"status": "UNKNOWN", "signal": "Existing tests cover URL classification but not the installed modal/navigation interaction.", "evidence_ids": ["ev_source"], "rationale": "Add UI integration and installed regression evidence."},
+      "human_acceptance": {"status": "FAIL", "signal": "The owner explicitly rejected the image and DM behavior.", "evidence_ids": ["ev_request"], "rationale": "Only the owner can accept a revision."
+      }
+    }
+  },
+  "claims": [
+    {"id": "claim_objective", "label": "OBSERVED", "statement": "The owner requested the complete SoulCord V1 repair, catalog, identity, timeline, verification, push, and reversible Windows rollout plan to be implemented.", "evidence_ids": ["ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct explicit request."}},
+    {"id": "claim_authority", "label": "OBSERVED", "statement": "Source modification, owner-branch push, reversible local installation, and Discord launch are authorized within the stated gates.", "evidence_ids": ["ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct explicit request and prior delegated installation authorization."}},
+    {"id": "claim_account_boundary", "label": "OBSERVED", "statement": "Live messaging, uploads, recording, read-state changes, OAuth, voice, streaming, and Activity actions remain reserved for fresh owner confirmation.", "evidence_ids": ["ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Explicit acceptance boundary."}},
+    {"id": "claim_clean_branch", "label": "OBSERVED", "statement": "fork/scaffold-baseline began clean at 9e2b67532f5fde991994b094ac42c5ac9ed101dd; the reviewed source wave is committed through 22af5a60d30ada92e47fa9f3762e5f5ce7b744a7.", "evidence_ids": ["ev_git", "ev_repair_source"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Start-of-run and post-commit git inspections."}},
+    {"id": "claim_archives", "label": "MEASURED", "statement": "Both supplied archive SHA-256 values match the owner-provided expected hashes.", "evidence_ids": ["ev_archives"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current local certutil measurements."}},
+    {"id": "claim_current_runtime", "label": "MEASURED", "statement": "Discord stable 1.0.9253 is installed and six Discord.exe processes are currently active.", "evidence_ids": ["ev_runtime"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current build_info and process-list inspection."}},
+    {"id": "claim_visual_defects", "label": "OBSERVED", "statement": "Owner captures show the translation sentinel, obstructive low-contrast link overlay, and rejected identity mark.", "evidence_ids": ["ev_screenshots", "ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct current captures and owner verdict."}},
+    {"id": "claim_overlay", "label": "OBSERVED", "statement": "The rejected baseline used a capture-phase document listener and raw fixed overlay; current source replaces that mechanism with narrow verified external-link activation and the native modal queue while keeping Link Lens off by default.", "evidence_ids": ["ev_source", "ev_repair_source"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Baseline and current source inspection."}},
+    {"id": "claim_repair_priority", "label": "INFERRED", "statement": "Replacing the global raw overlay path before broader feature work has the highest decision value because it restores a primary Discord navigation invariant.", "evidence_ids": ["ev_screenshots", "ev_source"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct runtime failure plus deterministic source mechanism."}},
+    {"id": "claim_human_gate", "label": "OBSERVED", "statement": "Final logo and UI taste acceptance belongs to the owner and cannot be granted by automated checks.", "evidence_ids": ["ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Explicit owner rejection and acceptance plan."}},
+    {"id": "claim_rights", "label": "PROPOSED", "statement": "Every catalog and theme candidate must receive a fail-closed rights and provenance disposition before adaptation or redistribution.", "evidence_ids": ["ev_request"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Explicit plan invariant and Resource Pilfer protocol."}},
+    {"id": "claim_catalog_unknown", "label": "MEASURED", "statement": "The 2026-08-22 catalog snapshot contains 209 plugins and 114 themes with upstream response hashes 693ff65d...a0c and d3de7baa...e31; all 36 requested names matched.", "evidence_ids": ["ev_catalog"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current generated registry and independent artifact hash measurements."}},
+    {"id": "claim_privacy_open", "label": "UNKNOWN", "statement": "Message Timeline source now implements AES-256-GCM segments, safeStorage-wrapped keys, opaque account stores, retention, and a 250 MiB cap, but Windows integration, fallback, corrupt-segment, account-switch, clear, and export gates have not passed.", "evidence_ids": ["ev_timeline_source"], "contradiction_claim_ids": [], "confidence": {"level": "LOW", "basis": "Implementation is inspectable; required runtime and security tests remain open."}},
+    {"id": "claim_setup_transaction", "label": "OBSERVED", "statement": "Current setup source resolves the known dependency closure, stages immutable HTTPS sources, verifies SHA-256, refuses differing local files, journals relative filenames and hashes, and removes only unchanged files added by its own transaction.", "evidence_ids": ["ev_setup_source"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current source and generated immutable manifest inspection."}},
+    {"id": "claim_timeline_boundary", "label": "OBSERVED", "statement": "Timeline is disabled in stored defaults, observes only events delivered to the running client, isolates account state, excludes URLs from attachment metadata, and does not import existing MessageLoggerV2 data.", "evidence_ids": ["ev_timeline_source"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current renderer, main-process, schema, and setup-copy inspection."}},
+    {"id": "claim_brand_assets", "label": "MEASURED", "statement": "The original cord-cut S sources, five deterministic PNG exports, and four self-contained SoulCord themes have recorded current SHA-256 values and no remote theme imports.", "evidence_ids": ["ev_brand_assets"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current filesystem hash and source inspection."}},
+    {"id": "claim_recovery_open", "label": "UNKNOWN", "statement": "A current hashed installation backup and verified restore path do not yet exist for this run.", "evidence_ids": [], "contradiction_claim_ids": [], "confidence": {"level": "LOW", "basis": "Backup is intentionally deferred until the validated artifact is ready."}}
+  ],
+  "evidence": [
+    {"id": "ev_request", "kind": "HUMAN_DECISION", "access": "INSPECTED_CURRENT", "locator": "current task implementation request", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "conversation authority", "supports_claim_ids": ["claim_objective", "claim_authority", "claim_account_boundary", "claim_visual_defects", "claim_human_gate", "claim_rights"], "contradicts_claim_ids": []},
+    {"id": "ev_git", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "git branch and remote inspection", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "HEAD 9e2b67532f5fde991994b094ac42c5ac9ed101dd", "supports_claim_ids": ["claim_clean_branch"], "contradicts_claim_ids": []},
+    {"id": "ev_archives", "kind": "MEASUREMENT", "access": "INSPECTED_CURRENT", "locator": "external supplied archive hash measurements", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "source 6c14165e...777d9; delivery 30327736...5f18", "supports_claim_ids": ["claim_archives"], "contradicts_claim_ids": []},
+    {"id": "ev_runtime", "kind": "MEASUREMENT", "access": "INSPECTED_CURRENT", "locator": "Discord build_info and task list", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "stable 1.0.9253; six active processes", "supports_claim_ids": ["claim_current_runtime"], "contradicts_claim_ids": []},
+    {"id": "ev_screenshots", "kind": "ARTIFACT", "access": "INSPECTED_CURRENT", "locator": "three owner-supplied current Discord captures", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "visual evidence retained outside repository", "supports_claim_ids": ["claim_visual_defects", "claim_repair_priority"], "contradicts_claim_ids": []},
+    {"id": "ev_source", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "baseline and current SoulCord renderer/settings source comparison", "captured_at": "2026-08-22T23:36:40.689Z", "integrity": "baseline HEAD 9e2b675 plus current isolated diff", "supports_claim_ids": ["claim_overlay", "claim_repair_priority"], "contradicts_claim_ids": []},
+    {"id": "ev_repair_source", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "current panel-label, settings registration, Link Lens, and safety-test source", "captured_at": "2026-08-23T01:20:00.000Z", "integrity": "committed owner-branch source through 22af5a60d30ada92e47fa9f3762e5f5ce7b744a7", "supports_claim_ids": ["claim_clean_branch", "claim_overlay", "claim_repair_priority"], "contradicts_claim_ids": []},
+    {"id": "ev_catalog", "kind": "MEASUREMENT", "access": "INSPECTED_CURRENT", "locator": "assets/catalog generated registries and current artifact hashes", "captured_at": "2026-08-23T01:20:00.000Z", "integrity": "209 plugins; 114 themes; catalog artifact 325f8544...fc5; reviewed artifact 40fa7ae0...d23", "supports_claim_ids": ["claim_catalog_unknown", "claim_rights", "claim_setup_transaction"], "contradicts_claim_ids": []},
+    {"id": "ev_setup_source", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "current setup transaction, runtime orchestration, and generated manifest source", "captured_at": "2026-08-23T01:20:00.000Z", "integrity": "immutable source URLs and SHA-256 records; runtime acceptance remains pending", "supports_claim_ids": ["claim_setup_transaction", "claim_rights"], "contradicts_claim_ids": []},
+    {"id": "ev_timeline_source", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "current Message Timeline model, renderer adapter, main storage, schema, and UI source", "captured_at": "2026-08-23T01:20:00.000Z", "integrity": "source implementation only; Windows runtime tests pending", "supports_claim_ids": ["claim_privacy_open", "claim_timeline_boundary"], "contradicts_claim_ids": []},
+    {"id": "ev_brand_assets", "kind": "MEASUREMENT", "access": "INSPECTED_CURRENT", "locator": "current SoulCord branding and theme source/hash inspection", "captured_at": "2026-08-23T01:20:00.000Z", "integrity": "mark SVG 6128f02f...511; four theme hashes recorded in BRAND_SYSTEM.md", "supports_claim_ids": ["claim_brand_assets", "claim_rights"], "contradicts_claim_ids": []}
+  ],
+  "hypotheses": [
+    {"id": "hyp_overlay", "statement": "The DM blocker is caused by Link Lens owning a raw document-level capture listener and overlay outside the native modal lifecycle.", "mechanism": "An external-link click is stopped during capture and a scope-owned fixed overlay remains above Discord navigation until explicitly closed or disposed.", "status": "SUPPORTED", "supporting_claim_ids": ["claim_visual_defects", "claim_overlay"], "contradicting_claim_ids": [], "distinguishing_prediction": "Removing the capture listener and native-lifecycle bypass eliminates the overlay while internal DM routes remain untouched.", "falsifier": "A disposable build without Link Lens still reproduces the same overlay and DM obstruction.", "decision_if_true": "Replace the listener and raw overlay with a narrowly patched external-link activation and native modal.", "test_ids": ["test_link_matrix"], "confidence": {"level": "HIGH", "basis": "Current capture and directly inspected mechanism agree."}},
+    {"id": "hyp_stale_install", "statement": "A stale installed renderer or mismatched stylesheet contributes to the poor contrast or persistence.", "mechanism": "Installed asar content differs from current source, so current CSS fixes are absent while old runtime code remains active.", "status": "ACTIVE", "supporting_claim_ids": ["claim_visual_defects"], "contradicting_claim_ids": [], "distinguishing_prediction": "The installed asar hash or extracted implementation differs from the owner-branch production artifact.", "falsifier": "Installed and rebuilt source hashes match while the defect reproduces.", "decision_if_true": "Include a clean atomic reinstall after the source repair and invalidate stale injection state.", "test_ids": ["test_install_identity"], "confidence": {"level": "MEDIUM", "basis": "The screenshot styling differs from inspected CSS, but installed identity is not frozen yet."}}
+  ],
+  "tests": [
+    {"id": "test_link_matrix", "question": "Do safe-core, Link-Lens-only, and owner-addon disposable profiles isolate the DM obstruction to the current Link Lens adapter or to a stale installed bundle?", "kind": "EXPERIMENT", "discriminates_hypothesis_ids": ["hyp_overlay", "hyp_stale_install"], "predicted_outcomes": [{"hypothesis_id": "hyp_overlay", "outcome": "Only the current raw Link Lens path creates the blocking review layer; the native replacement leaves DMs navigable without an installation-wide reset."}, {"hypothesis_id": "hyp_stale_install", "outcome": "The obstruction persists across disposable module states until the installed asar is replaced with the exact rebuilt artifact."}], "expected_decision_value": "HIGH", "cost": "MEDIUM", "risk": "LOW", "authorization_status": "AUTHORIZED", "status": "PROPOSED", "evidence_ids": [], "changes_decision_if": "If the overlay persists without Link Lens, inspect the conflicting addon or stale installed bundle before enabling catalog additions."},
+    {"id": "test_install_identity", "question": "Does the installed BetterDiscord asar match the exact built artifact selected for acceptance?", "kind": "MEASUREMENT", "discriminates_hypothesis_ids": ["hyp_stale_install"], "predicted_outcomes": [{"hypothesis_id": "hyp_stale_install", "outcome": "A differing hash explains why inspected source styling and installed behavior diverge."}], "expected_decision_value": "HIGH", "cost": "LOW", "risk": "LOW", "authorization_status": "AUTHORIZED", "status": "PROPOSED", "evidence_ids": [], "changes_decision_if": "A match shifts the cause entirely to runtime integration; a mismatch requires atomic reinstall before installed acceptance."}
+  ],
+  "trace": {
+    "bounds": {"max_depth": 6, "max_nodes": 24, "stop_rule": "Expand only branches that change implementation, acceptance, privacy, rights, installation, or rollback."},
+    "nodes": [
+      {"id": "root_failure", "kind": "ROOT", "statement": "The installed SoulCord V1 experience obstructs DMs and does not deliver the authorized utility and identity wave.", "claim_id": "claim_visual_defects", "depth": 0, "terminal": false, "closure_reason": "EXPANDED"},
+      {"id": "node_overlay", "kind": "FAILURE", "statement": "A global capture listener creates a raw overlay outside Discord's native modal lifecycle.", "claim_id": "claim_overlay", "depth": 1, "terminal": false, "closure_reason": "EXPANDED"},
+      {"id": "node_native", "kind": "MITIGATION", "statement": "A narrow verified external-link patch and native modal restore navigation ownership and focus lifecycle.", "claim_id": "claim_repair_priority", "depth": 2, "terminal": true, "closure_reason": "MONITORED"},
+      {"id": "node_catalog", "kind": "STATE", "statement": "Broad addon value requires current catalog provenance, staging, conflict detection, and one-at-a-time enablement.", "claim_id": "claim_catalog_unknown", "depth": 1, "terminal": true, "closure_reason": "MONITORED"},
+      {"id": "node_privacy", "kind": "STATE", "statement": "Private timeline persistence requires encryption, account isolation, retention, and diagnostic exclusion evidence.", "claim_id": "claim_privacy_open", "depth": 1, "terminal": true, "closure_reason": "UNKNOWN_ESCALATED"},
+      {"id": "node_install", "kind": "RECOVERY", "statement": "A hashed backup and verified restore gate must precede installation.", "claim_id": "claim_recovery_open", "depth": 1, "terminal": true, "closure_reason": "UNKNOWN_ESCALATED"}
+    ],
+    "edges": [
+      {"id": "edge_overlay", "relation": "FORWARD", "source_node_id": "root_failure", "target_node_id": "node_overlay", "source_delta": "External-link review is enabled in the installed renderer.", "mechanism_status": "KNOWN", "mechanism": "The capture-phase listener prevents default navigation and mounts a fixed high-z overlay directly on document.body.", "conditions": ["A qualifying external anchor is clicked."], "lag": "Immediate", "target_delta": "Discord's primary DM surface becomes visually obstructed until overlay cleanup.", "affected_refs": ["inv_compatibility", "stake_owner"], "supporting_claim_ids": ["claim_overlay", "claim_visual_defects"], "contradicting_claim_ids": [], "detection": {"signal": "A soulcord-local-overlay exists while DM content is obscured.", "latency": "Immediate", "failure_to_detect": "URL-only unit tests do not mount or inspect the modal lifecycle."}, "falsifier": "The same obstruction reproduces with the Link Lens module absent.", "confidence": {"level": "HIGH", "basis": "Source mechanism and current capture align."}},
+      {"id": "edge_native", "relation": "FORWARD", "source_node_id": "node_overlay", "target_node_id": "node_native", "source_delta": "Remove global listener and raw overlay ownership.", "mechanism_status": "KNOWN", "mechanism": "Use the existing queued confirmation modal and only intercept verified external-link activation.", "conditions": ["Native modal services validate before patching.", "Internal Discord routes bypass inspection."], "lag": "Next repaired build", "target_delta": "DM navigation remains owned by Discord and review UI inherits focus, theme, and cleanup behavior.", "affected_refs": ["inv_compatibility", "inv_recovery"], "supporting_claim_ids": ["claim_repair_priority"], "contradicting_claim_ids": [], "detection": {"signal": "UI integration tests and disposable DM matrix pass.", "latency": "Build and runtime test", "failure_to_detect": "Discord internal-module drift could bypass the patch; fail open and report degraded health."}, "falsifier": "The native replacement still captures internal navigation or leaves a modal mounted after close.", "confidence": {"level": "HIGH", "basis": "Existing modal queue provides the required lifecycle."}}
+    ],
+    "feedback_loops": [],
+    "thresholds": [
+      {"id": "threshold_install", "variable": "Acceptance-critical automated, runtime, security, and rollback gates", "boundary": "All must pass before local installation", "direction": "Any failure prevents install", "evidence_or_test_ids": ["test_link_matrix", "test_install_identity"]}
+    ]
+  },
+  "decision": {
+    "iteration_choice": "ACT",
+    "recommendation": "Complete type/build/security and disposable-profile verification of the implemented repair, staged setup, Timeline, catalog candidates, and themes; install only after every hard gate is green.",
+    "selected_action_ids": ["action_repair", "action_registry"],
+    "rejected_options": ["Do not enable the rejected Link Lens overlay path.", "Do not interpret static catalog review as runtime acceptance.", "Do not bulk-enable or vendor candidate payloads.", "Do not install before privacy, backup, rollback, and installed visual gates."],
+    "decision_claim_ids": ["claim_repair_priority", "claim_authority", "claim_rights", "claim_setup_transaction", "claim_timeline_boundary"],
+    "remaining_unknown_claim_ids": ["claim_privacy_open", "claim_recovery_open"],
+    "human_owner": "SoulCord owner",
+    "consecutive_stable_checks": 0,
+    "reopen_trigger": "Re-evaluate if the disposable profile reproduces the DM obstruction without Link Lens, a staged candidate fails cleanup, Timeline isolation fails, or installed/source identity already matches."
+  },
+  "actions": [
+    {"id": "action_repair", "description": "Replace translation-sentinel and raw Link Lens overlay paths with explicit fallback labeling and native modal lifecycle, then add regression coverage.", "status": "AUTHORIZED", "authorization_status": "AUTHORIZED", "authority_basis": "Current implementation request.", "destructive": false, "production": false, "external_state_change": false, "irreversible": false, "monitoring": "Unit, UI integration, disposable-profile, and installed modal checks.", "rollback": {"kind": "TRUE_ROLLBACK", "procedure": "Revert the reviewable repair commit before installation.", "preconditions": ["No user-data migration has run."], "verification": "Original source tree and tests return to the frozen parent commit.", "evidence_ids": ["ev_git"], "irreversible_residue": "None in repository source."}, "recovery": {"procedure": "Keep Link Lens disabled and continue with Discord's default link behavior.", "owner": "SoulCord maintainer", "evidence_ids": []}, "mitigation_consequence_node_ids": ["node_native"]},
+    {"id": "action_registry", "description": "Create and validate a fail-closed catalog and theme provenance registry before acquiring or adapting external payloads.", "status": "AUTHORIZED", "authorization_status": "AUTHORIZED", "authority_basis": "Current implementation request and Resource Pilfer boundary.", "destructive": false, "production": false, "external_state_change": false, "irreversible": false, "monitoring": "Offline registry validation and immutable source hashes.", "rollback": {"kind": "TRUE_ROLLBACK", "procedure": "Remove only uncommitted generated registry records if validation fails.", "preconditions": ["No candidate payload is integrated."], "verification": "Repository source remains unchanged outside evidence files.", "evidence_ids": ["ev_git"], "irreversible_residue": "Public metadata fetches may remain in network caches."}, "recovery": {"procedure": "Hold every unresolved candidate and continue with clean-room or existing local addons only.", "owner": "SoulCord maintainer", "evidence_ids": []}, "mitigation_consequence_node_ids": ["node_catalog"]}
+  ],
+  "verification": {
+    "mechanism": {"status": "UNKNOWN", "signal": "Repair, setup, Timeline, and theme mechanisms are source-implemented; the aggregate suite and disposable-profile matrix have not completed after the latest edits.", "evidence_ids": ["ev_repair_source", "ev_setup_source", "ev_timeline_source", "ev_brand_assets"], "rationale": "Source inspection is not installed integration evidence."},
+    "endpoint": {"status": "FAIL", "signal": "Current installed DMs are obstructed and desired daily features are absent.", "evidence_ids": ["ev_screenshots", "ev_request"], "rationale": "The owner-visible outcome currently fails."},
+    "guardrails": {"status": "UNKNOWN", "signal": "Rights metadata and fail-closed source boundaries exist; runtime privacy, compatibility, no-secret, and rollback gates are still open.", "evidence_ids": ["ev_catalog", "ev_setup_source", "ev_timeline_source"], "rationale": "Run focused integration, security, artifact, and disposable-profile tests."},
+    "recovery": {"status": "UNKNOWN", "signal": "No current backup/restore proof exists.", "evidence_ids": [], "rationale": "Installation is gated on reversible backup evidence."}
+  },
+  "closure": {
+    "status": "OPEN",
+    "summary": "The implementation run is open; repair, identity, catalog, setup, and Timeline source exist, while aggregate verification, runtime acceptance, recovery, installation, and owner acceptance remain gated.",
+    "residual_risks": ["Discord internal APIs can drift.", "Community addons can change source and behavior.", "Private timeline data increases local privacy impact.", "The generated identity requires owner taste acceptance."],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": ["Current screenshots do not prove the repaired build.", "Static catalog review and stageable manifests do not prove addon runtime safety or installability.", "Timeline source does not prove Windows safeStorage, account isolation, or recovery.", "The setup transaction has not yet proven end-to-end rollback.", "Automated tests do not grant owner visual acceptance.", "Activity compatibility is not called permanent before owner live checks."]
+  }
+}

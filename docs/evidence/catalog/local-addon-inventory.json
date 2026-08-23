@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "inspectedAt": "2026-08-22",
+  "privacy": "Only requested addon source files were hashed. Config files, MessageLogger files, messages, user identifiers, and local paths were not read or recorded.",
+  "counts": {
+    "exact": 21,
+    "conflict": 0,
+    "missing": 15
+  },
+  "dependency": {
+    "name": "BDFDB",
+    "fileName": "0BDFDB.plugin.js",
+    "state": "EXACT_REVIEWED",
+    "reviewedSha256": "dd2ea0dd6fad440857e472912fb755cff20dc7dcc8e3e218628ed7deaa99fffd",
+    "localSha256": "dd2ea0dd6fad440857e472912fb755cff20dc7dcc8e3e218628ed7deaa99fffd",
+    "sizeBytes": 481040
+  },
+  "records": [
+    {
+      "name": "FileNameRandomization",
+      "fileName": "FileNameRandomization.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "acf5cbfbdaa4acc08921d63630be49ef65ec3f9497f5a216a510be450b3d2176"
+    },
+    {
+      "name": "AudioOptions",
+      "fileName": "AudioOptions.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "56ee2e2bd881f131665f222298e31e29e5a45275f4db06f1a1a018f431abd6bc"
+    },
+    {
+      "name": "BetterFolders",
+      "fileName": "BetterFolders.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a"
+    },
+    {
+      "name": "BlurNSFW",
+      "fileName": "BlurNSFW.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "7c94450550d1808cca17648458c9f123cbd479f96d13c128c774f4eb27c9b34e"
+    },
+    {
+      "name": "CallTimeCounter",
+      "fileName": "CallTimeCounter.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
+      "localSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
+      "sizeBytes": 3809
+    },
+    {
+      "name": "HideDisabledEmojis",
+      "fileName": "HideDisabledEmojis.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698"
+    },
+    {
+      "name": "InvisibleTyping",
+      "fileName": "InvisibleTyping.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "d19d1993f3509e7019faaca74abfc11c3efc57a45e7cba98bf5e7946a053e3dd",
+      "localSha256": "d19d1993f3509e7019faaca74abfc11c3efc57a45e7cba98bf5e7946a053e3dd",
+      "sizeBytes": 17550
+    },
+    {
+      "name": "VoiceMessages",
+      "fileName": "VoiceMessages.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "72a88a1ea04ea362b851c333b7af57f431acf7ea43f0edac969ac52a9173d275",
+      "localSha256": "72a88a1ea04ea362b851c333b7af57f431acf7ea43f0edac969ac52a9173d275",
+      "sizeBytes": 26927
+    },
+    {
+      "name": "ViewProfilePicture",
+      "fileName": "ViewProfilePicture.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "8755d6e19694439affee769f2d822013c4b1c77d5bc7eaa7a5e52d9ca4218e6a"
+    },
+    {
+      "name": "NotifyWhenMuted",
+      "fileName": "NotifyWhenMuted.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "64ca857fca4adc1b2e760dac75ef06706336d620f7486ef7a907600e34eecdb4"
+    },
+    {
+      "name": "DiscordEffects",
+      "fileName": "DiscordEffects.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "87eddfad83c1c779e8fe65a336d96c8242951e025e575137ce41aa1e4de72b1e",
+      "localSha256": "87eddfad83c1c779e8fe65a336d96c8242951e025e575137ce41aa1e4de72b1e",
+      "sizeBytes": 18264
+    },
+    {
+      "name": "PermissionsViewer",
+      "fileName": "PermissionsViewer.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e"
+    },
+    {
+      "name": "EditServers",
+      "fileName": "EditServers.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "b46e8d1af3799e6ab34da638942dd21dece10e66f13ce8b13089aad43e63c99d",
+      "localSha256": "b46e8d1af3799e6ab34da638942dd21dece10e66f13ce8b13089aad43e63c99d",
+      "sizeBytes": 56835
+    },
+    {
+      "name": "PinDMs",
+      "fileName": "PinDMs.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+      "localSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+      "sizeBytes": 62157
+    },
+    {
+      "name": "MessagePeek",
+      "fileName": "MessagePeek.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "de9503fcf157cffb0323cc36c7ceb34d688efc1e2b364a6cbb1ad101b0542a02",
+      "localSha256": "de9503fcf157cffb0323cc36c7ceb34d688efc1e2b364a6cbb1ad101b0542a02",
+      "sizeBytes": 18881
+    },
+    {
+      "name": "BetterSearchPage",
+      "fileName": "BetterSearchPage.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096"
+    },
+    {
+      "name": "ServerHider",
+      "fileName": "ServerHider.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "f5b773a48edf937e321c617dd095779f4c6083b62d33affad919f546700a6a63",
+      "localSha256": "f5b773a48edf937e321c617dd095779f4c6083b62d33affad919f546700a6a63",
+      "sizeBytes": 24689
+    },
+    {
+      "name": "PersonalPins",
+      "fileName": "PersonalPins.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "2a4d4f8f3d4fde213497e871702170d06f87d5dbe1e7024eecc4fddd90ff32e1"
+    },
+    {
+      "name": "CompleteTimestamps",
+      "fileName": "CompleteTimestamps.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "18ce79c9d59c54ea90478399b8fab5b41eb9e1d11c56e91799e2943f0a03d327",
+      "localSha256": "18ce79c9d59c54ea90478399b8fab5b41eb9e1d11c56e91799e2943f0a03d327",
+      "sizeBytes": 13378
+    },
+    {
+      "name": "ReadAllNotificationsButton",
+      "fileName": "ReadAllNotificationsButton.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+      "localSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+      "sizeBytes": 35542
+    },
+    {
+      "name": "Translator",
+      "fileName": "Translator.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "09e342ca92cf946eebf5423ea4ea87498207fed6db72f6a2706a248e3849aef6",
+      "localSha256": "09e342ca92cf946eebf5423ea4ea87498207fed6db72f6a2706a248e3849aef6",
+      "sizeBytes": 186948
+    },
+    {
+      "name": "ServerDetails",
+      "fileName": "ServerDetails.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "cc9ee921b73e51d2efd0e50ddc4e7850598c8d6047eb3e7596b5983bef67ddbf",
+      "localSha256": "cc9ee921b73e51d2efd0e50ddc4e7850598c8d6047eb3e7596b5983bef67ddbf",
+      "sizeBytes": 22492
+    },
+    {
+      "name": "ImageUtilities",
+      "fileName": "ImageUtilities.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2"
+    },
+    {
+      "name": "InsertTimestamps",
+      "fileName": "InsertTimestamps.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61"
+    },
+    {
+      "name": "RevealAllSpoilers",
+      "fileName": "RevealAllSpoilers.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "0ef125fbac6591e72523b3e99dc0e2271dd63cf2e91f158b937d531450c4789c"
+    },
+    {
+      "name": "ActivityFilter",
+      "fileName": "ActivityFilter.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "5d2e7236033ce7f161b13024681e4b8a6189911f4f5ed3fc07a0662ba06de9cf"
+    },
+    {
+      "name": "BetterFriendList",
+      "fileName": "BetterFriendList.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
+      "localSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
+      "sizeBytes": 42326
+    },
+    {
+      "name": "BetterVolume",
+      "fileName": "BetterVolume.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+      "localSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+      "sizeBytes": 20060
+    },
+    {
+      "name": "BetterAnimations",
+      "fileName": "BetterAnimations.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "d047eec2f77738e41493be95e88b2c02936156f224c6c1fb93bd86961cb1df0d",
+      "localSha256": "d047eec2f77738e41493be95e88b2c02936156f224c6c1fb93bd86961cb1df0d",
+      "sizeBytes": 1247477
+    },
+    {
+      "name": "VoiceActivity",
+      "fileName": "VoiceActivity.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "5692cd19da9374e6f5a208e71695ee25fb5b27dbe6c211f2d92f83a08b623fa1",
+      "localSha256": "5692cd19da9374e6f5a208e71695ee25fb5b27dbe6c211f2d92f83a08b623fa1",
+      "sizeBytes": 34824
+    },
+    {
+      "name": "DoubleClickToReply",
+      "fileName": "DoubleClickToReply.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+      "localSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+      "sizeBytes": 5610
+    },
+    {
+      "name": "DoNotTrack",
+      "fileName": "DoNotTrack.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+      "localSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+      "sizeBytes": 10460
+    },
+    {
+      "name": "SpellCheck",
+      "fileName": "SpellCheck.plugin.js",
+      "state": "MISSING",
+      "reviewedSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a"
+    },
+    {
+      "name": "ShowSpectators",
+      "fileName": "ShowSpectators.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
+      "localSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
+      "sizeBytes": 16367
+    },
+    {
+      "name": "SplitLargeMessages",
+      "fileName": "SplitLargeMessages.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "c5866f77edaf227eb333a2e0f0819f2a8e1e122bd6c4c50f49c2ed3cde2eea46",
+      "localSha256": "c5866f77edaf227eb333a2e0f0819f2a8e1e122bd6c4c50f49c2ed3cde2eea46",
+      "sizeBytes": 19021
+    },
+    {
+      "name": "CharCounter",
+      "fileName": "CharCounter.plugin.js",
+      "state": "EXACT_REVIEWED",
+      "reviewedSha256": "ac1c3864a9dbeb5da09256c27b1937a5cd706b66be8fb7f835d598345409d8c2",
+      "localSha256": "ac1c3864a9dbeb5da09256c27b1937a5cd706b66be8fb7f835d598345409d8c2",
+      "sizeBytes": 9656
+    }
+  ]
+}
