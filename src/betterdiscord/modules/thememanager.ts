@@ -5,6 +5,7 @@ import AddonManager from "./addonmanager";
 import {type Addon} from "@typed/addon";
 import DOMManager from "./dommanager";
 import {t} from "@common/i18n";
+import {checkReviewedExecution} from "./soulcord/integrity";
 
 
 export interface Theme extends Addon {
@@ -48,6 +49,14 @@ class ThemeManager extends AddonManager<Theme> {
     }
 
     initAddon(theme: Theme) {
+        const executionCheck = checkReviewedExecution("theme", theme.filename, theme.name, theme.fileContent ?? "");
+        if (executionCheck.reviewed && !executionCheck.matches) {
+            this.state[theme.id] = false;
+            this.saveState();
+            Toasts.warning(`${executionCheck.name ?? theme.filename} changed after review and was held before CSS injection.`);
+            return false;
+        }
+
         theme.css = theme.fileContent!;
         delete theme.fileContent;
 

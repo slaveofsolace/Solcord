@@ -32,12 +32,23 @@ function isTrustedOrigin(): boolean {
 }
 
 let hasInitialized = false;
+let bootstrapPromise: Promise<string> | undefined;
+let bootstrapClaimed = false;
 contextBridge.exposeInMainWorld("process", newProcess);
 contextBridge.exposeInMainWorld("BetterDiscordPreload", () => {
     if (!isTrustedOrigin()) return null;
     if (hasInitialized) return null;
     hasInitialized = true;
-    return BdApi;
+    return {
+        ...BdApi,
+        __claimSoulCordTimelineBootstrap: async () => {
+            if (bootstrapClaimed || !bootstrapPromise) throw new Error("SoulCord timeline bootstrap is unavailable.");
+            bootstrapClaimed = true;
+            const pending = bootstrapPromise;
+            bootstrapPromise = undefined;
+            return pending;
+        }
+    };
 });
 
 let hasRanRenderer = false;
@@ -46,7 +57,11 @@ contextBridge.exposeInMainWorld("BetterDiscordRunRenderer", () => {
     if (hasRanRenderer) return null;
     hasRanRenderer = true;
 
-    ipcRenderer.invoke(IPCEvents.RUN_RENDERER);
+    bootstrapPromise = ipcRenderer.invoke(IPCEvents.RUN_RENDERER).then((response: unknown) => {
+        const capability = (response as {bootstrapCapability?: unknown;} | undefined)?.bootstrapCapability;
+        if (typeof capability !== "string" || !/^[a-zA-Z0-9_-]{43}$/.test(capability)) throw new Error("SoulCord timeline bootstrap was rejected.");
+        return capability;
+    });
 });
 
 init();

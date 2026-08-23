@@ -1,2 +1,7 @@
-const RemoteAPI = window.BetterDiscordPreload();
+const {
+    __claimSoulCordTimelineBootstrap: claimSoulCordTimelineBootstrap,
+    ...RemoteAPI
+} = window.BetterDiscordPreload();
+
+export {claimSoulCordTimelineBootstrap};
 export default RemoteAPI;

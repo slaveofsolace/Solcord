@@ -1,5 +1,5 @@
 import React from "react";
-import soulCordMark from "@assets/branding/soulcord-mark-v2.png";
+import soulCordMark from "@assets/branding/soulcord-mark.svg";
 import {lucideToDiscordIcon} from "@utils/icon";
 import clsx from "clsx";
 import {Icon, type LucideProps} from "lucide-react";

@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
 
 import {runStructuralProbes} from "../../src/betterdiscord/modules/soulcord/drift";
-import {inspectLink, isDiscordInternalNavigation, shouldInterceptLink} from "../../src/betterdiscord/modules/soulcord/link-lens";
+import {inspectLink, interceptLinkActivation, isDiscordInternalNavigation, shouldInterceptLink} from "../../src/betterdiscord/modules/soulcord/link-lens";
 import {BoundedPerformanceSampler} from "../../src/betterdiscord/modules/soulcord/performance";
 import {evaluateCrashGuard} from "../../src/betterdiscord/modules/soulcord/crash-guard";
 import {SoulCordDisposalScope} from "../../src/betterdiscord/modules/soulcord/disposal";
@@ -42,6 +42,73 @@ describe("SoulCord safety adapters", () => {
         expect(shouldInterceptLink(safe, inspectLink(safe), "https://discord.com/channels/@me", false)).toBeFalse();
         expect(shouldInterceptLink(safe, inspectLink(safe), "https://discord.com/channels/@me", true)).toBeTrue();
         expect(shouldInterceptLink(risky, inspectLink(risky), "https://discord.com/channels/@me", false)).toBeTrue();
+    });
+
+    test("keeps internal DM navigation on Discord's original activation path", () => {
+        let originalCalls = 0;
+        const event = new MouseEvent("click", {cancelable: true});
+        const result = interceptLinkActivation({}, [
+            {href: "https://discord.com/channels/@me/123456789012345678"},
+            event
+        ], () => {
+            originalCalls++;
+            return "original";
+        }, {
+            currentHref: "https://discord.com/channels/@me",
+            confirmAllExternal: true,
+            removeTrackers: true,
+            review: () => {throw new Error("internal navigation must not review");},
+            open: () => {throw new Error("internal navigation must not open externally");}
+        });
+
+        expect(result).toBe("original");
+        expect(originalCalls).toBe(1);
+        expect(event.defaultPrevented).toBeFalse();
+    });
+
+    test("stops a risky external activation until native review confirms it", () => {
+        let originalCalls = 0;
+        let confirm: (() => void) | undefined;
+        const opened: string[] = [];
+        const event = new MouseEvent("click", {cancelable: true});
+        const result = interceptLinkActivation({}, [
+            {href: "http://example.com/path?utm_source=test"},
+            event
+        ], () => {
+            originalCalls++;
+            return "original";
+        }, {
+            currentHref: "https://discord.com/channels/@me",
+            confirmAllExternal: false,
+            removeTrackers: true,
+            review: (_inspection, onConfirm) => {confirm = onConfirm; return true;},
+            open: destination => opened.push(destination)
+        });
+
+        expect(result).toBeUndefined();
+        expect(originalCalls).toBe(0);
+        expect(event.defaultPrevented).toBeTrue();
+        expect(opened).toEqual([]);
+        confirm?.();
+        expect(opened).toEqual(["http://example.com/path"]);
+    });
+
+    test("fails open through the original activation when the native review adapter drifts", () => {
+        let originalCalls = 0;
+        const event = new MouseEvent("click", {cancelable: true});
+        const result = interceptLinkActivation({}, [{href: "http://example.com/"}, event], () => {
+            originalCalls++;
+            return "original";
+        }, {
+            currentHref: "https://discord.com/channels/@me",
+            confirmAllExternal: false,
+            removeTrackers: true,
+            review: () => {throw new Error("native modal unavailable");},
+            open: () => {throw new Error("must remain on original activation path");}
+        });
+        expect(result).toBe("original");
+        expect(originalCalls).toBe(1);
+        expect(event.defaultPrevented).toBeFalse();
     });
 
     test("structural probes fail closed when a validator throws", () => {

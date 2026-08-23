@@ -29,3 +29,13 @@ export const RUN_RENDERER               = "bd-run-renderer";
 
 // SoulCord-internal compatibility bridge. Existing BetterDiscord IPC names stay unchanged.
 export const GET_ACTIVITY_COMPATIBILITY = "sc-get-activity-compatibility";
+export const TIMELINE_BOOTSTRAP          = "sc-timeline-bootstrap";
+export const TIMELINE_BIND               = "sc-timeline-bind";
+export const TIMELINE_RELEASE            = "sc-timeline-release";
+export const TIMELINE_STATUS             = "sc-timeline-status";
+export const TIMELINE_APPEND             = "sc-timeline-append";
+export const TIMELINE_READ               = "sc-timeline-read";
+export const TIMELINE_CLEAR              = "sc-timeline-clear";
+export const SETUP_APPLY                 = "sc-setup-apply";
+export const SETUP_ROLLBACK              = "sc-setup-rollback";
+export const SETUP_AUDIT                 = "sc-setup-audit";

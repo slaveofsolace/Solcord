@@ -1,21 +1,19 @@
 import React from "react";
-import soulCordMark from "@assets/branding/soulcord-mark-v2.png";
+import soulCordMark from "@assets/branding/soulcord-mark.svg";
 
 import {useStateFromStores} from "@ui/hooks";
-import PluginManager from "@modules/pluginmanager";
 import SoulCordRuntime from "@modules/soulcord/runtime";
 import SoulCordSettings from "@modules/soulcord/store";
 import PluginDoctor from "@modules/soulcord/doctor";
 import type {SoulCordModuleId} from "@modules/soulcord/contracts";
 import type {LinkInspection} from "@modules/soulcord/link-lens";
 
-const {useRef, useState} = React;
+import SetupWizard from "./setup-wizard";
+import MessageTimelinePanel from "./timeline";
+import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
+import {SOULCORD_POWER_LAB} from "./catalog";
 
-const OWNER_DAILY_ADDONS = [
-    {id: "DoNotTrack", name: "Do Not Track", summary: "Suppresses Discord analytics and process monitoring. Exact catalog-pinned local file; permissive source license."},
-    {id: "InvisibleTyping", name: "Invisible Typing", summary: "Prevents the typing indicator unless you opt a channel back in. Exact catalog-pinned local file; not redistributed by SoulCord."},
-    {id: "DoubleClickToReply", name: "Double Click to Reply", summary: "Double-click another person’s message to open Discord’s normal reply composer. It never sends automatically."}
-] as const;
+const {useRef, useState} = React;
 
 function timestamp(value?: number | string): string {
     if (!value) return "never";
@@ -66,27 +64,6 @@ function ModuleTable() {
     </div>;
 }
 
-function DailyAddonSet() {
-    const addons = useStateFromStores(PluginManager, () => OWNER_DAILY_ADDONS.map(item => {
-        const addon = PluginManager.resolveAddon(item.id);
-        return {...item, installed: Boolean(addon), version: addon?.version, enabled: Boolean(addon && PluginManager.isEnabled(item.id))};
-    }));
-    return <Section title="Daily add-on set" summary="These are the owner’s existing local plugin files, selected for this Windows profile. SoulCord verifies and manages them but does not copy unlicensed source into the fork.">
-        <div className="soulcord-daily-grid">
-            {addons.map(addon => <div className="soulcord-daily-row" key={addon.id}>
-                <div>
-                    <div className="soulcord-module-name"><strong>{addon.name}</strong><span className="soulcord-maturity">{addon.installed ? `local ${addon.version ?? "installed"}` : "not installed"}</span></div>
-                    <p>{addon.summary}</p>
-                </div>
-                <label className="soulcord-toggle">
-                    <input type="checkbox" checked={addon.enabled} disabled={!addon.installed} onChange={() => PluginManager.toggleAddon(addon.id)} />
-                    <span>{addon.enabled ? "On" : "Off"}</span>
-                </label>
-            </div>)}
-        </div>
-    </Section>;
-}
-
 function ActivityBridge() {
     const activity = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.activityHealth());
     const events = activity?.events.slice(-8).reverse() ?? [];
@@ -115,23 +92,30 @@ function ActivityBridge() {
 }
 
 function PluginRecovery() {
-    const records = useStateFromStores(PluginDoctor, () => PluginDoctor.snapshot());
-    const quarantined = records.filter(record => record.quarantinedAt);
-    const retry = (id: string) => {
-        const addon = PluginManager.resolveAddon(id);
-        if (!addon) return;
-        if (!PluginDoctor.clearQuarantine(id)) return;
-        PluginManager.state[addon.id] = true;
-        PluginManager.saveState();
-        PluginManager.startAddon(addon);
+    const state = useStateFromStores([PluginDoctor, SoulCordRuntime], () => ({records: PluginDoctor.snapshot(), integrity: SoulCordRuntime.integrityStatus()}));
+    const [retrying, setRetrying] = useState<string>();
+    const [retryStatus, setRetryStatus] = useState("");
+    const quarantined = state.records.filter(record => record.quarantinedAt);
+    const visibleIntegrity = state.integrity.records.filter(record => record.status !== "match").slice(0, 12);
+    const retry = async (id: string) => {
+        setRetrying(id);
+        const succeeded = await SoulCordRuntime.retryQuarantinedAddon(id);
+        setRetryStatus(succeeded ? `${id} passed a fresh integrity audit and started.` : `${id} stayed quarantined because integrity or startup validation did not pass.`);
+        setRetrying(undefined);
     };
     return <Section title="Plugin Doctor" summary="Failures are recorded as time, phase, and error class only. Three failures in ten minutes quarantine the addon until you explicitly retry it.">
+        <dl className="soulcord-facts"><div><dt>Hash verified</dt><dd>{state.integrity.summary.match}</dd></div><div><dt>Not staged</dt><dd>{state.integrity.summary.missing}</dd></div><div><dt>Integrity attention</dt><dd>{state.integrity.summary.attention}</dd></div><div><dt>Audit unavailable</dt><dd>{state.integrity.summary.unavailable}</dd></div></dl>
         {quarantined.length ? <div className="soulcord-recovery-list">
             {quarantined.map(record => <div className="soulcord-recovery-row" key={record.addonId}>
                 <div><strong>{record.addonId}</strong><p>{record.quarantineReason}</p><small>Quarantined {timestamp(record.quarantinedAt)}</small></div>
-                <ActionButton tone="danger" onClick={() => retry(record.addonId)}>Retry once</ActionButton>
+                <ActionButton tone="danger" disabled={retrying === record.addonId} onClick={() => void retry(record.addonId)}>{retrying === record.addonId ? "Checking…" : "Retry once"}</ActionButton>
             </div>)}
         </div> : <p className="soulcord-empty">No addon is quarantined.</p>}
+        {retryStatus && <p role="status" className="soulcord-import-status">{retryStatus}</p>}
+        {visibleIntegrity.length ? <div className="soulcord-ledger" aria-label="Curated addon integrity status">
+            {visibleIntegrity.map(record => <div className="soulcord-ledger-row" key={`${record.kind}-${record.name}`}><strong>{record.name}</strong><span>{record.kind} · {record.status}{record.status === "missing" ? " (not staged; not quarantined as tampering)" : ""}</span><code>{record.reviewedSha256.slice(0, 12)}…{record.installedSha256 ? ` / ${record.installedSha256.slice(0, 12)}…` : ""}</code></div>)}
+            {state.integrity.records.filter(record => record.status !== "match").length > visibleIntegrity.length && <p className="soulcord-empty">Showing the first {visibleIntegrity.length} path-free records. Sanitized diagnostics contain the complete bounded status list.</p>}
+        </div> : <p className="soulcord-empty">Every reviewed installed file matches its pinned hash.</p>}
     </Section>;
 }
 
@@ -139,19 +123,34 @@ function ProfilesAndHistory() {
     const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
     const [profileId, setProfileId] = useState(document.profiles[0]?.id ?? "");
     const [newName, setNewName] = useState("");
+    const [includeThirdParty, setIncludeThirdParty] = useState(false);
     const [importStatus, setImportStatus] = useState("");
-    const diff = profileId ? SoulCordSettings.previewProfile(profileId) : [];
+    const diff = profileId ? SoulCordRuntime.previewProfile(profileId) : [];
     const selected = document.profiles.find(profile => profile.id === profileId);
-    const apply = () => {
+    const apply = async () => {
         if (!selected) return;
-        const thirdPartyWarning = selected.includesThirdPartyAddons ? " This profile names third-party addons; SoulCord will not execute them automatically." : "";
-        if (!window.confirm(`Apply ${selected.name}? SoulCord will snapshot the current state first.${thirdPartyWarning}`)) return;
-        void SoulCordRuntime.applyProfile(selected.id);
+        if (!window.confirm(`Apply ${selected.name}? SoulCord will snapshot the current state first and then apply the complete preview shown here.`)) return;
+        const executionPlan = SoulCordRuntime.profileAddonExecutionPlan(selected.id);
+        if (selected.includesThirdPartyAddons) {
+            if (!executionPlan) {
+                setImportStatus("The third-party addon plan changed before confirmation; nothing was applied.");
+                return;
+            }
+            const starts = [...executionPlan.enablePlugins, ...executionPlan.enableThemes];
+            const stops = [...executionPlan.disablePlugins, ...executionPlan.disableThemes];
+            const startList = starts.length ? starts.map(fileName => `• ${fileName}`).join("\n") : "• none";
+            const stopList = stops.length ? stops.map(fileName => `• ${fileName}`).join("\n") : "• none";
+            if (!window.confirm(`Third-party execution confirmation\n\nApplying this profile will start ${executionPlan.enablePlugins.length} plugin file(s) now. Enabled plugins execute third-party code in Discord. It will also enable ${executionPlan.enableThemes.length} theme file(s) and stop or disable ${stops.length} file(s).\n\nFiles to start or enable (${starts.length}):\n${startList}\n\nFiles to stop or disable (${stops.length}):\n${stopList}\n\nContinue with these exact files?`)) return;
+        }
+        const applied = await SoulCordRuntime.applyProfile(selected.id, executionPlan);
+        setImportStatus(applied ? `${selected.name} applied with a rollback snapshot.` : `${selected.name} was not fully applied. SoulCord attempted recovery; review the current addon and module states before retrying.`);
     };
     const save = () => {
         try {
-            const profile = SoulCordSettings.saveProfile(newName);
+            if (includeThirdParty && !window.confirm("Save the complete currently enabled BetterDiscord plugin and theme set in this profile? Applying it later can execute or stop third-party code. The file names will appear in settings exports.")) return;
+            const profile = SoulCordRuntime.saveProfile(newName, includeThirdParty);
             setNewName("");
+            setIncludeThirdParty(false);
             setProfileId(profile.id);
             setImportStatus(`Saved ${profile.name}.`);
         }
@@ -168,24 +167,25 @@ function ProfilesAndHistory() {
         }
         try {
             const text = await file.text();
-            const changes = SoulCordRuntime.previewSettingsImport(text);
-            if (!changes) {
+            const importPreview = SoulCordRuntime.previewSettingsImport(text);
+            if (!importPreview) {
                 setImportStatus("Choose an unmodified SoulCord settings export.");
                 return;
             }
-            const preview = changes.length ? changes.map(change => `• ${change}`).join("\n") : "No module or profile differences.";
+            const {changes, fingerprint} = importPreview;
+            const preview = changes.length ? changes.map(change => `• ${change}`).join("\n") : "No settings differences.";
             if (!window.confirm(`Import this validated SoulCord settings file? The current state will be snapshotted first.\n\nComplete preview:\n${preview}`)) {
                 setImportStatus("Import cancelled; no settings changed.");
                 return;
             }
-            const imported = await SoulCordRuntime.importSettings(text);
-            setImportStatus(imported ? "Settings imported. A rollback snapshot was kept." : "Import failed validation; no settings changed.");
+            const imported = await SoulCordRuntime.importSettings(text, fingerprint);
+            setImportStatus(imported ? "Settings imported. A rollback snapshot was kept." : "Import changed after preview or failed validation; no settings changed.");
         }
         catch {
             setImportStatus("The settings file could not be read locally.");
         }
     };
-    return <Section title="Profiles and Time Machine" summary="Every apply or setting change captures a bounded local snapshot. Profile exports exclude secrets and do not execute third-party plugins.">
+    return <Section title="Profiles and Time Machine" summary="Every apply captures a bounded local snapshot. Exports exclude secrets; applying an opted-in addon profile can execute the exact third-party plugin files shown in the separate confirmation.">
         <div className="soulcord-split">
             <div>
                 <label className="soulcord-field">Profile
@@ -198,7 +198,7 @@ function ProfilesAndHistory() {
                     {diff.length ? <ul>{diff.map(item => <li key={item}>{item}</li>)}</ul> : <p>No module-setting differences.</p>}
                 </div>
                 <div className="soulcord-actions">
-                    <ActionButton tone="accent" onClick={apply} disabled={!selected}>Apply with snapshot</ActionButton>
+                    <ActionButton tone="accent" onClick={() => void apply()} disabled={!selected}>Apply with snapshot</ActionButton>
                     <ActionButton onClick={() => SoulCordRuntime.exportSettings()}>Export settings</ActionButton>
                 </div>
                 <label className="soulcord-file-import">Import settings JSON
@@ -212,6 +212,7 @@ function ProfilesAndHistory() {
                     <input value={newName} maxLength={80} placeholder="Custom profile name" aria-label="Custom profile name" onChange={event => setNewName(event.currentTarget.value)} />
                     <ActionButton onClick={save} disabled={!newName.trim()}>Save current state</ActionButton>
                 </div>
+                <label className="soulcord-profile-addon-optin"><input type="checkbox" checked={includeThirdParty} onChange={event => setIncludeThirdParty(event.currentTarget.checked)} /> Include the complete currently enabled BetterDiscord plugin/theme set (executes third-party code when applied)</label>
                 {importStatus && <p className="soulcord-import-status" role="status">{importStatus}</p>}
             </div>
             <div>
@@ -220,7 +221,10 @@ function ProfilesAndHistory() {
                     {document.snapshots.slice(-6).reverse().map(snapshot => <div key={snapshot.id} className="soulcord-snapshot-row">
                         <div><span>{snapshot.reason}</span><small>{timestamp(snapshot.createdAt)}</small></div>
                         <ActionButton onClick={() => {
-                            if (window.confirm(`Roll back to “${snapshot.reason}”? A snapshot of the current state will be kept.`)) void SoulCordRuntime.rollback(snapshot.id);
+                            if (!window.confirm(`Roll back to “${snapshot.reason}”? A snapshot of the current state will be kept.`)) return;
+                            void SoulCordRuntime.rollback(snapshot.id).then(restored => setImportStatus(restored
+                                ? `Rolled back to “${snapshot.reason}”.`
+                                : "The settings snapshot was restored, but one or more addon states remained held or failed to change. Review Plugin Doctor before retrying."));
                         }}>Roll back</ActionButton>
                     </div>)}
                     {!document.snapshots.length && <p className="soulcord-empty">No snapshot has been captured yet.</p>}
@@ -427,16 +431,42 @@ function AboutSoulCord() {
     return <Section title="About SoulCord" summary="A reliability, privacy, and productivity fork built on BetterDiscord’s open-source foundation.">
         <div className="soulcord-about-grid">
             <p><strong>Why it exists.</strong> SoulCord keeps the BetterDiscord plugin and theme ecosystem while tightening recovery behavior and restoring Discord Activities through a bounded same-package preload policy.</p>
-            <p><strong>What it does not do.</strong> It does not grant Nitro, forge entitlements, extract tokens, log messages, send on your behalf, send SoulCord telemetry, or enable the global unrestricted preload override.</p>
-            <p><strong>Privacy.</strong> Module state, snapshots, and diagnostics stay local. Sanitized exports omit tokens, message content, server names, account identifiers, and absolute paths.</p>
+            <p><strong>What it does not do.</strong> It does not grant Nitro, forge entitlements, extract tokens, backfill messages, access hidden channels, send on your behalf, send SoulCord telemetry, or enable the global unrestricted preload override.</p>
+            <p><strong>Privacy.</strong> Module state, snapshots, and diagnostics stay local. The private Message Timeline runs only after opt-in, is DM-only by default, and uses encrypted persistence when safeStorage is available. Sanitized diagnostics omit message content, server names, account identifiers, and absolute paths.</p>
             <p><strong>Maturity.</strong> Automated and synthetic checks can prove policy behavior; only the owner’s post-launch Codenames and second-Activity checks can complete live human acceptance.</p>
         </div>
         <p className="soulcord-attribution">Based on BetterDiscord. Upstream contributors, Apache-2.0 licensing, ecosystem-compatible identifiers, and fork lineage are preserved.</p>
     </Section>;
 }
 
+function SetupManagement() {
+    const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
+    const [status, setStatus] = useState("");
+    if (document.onboarding.status === "pending") return null;
+    return <section className="soulcord-setup-management" aria-label="SoulCord setup management">
+        <div><strong>Setup {document.onboarding.status}</strong><span>{document.onboarding.completedAt ? ` · ${timestamp(document.onboarding.completedAt)}` : ""}</span><p>Reopen the complete preview or roll back the latest staged setup transaction.</p></div>
+        <div className="soulcord-actions"><ActionButton onClick={() => SoulCordSettings.reopenOnboarding()}>Reopen setup</ActionButton><ActionButton tone="danger" disabled={!document.setupTransactions.length} onClick={() => {
+            if (!window.confirm("Roll back the latest SoulCord setup transaction? Files added by that transaction are removed only when their hashes are unchanged, and previous enabled states are restored.")) return;
+            void SoulCordRuntime.rollbackLatestSetup().then(result => setStatus({
+                complete: `Latest setup transaction rolled back; ${result.removed} unchanged staged file(s) were removed and none were preserved.`,
+                partial: `Rollback is incomplete: ${result.removed} unchanged file(s) removed and ${result.preserved} locally changed file(s) preserved, or an addon state remained held.`,
+                unavailable: "No complete setup transaction was available to roll back.",
+                failed: "Rollback could not be confirmed. No locally changed file was overwritten; review Plugin Doctor and the setup journal."
+            }[result.status])).catch(() => setStatus("Rollback failed closed before completion. Review Plugin Doctor and the setup journal."));
+        }}>Roll back latest setup</ActionButton></div>
+        {status && <p role="status">{status}</p>}
+    </section>;
+}
+
+function PowerLabStatus() {
+    return <Section title="Power Lab" summary="Private experiments remain isolated from the daily set. V1 exposes their status honestly; none can be enabled until provenance, teardown, drift, and consent gates pass.">
+        <div className="soulcord-power-list">{SOULCORD_POWER_LAB.map(experiment => <div key={experiment.id} className="soulcord-curated-row soulcord-unavailable"><div><div className="soulcord-module-name"><strong>{experiment.name}</strong><span className="soulcord-maturity">unavailable</span></div><p>{experiment.summary}</p></div><label className="soulcord-toggle"><input type="checkbox" checked={false} disabled /><span>Off</span></label></div>)}</div>
+    </Section>;
+}
+
 export default function SoulCordPanel() {
     const recoveryMode = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.recoveryMode);
+    const onboarding = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().onboarding);
     return <main className="soulcord-panel">
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
@@ -446,14 +476,19 @@ export default function SoulCordPanel() {
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
             <ActionButton tone="danger" onClick={() => void SoulCordRuntime.leaveRecoveryMode()}>Try normal startup</ActionButton>
         </div>}
-        <DailyAddonSet />
+        {onboarding.status === "pending" && <SetupWizard />}
+        <SetupManagement />
+        <CuratedAddonSet />
         <ActivityBridge />
         <Section title="Module status" summary="Ready means a live adapter is attached. Preview means useful behavior exists but a volatile Discord lookup or a human visual gate is still pending."><ModuleTable /></Section>
         <PluginRecovery />
         <ProfilesAndHistory />
         <PrivacyControls />
+        <MessageTimelinePanel />
         <LinkWorkbench />
         <ScreenshotScrubber />
+        <CatalogBrowser />
+        <PowerLabStatus />
         <AboutSoulCord />
     </main>;
 }

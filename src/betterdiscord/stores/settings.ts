@@ -10,6 +10,7 @@ import Store from "./base";
 import type {ComponentType} from "react";
 import type AddonManager from "@modules/addonmanager";
 import {PaletteIcon, PlugIcon, type LucideIcon} from "lucide-react";
+import {resolvePanelLabel} from "./panel-label";
 
 export interface SettingsCollection {
     type: "collection";
@@ -31,6 +32,18 @@ export interface SettingsPanel {
     type?: "addon" | "settings";
     manager?: AddonManager;
     searchable?(): string[];
+}
+
+export interface RegisterPanelOptions {
+    onClick?: (o: any) => void;
+    element?: ComponentType;
+    order: number;
+    type?: "addon" | "settings";
+    manager?: AddonManager;
+    icon?: LucideIcon;
+    searchable?(): string[];
+    /** Internal panels can opt out when their name is a product-owned literal. */
+    translateLabel?: boolean;
 }
 
 type State = Record<string, Record<string, any>>;
@@ -64,7 +77,7 @@ class SettingsManager extends Store {
         this.emitChange();
     }
 
-    registerPanel(id: string, name: string, options: {onClick?: (o: any) => void; element?: ComponentType; order: number; type?: "addon" | "settings"; manager?: AddonManager; icon?: LucideIcon; searchable?(): string[];}) {
+    registerPanel(id: string, name: string, options: RegisterPanelOptions) {
         if (this.panels.find(p => p.id == id)) return Logger.error("Settings", "Already have a panel with id " + id);
         const {element, onClick, order = 1, type = "settings"} = options;
         const section: SettingsPanel = {
@@ -72,8 +85,7 @@ class SettingsManager extends Store {
             type,
             order,
             get label() {
-                const translated = t(`Panels.${id}`);
-                return translated === "String not found!" ? name : translated || name;
+                return resolvePanelLabel(id, name, options.translateLabel !== false);
             },
             section: id,
             icon: options.icon,

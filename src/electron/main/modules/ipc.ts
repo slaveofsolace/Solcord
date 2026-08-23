@@ -5,6 +5,9 @@ import * as IPCEvents from "@common/constants/ipcevents";
 import Editor from "./editor";
 import BetterDiscord from "./betterdiscord";
 import ActivityCompatibility from "./activity-compatibility";
+import SoulCordTimeline from "./soulcord-timeline";
+import SoulCordSetup from "./soulcord-setup";
+import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
 import type {DialogOptions} from "@common/types/ipc";
 
 const getPath = (event: IpcMainEvent, pathReq: string) => {
@@ -198,8 +201,88 @@ const setAllowPreloadOverride = (_: IpcMainInvokeEvent, value: boolean) => {
 
 const getActivityCompatibility = () => ActivityCompatibility.snapshot();
 
+const requireTrustedSoulCordSender = (event: IpcMainInvokeEvent): void => {
+    if (event.sender.isDestroyed()) throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+    const senderFrame = event.senderFrame;
+    if (!senderFrame) throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+    const mainFrame = event.sender.mainFrame;
+    const isMainFrame = senderFrame.processId === mainFrame.processId && senderFrame.routingId === mainFrame.routingId;
+    if (!isMainFrame || !isTrustedSoulCordIpcUrl(event.sender.getURL()) || !isTrustedSoulCordIpcUrl(senderFrame.url)) {
+        throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+    }
+};
+
+const timelineAuthority = new SoulCordTimelineIpcAuthority();
+const timelineReleaseHooks = new WeakSet<Electron.WebContents>();
+
+const ensureTimelineReleaseHook = (sender: Electron.WebContents): void => {
+    if (!timelineReleaseHooks.has(sender)) {
+        timelineReleaseHooks.add(sender);
+        const id = sender.id;
+        const release = () => timelineAuthority.release(id);
+        sender.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
+            if (isMainFrame && !isInPlace) release();
+        });
+        sender.on("render-process-gone", release);
+        sender.once("destroyed", release);
+    }
+};
+const bootstrapTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return timelineAuthority.activate(event.sender.id, request);
+};
+const bindTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return timelineAuthority.bind(event.sender.id, request);
+};
+const releaseTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return timelineAuthority.releaseAccount(event.sender.id, request);
+};
+const getTimelineStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordTimeline.status();
+};
+const appendTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordTimeline.append(authorized.accountScope, authorized.request);
+};
+const readTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordTimeline.read(authorized.accountScope, authorized.request);
+};
+const clearTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordTimeline.clear(authorized.accountScope, authorized.request);
+};
+const applySoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordSetup.apply(authorized.request);
+};
+const rollbackSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordSetup.rollback(authorized.request.transactionId);
+};
+const auditSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordSetup.auditIntegrity();
+};
+
 const runRenderer = (event: IpcMainInvokeEvent) => {
-    BetterDiscord.injectRenderer(BrowserWindow.fromWebContents(event.sender)!);
+    requireTrustedSoulCordSender(event);
+    ensureTimelineReleaseHook(event.sender);
+    const bootstrap = timelineAuthority.bootstrap(event.sender.id);
+    void BetterDiscord.injectRenderer(BrowserWindow.fromWebContents(event.sender)!).catch(() => {
+        timelineAuthority.release(event.sender.id);
+    });
+    return bootstrap;
 };
 
 
@@ -227,6 +310,16 @@ export default class IPCMain {
             ipc.handle(IPCEvents.SET_ALLOW_PRELOAD_OVERRIDE, setAllowPreloadOverride);
             ipc.handle(IPCEvents.RUN_RENDERER, runRenderer);
             ipc.handle(IPCEvents.GET_ACTIVITY_COMPATIBILITY, getActivityCompatibility);
+            ipc.handle(IPCEvents.TIMELINE_BOOTSTRAP, bootstrapTimeline);
+            ipc.handle(IPCEvents.TIMELINE_BIND, bindTimeline);
+            ipc.handle(IPCEvents.TIMELINE_RELEASE, releaseTimeline);
+            ipc.handle(IPCEvents.TIMELINE_STATUS, getTimelineStatus);
+            ipc.handle(IPCEvents.TIMELINE_APPEND, appendTimeline);
+            ipc.handle(IPCEvents.TIMELINE_READ, readTimeline);
+            ipc.handle(IPCEvents.TIMELINE_CLEAR, clearTimeline);
+            ipc.handle(IPCEvents.SETUP_APPLY, applySoulCordSetup);
+            ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSoulCordSetup);
+            ipc.handle(IPCEvents.SETUP_AUDIT, auditSoulCordSetup);
         }
         catch (err) {
             // eslint-disable-next-line no-console

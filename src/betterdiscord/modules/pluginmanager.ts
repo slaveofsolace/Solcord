@@ -8,6 +8,7 @@ import {type Addon} from "@typed/addon";
 import {t} from "@common/i18n";
 import Events from "./emitter";
 import PluginDoctor, {type AddonFailure} from "./soulcord/doctor";
+import {checkReviewedExecution} from "./soulcord/integrity";
 
 type PluginLoadPoint = "connection" | "idle";
 
@@ -73,6 +74,17 @@ class PluginManager extends AddonManager<Plugin> {
     }
 
     initAddon(plugin: Plugin) {
+        const executionCheck = checkReviewedExecution("plugin", plugin.filename, plugin.name, plugin.fileContent ?? "");
+        if (executionCheck.reviewed && !executionCheck.matches) {
+            const name = executionCheck.name ?? plugin.filename;
+            const reason = "Installed bytes changed after SoulCord review; execution was stopped before the plugin was evaluated.";
+            this.state[plugin.id] = false;
+            this.saveState();
+            PluginDoctor.quarantine(name, reason);
+            Toasts.warning(`${name} changed after review and was quarantined before execution.`);
+            return false;
+        }
+
         // Evaluate the plugin
         try {
             const module = {filename: plugin.filename, exports: {}};

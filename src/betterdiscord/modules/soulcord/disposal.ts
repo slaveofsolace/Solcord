@@ -1,4 +1,4 @@
-export type SoulCordResourceKind = "listener" | "timer" | "interval" | "observer" | "style" | "element" | "patch" | "other";
+export type SoulCordResourceKind = "listener" | "timer" | "interval" | "observer" | "style" | "element" | "patch" | "cache" | "media" | "audio-context" | "track" | "object-url" | "other";
 
 interface DisposalRecord {
     kind: SoulCordResourceKind;

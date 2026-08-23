@@ -26,6 +26,19 @@ import {RefreshCcwIcon} from "lucide-react";
 import type {AddonType} from "@typed/addon";
 import {fetch} from "./net";
 import AddonStore from "./addonstore";
+import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
+import {isSoulCordTransactionOwnedAcceptedArtifact} from "./soulcord/updater-ownership";
+
+function acceptedSoulCordArtifact(type: AddonType, fileName: string): {fileName: string; reviewedSha256: string;} | undefined {
+    if (type === "theme") {
+        const theme = SOULCORD_RUNTIME_THEMES.find(candidate => candidate.fileName === fileName);
+        return theme && {fileName: theme.fileName, reviewedSha256: theme.sourceSha256};
+    }
+
+    const candidate = SOULCORD_RUNTIME_ADDONS.find(addon => addon.fileName === fileName) ?? SOULCORD_RUNTIME_DEPENDENCIES.find(dependency => dependency.fileName === fileName);
+    if (!candidate || (candidate as {installable?: boolean;}).installable !== true) return;
+    return {fileName: candidate.fileName, reviewedSha256: candidate.sourceSha256};
+}
 
 export default class Updater {
     static updateCheckInterval: ReturnType<typeof setInterval> | null = null;
@@ -165,6 +178,21 @@ export class AddonUpdater {
     }
 
     async updateAddon(filename: string) {
+        const basename = path.basename(filename);
+        const reviewed = acceptedSoulCordArtifact(this.type, basename);
+        const transactionOwned = reviewed && isSoulCordTransactionOwnedAcceptedArtifact({
+            accepted: true,
+            addonFolder: this.manager.addonFolder,
+            fileName: reviewed.fileName,
+            kind: this.type,
+            reviewedSha256: reviewed.reviewedSha256
+        });
+        if (transactionOwned) {
+            const reason = "This exact file was installed by SoulCord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated.";
+            Logger.warn("SoulCord Addon Integrity", `${basename} update paused for re-review.`);
+            Toasts.error(reason);
+            return;
+        }
         const info = AddonStore.getAddon(filename);
 
         if (!info) return;

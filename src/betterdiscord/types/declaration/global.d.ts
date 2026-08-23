@@ -54,7 +54,7 @@ interface DiscordWindow {
         };
     };
 
-    BetterDiscordPreload(): typeof PreloadAPI;
+    BetterDiscordPreload(): typeof PreloadAPI & {__claimSoulCordTimelineBootstrap(): Promise<string>;};
 
     BetterDiscordRunRenderer(): void;
 

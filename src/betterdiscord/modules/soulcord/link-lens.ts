@@ -19,6 +19,20 @@ export interface LinkInspection {
     requiresConfirmation: boolean;
 }
 
+export interface LinkActivationDecision {
+    inspection: LinkInspection;
+    action: "pass" | "review";
+    destination?: string;
+}
+
+export interface LinkActivationAdapterOptions {
+    currentHref?: string;
+    confirmAllExternal: boolean;
+    removeTrackers: boolean;
+    review(inspection: LinkInspection, onConfirm: () => void): boolean | void;
+    open(destination: string): void;
+}
+
 function safeUrl(value: string): URL | null {
     try {
         const url = new URL(value);
@@ -54,6 +68,39 @@ export function isDiscordInternalNavigation(input: string, currentHref?: string)
 export function shouldInterceptLink(input: string, inspection: LinkInspection, currentHref: string | undefined, confirmAllExternal: boolean): boolean {
     if (!inspection.valid || isDiscordInternalNavigation(input, currentHref)) return false;
     return inspection.requiresConfirmation || confirmAllExternal;
+}
+
+export function decideLinkActivation(input: string, currentHref: string | undefined, confirmAllExternal: boolean, removeTrackers: boolean): LinkActivationDecision {
+    const inspection = inspectLink(input);
+    if (!shouldInterceptLink(input, inspection, currentHref, confirmAllExternal)) return {inspection, action: "pass"};
+    return {
+        inspection,
+        action: "review",
+        destination: removeTrackers ? inspection.cleanedUrl ?? input : input
+    };
+}
+
+export function interceptLinkActivation(
+    thisObject: unknown,
+    args: Array<{href?: string;} | Event | undefined>,
+    original: (...args: any[]) => unknown,
+    options: LinkActivationAdapterOptions
+): unknown {
+    const link = args[0] as {href?: string;} | undefined;
+    if (!link?.href) return original.apply(thisObject, args);
+
+    const decision = decideLinkActivation(link.href, options.currentHref, options.confirmAllExternal, options.removeTrackers);
+    if (decision.action === "pass" || !decision.destination) return original.apply(thisObject, args);
+
+    let reviewed: boolean | void;
+    try {reviewed = options.review(decision.inspection, () => options.open(decision.destination!));}
+    catch {return original.apply(thisObject, args);}
+    if (reviewed === false) return original.apply(thisObject, args);
+
+    const event = args[1] as Event | undefined;
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    return undefined;
 }
 
 export function inspectLink(input: string): LinkInspection {

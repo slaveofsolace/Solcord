@@ -58,6 +58,7 @@ export default new class Core {
             order: 0,
             icon: ShieldCheckIcon,
             element: SoulCordPanel,
+            translateLabel: false,
             searchable: () => ["SoulCord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
         });
         SettingsRenderer.initialize();
@@ -90,10 +91,12 @@ export default new class Core {
 
         Logger.log("Startup", "Loading Plugins");
         PluginManager.initialize();
+        await SoulCordRuntime.enforceAddonIntegrityBeforeStart();
         PluginManager.startAddons("connection");
 
         Logger.log("Startup", "Loading Themes");
         ThemeManager.initialize();
+        await SoulCordRuntime.enforceAddonIntegrityBeforeStart();
         ThemeManager.startAddons();
 
         Logger.log("Startup", "Initializing Updater");

@@ -100,6 +100,15 @@ class PluginDoctorStore extends Store {
         this.#save();
     }
 
+    quarantine(addonId: string, reason: string, now = Date.now()): void {
+        this.initialize();
+        const id = safeId(addonId);
+        const record = this.#document.records[id] ??= {addonId: id, failures: []};
+        record.quarantinedAt = now;
+        record.quarantineReason = reason.slice(0, 160);
+        this.#save();
+    }
+
     clearQuarantine(addonId: string): boolean {
         this.initialize();
         const record = this.#document.records[safeId(addonId)];
