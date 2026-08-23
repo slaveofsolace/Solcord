@@ -24,25 +24,27 @@ This branch is a review build, not a published release. Automated and synthetic 
 | Plugin Doctor | Failure history, three-in-ten-minute quarantine, explicit retry | Ready |
 | Drift Radar | Structural probes plus adapter-local fail-closed lookup checks | Preview |
 | Performance HUD | Bounded renderer lag, heap-when-available, and owned-resource samples | Ready |
-| Workspace Profiles | Activities, Gaming, Calls, Streaming, Focus, custom SoulCord-only profiles, diff and rollback | Preview; third-party addon execution excluded |
+| Workspace Profiles | Activities, Gaming, Calls, Streaming, Focus, custom profiles, full diff, atomic apply and rollback | Preview; third-party addon sets require an extra warning |
 | Command Deck | Local settings/actions palette at `Ctrl+Alt+K` | Ready |
 | Link Lens | Local host, tracker, declared-redirect, confusable-domain, and invite-code review | Preview; invite metadata is not fetched |
 | Stream Shield | Reversible privacy preview and manual hotkey; structural Go Live detection | Preview |
 | Screenshot Scrubber | Local cover/blur workflow and PNG export; never uploads | Ready |
 | Time Machine | Versioned local snapshots, migration ledger, export and rollback | Ready |
 | Accessibility Toolkit | Reduced motion, focus treatment, contrast aid, reading controls | Preview |
+| Setup and catalog | Four-theme preview, 36-addon reviewed candidate preset, immutable-source/hash checks, dependency closure, conflicts, quarantine and rollback | Fail-closed: security/runtime gates pending; no community candidate is installable yet |
+| Message Timeline | Opt-in observed-message journal, DM-only default, explicit deleted/edited labels, retention/cap controls, AES-256-GCM persistence with a safeStorage-wrapped key | Experimental; media cache unavailable and live acceptance pending |
 
 The global `BdApi`, plugin/theme folders, `betterdiscord://` protocol, preload globals, CSS hooks, and existing addon contracts remain unchanged for compatibility. These retained identifiers are documented in [the brand migration ledger](docs/BRAND_MIGRATION_LEDGER.md).
 
 ## Deliberate boundaries
 
-SoulCord V1 does not extract tokens, log messages, recover deleted content, automate sending or joining, upload without confirmation, forge premium state, mutate entitlements, bypass account controls, or generate covert microphone traffic. There is no hidden telemetry.
+SoulCord V1 does not extract tokens, fetch deleted messages, backfill history, access hidden channels, automate sending or joining, upload without confirmation, forge premium state, mutate entitlements, bypass account controls, or generate covert microphone traffic. There is no hidden telemetry. The private Message Timeline records only in-scope events already observed by the running client after explicit opt-in.
 
 Anti-AFK audio pulses, Fake-Nitro-like expression experiments, Decor/OAuth, stream-quality overrides, and other account-risk or external-service work are outside V1 installation acceptance. If explored later, they must remain separately consented, default-off, licensed, and fail-closed.
 
 ## Privacy and recovery
 
-SoulCord stores settings, profiles, snapshots, and quarantine state locally in the existing BetterDiscord compatibility data directory. Sanitized diagnostics omit tokens, message content, server names, account identifiers, and absolute local paths. Link inspection and screenshot redaction run locally. No SoulCord service receives data.
+SoulCord stores settings, profiles, snapshots, quarantine state, and—when enabled—encrypted Message Timeline segments locally in the existing BetterDiscord compatibility data directory. Sanitized diagnostics omit tokens, message content, server names, account identifiers, and absolute local paths. Link inspection and screenshot redaction run locally. No SoulCord service receives data. Timeline persistence fails closed to session-only when Electron secure storage is unavailable.
 
 After three interrupted SoulCord renderer starts within ten minutes, startup recovery loads only Plugin Doctor. Quarantined addons are never silently re-enabled. The core updater is intentionally disabled until SoulCord has owner-controlled signed integrity metadata, so an upstream BetterDiscord artifact cannot replace the fork.
 

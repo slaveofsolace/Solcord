@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 2,
+  "reviewedAt": "2026-08-22",
+  "method": "Full-file deep static review of the 36 preset candidates and BDFDB dependency in a sibling quarantine. No source was executed and no owner addon data was inspected.",
+  "counts": {
+    "SAFE_TO_RUNTIME_TEST": 11,
+    "ACTION_GATED_TEST": 4,
+    "HOLD": 20,
+    "REJECT": 2
+  },
+  "candidates": {
+    "BetterFolders": {
+      "catalogId": 181,
+      "immutableRevision": "7c5f6e4ad7cada88974885daf2bfaedae2658a73",
+      "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "CallTimeCounter": {
+      "catalogId": 228,
+      "immutableRevision": "0952006f55c44815dfab3c1b827b7110fd97bc34",
+      "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "HideDisabledEmojis": {
+      "catalogId": 188,
+      "immutableRevision": "c2fdb36b97e4aee083130381a20ace050dd16621",
+      "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "ViewProfilePicture": {
+      "catalogId": 805,
+      "immutableRevision": "364b4f372afe6febe8d6afa49fd254bf2800fe67",
+      "sourceSha256": "8755d6e19694439affee769f2d822013c4b1c77d5bc7eaa7a5e52d9ca4218e6a",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "DiscordEffects": {
+      "catalogId": 1436,
+      "immutableRevision": "55a2402b53043d49d9163133cca71aa48ce04bdb",
+      "sourceSha256": "87eddfad83c1c779e8fe65a336d96c8242951e025e575137ce41aa1e4de72b1e",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED",
+        "REDUCED_MOTION_GATE"
+      ]
+    },
+    "PermissionsViewer": {
+      "catalogId": 29,
+      "immutableRevision": "49cdbe56ffc5d9d815663d83454cbe361af2b2cf",
+      "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "InsertTimestamps": {
+      "catalogId": 953,
+      "immutableRevision": "09bd7603c379b695102110ac838e59b4a1105ff4",
+      "sourceSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "ActivityFilter": {
+      "catalogId": 1191,
+      "immutableRevision": "9ed66ec7ef30c237032e09b8458aeba71e64eb3e",
+      "sourceSha256": "5d2e7236033ce7f161b13024681e4b8a6189911f4f5ed3fc07a0662ba06de9cf",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "VoiceActivity": {
+      "catalogId": 670,
+      "immutableRevision": "8051cc35fd578f8a48ca2310a2665b82b20970b3",
+      "sourceSha256": "5692cd19da9374e6f5a208e71695ee25fb5b27dbe6c211f2d92f83a08b623fa1",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "DoubleClickToReply": {
+      "catalogId": 1587,
+      "immutableRevision": "4474ed05346b0b413ee69feaf941a834b84209ea",
+      "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "ShowSpectators": {
+      "catalogId": 1236,
+      "immutableRevision": "e9c5b2ec2a0c778adf37781f690811253863a3cc",
+      "sourceSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
+      "disposition": "SAFE_TO_RUNTIME_TEST",
+      "reasonCodes": [
+        "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+      ]
+    },
+    "FileNameRandomization": {
+      "catalogId": 1077,
+      "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+      "sourceSha256": "acf5cbfbdaa4acc08921d63630be49ef65ec3f9497f5a216a510be450b3d2176",
+      "disposition": "ACTION_GATED_TEST",
+      "reasonCodes": [
+        "ATTACHMENT_SEND_PATH_REQUIRES_CONFIRMATION"
+      ],
+      "evidence": [
+        "1077-FileNameRandomization.plugin.js:107-123"
+      ]
+    },
+    "AudioOptions": {
+      "catalogId": 1346,
+      "immutableRevision": "77f082d80e0911beab521377036f3a4a94cc5fe9",
+      "sourceSha256": "56ee2e2bd881f131665f222298e31e29e5a45275f4db06f1a1a018f431abd6bc",
+      "disposition": "ACTION_GATED_TEST",
+      "reasonCodes": [
+        "EXTERNAL_AUDIO_DOWNLOAD_REQUIRES_CONFIRMATION"
+      ],
+      "evidence": [
+        "1346-AudioOptions.plugin.js:70-90"
+      ]
+    },
+    "InvisibleTyping": {
+      "catalogId": 295,
+      "immutableRevision": "1844830dd2332e8d3e28d9bee5b767920061506a",
+      "sourceSha256": "d19d1993f3509e7019faaca74abfc11c3efc57a45e7cba98bf5e7946a053e3dd",
+      "disposition": "ACTION_GATED_TEST",
+      "reasonCodes": [
+        "TYPING_STATE_ACTION_REQUIRES_CONFIRMATION"
+      ],
+      "evidence": [
+        "295-InvisibleTyping.plugin.js:451-460,533-541"
+      ]
+    },
+    "NotifyWhenMuted": {
+      "catalogId": 1206,
+      "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
+      "sourceSha256": "64ca857fca4adc1b2e760dac75ef06706336d620f7486ef7a907600e34eecdb4",
+      "disposition": "ACTION_GATED_TEST",
+      "reasonCodes": [
+        "VOICE_AND_REMOTE_AUDIO_REQUIRES_CONFIRMATION"
+      ],
+      "evidence": [
+        "1206-NotifyWhenMuted.plugin.js:11,20-25,137-164"
+      ]
+    },
+    "EditServers": {
+      "catalogId": 75,
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "b46e8d1af3799e6ab34da638942dd21dece10e66f13ce8b13089aad43e63c99d",
+      "disposition": "REJECT",
+      "reasonCodes": [
+        "TLS_VERIFICATION_DISABLED",
+        "BDFDB_DEPENDENCY_HOLD"
+      ],
+      "evidence": [
+        "75-EditServers.plugin.js:581-617"
+      ]
+    },
+    "Translator": {
+      "catalogId": 81,
+      "immutableRevision": "295c2102402b1dc7eb543d45fc7236c34d6503ac",
+      "sourceSha256": "09e342ca92cf946eebf5423ea4ea87498207fed6db72f6a2706a248e3849aef6",
+      "disposition": "REJECT",
+      "reasonCodes": [
+        "PLAINTEXT_PROVIDER_KEYS",
+        "EMBEDDED_PROVIDER_CREDENTIALS",
+        "ARBITRARY_PROVIDER_ENDPOINT",
+        "BDFDB_DEPENDENCY_HOLD"
+      ],
+      "evidence": [
+        "81-Translator.plugin.js:528-607,926-983,1331-1780"
+      ]
+    },
+    "BlurNSFW": {
+      "catalogId": 28,
+      "immutableRevision": "c1488d0c8d143fb43cb70175f92062e184737a47",
+      "sourceSha256": "7c94450550d1808cca17648458c9f123cbd479f96d13c128c774f4eb27c9b34e",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "PATCH_TEARDOWN_INCOMPLETE"
+      ],
+      "evidence": [
+        "28-BlurNSFW.plugin.js:291-322"
+      ]
+    },
+    "VoiceMessages": {
+      "catalogId": 1199,
+      "immutableRevision": "651f87d787e28d7867f9e2948b42fb47de496138",
+      "sourceSha256": "72a88a1ea04ea362b851c333b7af57f431acf7ea43f0edac969ac52a9173d275",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "RECORD_UPLOAD_SEND_PATH",
+        "AUDIO_CONTEXT_TEARDOWN_INCOMPLETE",
+        "CONFIG_DELETE_ON_PARSE_ERROR"
+      ],
+      "evidence": [
+        "1199-VoiceMessages.plugin.js:217-282,435-476,797-849"
+      ]
+    },
+    "PinDMs": {
+      "catalogId": 92,
+      "immutableRevision": "303f9ff6ba59c8acd83c3e203e2aaaa20f63c347",
+      "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "MessagePeek": {
+      "catalogId": 1163,
+      "immutableRevision": "200911262139967235aecd7df7faf7fa8a47ee1a",
+      "sourceSha256": "de9503fcf157cffb0323cc36c7ceb34d688efc1e2b364a6cbb1ad101b0542a02",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "AUTOMATIC_DM_API_PRELOAD",
+        "ASYNC_TEARDOWN_INCOMPLETE"
+      ],
+      "evidence": [
+        "1163-MessagePeek.plugin.js:479-493,526-563"
+      ]
+    },
+    "BetterSearchPage": {
+      "catalogId": 63,
+      "immutableRevision": "677bd668ec3f89de9a66b74bb69566676ec6da17",
+      "sourceSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "ServerHider": {
+      "catalogId": 102,
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "f5b773a48edf937e321c617dd095779f4c6083b62d33affad919f546700a6a63",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "PersonalPins": {
+      "catalogId": 91,
+      "immutableRevision": "c4ee578034688dc77bc30624146770fe57a9a76a",
+      "sourceSha256": "2a4d4f8f3d4fde213497e871702170d06f87d5dbe1e7024eecc4fddd90ff32e1",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "CompleteTimestamps": {
+      "catalogId": 67,
+      "immutableRevision": "0f668ff478ea824d0cb13d5a68cd54862fc82b4a",
+      "sourceSha256": "18ce79c9d59c54ea90478399b8fab5b41eb9e1d11c56e91799e2943f0a03d327",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "ReadAllNotificationsButton": {
+      "catalogId": 94,
+      "immutableRevision": "80de11f2cc8b769f80ac3aceb41ec3262a8839ac",
+      "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD",
+        "READ_STATE_ACTION_REQUIRES_CONFIRMATION"
+      ]
+    },
+    "ServerDetails": {
+      "catalogId": 100,
+      "immutableRevision": "3010da472dda22cf9744a13616a8e0b3f3a5afb2",
+      "sourceSha256": "cc9ee921b73e51d2efd0e50ddc4e7850598c8d6047eb3e7596b5983bef67ddbf",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "ImageUtilities": {
+      "catalogId": 83,
+      "immutableRevision": "4534f0217cc4b5a69cd3a09e6d795e966daded77",
+      "sourceSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD",
+        "DOWNLOAD_AND_FILESYSTEM_ACTION_GATE"
+      ]
+    },
+    "RevealAllSpoilers": {
+      "catalogId": 97,
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "0ef125fbac6591e72523b3e99dc0e2271dd63cf2e91f158b937d531450c4789c",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "BetterFriendList": {
+      "catalogId": 61,
+      "immutableRevision": "d2c23f5ca7d0c8398213aee653668c211b7700a4",
+      "sourceSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    },
+    "BetterVolume": {
+      "catalogId": 184,
+      "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
+      "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "USER_IDENTIFIER_LOGGING"
+      ],
+      "evidence": [
+        "184-BetterVolume.plugin.js:166-169,425-531"
+      ]
+    },
+    "BetterAnimations": {
+      "catalogId": 608,
+      "immutableRevision": "83d3b1d58f1a8b410dda9505df0c4c3a2e039ea6",
+      "sourceSha256": "d047eec2f77738e41493be95e88b2c02936156f224c6c1fb93bd86961cb1df0d",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "MUTABLE_REMOTE_PACK_REGISTRY",
+        "FILE_WATCH_AND_UPDATE",
+        "TEARDOWN_INCOMPLETE"
+      ],
+      "evidence": [
+        "608-BetterAnimations.plugin.js:20056-20257,30413-30669"
+      ]
+    },
+    "DoNotTrack": {
+      "catalogId": 186,
+      "immutableRevision": "6d839d0ab65371819b081218bc43b09d7d6e762d",
+      "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "NONREVERSIBLE_TELEMETRY_MUTATION",
+        "RELOAD_REQUIRED"
+      ],
+      "evidence": [
+        "186-DoNotTrack.plugin.js:218-265"
+      ]
+    },
+    "SpellCheck": {
+      "catalogId": 104,
+      "immutableRevision": "92f52d9f66172df2c4f0d4394de843332689b861",
+      "sourceSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD",
+        "MUTABLE_DICTIONARY_DOWNLOAD",
+        "REQUEST_NOT_ABORTED"
+      ],
+      "evidence": [
+        "104-SpellCheck.plugin.js:104-125,341-378"
+      ]
+    },
+    "SplitLargeMessages": {
+      "catalogId": 98,
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "c5866f77edaf227eb333a2e0f0819f2a8e1e122bd6c4c50f49c2ed3cde2eea46",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD",
+        "MULTI_SEND_ACTION_GATE",
+        "SOULCORD_GUARDED_MODE_AVAILABLE_WITHOUT_FILE"
+      ],
+      "evidence": [
+        "98-SplitLargeMessages.plugin.js:182-201"
+      ]
+    },
+    "CharCounter": {
+      "catalogId": 64,
+      "immutableRevision": "23c24d91e7449c27b497784761ff1e82df273a59",
+      "sourceSha256": "ac1c3864a9dbeb5da09256c27b1937a5cd706b66be8fb7f835d598345409d8c2",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "BDFDB_DEPENDENCY_HOLD"
+      ]
+    }
+  },
+  "dependencies": {
+    "BDFDB": {
+      "catalogId": null,
+      "immutableRevision": "f8709446e30af2448824278091fd36dfdada0088",
+      "sourceSha256": "dd2ea0dd6fad440857e472912fb755cff20dc7dcc8e3e218628ed7deaa99fffd",
+      "disposition": "HOLD",
+      "reasonCodes": [
+        "MUTABLE_RUNTIME_FETCH",
+        "PLUGIN_FILE_MUTATION",
+        "OWN_TEARDOWN_EMPTY"
+      ],
+      "evidence": [
+        "0BDFDB.plugin.js:588-589,696-714,822-858,1134-1215,8739-8748"
+      ]
+    }
+  },
+  "nonclaims": [
+    "SAFE_TO_RUNTIME_TEST is not installed-runtime acceptance.",
+    "No action-gated operation was executed.",
+    "The review found no Discord token, cookie, localStorage, or sessionStorage access in these exact files; that is not a sandbox guarantee."
+  ]
+}
