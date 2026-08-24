@@ -208,7 +208,7 @@ export default function SetupWizard() {
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState("");
     const plan = useMemo(() => resolveSoulCordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
-    const providerMigrationPlan = useStateFromStores([PluginManager], () => SoulCordRuntime.prepareProviderMigrationPlan(draft));
+    const providerMigrationPlan = useStateFromStores([PluginManager], () => SoulCordRuntime.prepareProviderMigrationPlan(draft), [draft]);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setProvider = (name: string, provider: SoulCordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
     const selectRecommended = () => setDraft(current => {

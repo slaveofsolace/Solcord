@@ -53,6 +53,7 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Use SoulCord built-in");
         expect(WIZARD_SOURCE).toContain("Finish disables this exact community file. Rollback restores its exact prior state.");
         expect(WIZARD_SOURCE).toContain("SoulCordRuntime.prepareProviderMigrationPlan(draft)");
+        expect(WIZARD_SOURCE).toContain("SoulCordRuntime.prepareProviderMigrationPlan(draft), [draft]");
         expect(WIZARD_SOURCE).toContain("SoulCordRuntime.finishSetup(draft, providerMigrationPlan)");
         expect(WIZARD_SOURCE).toContain("active community provider changed after review");
         expect(WIZARD_SOURCE).toContain("This explicitly disables");
