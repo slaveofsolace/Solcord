@@ -12,76 +12,13 @@ import SetupWizard from "./setup-wizard";
 import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOULCORD_POWER_LAB} from "./catalog";
-import {calculateSoulCordPanelWidth} from "./panel-layout";
 
-const {useEffect, useRef, useState} = React;
+const {useRef, useState} = React;
 
 function timestamp(value?: number | string): string {
     if (!value) return "never";
     const date = new Date(value);
     return Number.isNaN(date.valueOf()) ? "unknown" : date.toLocaleString();
-}
-
-function useBoundedPanelWidth() {
-    const panelRef = useRef<HTMLElement>(null);
-
-    useEffect(() => {
-        const panel = panelRef.current;
-        if (!panel || typeof window === "undefined" || typeof document === "undefined" || typeof window.requestAnimationFrame !== "function" || typeof window.cancelAnimationFrame !== "function") return;
-
-        const previousWidth = panel.style.width;
-        let animationFrame: number | undefined;
-        let resizeObserver: ResizeObserver | undefined;
-        const restoreWidth = () => {
-            if (previousWidth) panel.style.width = previousWidth;
-            else panel.style.removeProperty("width");
-        };
-        const measure = () => {
-            try {
-                const documentWidth = document.documentElement?.clientWidth;
-                const viewportWidth = Number.isFinite(documentWidth) && documentWidth > 0 ? documentWidth : window.innerWidth;
-                const width = calculateSoulCordPanelWidth(panel.getBoundingClientRect().left, viewportWidth);
-                if (width === undefined) {
-                    restoreWidth();
-                    return;
-                }
-                const nextWidth = `${width}px`;
-                if (panel.style.width !== nextWidth) panel.style.width = nextWidth;
-            }
-            catch {
-                restoreWidth();
-            }
-        };
-        const scheduleMeasurement = () => {
-            if (animationFrame !== undefined) return;
-            animationFrame = window.requestAnimationFrame(() => {
-                animationFrame = undefined;
-                measure();
-            });
-        };
-
-        measure();
-        window.addEventListener("resize", scheduleMeasurement, {passive: true});
-        if (typeof ResizeObserver === "function") {
-            try {
-                resizeObserver = new ResizeObserver(scheduleMeasurement);
-                resizeObserver.observe(panel.parentElement ?? panel);
-            }
-            catch {
-                resizeObserver?.disconnect();
-                resizeObserver = undefined;
-            }
-        }
-
-        return () => {
-            window.removeEventListener("resize", scheduleMeasurement);
-            resizeObserver?.disconnect();
-            if (animationFrame !== undefined) window.cancelAnimationFrame(animationFrame);
-            restoreWidth();
-        };
-    }, []);
-
-    return panelRef;
 }
 
 function Section({title, summary, children}: {title: string; summary: string; children: React.ReactNode;}) {
@@ -563,8 +500,7 @@ function PowerLabStatus() {
 export default function SoulCordPanel() {
     const recoveryMode = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.recoveryMode);
     const onboarding = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().onboarding);
-    const panelRef = useBoundedPanelWidth();
-    return <main ref={panelRef} className="soulcord-panel">
+    return <main className="soulcord-panel">
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
             <div><p className="soulcord-eyebrow">SoulCord V1 · Local power tools</p><h1>SoulCord Suite</h1><p>Activity compatibility, addon recovery, privacy controls, and profiles—kept on this PC.</p></div>

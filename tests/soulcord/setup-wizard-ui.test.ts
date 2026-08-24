@@ -27,7 +27,7 @@ describe("SoulCord beginner-first setup UI", () => {
     });
 
     test("keys responsive layout to the actual settings content container", () => {
-        expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size; width: auto; min-width: 0; max-width: 1080px");
+        expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size; width: min(1080px, 58vw); min-width: 0");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 900px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 520px)");
