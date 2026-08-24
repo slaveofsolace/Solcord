@@ -1,17 +1,26 @@
-import Bun, {$} from "bun";
+// SPDX-License-Identifier: Apache-2.0
+
+import Bun from "bun";
 import path from "node:path";
 import pkg from "../package.json";
 import styleLoader from "bun-style-loader";
 import * as esbuild from "esbuild";
 
+import {assertSoulCordBuildAllowed, captureSoulCordBuildProvenance, type SoulCordBuildMode, writeSoulCordBuildProvenance} from "./helpers/build-provenance";
+
 
 const fileURL = Bun.fileURLToPath(import.meta.url);
 const rootDir = path.join(path.dirname(fileURL), "..");
-const isProduction = process.argv.includes("--minify");
-
-const BRANCH_NAME = Bun.env.BRANCH_NAME ?? (await $`git symbolic-ref --short HEAD`.quiet().nothrow().text()).trim();
-const COMMIT_HASH = Bun.env.COMMIT_HASH ?? (await $`git rev-parse --short HEAD`.quiet().nothrow().text()).trim();
-const DEVELOPMENT = process.argv.includes("--production") ? "production" : Bun.env.NODE_ENV ?? "development";
+const isProduction = process.argv.includes("--minify") || process.argv.includes("--production") || process.argv.includes("--release");
+const buildMode: SoulCordBuildMode = process.argv.includes("--release")
+    ? "release"
+    : process.argv.includes("--production")
+        ? "production"
+        : process.argv.includes("--diagnostic")
+            ? "diagnostic"
+            : process.argv.includes("--watch")
+                ? "watch"
+                : "development";
 
 interface EntryPoint {
     in: string;
@@ -32,6 +41,15 @@ let modulesRequested = process.argv.filter(a => a.startsWith("--module=")).map(a
 if (!modulesRequested.length) modulesRequested = Object.keys(moduleConfigs);
 
 const entryPoints = modulesRequested.map(m => moduleConfigs[m]);
+const provenance = captureSoulCordBuildProvenance(rootDir, {
+    version: pkg.version,
+    mode: buildMode,
+    modules: modulesRequested
+});
+assertSoulCordBuildAllowed(provenance);
+const BRANCH_NAME = provenance.source.branch;
+const COMMIT_HASH = provenance.source.commit;
+const DEVELOPMENT = provenance.buildLabel;
 
 function buildOptions() {
     return {
@@ -81,6 +99,7 @@ async function runBuild() {
     }
     else {
         await esbuild.build(buildOptions());
+        writeSoulCordBuildProvenance(path.join(rootDir, "dist", "build-provenance.json"), provenance);
     }
 
     const after = performance.now();

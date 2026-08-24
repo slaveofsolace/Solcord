@@ -1,6 +1,6 @@
 # SoulCord mark concept evidence
 
-Generated 2026-08-22 with OpenAI Image Generation from text-only prompts. No reference image, Discord asset, BetterDiscord asset, icon pack, owner-private material, or third-party artwork was supplied.
+Generated 2026-08-22 and 2026-08-23 with OpenAI Image Generation from text-only prompts. No reference image, Discord asset, BetterDiscord asset, icon pack, owner-private material, or third-party artwork was supplied. The prompt records below are normalized records of the generation requests; they preserve the requested subject, exclusions, layout, and palette without claiming the model followed them.
 
 ## Fixed art direction shared by all studies
 
@@ -12,9 +12,15 @@ Flat transparent concept art for an original SoulCord mark: an asymmetrical cord
 - **Concept B — data cable.** Explore a stricter geometric `S` built from USB-style signal cords with fewer details and harder endpoints. SHA-256 `2e13551c65b550135dbe1e9d3508e04f80ea80f9bacbfd1329bbfc3dcf7c06d3`. **REJECT:** too literal and too close to a generic connectivity product.
 - **Concept C — abstract cord.** Remove recognizable connector hardware; make the upper and lower cord strokes carry the silhouette, with negative space and a single center cut. SHA-256 `b0f0768ce084b3d9a8920febe7e54365a68b17bfebf38c1116899cd2283b4dbc`. **REVISE:** strongest silhouette, but generated volume and shading were unsuitable for the final flat mark.
 
+The owner rejected the previously installed striped-square icon on 2026-08-23. A second cold-eye pass deliberately tested whether generation could improve on the clean vector redraw:
+
+- **Concept D — physical-cord sheet.** Prompt record: “Six original SoulCord app-mark studies in a 2 by 3 sheet. Each is an asymmetrical cord-cut S made from two interlocking audio or signal cords with one deliberate break. Use graphite, warm bone, oxidized teal, and one restrained ember accent. Flat, transparent, crisp at 16 pixels. No text, crystal, orbit, shield, controller, Discord or BetterDiscord mark, gradient, glow, crypto badge, telemetry, or background.” SHA-256 `2137cb0a3dbb9fd6891197cc5692e70ae7a12feaf9ca9c544b225d0f66f47855`. **REJECT:** the result ignored the flat/transparent constraints, added glow and a dark presentation field, and made connector hardware dominate the silhouette.
+- **Concept E — abstract signal sheet.** Prompt record: “Six highly reduced cord-cut S symbols in a 2 by 3 sheet. Build the S from two separate interlocking signal strokes and a single unmistakable cut. No plugs or literal hardware. Use only graphite, warm bone, oxidized teal, and restrained ember. Flat vector-like geometry on transparency, no lighting, shadow, glow, gradient, lettering, shield, crystal, orbit, controller, Discord shape, or BetterDiscord monogram.” SHA-256 `4fced56901ba6dfce48f9d3b551e3fc75d57a1ba4f463ad8febd3720a7b16ebc`. **REFERENCE ONLY:** this is the strongest second-pass silhouette sheet, but the generated glow, field, and inconsistent cut geometry make it unsuitable for runtime use or direct tracing.
+- **Concept F — monochrome silhouette check.** Prompt record: “Six black-only cord-cut S silhouette thumbnails on a plain white field. One deliberate center break, two distinct strokes, no shading, lighting, gradient, border, text, plug hardware, or decorative imagery. Optimize only for legibility at 16 and 24 pixels.” SHA-256 `0842b51fc233e15d0211081e317e95ca9984a5b2a83212cc74da4f930a347c74`. **REJECT:** the result rendered near-black forms on a black field, so the required small-size silhouette could not be evaluated.
+
 ## Production redraw
 
-The selected direction was redrawn as two original cubic paths with independent graphite outlines, an oxidized-teal upper cord, warm-bone lower cord, and ember cut face. The concept raster was not traced, bundled, or used at runtime.
+The selected direction was redrawn as two original cubic paths with independent graphite outlines, an oxidized-teal upper cord, warm-bone lower cord, and ember cut face. None of the concept rasters was traced, bundled, or used at runtime. The second pass confirms that the deterministic vector is materially clearer than the generated sheets and replaces the rejected installed striped-square icon once this source build is installed.
 
 | Asset | SHA-256 |
 | --- | --- |

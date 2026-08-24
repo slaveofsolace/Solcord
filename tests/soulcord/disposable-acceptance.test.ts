@@ -1,0 +1,894 @@
+// SPDX-License-Identifier: Apache-2.0
+
+import crypto from "crypto";
+import {spawnSync} from "child_process";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import {runInNewContext} from "vm";
+import asar from "@electron/asar";
+import {afterEach, beforeEach, describe, expect, test} from "bun:test";
+
+import {prepareSoulCordDisposableAcceptance, renderDisposableAcceptanceShim} from "../../scripts/prepare-soulcord-disposable-acceptance";
+
+
+interface Fixture {
+    root: string;
+    sourceApp: string;
+    soulCordAsar: string;
+    soulCordSource: string;
+    destination: string;
+    expectedHash: string;
+    expectedSourceCommit: string;
+}
+
+const windowsDescribe = process.platform === "win32" ? describe : describe.skip;
+const temporaryRoots: string[] = [];
+let fixture: Fixture;
+
+function hashBytes(bytes: string | Buffer): string {
+    return crypto.createHash("sha256").update(bytes).digest("hex");
+}
+
+function refreshArtifactHash(): void {
+    fixture.expectedHash = hashBytes(fs.readFileSync(fixture.soulCordAsar));
+}
+
+function stagingRoots(root: string): string[] {
+    return fs.readdirSync(root)
+        .filter(entry => entry.startsWith(".soulcord-acceptance-stage-"))
+        .sort();
+}
+
+function executeShim(environment: Record<string, string>, dirname: string): {
+    environment: Record<string, string>;
+    error: Error | null;
+    loaded: string[];
+    userData: string | null;
+} {
+    const loaded: string[] = [];
+    const mutableEnvironment = {...environment};
+    let userData: string | null = null;
+    const app = {
+        setPath(name: string, value: string) {
+            if (name === "userData") userData = value;
+        },
+        setAsDefaultProtocolClient() {return true;}
+    };
+    const fakeRequire = (request: string): unknown => {
+        if (request === "node:fs") return fs;
+        if (request === "node:path") return path;
+        if (request === "electron") return {app};
+        loaded.push(request);
+        return {};
+    };
+    const module = {exports: {}};
+    let error: Error | null = null;
+    try {
+        runInNewContext(renderDisposableAcceptanceShim(), {
+            __dirname: dirname,
+            module,
+            exports: module.exports,
+            process: {env: mutableEnvironment},
+            require: fakeRequire
+        });
+    }
+    catch (caught) {error = caught instanceof Error ? caught : new Error(String(caught));}
+    return {environment: mutableEnvironment, error, loaded, userData};
+}
+
+function snapshotTree(root: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    const visit = (directory: string): void => {
+        for (const entry of fs.readdirSync(directory, {withFileTypes: true}).sort((left, right) => left.name.localeCompare(right.name))) {
+            const absolute = path.join(directory, entry.name);
+            const relative = path.relative(root, absolute).replaceAll("\\", "/");
+            if (entry.isDirectory()) {
+                result[`${relative}/`] = "directory";
+                visit(absolute);
+            }
+            else if (entry.isSymbolicLink()) {
+                result[relative] = `link:${fs.readlinkSync(absolute)}`;
+            }
+            else {
+                result[relative] = hashBytes(fs.readFileSync(absolute));
+            }
+        }
+    };
+    visit(root);
+    return result;
+}
+
+function validBuildProvenance(sourceCommit: string): Record<string, unknown> {
+    const digest = "1".repeat(64);
+    return {
+        schemaVersion: 1,
+        kind: "soulcord-build-provenance",
+        product: "SoulCord",
+        version: "1.0.0-test",
+        mode: "production",
+        buildLabel: "production-clean",
+        buildTimestamp: "2026-08-23T00:00:00.000Z",
+        modules: ["earlyRenderer", "editor", "editorHtml", "editorPreload", "main", "preload", "soulcord"],
+        source: {
+            commit: sourceCommit,
+            branch: "fork/scaffold-baseline",
+            clean: true,
+            digest,
+            statusDigest: hashBytes("")
+        },
+        inputs: {
+            lockfile: {file: "bun.lock", sha256: digest},
+            toolchain: {
+                bunVersion: "1.2.20",
+                bunExecutableSha256: digest,
+                packageJsonSha256: digest,
+                buildScriptSha256: digest,
+                packScriptSha256: digest
+            }
+        }
+    };
+}
+
+function writeSoulCordSource(source: string, provenance: Record<string, unknown>): void {
+    fs.rmSync(source, {recursive: true, force: true});
+    fs.mkdirSync(path.join(source, "editor"), {recursive: true});
+    fs.writeFileSync(path.join(source, "package.json"), JSON.stringify({name: "soulcord", main: "main.js"}));
+    fs.writeFileSync(path.join(source, "build-provenance.json"), JSON.stringify(provenance));
+    fs.writeFileSync(path.join(source, "main.js"), "module.exports = {};\n");
+    fs.writeFileSync(path.join(source, "preload.js"), "module.exports = {};\n");
+    fs.writeFileSync(path.join(source, "earlyRenderer.js"), "module.exports = {};\n");
+    fs.writeFileSync(path.join(source, "soulcord.js"), "module.exports = {};\n");
+    fs.writeFileSync(path.join(source, "editor", "preload.js"), "module.exports = {};\n");
+    fs.writeFileSync(path.join(source, "editor", "script.js"), "document.body.dataset.ready = 'true';\n");
+    fs.writeFileSync(path.join(source, "editor", "index.html"), "<!doctype html><title>SoulCord</title>\n");
+}
+
+async function packageSoulCord(fixtureValue: Fixture): Promise<void> {
+    asar.uncache(fixtureValue.soulCordAsar);
+    fs.rmSync(fixtureValue.soulCordAsar, {force: true});
+    await asar.createPackage(fixtureValue.soulCordSource, fixtureValue.soulCordAsar);
+    fixtureValue.expectedHash = hashBytes(fs.readFileSync(fixtureValue.soulCordAsar));
+}
+
+async function createFixture(): Promise<Fixture> {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "soulcord-disposable-test-"));
+    temporaryRoots.push(root);
+    const sourceApp = path.join(root, "source", "app-1.0.9999");
+    const soulCordAsar = path.join(root, "artifacts", "soulcord.asar");
+    const soulCordSource = path.join(root, "soulcord-source");
+    const destination = path.join(root, "acceptance");
+    const expectedSourceCommit = "a".repeat(40);
+
+    fs.mkdirSync(path.join(sourceApp, "resources", "app"), {recursive: true});
+    fs.mkdirSync(path.dirname(soulCordAsar), {recursive: true});
+    fs.writeFileSync(path.join(sourceApp, "Discord.exe"), "fake-discord-executable");
+    fs.writeFileSync(path.join(sourceApp, "resources", "app", "index.js"), "module.exports = require('../betterdiscord.app.asar');\n");
+    fs.writeFileSync(path.join(sourceApp, "resources", "app", "package.json"), "{\"name\":\"discord\",\"main\":\"index.js\"}\n");
+    fs.writeFileSync(path.join(sourceApp, "resources", "build_info.json"), JSON.stringify({releaseChannel: "stable", version: "1.0.9999"}));
+    const betterDiscordSource = path.join(root, "betterdiscord-source");
+    fs.mkdirSync(betterDiscordSource);
+    fs.writeFileSync(path.join(betterDiscordSource, "index.js"), "module.exports = {};\n");
+    await asar.createPackage(betterDiscordSource, path.join(sourceApp, "resources", "betterdiscord.app.asar"));
+    fs.writeFileSync(path.join(sourceApp, "runtime-payload.bin"), Buffer.from([0, 1, 2, 3, 254, 255]));
+    writeSoulCordSource(soulCordSource, validBuildProvenance(expectedSourceCommit));
+
+    const result = {root, sourceApp, soulCordAsar, soulCordSource, destination, expectedHash: "", expectedSourceCommit};
+    await packageSoulCord(result);
+    return result;
+}
+
+beforeEach(async () => {
+    fixture = await createFixture();
+});
+
+afterEach(() => {
+    for (const root of temporaryRoots.splice(0)) {
+        const resolved = path.resolve(root);
+        const temporary = `${path.resolve(os.tmpdir())}${path.sep}`.toLowerCase();
+        if (!resolved.toLowerCase().startsWith(temporary) || !path.basename(resolved).startsWith("soulcord-disposable-test-")) {
+            throw new Error(`Refusing unsafe test cleanup target: ${resolved}`);
+        }
+        fs.rmSync(resolved, {recursive: true, force: true});
+    }
+});
+
+windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
+    test("dry-run validates everything while performing zero writes", () => {
+        const before = snapshotTree(fixture.sourceApp);
+        const result = prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        });
+
+        expect(result.dryRun).toBeTrue();
+        expect(result.writtenFiles).toEqual([]);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+        expect(snapshotTree(fixture.sourceApp)).toEqual(before);
+        const manifestText = JSON.stringify(result.manifest);
+        expect(manifestText).not.toContain(fixture.root);
+        expect(manifestText).not.toContain(fixture.sourceApp);
+        expect(manifestText).not.toContain(fixture.destination);
+        expect(manifestText).not.toContain(fixture.soulCordAsar);
+        expect(result.manifest.schemaVersion).toBe(3);
+        expect(result.manifest.discordReleaseChannel).toBe("stable");
+        expect(result.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
+        expect(result.manifest.soulcordBuildMode).toBe("production");
+        expect(result.manifest.sourceDiscordTree.sha256).toMatch(/^[a-f0-9]{64}$/);
+        expect(result.manifest.sourceDiscordTree.files).toBeGreaterThan(0);
+    });
+
+    test("CLI binds both artifact hash and source commit in a no-write dry-run", () => {
+        const result = spawnSync(process.execPath, [
+            path.resolve("scripts/prepare-soulcord-disposable-acceptance.ts"),
+            "--source-app", fixture.sourceApp,
+            "--soulcord-asar", fixture.soulCordAsar,
+            "--destination", fixture.destination,
+            "--expected-sha256", fixture.expectedHash,
+            "--expected-source-commit", fixture.expectedSourceCommit,
+            "--dry-run"
+        ], {cwd: path.resolve("."), encoding: "utf8", windowsHide: true});
+
+        expect(result.status).toBe(0);
+        expect(result.stderr).toBe("");
+        const parsed = JSON.parse(result.stdout) as {dryRun: boolean; writtenFiles: string[]; manifest: {soulcordSourceCommit: string;};};
+        expect(parsed.dryRun).toBeTrue();
+        expect(parsed.writtenFiles).toEqual([]);
+        expect(parsed.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("direct Discord execution fails before acceptance mode or SoulCord modules are used", () => {
+        const result = executeShim({}, path.join(fixture.destination, "runtime", "resources", "app"));
+        expect(result.error?.message).toContain("SOULCORD_ACCEPTANCE_ROOT");
+        expect(result.environment.SOULCORD_ACCEPTANCE_MODE).toBeUndefined();
+        expect(result.userData).toBeNull();
+        expect(result.loaded).toEqual([]);
+    });
+
+    test("copies bytes, isolates paths, writes an ordered shim, and never launches", () => {
+        const before = snapshotTree(fixture.sourceApp);
+        const result = prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        });
+
+        const runtime = path.join(fixture.destination, "runtime");
+        const copiedSoulCord = path.join(runtime, "resources", "soulcord.asar");
+        expect(result.dryRun).toBeFalse();
+        expect(fs.readFileSync(path.join(runtime, "Discord.exe"), "utf8")).toBe("fake-discord-executable");
+        expect(fs.readFileSync(path.join(runtime, "runtime-payload.bin"))).toEqual(Buffer.from([0, 1, 2, 3, 254, 255]));
+        expect(hashBytes(fs.readFileSync(copiedSoulCord))).toBe(fixture.expectedHash);
+        expect(fs.readFileSync(copiedSoulCord)).toEqual(fs.readFileSync(fixture.soulCordAsar));
+        expect(snapshotTree(fixture.sourceApp)).toEqual(before);
+
+        const shim = fs.readFileSync(path.join(runtime, "resources", "app", "index.js"), "utf8");
+        const setPathIndex = shim.indexOf("app.setPath(\"userData\"");
+        const protocolStubIndex = shim.indexOf("setAsDefaultProtocolClient");
+        const soulCordIndex = shim.indexOf("require(\"../soulcord.asar\")");
+        const originalIndex = shim.indexOf("require(\"../betterdiscord.app.asar\")");
+        expect(setPathIndex).toBeGreaterThan(-1);
+        expect(protocolStubIndex).toBeGreaterThan(setPathIndex);
+        expect(soulCordIndex).toBeGreaterThan(protocolStubIndex);
+        expect(originalIndex).toBeGreaterThan(soulCordIndex);
+        expect(shim.indexOf("SOULCORD_ACCEPTANCE_MODE")).toBeLessThan(setPathIndex);
+
+        const execution = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Roaming"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(runtime, "resources", "app"));
+        expect(execution.error).toBeNull();
+        expect(execution.userData).toBe(path.join(fixture.destination, "profile", "Roaming", "discord"));
+        expect(execution.environment.SOULCORD_ACCEPTANCE_MODE).toBe("1");
+        expect(execution.loaded).toEqual(["../soulcord.asar", "../betterdiscord.app.asar"]);
+        const mismatchedEnvironment = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Local"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(runtime, "resources", "app"));
+        expect(mismatchedEnvironment.error?.message).toContain("APPDATA does not match");
+        expect(mismatchedEnvironment.environment.SOULCORD_ACCEPTANCE_MODE).toBeUndefined();
+        expect(mismatchedEnvironment.loaded).toEqual([]);
+
+        const launcher = fs.readFileSync(path.join(fixture.destination, "launch-soulcord-acceptance.cmd"), "utf8");
+        expect(launcher).toContain("APPDATA=%SOULCORD_ACCEPTANCE_ROOT%profile\\Roaming");
+        expect(launcher).toContain("LOCALAPPDATA=%SOULCORD_ACCEPTANCE_ROOT%profile\\Local");
+        expect(launcher).toContain("DISCORD_USER_DATA_DIR=%SOULCORD_ACCEPTANCE_ROOT%profile\\Roaming");
+        expect(launcher).toContain("--multi-instance");
+        expect(launcher).not.toContain("--user-data-dir");
+
+        const launcherEnvironmentRoot = path.join(fixture.destination, "profile", "Roaming");
+        const discordComputedUserData = path.join(launcherEnvironmentRoot, "discord");
+        const shimComputedUserData = path.resolve(path.dirname(path.join(runtime, "resources", "app", "index.js")), "../../../profile/Roaming/discord");
+        expect(shimComputedUserData).toBe(discordComputedUserData);
+        expect(result.manifest.paths.userData).toBe("profile/Roaming/discord");
+        expect(path.join(path.dirname(shimComputedUserData), "BetterDiscord"))
+            .toBe(path.join(fixture.destination, "profile", "Roaming", "BetterDiscord"));
+        expect(fs.statSync(shimComputedUserData).isDirectory()).toBeTrue();
+        expect(fs.statSync(path.join(path.dirname(shimComputedUserData), "BetterDiscord")).isDirectory()).toBeTrue();
+
+        const manifestText = fs.readFileSync(path.join(fixture.destination, "acceptance-manifest.json"), "utf8");
+        expect(manifestText).not.toContain(fixture.root);
+        expect(manifestText).not.toContain(fixture.sourceApp);
+        expect(manifestText).not.toContain(fixture.destination);
+        expect(manifestText).not.toContain(fixture.soulCordAsar);
+        expect(JSON.parse(manifestText)).toEqual(result.manifest);
+        expect(result.manifest.discordVersion).toBe("1.0.9999");
+        expect(result.manifest.discordReleaseChannel).toBe("stable");
+        expect(result.manifest.safety.launchPerformed).toBeFalse();
+        expect(result.manifest.safety.copiedUserProfile).toBeFalse();
+        expect(result.manifest.safety.filesystemProfileIsolated).toBeTrue();
+        expect(result.manifest.safety.windowsAccountIsolated).toBeFalse();
+        for (const relative of Object.values(result.manifest.paths)) {
+            expect(path.isAbsolute(relative)).toBeFalse();
+            expect(relative).not.toContain("\\");
+        }
+    });
+
+    test("refuses a pre-existing destination root", () => {
+        fs.mkdirSync(fixture.destination);
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("already exists");
+    });
+
+    test("rejects a non-CommonJS or noncanonical Discord app package in dry-run", () => {
+        fs.writeFileSync(
+            path.join(fixture.sourceApp, "resources", "app", "package.json"),
+            JSON.stringify({name: "discord", main: "../index.js", type: "module"})
+        );
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("discord CommonJS application with canonical index.js main");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects oversized Discord app metadata before parsing it", () => {
+        fs.writeFileSync(path.join(fixture.sourceApp, "resources", "app", "package.json"), Buffer.alloc(128 * 1024 + 1, 0x20));
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("no larger than 128 KiB");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects build-info version drift before creating the destination", () => {
+        fs.writeFileSync(
+            path.join(fixture.sourceApp, "resources", "build_info.json"),
+            JSON.stringify({releaseChannel: "stable", version: "1.0.0000"})
+        );
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("must match the app directory version");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects a source runtime that already contains soulcord.asar during dry-run", () => {
+        fs.copyFileSync(fixture.soulCordAsar, path.join(fixture.sourceApp, "resources", "soulcord.asar"));
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("source resources/soulcord.asar already exists");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects a physical destination-parent alias into the source tree", () => {
+        const originalNativeRealpath = fs.realpathSync.native;
+        fs.realpathSync.native = ((target, options) => {
+            if (path.resolve(String(target)).toLocaleLowerCase("en-US") === path.resolve(fixture.root).toLocaleLowerCase("en-US")) {
+                return fixture.sourceApp;
+            }
+            return originalNativeRealpath(target, options as never);
+        }) as typeof fs.realpathSync.native;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+                dryRun: true
+            })).toThrow("physically resolve inside");
+        }
+        finally {
+            fs.realpathSync.native = originalNativeRealpath;
+        }
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects a hash mismatch before creating the destination", () => {
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: "0".repeat(64),
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("does not match");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects a truncated ASAR whose packed entry ends exceed the archive", () => {
+        fs.truncateSync(fixture.soulCordAsar, fs.statSync(fixture.soulCordAsar).size - 1);
+        refreshArtifactHash();
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow(/outside the archive|truncated/i);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an oversized ASAR before hashing or parser allocation", () => {
+        fs.truncateSync(fixture.soulCordAsar, 512 * 1024 * 1024 + 1);
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("between 16 bytes and 512 MiB");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an oversized declared ASAR header before parser allocation", () => {
+        const descriptor = fs.openSync(fixture.soulCordAsar, "r+");
+        try {
+            const declaredSize = Buffer.alloc(4);
+            declaredSize.writeUInt32LE(1024 * 1024 + 4);
+            fs.writeSync(descriptor, declaredSize, 0, declaredSize.length, 4);
+        }
+        finally {fs.closeSync(descriptor);}
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("fixed header is malformed or oversized");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an in-bounds header with a forged packed offset", () => {
+        const archive = fs.readFileSync(fixture.soulCordAsar);
+        const marker = Buffer.from("\"offset\":\"0\"");
+        const markerIndex = archive.indexOf(marker);
+        expect(markerIndex).toBeGreaterThan(-1);
+        archive[markerIndex + Buffer.byteLength("\"offset\":\"")] = "9".charCodeAt(0);
+        fs.writeFileSync(fixture.soulCordAsar, archive);
+        refreshArtifactHash();
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow(/overlap|gaps|outside the archive/i);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects malformed ASAR integrity metadata", () => {
+        const archive = fs.readFileSync(fixture.soulCordAsar);
+        const marker = Buffer.from("\"algorithm\":\"SHA256\"");
+        const markerIndex = archive.indexOf(marker);
+        expect(markerIndex).toBeGreaterThan(-1);
+        Buffer.from("MD5256").copy(archive, markerIndex + Buffer.byteLength("\"algorithm\":\""));
+        fs.writeFileSync(fixture.soulCordAsar, archive);
+        refreshArtifactHash();
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("integrity metadata is unsupported or invalid");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects zero-sized or unexpected ASAR runtime entries", async () => {
+        fs.writeFileSync(path.join(fixture.soulCordSource, "main.js"), "");
+        fs.writeFileSync(path.join(fixture.soulCordSource, "unexpected.js"), "module.exports = {};\n");
+        await packageSoulCord(fixture);
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow(/invalid, empty, or oversized|exact expected runtime entrypoints/i);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an embedded SoulCord package that selects ESM loading", async () => {
+        fs.writeFileSync(
+            path.join(fixture.soulCordSource, "package.json"),
+            JSON.stringify({name: "soulcord", main: "main.js", type: "module"})
+        );
+        await packageSoulCord(fixture);
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("canonical CommonJS package");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects unknown embedded package keys that can alter module loading", async () => {
+        fs.writeFileSync(
+            path.join(fixture.soulCordSource, "package.json"),
+            JSON.stringify({name: "soulcord", main: "main.js", exports: "./preload.js"})
+        );
+        await packageSoulCord(fixture);
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("canonical CommonJS package");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an ASAR missing embedded build provenance before creating the destination", async () => {
+        fs.unlinkSync(path.join(fixture.soulCordSource, "build-provenance.json"));
+        await packageSoulCord(fixture);
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow(/expected runtime entrypoints|build-provenance/i);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects stale diagnostic provenance before creating the destination", async () => {
+        const provenance = validBuildProvenance(fixture.expectedSourceCommit);
+        provenance.mode = "diagnostic";
+        provenance.buildLabel = "diagnostic-clean";
+        writeSoulCordSource(fixture.soulCordSource, provenance);
+        await packageSoulCord(fixture);
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("production or release build provenance");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects dirty production provenance before creating the destination", async () => {
+        const provenance = validBuildProvenance(fixture.expectedSourceCommit);
+        const source = provenance.source as Record<string, unknown>;
+        source.clean = false;
+        source.statusDigest = "2".repeat(64);
+        provenance.buildLabel = `production-dirty.${String(source.digest).slice(0, 16)}`;
+        writeSoulCordSource(fixture.soulCordSource, provenance);
+        await packageSoulCord(fixture);
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        })).toThrow("clean production or release build provenance");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects a caller-bound source commit mismatch before creating the destination", () => {
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: "b".repeat(40)
+        })).toThrow("does not match the caller-provided expected source commit");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects and removes a runtime when the copied BetterDiscord ASAR changes during copy", () => {
+        const originalCopyFileSync = fs.copyFileSync;
+        fs.copyFileSync = ((source, destination, mode) => {
+            originalCopyFileSync(source, destination, mode);
+            if (path.basename(String(destination)) === "betterdiscord.app.asar") {
+                fs.appendFileSync(destination, "changed-after-source-hash");
+            }
+        }) as typeof fs.copyFileSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("BetterDiscord application ASAR failed post-copy SHA-256 verification");
+        }
+        finally {
+            fs.copyFileSync = originalCopyFileSync;
+        }
+
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("detects a source-tree mutation during copy and removes only its destination", () => {
+        const originalCopyFileSync = fs.copyFileSync;
+        const mutableSource = path.join(fixture.sourceApp, "runtime-payload.bin");
+        let mutated = false;
+        fs.copyFileSync = ((source, destination, mode) => {
+            originalCopyFileSync(source, destination, mode);
+            if (!mutated && path.resolve(String(source)) === path.resolve(mutableSource)) {
+                mutated = true;
+                fs.appendFileSync(mutableSource, "changed-during-copy");
+            }
+        }) as typeof fs.copyFileSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("source Discord runtime changed during copy");
+        }
+        finally {
+            fs.copyFileSync = originalCopyFileSync;
+        }
+
+        expect(mutated).toBeTrue();
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+        expect(fs.existsSync(fixture.sourceApp)).toBeTrue();
+    });
+
+    test("revalidates copied package semantics accepted before the first inventory", () => {
+        const originalReadDirectory = fs.readdirSync;
+        const sourcePackage = path.join(fixture.sourceApp, "resources", "app", "package.json");
+        let sourceRootReads = 0;
+        let mutated = false;
+        fs.readdirSync = ((directory, options) => {
+            if (path.resolve(String(directory)) === path.resolve(fixture.sourceApp) && ++sourceRootReads === 2) {
+                fs.writeFileSync(sourcePackage, "{\"name\":\"discord\",\"main\":\"./index.js\"}\n");
+                mutated = true;
+            }
+            return originalReadDirectory(directory, options as never);
+        }) as typeof fs.readdirSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("no longer matches the initially accepted package and build identity");
+        }
+        finally {
+            fs.readdirSync = originalReadDirectory;
+        }
+
+        expect(mutated).toBeTrue();
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("revalidates copied build identity accepted before the first inventory", () => {
+        const originalReadDirectory = fs.readdirSync;
+        const buildInfo = path.join(fixture.sourceApp, "resources", "build_info.json");
+        let sourceRootReads = 0;
+        let mutated = false;
+        fs.readdirSync = ((directory, options) => {
+            if (path.resolve(String(directory)) === path.resolve(fixture.sourceApp) && ++sourceRootReads === 2) {
+                fs.writeFileSync(buildInfo, JSON.stringify({releaseChannel: "canary", version: "1.0.9999"}));
+                mutated = true;
+            }
+            return originalReadDirectory(directory, options as never);
+        }) as typeof fs.readdirSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("no longer matches the initially accepted package and build identity");
+        }
+        finally {
+            fs.readdirSync = originalReadDirectory;
+        }
+
+        expect(mutated).toBeTrue();
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects corruption in a copied non-ASAR runtime file through whole-tree verification", () => {
+        const originalCopyFileSync = fs.copyFileSync;
+        const mutableSource = path.join(fixture.sourceApp, "runtime-payload.bin");
+        fs.copyFileSync = ((source, destination, mode) => {
+            originalCopyFileSync(source, destination, mode);
+            if (path.resolve(String(source)) === path.resolve(mutableSource)) {
+                fs.appendFileSync(destination, "corrupt-copy-only");
+            }
+        }) as typeof fs.copyFileSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("whole-tree verification");
+        }
+        finally {
+            fs.copyFileSync = originalCopyFileSync;
+        }
+
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+        expect(fs.readFileSync(mutableSource)).toEqual(Buffer.from([0, 1, 2, 3, 254, 255]));
+    });
+
+    test("does not clean an attacker replacement of the owned staging root", () => {
+        const originalCopyFileSync = fs.copyFileSync;
+        const originalRenameSync = fs.renameSync;
+        let replacementRoot = "";
+        let displacedOwnedRoot = "";
+        fs.copyFileSync = ((source, destination, mode) => {
+            const destinationPath = path.resolve(String(destination));
+            const firstSegment = path.relative(fixture.root, destinationPath).split(path.sep)[0];
+            if (!replacementRoot && firstSegment.startsWith(".soulcord-acceptance-stage-")) {
+                replacementRoot = path.join(fixture.root, firstSegment);
+                displacedOwnedRoot = `${replacementRoot}.displaced`;
+                originalRenameSync(replacementRoot, displacedOwnedRoot);
+                fs.mkdirSync(path.dirname(destinationPath), {recursive: true});
+                fs.writeFileSync(path.join(replacementRoot, "attacker-marker.txt"), "preserve-replacement");
+            }
+            originalCopyFileSync(source, destination, mode);
+        }) as typeof fs.copyFileSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("staging root ownership changed");
+        }
+        finally {
+            fs.copyFileSync = originalCopyFileSync;
+        }
+
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+        expect(fs.readFileSync(path.join(replacementRoot, "attacker-marker.txt"), "utf8")).toBe("preserve-replacement");
+        expect(fs.existsSync(displacedOwnedRoot)).toBeTrue();
+    });
+
+    test("cleans only owned staging after a late manifest-write failure", () => {
+        const originalWriteFileSync = fs.writeFileSync;
+        fs.writeFileSync = ((file, data, options) => {
+            if (path.basename(String(file)) === "acceptance-manifest.json") throw new Error("synthetic late manifest failure");
+            return originalWriteFileSync(file, data, options as never);
+        }) as typeof fs.writeFileSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("synthetic late manifest failure");
+        }
+        finally {
+            fs.writeFileSync = originalWriteFileSync;
+        }
+
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+        expect(stagingRoots(fixture.root)).toEqual([]);
+    });
+
+    test("preserves a destination created by another process before atomic rename wins the race", () => {
+        const originalRenameSync = fs.renameSync;
+        const competingMarker = path.join(fixture.destination, "created-by-competing-process.txt");
+        let injected = false;
+        fs.renameSync = ((source, destination) => {
+            if (!injected && path.resolve(String(destination)) === path.resolve(fixture.destination)) {
+                injected = true;
+                fs.mkdirSync(fixture.destination);
+                fs.writeFileSync(competingMarker, "preserve-me");
+                throw Object.assign(new Error("EEXIST: destination won by competing process"), {code: "EEXIST"});
+            }
+            return originalRenameSync(source, destination);
+        }) as typeof fs.renameSync;
+
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("destination won by competing process");
+        }
+        finally {
+            fs.renameSync = originalRenameSync;
+        }
+
+        expect(fs.readFileSync(competingMarker, "utf8")).toBe("preserve-me");
+        expect(stagingRoots(fixture.root)).toEqual([]);
+    });
+
+    test("rejects source-tree junctions rather than following them", () => {
+        const external = path.join(fixture.root, "external");
+        fs.mkdirSync(external);
+        fs.writeFileSync(path.join(external, "private.txt"), "must-not-be-read");
+        fs.symlinkSync(external, path.join(fixture.sourceApp, "linked-profile"), "junction");
+
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow(/symbolic link|junction|reparse/i);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects relative input paths", () => {
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: "app-1.0.9999",
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("absolute");
+    });
+});

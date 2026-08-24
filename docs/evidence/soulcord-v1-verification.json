@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
   "baseCommit": "9e2b67532f5fde991994b094ac42c5ac9ed101dd",
-  "sourceState": "committed-source-with-separate-evidence-attestation",
+  "sourceState": "PENDING_FINAL_EXACT_COMMIT_AND_EVIDENCE_ATTESTATION",
   "archives": {
     "sourceSha256": "6c14165e1a6517d17dca401408b8299b68b39afd413196c64a22e7b0e6b777d9",
     "deliverySha256": "3032773607fae5477f9c1dedfdc4e39125ea82acff242e4ce27099a0a4f75f18",
@@ -18,14 +18,14 @@
     "runtimeAcceptance": "PENDING"
   },
   "automatedVerification": {
-    "tests": {"status": "PASS", "passed": 388, "failed": 0, "assertions": 1222, "files": 30},
+    "tests": {"status": "PASS_PRECOMMIT_SETTLED_TREE", "passed": 521, "failed": 0, "assertions": 2936, "files": 46},
     "typecheck": "PASS",
     "eslint": {"status": "PASS", "errors": 0, "inheritedWarnings": 3},
     "soulcordCssLint": "PASS",
-    "upstreamCssLint": {"status": "INHERITED_NON_GREEN", "errors": 197, "warnings": 27, "changedSoulCordFilesClean": true},
+    "upstreamCssLint": {"status": "INHERITED_NON_GREEN", "errors": 509, "warnings": 895, "baselineErrors": 509, "baselineWarnings": 895, "changedSoulCordFilesClean": true, "measurement": "explicit **/*.css; package lint-css short-circuits after its first inherited failure"},
     "circularAnalysis": {"status": "PASS", "inheritedCyclesReported": 11},
-    "productionBuild": "PASS",
-    "asarPackaging": "PASS",
+    "productionBuild": "PENDING_FINAL_EXACT_COMMIT",
+    "asarPackaging": "PENDING_FINAL_EXACT_COMMIT",
     "typeGeneration": "PASS",
     "diffCheck": "PASS"
   },
@@ -47,20 +47,23 @@
     "editor/index.html"
   ],
   "productionArtifact": {
-    "path": "dist/soulcord.asar",
-    "sha256": "f89d8a4e241c31f7e8ddc1e5f17d328a6d8697ef97075701b7987d2119332292",
-    "sourceRevision": "22af5a60d30ada92e47fa9f3762e5f5ce7b744a7"
+    "status": "PENDING_FINAL_EXACT_COMMIT",
+    "path": null,
+    "sha256": null,
+    "sourceRevision": null
   },
   "securityReview": {
-    "latestSealedScanId": "1fa1a86b-2a59-4d33-a247-7c70d06b7ed3",
-    "latestSealedSnapshot": "codex-security-snapshot/v1:sha256:229fb0f1a2043d0439ba9b5caa93f00b19c0de13f36f3b18d978b03995829aaa",
-    "latestFindings": {"medium": 0, "low": 0},
-    "cumulativeRemediatedFindings": 8,
+    "latestSealedScanId": "63440b76-b835-4767-80ca-21dd80597eb3",
+    "latestSealedSnapshot": "codex-security-snapshot/v1:sha256:29845d397c45cb6c5fcd5cba29f9a5e2f10bf645cbe81b3454813ef71535142c",
+    "latestFindings": {"medium": 0, "low": 3, "remediatedAfterScan": true},
+    "cumulativeRemediatedFindings": 11,
     "latestRemediations": [
       "Ordinary settings exports omit Timeline channel identifiers and normalize the mirrored scope to DM-only.",
-      "Settings imports preview every applied field without identifiers and verify a SHA-256 binding over full normalized current and candidate state at apply time."
+      "Settings imports preview every applied field without identifiers and verify a SHA-256 binding over full normalized current and candidate state at apply time.",
+      "Provider migration revalidates the sealed plan immediately before disabling and rolls back on post-transaction drift.",
+      "Memory-only Timeline reads enforce shortened retention while session retention preserves opaque account stores for explicit recovery."
     ],
-    "finalRescan": "PASS_PRECOMMIT"
+    "finalRescan": "PENDING_POST_FIX_EXACT_COMMIT"
   },
   "humanEye": {
     "sourceAssetReview": "COMPLETE",

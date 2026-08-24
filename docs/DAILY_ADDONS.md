@@ -18,7 +18,7 @@ The pre-change `plugins.json` is preserved in the task repair backup. Enabling t
 
 - Activity Bridge
 - Plugin Doctor + Addon Quarantine
-- Module Drift Radar / Patch Canary
+- Module Drift Radar (preview; captured-fixture Patch Canary is not implemented)
 - Performance HUD
 - Workspace Profiles
 - Command Deck
@@ -26,12 +26,18 @@ The pre-change `plugins.json` is preserved in the task repair backup. Enabling t
 - Stream Shield + Screenshot Scrubber
 - Settings Time Machine + Update Ledger
 - Accessibility Toolkit
+- Do Not Track clean-room adapter (suppresses only Discord's structurally anchored analytics `track` method; it does not claim Sentry, process-monitoring, or network-wide blocking)
+- Double Click to Reply clean-room adapter (opens reply state only; never sends)
+- Invisible Typing clean-room adapter (suppresses only outgoing typing-start calls)
+- Guarded Split Large Messages (PREVIEW: prepares ordered parts for manual copy and never multi-sends; setup keeps it off until a disposable Discord modal/clipboard acceptance receipt exists)
 
-## Installed candidates reviewed, not auto-enabled
+The accepted default interaction set is Do Not Track, Double Click to Reply, and Invisible Typing. Guarded Split Large Messages remains source-present at PREVIEW maturity and is neither recommended nor transaction-executable. These clean-room adapters do not copy the owner-installed plugin files. If a matching owner plugin is already enabled, SoulCord leaves it alone and does not install a duplicate patch.
+
+## Community candidates considered, not SoulCord-accepted
 
 - BetterVolume, CallTimeCounter, CompleteTimestamps, PinDMs, VoiceActivity, BetterFriendList, and ServerDetails are sensible next daily-tool candidates. Dependency, license, and installed-runtime checks still apply before enabling them as a pack.
-- SplitLargeMessages is not auto-enabled because it can submit multiple messages and therefore crosses SoulCord’s no-automatic-send default.
-- MessageLoggerV2 and MessagePeek remain off because message retention/deleted-message behavior conflicts with SoulCord’s privacy boundary.
+- Native SplitLargeMessages remains held because it can submit multiple messages. SoulCord's guarded built-in remains PREVIEW: its source prepares and copies ordered parts after confirmation, but setup does not enable it before the disposable Discord modal/clipboard receipt exists.
+- MessageLoggerV2 remains off because it is a private message-retention tool outside the ordinary curated pack. MessagePeek is separately held because its reviewed file preloads DM data through an API path and does not yet prove complete asynchronous teardown.
 - FakeDeafen and FakeMute & Deafen remain off because they intentionally misrepresent voice state and are account-risk behavior.
 
-Catalog review also considered current tools such as MoreDoubleClicks, BetterDoubleClickToEdit, Incognito, FileNameRandomization, and ActivityFilter. Names and behavior can inform clean-room product work; no catalog entry grants blanket permission to copy source or assets.
+The pinned catalog contains 209 plugin and 114 theme metadata records. Forty-seven plugin payloads were statically screened and the requested 36 received manual dispositions; catalog-theme source/license review and every community runtime acceptance remain pending. Catalog names and behavior can inform clean-room product work, but no catalog entry grants blanket permission to copy source or assets.

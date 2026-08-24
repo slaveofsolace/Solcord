@@ -1,6 +1,6 @@
 # Windows install and rollback
 
-SoulCord V1 is installed only after tests, lint, type checks, production build, packaging, security review, and artifact hashing pass. The owner authorized a reversible install on this PC, but Windows security, authentication, and permission dialogs remain manual.
+SoulCord V1 is installed only after tests, lint, type checks, production build, packaging, security review, artifact hashing, disposable acceptance, and the live-install checkpoint pass. Source work does not authorize closing Discord or changing the live profile; fresh owner approval is required at that checkpoint. Windows security, authentication, and permission dialogs remain manual.
 
 ## Compatibility paths
 
@@ -23,6 +23,20 @@ The installed filename remains `betterdiscord.asar` because that is the existing
 6. Confirm no token-like string, private content, absolute user path, or secret appears in the diff, package, screenshots, docs, or build manifest.
 7. Do not continue if any required gate fails.
 
+## Disposable acceptance mode
+
+SoulCord can prepare a copied Discord runtime for core-only acceptance without changing the installed Discord resources or copying the owner's Discord/BetterDiscord profile. Acceptance mode requires an explicit absolute root and derives every SoulCord data path from that root. It also suppresses `betterdiscord://` registration and disables core/addon update writes for the copied run.
+
+The preparer has a true dry-run mode. Before any destination write, it validates a bounded CommonJS `resources/app/package.json`, matches bounded `resources/build_info.json` metadata to the `app-<version>` directory, rejects a source that already contains `resources/soulcord.asar`, canonicalizes the physical source and existing destination parent, and rejects links/reparse aliases or physical destination containment. It verifies the caller-bound SoulCord ASAR SHA-256 and full source commit, prechecks bounded ASAR file/header sizes before parsing, validates every packed entry range, and requires the exact self-contained runtime entrypoints plus embedded clean `production` or `release` build provenance. The caller must supply both `--expected-sha256 <sha256>` and `--expected-source-commit <40-character git commit>`; corrupt, truncated, oversized, copied, or stale diagnostic artifacts fail closed.
+
+A real preparation snapshots a deterministic hash inventory of the complete Discord application tree, builds under a random sibling staging directory whose physical identity is rechecked, verifies both the unchanged source tree and the complete copied tree against that snapshot, writes the shim/artifact/manifest inside staging, and atomically renames staging to the still-absent final destination. Failure cleanup removes only the staging directory whose recorded identity is still owned by that invocation; it never deletes a competing or replaced destination. The shim then requires the launcher-provided `SOULCORD_ACCEPTANCE_ROOT`, `APPDATA`, `LOCALAPPDATA`, and `DISCORD_USER_DATA_DIR` to canonically match its copied location before enabling acceptance mode or loading SoulCord. Direct `Discord.exe` execution therefore fails closed. Preparation never launches Discord. The generated launcher uses `--multi-instance`; authentication remains a manual owner action.
+
+Residual nonclaim: the staging-identity check and recursive failure cleanup are separate filesystem operations. A hostile process running as the same Windows user with write access to the destination parent could attempt a directory swap in that narrow interval. Random staging names, repeated physical identity checks, and replacement-preserving failure behavior reduce exposure and fail closed when a swap is observed, but they do not make recursive deletion kernel-atomic. Use a destination parent that untrusted same-user processes cannot modify, or a separate Windows account, for a stronger boundary.
+
+Do not copy `%APPDATA%\Discord`, `%APPDATA%\BetterDiscord`, tokens, Timeline data, or browser session material into the disposable profile. A same-Windows-user profile separates files and Discord state but still shares the Windows account and DPAPI boundary. A separate standard Windows account is the stronger acceptance boundary.
+
+Disposable acceptance does not authorize messages, uploads, notification reads, voice joins, recordings, streams, OAuth, links, or Activity launches. The owner performs those actions after reviewing the prepared build. The copied runtime is evidence only for the exact artifact hash and Discord version recorded in its manifest.
+
 ## Reversible install procedure
 
 1. Post the exact close/install action in the active task.
@@ -41,9 +55,9 @@ The machine-readable install manifest records exact backup and rollback paths af
 
 ## First-run setup transaction
 
-The first-run selection is a draft: Obsidian Thread, the 36-addon aggressive selection, guarded message splitting, DM/group-DM Timeline with seven-day text-only retention, and every Power Lab experiment off. `Skip` changes no addon file, enabled state, theme, or Timeline setting.
+The first-run draft selects SoulCord Default and three ready local features: DoNotTrack, Invisible Typing, and Double Click to Reply. Guarded Split Large Messages remains visible as a preview but is not selected, executable, or eligible to replace a community provider until disposable Discord modal/clipboard acceptance passes. Message Timeline and every Power Lab experiment remain off. The other catalog entries are optional and carry an individual reason/status; unavailable choices never block `Finish`. `Skip` changes no addon file, enabled state, theme, or Timeline setting.
 
-After the owner presses `Finish`, SoulCord stages the complete dependency closure, verifies immutable hashes, and refuses a differing local file. It then enables selected addons one at a time and activates one SoulCord theme. A start failure is reported and quarantined; it is not counted as working. Reduced-motion conflicts keep DiscordEffects and BetterAnimations off. This transaction is not installation evidence until the disposable-profile tests pass.
+After the owner presses `Finish`, SoulCord stages only accepted requested candidates and their complete dependency closure, verifies immutable hashes, and refuses a differing local file. It enables accepted choices one at a time and activates one SoulCord theme. Requested-but-held and unrequested owner addons remain untouched and owner-managed; setup does not replace, stop, or certify them. When an active community plugin overlaps a selected clean-room built-in, the community plugin remains active and the built-in dynamically stands down until the owner makes a separate reversible choice. If the owner chooses the SoulCord provider, the wizard seals the exact feature name, community filename, enabled state, and provider choice shown in the confirmation. The runtime rechecks that plan before staging and immediately before disabling the community file; any drift aborts and rolls the transaction back without disabling a replacement file. A start failure is reported and quarantined; it is not counted as working. Reduced-motion conflicts keep DiscordEffects and BetterAnimations off. This transaction is not installation evidence until the disposable-profile tests pass.
 
 The setup rollback action restores the recorded prior plugin/theme enabled states and the pre-setup SoulCord snapshot, then asks the main process to remove only unchanged files added by that transaction. Identical pre-existing files are reused and never removed. A user-modified file is preserved rather than overwritten or deleted.
 
@@ -76,5 +90,5 @@ Do not delete the SoulCord artifact or backup until the owner accepts both Activ
 - The owner’s existing plugins/themes are preserved, not certified compatible.
 - The vanilla launcher is an escape hatch, not a SoulCord validation path.
 - A catalog hash match or static pass is not plugin runtime acceptance.
-- The 36-addon wizard selection is not an enabled-addon list until the owner presses `Finish` and each addon passes its one-at-a-time start check.
+- The 36-entry catalog is not an enabled-addon list. Only accepted choices can run, and the beginner default contains three clean-room features.
 - Persistent Timeline and setup rollback are source-implemented, not Windows-accepted, until their integration gates pass.

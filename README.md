@@ -28,10 +28,12 @@ This branch is a review build, not a published release. Automated and synthetic 
 | Command Deck | Local settings/actions palette at `Ctrl+Alt+K` | Ready |
 | Link Lens | Local host, tracker, declared-redirect, confusable-domain, and invite-code review | Preview; invite metadata is not fetched |
 | Stream Shield | Reversible privacy preview and manual hotkey; structural Go Live detection | Preview |
-| Screenshot Scrubber | Local cover/blur workflow and PNG export; never uploads | Ready |
+| Screenshot Scrubber | Local cover/blur workflow and PNG export; never uploads | Preview |
 | Time Machine | Versioned local snapshots, migration ledger, export and rollback | Ready |
 | Accessibility Toolkit | Reduced motion, focus treatment, contrast aid, reading controls | Preview |
-| Setup and catalog | Four-theme preview, 36-addon reviewed candidate preset, immutable-source/hash checks, dependency closure, conflicts, quarantine and rollback | Fail-closed: security/runtime gates pending; no community candidate is installable yet |
+| Daily interaction built-ins | Clean-room Do Not Track, Double Click to Reply, and Invisible Typing; no automatic send | Three accepted setup defaults; installed Discord adapter acceptance pending |
+| Guarded Split Large Messages | Implemented modal/clipboard preview path; never multi-sends | Preview; not recommended or setup-enabled until a disposable Discord acceptance receipt exists |
+| Setup and catalog | Recommended theme plus four alternatives, three ready clean-room features, optional 36-addon review catalog, immutable-source/hash checks, dependency closure, conflicts, quarantine and rollback | Community candidates and built-in previews remain fail-closed until their individual security/runtime gates pass |
 | Message Timeline | Opt-in observed-message journal, DM-only default, explicit deleted/edited labels, retention/cap controls, AES-256-GCM persistence with a safeStorage-wrapped key | Experimental; media cache unavailable and live acceptance pending |
 
 The global `BdApi`, plugin/theme folders, `betterdiscord://` protocol, preload globals, CSS hooks, and existing addon contracts remain unchanged for compatibility. These retained identifiers are documented in [the brand migration ledger](docs/BRAND_MIGRATION_LEDGER.md).

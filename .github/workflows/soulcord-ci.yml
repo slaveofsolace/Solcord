@@ -22,6 +22,8 @@ jobs:
           bun-version: 1.4.0
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
       - name: Test
         run: bun run test
       - name: Lint TypeScript
@@ -62,6 +64,8 @@ jobs:
           bun-version: 1.4.0
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
       - name: Run Windows-sensitive fixtures
         run: bun test tests/electron/preload-policy.test.ts tests/electron/original-preload.test.ts tests/soulcord/safety.test.ts tests/soulcord/settings.test.ts
       - name: Typecheck

@@ -29,9 +29,9 @@ At 16–24 pixels use the mark only; do not use the wordmark. Preserve its trans
 
 ## Asset provenance
 
-Three text-only concept studies were generated with OpenAI Image Generation on 2026-08-22. No reference image was supplied. Their prompt records, hashes, and cold-eye decisions are retained in `docs/evidence/branding/README.md`. Concepts A and B were rejected; C was marked `REVISE` and supplied silhouette direction only.
+Six text-only concept studies were generated with OpenAI Image Generation on 2026-08-22 and 2026-08-23. No reference image was supplied. Their prompt records, hashes, and cold-eye decisions are retained in `docs/evidence/branding/README.md`. A, B, D, and F were rejected; C was marked `REVISE`; E is reference-only. The generated studies supplied direction and comparison evidence only.
 
-The production vector was redrawn from first principles as original SVG paths. Required PNG sizes are deterministically rendered from that SVG by `scripts/render-soulcord-mark.cjs`; the generated raster concepts do not ship in the runtime. No icon pack, Discord asset, BetterDiscord asset, third-party font, or user-submitted image is embedded.
+The production vector was redrawn from first principles as original SVG paths. Required PNG sizes are deterministically rendered from that SVG by `scripts/render-soulcord-mark.cjs`; the generated raster concepts do not ship in the runtime. The vector also replaces the owner-rejected striped-square icon visible in the prior installed build. No icon pack, Discord asset, BetterDiscord asset, third-party font, or user-submitted image is embedded.
 
 Current production-source hashes:
 
@@ -48,16 +48,17 @@ Current production-source hashes:
 
 ## Theme family
 
-The four themes share dense Discord-compatible spacing, explicit keyboard focus, written status labels, 1 px seams, and a `prefers-reduced-motion` fallback. Each is a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
+The recommended default and four alternatives share dense Discord-compatible spacing, explicit keyboard focus, written status labels, 1 px seams, and a `prefers-reduced-motion` fallback. Each is a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
 
 | Theme | Character | SHA-256 |
 | --- | --- | --- |
-| Obsidian Thread | Graphite, warm bone, oxidized teal, and restrained ember; the default setup choice. | `a7fadd2a08784595318199dc68fe8db179f514950b6cd6c615d34ed39ef5bd8b` |
-| Carbon Ember | Charcoal and ash with copper and burgundy signals. | `a8180d684e6543e8c15a7b18a1f747e96ed17855a2f30a967baeb7ff88d7a65d` |
-| Midnight Glass | Navy-black, silver, ice cyan, bounded blur, and reduced-transparency fallback. | `fe8585ef1a8e8967de29b7d78b59c88cdc89d85d2b298e41b28739ecc85048fd` |
-| Paper Signal | Warm paper, ink, coral, and teal for Discord light mode. | `2d310da956e00dd392de8ce575c42d7852f4595ff3f0b19409e0a8a100c22dc2` |
+| SoulCord Default | Recommended graphite foundation, warm text, oxidized-teal interaction, and ember reserved for warnings. | `411c277ccfecd53c28a344f22f66c2ac28a6ea16533d4365ddd9a24e80e5f536` |
+| Obsidian Thread | Graphite, warm bone, oxidized teal, and restrained ember. | `da8058f1f0ad765654d11906cff1e2e71c13e1c60bf8d79f6a110435557b3ff8` |
+| Carbon Ember | Charcoal and ash with copper and burgundy signals. | `6b4bd267a172f2eaf2c5847d47305862e411e5b3b35a025169d796caf914de8d` |
+| Midnight Glass | Navy-black, silver, and ice cyan without remote assets or backdrop blur. | `2f29872d7e225e71e03810805f7033b43930f9d9e02840fe37d2014c4c835801` |
+| Paper Signal | Warm paper, ink, coral, and teal for Discord light mode. | `23ec183af6391d2dbc7ec73fd36b953ebe39735965203ce7d2b4b59df66c0cd4` |
 
-All four are original. The MIT-licensed `midnight-discord` candidate was considered as a possible reference, but no file, selector block, asset, or code from it was used. The owner’s existing `midnight.theme.css` is a separate user file and is not inspected, modified, or replaced by this theme family.
+All five are original. The MIT-licensed `midnight-discord` candidate was considered as a possible reference, but no file, selector block, asset, or code from it was used. The owner’s existing `midnight.theme.css` is a separate user file and is not inspected, modified, or replaced by this theme family.
 
 Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before `Finish`; skipping the wizard changes no theme state.
 
@@ -73,7 +74,7 @@ Only one SoulCord theme is selected by the setup transaction. The preview report
 
 ## Acceptance status
 
-The 16 px and 256 px mark exports passed a technical silhouette inspection. That is implementation evidence, not owner acceptance. The mark, all four themes, onboarding, settings, Timeline tombstones, recovery, 100%/125% scaling, light/dark contrast, focus order, and reduced-motion behavior remain `REVISE` or `UNREVIEWED` until installed Human Eye captures receive an explicit owner verdict.
+The 16 px and 256 px mark exports passed a technical silhouette inspection. That is implementation evidence, not owner acceptance. The mark, all five themes, onboarding, settings, Timeline tombstones, recovery, 100%/125% scaling, light/dark contrast, focus order, and reduced-motion behavior remain `REVISE` or `UNREVIEWED` until installed Human Eye captures receive an explicit owner verdict.
 
 ## Voice
 
