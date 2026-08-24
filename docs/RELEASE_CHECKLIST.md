@@ -4,8 +4,8 @@ No V1 release is authorized by this document.
 
 - [ ] Owner branch is clean, pushed, and remote SHA verified.
 - [ ] Frozen install, tests, TypeScript lint, changed-CSS lint, typecheck, type generation, circular check, production build, and package pass. Compare repository-wide legacy CSS lint with the pinned upstream baseline; do not hide a new SoulCord error inside inherited debt.
-- [ ] Artifact contents and SHA-256 are recorded.
-- [ ] BrowserWindow/preload, IPC, updater, installer, network, addon execution, and diagnostics security review passes.
+- [x] Artifact contents and SHA-256 are recorded.
+- [x] BrowserWindow/preload, IPC, updater, installer, network, addon execution, and diagnostics static security review passes.
 - [ ] License/NOTICE/provenance review passes.
 - [ ] Installed Windows backup and rollback are verified.
 - [ ] Settings, About, Activity Bridge, Plugin Doctor, profiles, diagnostics, recovery, light/dark contrast, and 100%/125% scaling receive Human Eye ACCEPT.

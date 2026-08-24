@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
   "baseCommit": "9e2b67532f5fde991994b094ac42c5ac9ed101dd",
-  "sourceState": "PENDING_FINAL_EXACT_COMMIT_AND_EVIDENCE_ATTESTATION",
+  "sourceState": "EXACT_COMMIT_BUILT_SECURITY_REVIEWED_PENDING_DISPOSABLE_ACCEPTANCE",
   "archives": {
     "sourceSha256": "6c14165e1a6517d17dca401408b8299b68b39afd413196c64a22e7b0e6b777d9",
     "deliverySha256": "3032773607fae5477f9c1dedfdc4e39125ea82acff242e4ce27099a0a4f75f18",
@@ -18,14 +18,15 @@
     "runtimeAcceptance": "PENDING"
   },
   "automatedVerification": {
-    "tests": {"status": "PASS_PRECOMMIT_SETTLED_TREE", "passed": 521, "failed": 0, "assertions": 2936, "files": 46},
+    "tests": {"status": "PASS_EXACT_COMMIT", "passed": 521, "failed": 0, "assertions": 2929, "files": 46},
     "typecheck": "PASS",
     "eslint": {"status": "PASS", "errors": 0, "inheritedWarnings": 3},
     "soulcordCssLint": "PASS",
     "upstreamCssLint": {"status": "INHERITED_NON_GREEN", "errors": 509, "warnings": 895, "baselineErrors": 509, "baselineWarnings": 895, "changedSoulCordFilesClean": true, "measurement": "explicit **/*.css; package lint-css short-circuits after its first inherited failure"},
     "circularAnalysis": {"status": "PASS", "inheritedCyclesReported": 11},
-    "productionBuild": "PENDING_FINAL_EXACT_COMMIT",
-    "asarPackaging": "PENDING_FINAL_EXACT_COMMIT",
+    "productionBuild": "PASS_EXACT_COMMIT",
+    "asarPackaging": "PASS_EXACT_COMMIT",
+    "reproducibility": "PASS_BYTE_IDENTICAL_TWO_CLEAN_RUNS",
     "typeGeneration": "PASS",
     "diffCheck": "PASS"
   },
@@ -47,15 +48,21 @@
     "editor/index.html"
   ],
   "productionArtifact": {
-    "status": "PENDING_FINAL_EXACT_COMMIT",
-    "path": null,
-    "sha256": null,
-    "sourceRevision": null
+    "status": "BUILT_HASH_VERIFIED_SECURITY_REVIEWED_PENDING_RUNTIME_ACCEPTANCE",
+    "path": "../../outputs/soulcord-v1-d1744c5/final/soulcord.asar",
+    "sha256": "02f25dbc26bee3004a3a9f5278bba5e077677505358218d1adfe5ee3819255b0",
+    "sourceRevision": "d1744c573f12745b6262f2176c969bf232349915",
+    "bytes": 1280533
   },
   "securityReview": {
-    "latestSealedScanId": "63440b76-b835-4767-80ca-21dd80597eb3",
-    "latestSealedSnapshot": "codex-security-snapshot/v1:sha256:29845d397c45cb6c5fcd5cba29f9a5e2f10bf645cbe81b3454813ef71535142c",
-    "latestFindings": {"medium": 0, "low": 3, "remediatedAfterScan": true},
+    "latestSealedScanId": "a9966a2f-4c3e-49e0-bed7-2fd3a50aca3f",
+    "latestSealedSnapshot": "codex-security-snapshot/v1:sha256:a2006d4791c20883df7228163f4c58411c643f9a13fc6d20663f4c731141e188",
+    "latestFindings": {"critical": 0, "high": 0, "medium": 0, "low": 0, "remediatedAfterScan": false},
+    "previousSealedScan": {
+      "id": "63440b76-b835-4767-80ca-21dd80597eb3",
+      "snapshot": "codex-security-snapshot/v1:sha256:29845d397c45cb6c5fcd5cba29f9a5e2f10bf645cbe81b3454813ef71535142c",
+      "findings": {"medium": 0, "low": 3, "remediatedAfterScan": true}
+    },
     "cumulativeRemediatedFindings": 11,
     "latestRemediations": [
       "Ordinary settings exports omit Timeline channel identifiers and normalize the mirrored scope to DM-only.",
@@ -63,7 +70,8 @@
       "Provider migration revalidates the sealed plan immediately before disabling and rolls back on post-transaction drift.",
       "Memory-only Timeline reads enforce shortened retention while session retention preserves opaque account stores for explicit recovery."
     ],
-    "finalRescan": "PENDING_POST_FIX_EXACT_COMMIT"
+    "finalRescan": "PASS_EXACT_COMMIT_ZERO_FINDINGS",
+    "independentDeltaScan": {"id": "0cb25018-ca18-412b-a83c-650c4d7fea4e", "findings": 0}
   },
   "humanEye": {
     "sourceAssetReview": "COMPLETE",
@@ -73,7 +81,7 @@
   "installation": {
     "authorized": true,
     "currentWaveInstalled": false,
-    "status": "BLOCKED_PENDING_HARD_GATES",
+    "status": "PENDING_DISPOSABLE_AND_INSTALLED_RUNTIME_GATES",
     "blockers": [
       "The 36 community addons have no isolated disposable-profile runtime acceptance and remain installable false.",
       "Installed Discord visual, focus, scaling, and rollback acceptance has not run."
