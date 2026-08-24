@@ -54,7 +54,7 @@ function executeShim(environment: Record<string, string>, dirname: string): {
 } {
     const loaded: string[] = [];
     const mutableEnvironment = {...environment};
-    const moduleApi = {globalPaths: [] as string[]};
+    const moduleApi = Object.assign(function FakeModule() {}, {globalPaths: [] as string[]});
     let buildInfo: Record<string, unknown> | null = null;
     let userData: string | null = null;
     const app = {
@@ -75,6 +75,7 @@ function executeShim(environment: Record<string, string>, dirname: string): {
         loaded.push(request);
         return {};
     };
+    moduleApi.prototype.require = function(request: string): unknown {return fakeRequire(request);};
     const module = {exports: {}};
     let error: Error | null = null;
     try {
@@ -236,7 +237,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.soulCordAsar);
-        expect(result.manifest.schemaVersion).toBe(5);
+        expect(result.manifest.schemaVersion).toBe(6);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.soulcordBuildMode).toBe("production");
@@ -319,6 +320,19 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(execution.buildInfo?.localModulesRoot).toBe(path.join(runtime, "modules"));
         expect(execution.buildInfo?.disableUpdater).toBeTrue();
         expect(execution.loaded).toEqual(["../soulcord.asar", "../betterdiscord.app.asar"]);
+        const runtimeLedger = fs.readFileSync(
+            path.join(fixture.destination, result.manifest.paths.runtimeLedger),
+            "utf8"
+        ).trim().split("\n").map(line => JSON.parse(line) as {stage: string;});
+        expect(runtimeLedger.map(entry => entry.stage)).toEqual([
+            "shim-begin",
+            "environment-validated",
+            "native-module-policy-installed",
+            "soulcord-require-begin",
+            "soulcord-require-complete",
+            "discord-app-require-begin",
+            "discord-app-require-returned"
+        ]);
         const mismatchedEnvironment = executeShim({
             SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
             APPDATA: path.join(fixture.destination, "profile", "Local"),
@@ -342,6 +356,11 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         const shimComputedUserData = path.resolve(path.dirname(path.join(runtime, "resources", "app", "index.js")), "../../../profile/Roaming/discord");
         expect(shimComputedUserData).toBe(discordComputedUserData);
         expect(result.manifest.paths.userData).toBe("profile/Roaming/discord");
+        expect(result.manifest.paths.acceptanceSettings).toBe("profile/Roaming/discord/settings.json");
+        expect(JSON.parse(fs.readFileSync(
+            path.join(fixture.destination, result.manifest.paths.acceptanceSettings),
+            "utf8"
+        ))).toEqual({SKIP_HOST_UPDATE: true, SKIP_MODULE_UPDATE: true});
         expect(result.manifest.paths.firstRunMarker).toBe("profile/Roaming/discord/1.0.9999/.first-run");
         expect(fs.readFileSync(
             path.join(fixture.destination, result.manifest.paths.firstRunMarker),
@@ -349,9 +368,12 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         )).toBe("true");
         expect(snapshotTree(path.join(fixture.destination, "profile", "Roaming", "discord"))).toEqual({
             "1.0.9999/": "directory",
-            "1.0.9999/.first-run": hashBytes("true")
+            "1.0.9999/.first-run": hashBytes("true"),
+            "settings.json": hashBytes(`${JSON.stringify({SKIP_HOST_UPDATE: true, SKIP_MODULE_UPDATE: true}, null, 2)}\n`)
         });
+        expect(result.writtenFiles).toContain(result.manifest.paths.acceptanceSettings);
         expect(result.writtenFiles).toContain(result.manifest.paths.firstRunMarker);
+        expect(result.writtenFiles).not.toContain(result.manifest.paths.runtimeLedger);
         expect(path.join(path.dirname(shimComputedUserData), "BetterDiscord"))
             .toBe(path.join(fixture.destination, "profile", "Roaming", "BetterDiscord"));
         expect(fs.statSync(shimComputedUserData).isDirectory()).toBeTrue();
@@ -371,6 +393,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(result.manifest.safety.windowsAccountIsolated).toBeFalse();
         expect(result.manifest.safety.copiedNativeModules).toBeTrue();
         expect(result.manifest.safety.updaterDisabledInAcceptance).toBeTrue();
+        expect(result.manifest.safety.runtimeLedgerSanitized).toBeTrue();
         for (const relative of Object.values(result.manifest.paths)) {
             expect(path.isAbsolute(relative)).toBeFalse();
             expect(relative).not.toContain("\\");

@@ -7,6 +7,8 @@ import path from "path";
 
 const MANIFEST_FILE = "acceptance-manifest.json";
 const LAUNCHER_FILE = "launch-soulcord-acceptance.cmd";
+const ACCEPTANCE_SETTINGS_FILE = "profile/Roaming/discord/settings.json";
+const RUNTIME_LEDGER_FILE = "acceptance-runtime-ledger.jsonl";
 const DISCORD_FIRST_RUN_MARKER = ".first-run";
 const DISCORD_VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){1,7}$/;
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
@@ -40,7 +42,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 5;
+    schemaVersion: 6;
     kind: "soulcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -58,10 +60,12 @@ export interface DisposableAcceptanceManifest {
         betterdiscordAppAsar: "runtime/resources/betterdiscord.app.asar";
         electronEntryPoint: "runtime/resources/app/index.js";
         userData: "profile/Roaming/discord";
+        acceptanceSettings: "profile/Roaming/discord/settings.json";
         firstRunMarker: string;
         betterdiscordData: "profile/Roaming/BetterDiscord";
         localAppData: "profile/Local";
         launcher: "launch-soulcord-acceptance.cmd";
+        runtimeLedger: "acceptance-runtime-ledger.jsonl";
     };
     safety: {
         copiedRuntime: true;
@@ -72,6 +76,7 @@ export interface DisposableAcceptanceManifest {
         windowsAccountIsolated: false;
         copiedNativeModules: true;
         updaterDisabledInAcceptance: true;
+        runtimeLedgerSanitized: true;
     };
 }
 
@@ -822,7 +827,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 5,
+        schemaVersion: 6,
         kind: "soulcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -840,10 +845,12 @@ export function createDisposableAcceptanceManifest(
             betterdiscordAppAsar: "runtime/resources/betterdiscord.app.asar",
             electronEntryPoint: "runtime/resources/app/index.js",
             userData: "profile/Roaming/discord",
+            acceptanceSettings: ACCEPTANCE_SETTINGS_FILE,
             firstRunMarker: `profile/Roaming/discord/${discordVersion}/${DISCORD_FIRST_RUN_MARKER}`,
             betterdiscordData: "profile/Roaming/BetterDiscord",
             localAppData: "profile/Local",
-            launcher: "launch-soulcord-acceptance.cmd"
+            launcher: "launch-soulcord-acceptance.cmd",
+            runtimeLedger: RUNTIME_LEDGER_FILE
         },
         safety: {
             copiedRuntime: true,
@@ -853,7 +860,8 @@ export function createDisposableAcceptanceManifest(
             filesystemProfileIsolated: true,
             windowsAccountIsolated: false,
             copiedNativeModules: true,
-            updaterDisabledInAcceptance: true
+            updaterDisabledInAcceptance: true,
+            runtimeLedgerSanitized: true
         }
     };
 }
@@ -945,7 +953,13 @@ function requireCanonicalEnvironmentPath(name, expected) {
     return actual;
 }
 
-function configureCopiedNativeModules(acceptanceRoot) {
+function safeErrorName(value) {
+    return value && typeof value.name === "string" && /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(value.name)
+        ? value.name
+        : "Error";
+}
+
+function configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage) {
     const modulesRoot = fs.realpathSync.native(path.join(acceptanceRoot, "runtime", "modules"));
     const moduleApi = require("node:module");
     if (!Array.isArray(moduleApi.globalPaths)) {
@@ -1003,6 +1017,52 @@ function configureCopiedNativeModules(acceptanceRoot) {
     }
     buildInfo.localModulesRoot = modulesRoot;
     buildInfo.disableUpdater = true;
+    recordRuntimeStage("native-module-policy-installed", {moduleCount: discovered.size});
+
+    const originalRequire = moduleApi.prototype && moduleApi.prototype.require;
+    if (typeof originalRequire !== "function") {
+        throw new Error("SoulCord acceptance cannot observe the native-module loader.");
+    }
+    moduleApi.prototype.require = function(request) {
+        if (request !== "discord_desktop_core") {
+            return Reflect.apply(originalRequire, this, arguments);
+        }
+        recordRuntimeStage("desktop-core-require-begin");
+        try {
+            const core = Reflect.apply(originalRequire, this, arguments);
+            recordRuntimeStage("desktop-core-require-complete");
+            if (core && typeof core.startup === "function") {
+                const originalStartup = core.startup;
+                core.startup = function() {
+                    recordRuntimeStage("desktop-core-startup-begin");
+                    try {
+                        const result = Reflect.apply(originalStartup, this, arguments);
+                        recordRuntimeStage("desktop-core-startup-returned");
+                        return result;
+                    }
+                    catch (error) {
+                        recordRuntimeStage("desktop-core-startup-failed", {errorName: safeErrorName(error)});
+                        throw error;
+                    }
+                };
+            }
+            if (core && typeof core.setMainWindowVisible === "function") {
+                const originalSetMainWindowVisible = core.setMainWindowVisible;
+                core.setMainWindowVisible = function() {
+                    recordRuntimeStage("desktop-core-main-visibility-requested");
+                    return Reflect.apply(originalSetMainWindowVisible, this, arguments);
+                };
+            }
+            return core;
+        }
+        catch (error) {
+            recordRuntimeStage("desktop-core-require-failed", {errorName: safeErrorName(error)});
+            throw error;
+        }
+        finally {
+            moduleApi.prototype.require = originalRequire;
+        }
+    };
 }
 
 const acceptanceRoot = canonicalEnvironmentDirectory("SOULCORD_ACCEPTANCE_ROOT");
@@ -1010,6 +1070,26 @@ const expectedRoot = fs.realpathSync.native(path.resolve(__dirname, "../../.."))
 if (pathKey(acceptanceRoot) !== pathKey(expectedRoot)) {
     throw new Error("SoulCord acceptance root does not match the copied runtime location.");
 }
+
+const runtimeLedger = path.join(acceptanceRoot, "acceptance-runtime-ledger.jsonl");
+let runtimeLedgerSequence = 0;
+function recordRuntimeStage(stage, fields) {
+    if (!/^[a-z][a-z0-9-]{0,63}$/.test(stage) || runtimeLedgerSequence >= 128) return;
+    try {
+        const existing = fs.existsSync(runtimeLedger) ? fs.lstatSync(runtimeLedger) : null;
+        if (existing && (!existing.isFile() || existing.isSymbolicLink() || existing.size >= 64 * 1024)) return;
+        runtimeLedgerSequence += 1;
+        fs.appendFileSync(runtimeLedger, JSON.stringify({
+            schemaVersion: 1,
+            processId: process.pid,
+            sequence: runtimeLedgerSequence,
+            stage,
+            ...(fields || {})
+        }) + "\\n", "utf8");
+    }
+    catch {}
+}
+recordRuntimeStage("shim-begin");
 
 const roaming = path.join(acceptanceRoot, "profile", "Roaming");
 const local = path.join(acceptanceRoot, "profile", "Local");
@@ -1021,6 +1101,7 @@ const userData = fs.realpathSync.native(path.join(roaming, "discord"));
 if (requestedAcceptanceMode !== "1") {
     throw new Error("SoulCord acceptance requires the launcher-owned acceptance mode marker.");
 }
+recordRuntimeStage("environment-validated");
 
 process.env.SOULCORD_ACCEPTANCE_MODE = "1";
 app.setPath("userData", userData);
@@ -1030,10 +1111,14 @@ Object.defineProperty(app, "setAsDefaultProtocolClient", {
     value: () => false
 });
 
-configureCopiedNativeModules(acceptanceRoot);
+configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage);
 
+recordRuntimeStage("soulcord-require-begin");
 require("../soulcord.asar");
+recordRuntimeStage("soulcord-require-complete");
+recordRuntimeStage("discord-app-require-begin");
 module.exports = require("../betterdiscord.app.asar");
+recordRuntimeStage("discord-app-require-returned");
 `;
 }
 
@@ -1118,6 +1203,11 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
             "true",
             {encoding: "utf8", flag: "wx"}
         );
+        fs.writeFileSync(
+            path.join(staging.path, ACCEPTANCE_SETTINGS_FILE),
+            `${JSON.stringify({SKIP_HOST_UPDATE: true, SKIP_MODULE_UPDATE: true}, null, 2)}\n`,
+            {encoding: "utf8", flag: "wx"}
+        );
 
         const copiedSoulCord = path.join(runtime, "resources", "soulcord.asar");
         if (lstatIfPresent(copiedSoulCord)) {
@@ -1153,6 +1243,7 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
         writtenFiles: [
             manifest.paths.electronEntryPoint,
             manifest.paths.soulcordAsar,
+            manifest.paths.acceptanceSettings,
             manifest.paths.firstRunMarker,
             manifest.paths.launcher,
             MANIFEST_FILE
