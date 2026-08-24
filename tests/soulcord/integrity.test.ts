@@ -1,7 +1,7 @@
-import {describe, expect, test} from "bun:test";
+import {afterEach, describe, expect, test} from "bun:test";
 
 import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "../../src/common/soulcord/addon-catalog.generated";
-import {checkReviewedExecution, integrityBlocksExecution, integrityFailureReason, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords} from "../../src/betterdiscord/modules/soulcord/integrity";
+import {checkReviewedExecution, configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords} from "../../src/betterdiscord/modules/soulcord/integrity";
 
 
 function expectedCount(): number {
@@ -9,26 +9,39 @@ function expectedCount(): number {
 }
 
 describe("SoulCord curated addon integrity consumer", () => {
-    test("checks reviewed bytes synchronously while leaving unrelated owner files alone", () => {
+    afterEach(() => configureReviewedExecutionOwnership([]));
+
+    test("checks only explicitly accepted exact files while leaving owner files alone", () => {
         const theme = SOULCORD_RUNTIME_THEMES[0];
+        const addon = SOULCORD_RUNTIME_ADDONS[0];
+        expect(checkReviewedExecution("plugin", addon.fileName, addon.name, "owner-modified content")).toEqual({reviewed: false, matches: true});
+        configureReviewedExecutionOwnership([
+            {kind: "theme", fileName: theme.fileName, reviewedSha256: theme.sourceSha256},
+            {kind: "plugin", fileName: addon.fileName, reviewedSha256: addon.sourceSha256}
+        ]);
         expect(checkReviewedExecution("theme", theme.fileName, "SoulCord — Obsidian Thread", theme.content)).toMatchObject({reviewed: true, matches: true, name: theme.name});
         expect(checkReviewedExecution("theme", theme.fileName, "SoulCord — Obsidian Thread", `${theme.content}\n/* changed */`)).toMatchObject({reviewed: true, matches: false, name: theme.name});
-        expect(checkReviewedExecution("plugin", SOULCORD_RUNTIME_ADDONS[0].fileName, SOULCORD_RUNTIME_ADDONS[0].name, "changed plugin bytes")).toMatchObject({reviewed: true, matches: false});
+        expect(checkReviewedExecution("plugin", addon.fileName, addon.name, "changed plugin bytes")).toMatchObject({reviewed: true, matches: false});
         expect(checkReviewedExecution("plugin", "OwnerOnly.plugin.js", "Owner Only", "owner content")).toEqual({reviewed: false, matches: true});
     });
 
-    test("fails closed for renamed, case-aliased, and metadata-aliased reviewed identities", () => {
+    test("does not claim renamed or metadata-aliased owner files while retaining Windows case safety", () => {
         const addon = SOULCORD_RUNTIME_ADDONS[0];
         const dependency = SOULCORD_RUNTIME_DEPENDENCIES[0];
         const theme = SOULCORD_RUNTIME_THEMES[0];
         const renamed = addon.fileName.replace(".plugin.js", "-owner-copy.plugin.js");
         const caseAlias = `${addon.fileName[0].toLocaleLowerCase("en-US")}${addon.fileName.slice(1)}`;
+        configureReviewedExecutionOwnership([
+            {kind: "plugin", fileName: addon.fileName, reviewedSha256: addon.sourceSha256},
+            {kind: "plugin", fileName: dependency.fileName, reviewedSha256: dependency.sourceSha256},
+            {kind: "theme", fileName: theme.fileName, reviewedSha256: theme.sourceSha256}
+        ]);
 
-        expect(checkReviewedExecution("plugin", renamed, addon.name, "tampered")).toMatchObject({reviewed: true, matches: false, name: addon.name});
+        expect(checkReviewedExecution("plugin", renamed, addon.name, "tampered")).toEqual({reviewed: false, matches: true});
         expect(checkReviewedExecution("plugin", caseAlias, "Unrelated display name", "tampered")).toMatchObject({reviewed: true, matches: false, name: addon.name});
-        expect(checkReviewedExecution("plugin", "RenamedDependency.plugin.js", dependency.name, "tampered")).toMatchObject({reviewed: true, matches: false, name: dependency.name});
-        expect(checkReviewedExecution("theme", "OwnerTheme.theme.css", "SoulCord — Obsidian Thread", theme.content)).toMatchObject({reviewed: true, matches: false, name: theme.name});
-        expect(checkReviewedExecution("theme", "ByteIdenticalCopy.theme.css", "Unrelated display name", theme.content)).toMatchObject({reviewed: true, matches: false, name: theme.name});
+        expect(checkReviewedExecution("plugin", "RenamedDependency.plugin.js", dependency.name, "tampered")).toEqual({reviewed: false, matches: true});
+        expect(checkReviewedExecution("theme", "OwnerTheme.theme.css", "SoulCord — Obsidian Thread", theme.content)).toEqual({reviewed: false, matches: true});
+        expect(checkReviewedExecution("theme", "ByteIdenticalCopy.theme.css", "Unrelated display name", theme.content)).toEqual({reviewed: false, matches: true});
         expect(checkReviewedExecution("plugin", "OwnerOnly.plugin.js", "Owner Only", "owner content")).toEqual({reviewed: false, matches: true});
     });
 
@@ -37,6 +50,21 @@ describe("SoulCord curated addon integrity consumer", () => {
         const themeManager = await Bun.file(new URL("../../src/betterdiscord/modules/thememanager.ts", import.meta.url)).text();
         expect(pluginManager.indexOf("checkReviewedExecution")).toBeLessThan(pluginManager.indexOf("new Function"));
         expect(themeManager.indexOf("checkReviewedExecution")).toBeLessThan(themeManager.indexOf("DOMManager.injectTheme"));
+    });
+
+    test("scopes runtime enforcement to selected hash-bound files and the selected installed theme", () => {
+        const addon = SOULCORD_RUNTIME_ADDONS[0];
+        const addonRecord = {kind: "addon" as const, name: addon.name, status: "mismatch" as const, reviewedSha256: addon.sourceSha256};
+        const base = {curatedAddons: {}, selectedTheme: SOULCORD_RUNTIME_THEMES[0].id, hasSetupTransaction: false};
+        expect(integrityRecordIsAccepted(addonRecord, base)).toBeFalse();
+        expect(integrityRecordIsAccepted(addonRecord, {...base, curatedAddons: {[addon.name]: {selected: true}}})).toBeFalse();
+        expect(integrityRecordIsAccepted(addonRecord, {...base, hasSetupTransaction: true, curatedAddons: {[addon.name]: {selected: true, reviewedSha256: addon.sourceSha256}}})).toBeTrue();
+
+        const theme = SOULCORD_RUNTIME_THEMES[0];
+        const themeRecord = {kind: "theme" as const, name: theme.name, status: "mismatch" as const, reviewedSha256: theme.sourceSha256};
+        expect(integrityRecordIsAccepted(themeRecord, base)).toBeFalse();
+        expect(integrityRecordIsAccepted(themeRecord, {...base, hasSetupTransaction: true})).toBeTrue();
+        expect(integrityRecordIsAccepted(themeRecord, {...base, selectedTheme: SOULCORD_RUNTIME_THEMES[1].id, hasSetupTransaction: true})).toBeFalse();
     });
 
     test("blocks unaccepted candidates while preserving the guarded built-in exception", () => {

@@ -52,6 +52,25 @@
     "missingRequested": [],
     "note": null
   },
+  "optional": {
+    "declaredCount": 12,
+    "matchedCount": 12,
+    "names": [
+      "ChannelTabs",
+      "UserNotes",
+      "Timezones",
+      "RoleExplorer",
+      "FavoriteMedia",
+      "Uncompressed Images",
+      "GameActivityToggle",
+      "InMyVoice",
+      "ShowPing",
+      "VoiceHub",
+      "BetterMediaPlayer",
+      "ChannelsPreview"
+    ],
+    "missingOptional": []
+  },
   "candidates": [
     {
       "catalogId": 1385,
@@ -1686,8 +1705,8 @@
       ],
       "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/ShowPing/ShowPing.plugin.js",
       "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
-      "disposition": "POWER_LAB",
-      "targetDisposition": "POWER_LAB",
+      "disposition": "OPTIONAL",
+      "targetDisposition": "OPTIONAL",
       "requestedByPreset": false,
       "license": {
         "status": "UNRESOLVED",
@@ -13471,8 +13490,8 @@
       ],
       "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/398be14a65264534ebaf564f8fa34cff9a71985d/My_Theme_Collection/BubbleThemev2.theme.css",
       "immutableRevision": "398be14a65264534ebaf564f8fa34cff9a71985d",
-      "disposition": "POWER_LAB",
-      "targetDisposition": "POWER_LAB",
+      "disposition": "HOLD",
+      "targetDisposition": "HOLD",
       "requestedByPreset": false,
       "license": {
         "status": "UNRESOLVED",

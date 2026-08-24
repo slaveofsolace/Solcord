@@ -9,18 +9,23 @@ import SettingsRenderer from "@ui/settings";
 import Modals from "@ui/modals";
 import {getByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
 
-import type {SoulCordMaturity, SoulCordModuleHealth, SoulCordModuleId} from "./contracts";
+import type {SoulCordCuratedAddonState, SoulCordMaturity, SoulCordModuleHealth, SoulCordModuleId} from "./contracts";
 import {SoulCordDisposalScope} from "./disposal";
 import SoulCordSettings, {normalizeSetupDraft, SOULCORD_THEMES, type SoulCordImportPreview} from "./store";
 import PluginDoctor from "./doctor";
 import {runStructuralProbes, type StructuralProbeResult} from "./drift";
-import {inspectLink, interceptLinkActivation, type LinkInspection} from "./link-lens";
+import {inspectLink, interceptLinkActivation, LinkReviewLifecycle, type LinkInspection} from "./link-lens";
 import {BoundedPerformanceSampler, type PerformanceSample} from "./performance";
 import {evaluateCrashGuard, type CrashGuardDocument} from "./crash-guard";
 import {boundedTimelineMessageIds, channelIsInTimelineScope, MessageTimelineJournal, normalizeTimelineAccountId, TimelineAccountGuard, timelineEventAccountMatches, type TimelineAccountIdentity, type TimelineAttachmentMetadata, type TimelineEvent, type TimelineMessageState} from "./message-timeline";
 import {splitLargeMessage} from "./message-splitter";
-import {integrityBlocksExecution, integrityFailureReason, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary} from "./integrity";
-import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES} from "@common/soulcord/addon-catalog.generated";
+import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
+import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
+import {canonicalizeSoulCordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSoulCordProviderMigrationPlan, isSoulCordBuiltInAddon, resolveCommunityAddon, soulCordProviderMigrationPlansMatch, type SoulCordProviderMigrationIdentity, type SoulCordProviderMigrationPlan} from "@common/soulcord/builtin-addons";
+import {resolveSoulCordSetupPlan} from "@common/soulcord/setup-catalog";
+import {InvisibleTypingAdapter} from "./invisible-typing";
+import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
+import {DoNotTrackAdapter, resolveDiscordAnalyticsTrack, validateDiscordAnalyticsTrack} from "./do-not-track";
 
 interface ActivityCompatibilityHealth {
     status: "idle" | "healthy" | "attention";
@@ -51,6 +56,26 @@ export interface TimelineClearOutcome {
     requiresOpaqueRecovery: boolean;
 }
 
+export interface TimelineExportOutcome {
+    status: "complete" | "incomplete" | "unavailable";
+    omittedSegments: number;
+    unreadableSegments: number;
+    retentionApplied: boolean;
+}
+
+interface TimelineReadOutcome extends TimelineExportOutcome {
+    events: TimelineEvent[];
+    persistent: boolean;
+    truncated: boolean;
+}
+
+export interface CuratedAdapterResult {
+    enabled: boolean;
+    provider: "community" | "soulcord" | "off";
+    conflict?: boolean;
+    reason?: string;
+}
+
 export interface SetupRollbackOutcome {
     status: "complete" | "partial" | "unavailable" | "failed";
     removed: number;
@@ -60,9 +85,9 @@ export interface SetupRollbackOutcome {
 const FEATURE_META: Record<SoulCordModuleId, {name: string; risk: SoulCordModuleHealth["risk"]; maturity: SoulCordMaturity; detail: string;}> = {
     "activity-bridge": {name: "Activity Bridge", risk: "standard", maturity: "ready", detail: "Waiting for the main-process compatibility ledger."},
     "plugin-doctor": {name: "Plugin Doctor + Addon Quarantine", risk: "standard", maturity: "ready", detail: "Monitoring local addon failures."},
-    "drift-radar": {name: "Module Drift Radar / Patch Canary", risk: "standard", maturity: "preview", detail: "Validating structural contracts before volatile adapters patch Discord."},
+    "drift-radar": {name: "Module Drift Radar", risk: "standard", maturity: "preview", detail: "Running bounded structural probes; captured-fixture Patch Canary coverage is not implemented in V1."},
     "performance-hud": {name: "Performance HUD", risk: "standard", maturity: "ready", detail: "Sampling local renderer measurements."},
-    "workspace-profiles": {name: "Workspace Profiles", risk: "standard", maturity: "preview", detail: "Profiles are local and rollback-backed. Applying an opted-in third-party profile requires a separate execution confirmation."},
+    "workspace-profiles": {name: "Workspace Profiles", risk: "standard", maturity: "preview", detail: "Profiles save module settings and optional exact addon states. Applying an opted-in third-party profile requires a separate execution confirmation."},
     "command-deck": {name: "Command Deck", risk: "standard", maturity: "ready", detail: "Local command palette; no message actions."},
     "link-lens": {name: "Link Lens + Invite Inspector", risk: "standard", maturity: "preview", detail: "Inspecting links and invite codes locally before suspicious navigation; invite metadata is not fetched in V1."},
     "stream-shield": {name: "Stream Shield + Screenshot Scrubber", risk: "standard", maturity: "preview", detail: "Manual shield is ready; Go Live detection is validated at runtime."},
@@ -75,6 +100,25 @@ const FEATURE_IDS = Object.keys(FEATURE_META) as SoulCordModuleId[];
 
 function errorName(error: unknown): string {
     return error instanceof Error ? error.name.slice(0, 80) : typeof error;
+}
+
+function normalizeTimelineReadOutcome(value: unknown): TimelineReadOutcome {
+    const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
+    const boundedCount = (candidate: unknown) => typeof candidate === "number" && Number.isSafeInteger(candidate) && candidate >= 0 ? Math.min(candidate, 100_000) : 0;
+    const omittedSegments = boundedCount(record.omittedSegments);
+    const unreadableSegments = boundedCount(record.unreadableSegments);
+    const retentionApplied = record.retentionApplied === true;
+    const truncated = record.truncated === true || omittedSegments > 0;
+    const complete = record.complete === true && retentionApplied && !truncated && unreadableSegments === 0;
+    return {
+        status: complete ? "complete" : "incomplete",
+        events: Array.isArray(record.events) ? record.events.slice(-10_000) as TimelineEvent[] : [],
+        persistent: record.persistent === true,
+        truncated,
+        omittedSegments,
+        unreadableSegments,
+        retentionApplied
+    };
 }
 
 function textElement(tag: string, text: string, className?: string): HTMLElement {
@@ -161,6 +205,8 @@ const TIMELINE_IPC = Object.freeze({
     read: IPC.readTimeline.bind(IPC),
     clear: IPC.clearTimeline.bind(IPC),
     applySetup: IPC.applySoulCordSetup.bind(IPC),
+    acknowledgeSetup: IPC.acknowledgeSoulCordSetup.bind(IPC),
+    reconcileSetup: IPC.reconcileSoulCordSetup.bind(IPC),
     rollbackSetup: IPC.rollbackSoulCordSetup.bind(IPC),
     auditSetup: IPC.auditSoulCordSetup.bind(IPC)
 });
@@ -176,10 +222,11 @@ class SoulCordRuntimeStore extends Store {
     #driftResults: StructuralProbeResult[] = [];
     #sampler = new BoundedPerformanceSampler();
     #lastPerformanceSample?: PerformanceSample;
-    #linkReviewOpen = false;
     #timeline = new MessageTimelineJournal();
     #timelinePersistent = false;
     #curatedScope = new SoulCordDisposalScope();
+    #curatedCommunitySignature = "";
+    #curatedAdapterResults: Record<string, CuratedAdapterResult> = {};
     #splitReviewOpen = false;
     #integrityQueue = Promise.resolve();
     #privateCapability?: string;
@@ -196,6 +243,7 @@ class SoulCordRuntimeStore extends Store {
         if (this.#initialized) return;
         this.#initialized = true;
         SoulCordSettings.initialize();
+        this.#refreshReviewedExecutionOwnership();
         PluginDoctor.initialize();
         this.#recoveryMode = this.#initializeCrashGuard();
         for (const id of FEATURE_IDS) {
@@ -219,6 +267,15 @@ class SoulCordRuntimeStore extends Store {
         if (this.#started) return;
         this.#started = true;
         await this.#bootstrapPrivateCapability();
+        try {
+            const transactionIds = SoulCordSettings.snapshot().setupTransactions.map(transaction => transaction.id);
+            await this.#withPrivateCapability(capability => TIMELINE_IPC.reconcileSetup(capability, transactionIds));
+        }
+        catch (error) {
+            this.#recoveryMode = true;
+            configureReviewedExecutionOwnership([]);
+            Logger.error("SoulCord", "Setup transaction reconciliation failed; startup recovery mode is active.", error);
+        }
         for (const id of FEATURE_IDS) {
             if (this.#recoveryMode && id !== "plugin-doctor") {
                 this.#setHealth(id, {status: "stopped", detail: "Held off by SoulCord startup recovery mode."});
@@ -227,6 +284,13 @@ class SoulCordRuntimeStore extends Store {
             if (SoulCordSettings.module(id).enabled) await this.#startFeature(id);
         }
         this.#synchronizeCuratedAdapters();
+        const synchronizeCuratedAdapters = () => {
+            const nextSignature = this.#communityAddonSignature();
+            if (nextSignature === this.#curatedCommunitySignature) return;
+            this.#synchronizeCuratedAdapters();
+        };
+        PluginManager.addChangeListener(synchronizeCuratedAdapters);
+        this.#rootScope.own(() => PluginManager.removeChangeListener(synchronizeCuratedAdapters), "listener");
         this.#rootScope.timeout(() => {
             JsonStore.set("misc", "soulcordCrashGuard", {attempts: [], state: "stable", at: Date.now()} satisfies CrashGuardDocument);
         }, 30_000);
@@ -345,6 +409,10 @@ class SoulCordRuntimeStore extends Store {
         return structuredClone(this.#integrity);
     }
 
+    curatedAdapterStatus(): Record<string, CuratedAdapterResult> {
+        return structuredClone(this.#curatedAdapterResults);
+    }
+
     timelineEntries(channelId?: string): TimelineMessageState[] {
         return this.#timeline.snapshot(channelId, 250);
     }
@@ -403,17 +471,22 @@ class SoulCordRuntimeStore extends Store {
         await this.#synchronizeFeatures();
     }
 
-    async exportTimeline(): Promise<boolean> {
+    async exportTimeline(): Promise<TimelineExportOutcome> {
         const identity = this.#captureTimelineIdentity();
-        if (!identity.accountId) return false;
+        if (!identity.accountId) return {status: "unavailable", omittedSegments: 0, unreadableSegments: 0, retentionApplied: false};
         const identityIsCurrent = () => this.#timelineIdentityIsCurrent(identity);
         const policy = SoulCordSettings.snapshot().timelinePolicy;
-        let loaded: {events?: TimelineEvent[]; persistent?: boolean;};
+        let loaded: TimelineReadOutcome;
         try {
-            loaded = await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.read(capability, {policy}), identityIsCurrent) as {events?: TimelineEvent[]; persistent?: boolean;};
+            const raw = await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.read(capability, {policy}), identityIsCurrent);
+            loaded = normalizeTimelineReadOutcome(raw);
         }
-        catch {return false;}
-        if (!identityIsCurrent()) return false;
+        catch {return {status: "unavailable", omittedSegments: 0, unreadableSegments: 0, retentionApplied: false};}
+        if (!identityIsCurrent()) return {status: "unavailable", omittedSegments: 0, unreadableSegments: 0, retentionApplied: false};
+        if (loaded.status !== "complete") {
+            this.#setHealth("message-timeline", {maturity: "preview", detail: `Export refused because the local read was incomplete (${loaded.omittedSegments} omitted, ${loaded.unreadableSegments} unreadable; retention ${loaded.retentionApplied ? "applied" : "incomplete"}).`});
+            return loaded;
+        }
         const payload = {
             format: "soulcord-private-message-timeline",
             version: 1,
@@ -422,34 +495,85 @@ class SoulCordRuntimeStore extends Store {
             retention: policy.retention,
             content: policy.content,
             persistent: loaded.persistent === true,
+            complete: true,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied: true,
             limitations: ["Observed by this running client only", "No API backfill", "No offline recovery", "No hidden-channel access"],
-            events: Array.isArray(loaded.events) ? loaded.events : []
+            events: loaded.events
         };
-        if (!identityIsCurrent()) return false;
+        if (!identityIsCurrent()) return {status: "unavailable", omittedSegments: 0, unreadableSegments: 0, retentionApplied: false};
         this.#download(`soulcord-timeline-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify(payload, null, 2)}\n`, "application/json");
-        return true;
+        return loaded;
     }
 
     previewSetup(rawDraft: unknown): string[] {
         return SoulCordSettings.previewSetup(rawDraft);
     }
 
-    async finishSetup(rawDraft: unknown): Promise<{transactionId: string; enabled: string[]; quarantined: Array<{name: string; reason: string;}>;}> {
-        await this.#refreshAddonIntegrity("pre-setup");
+    #setupAcceptsAddon(name: string, mode: string | undefined): boolean {
+        return resolveSoulCordSetupPlan([name], {[name]: mode}).executableAddons.includes(name);
+    }
+
+    #providerMigrationCandidates(draft: ReturnType<typeof normalizeSetupDraft>) {
+        return SOULCORD_RUNTIME_ADDONS.filter(candidate => this.#setupAcceptsAddon(candidate.name, draft.addonModes[candidate.name]));
+    }
+
+    prepareProviderMigrationPlan(rawDraft: unknown): SoulCordProviderMigrationPlan | undefined {
         const draft = normalizeSetupDraft(rawDraft);
-        const stagedAddons = draft.selectedAddons.filter(name => name !== "SplitLargeMessages" || draft.addonModes[name] !== "guarded");
-        const priorAddonStates = Object.fromEntries(SOULCORD_RUNTIME_ADDONS.map(candidate => [candidate.name, PluginManager.isEnabled(candidate.fileName)]));
-        const priorThemeStates = Object.fromEntries(SOULCORD_THEMES.map(theme => [theme.fileName, ThemeManager.isEnabled(theme.fileName)]));
-        const transaction = await this.#withPrivateCapability(capability => TIMELINE_IPC.applySetup(capability, {selectedAddons: stagedAddons, selectedTheme: draft.selectedTheme})) as {transactionId: string;};
+        return createSoulCordProviderMigrationPlan(PluginManager, this.#providerMigrationCandidates(draft), draft);
+    }
+
+    #requireProviderMigrationPlan(rawDraft: unknown, confirmedPlan: unknown): readonly SoulCordProviderMigrationIdentity[] {
+        const draft = normalizeSetupDraft(rawDraft);
+        const confirmed = canonicalizeSoulCordProviderMigrationPlan(confirmedPlan);
+        const current = createSoulCordProviderMigrationPlan(PluginManager, this.#providerMigrationCandidates(draft), draft);
+        if (!confirmed || !current || !soulCordProviderMigrationPlansMatch(confirmed, current)) throw new Error("SetupProviderMigrationConfirmationChanged");
+        return confirmed.entries;
+    }
+
+    #assertProviderMigrationIdentityCurrent(entry: SoulCordProviderMigrationIdentity, draft: ReturnType<typeof normalizeSetupDraft>): void {
+        const candidate = SOULCORD_RUNTIME_ADDONS.find(item => item.name === entry.name);
+        const current = candidate ? resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName) : undefined;
+        if (!candidate
+            || !draft.selectedAddons.includes(candidate.name)
+            || !isSoulCordBuiltInAddon(candidate.name, draft.addonModes[candidate.name])
+            || draft.addonProviders[candidate.name] !== entry.provider
+            || !current
+            || current.filename !== entry.fileName
+            || PluginManager.isEnabled(current.filename) !== entry.enabled) throw new Error("SetupProviderMigrationConfirmationChanged");
+    }
+
+    async finishSetup(rawDraft: unknown, confirmedProviderMigrationPlan: unknown): Promise<{transactionId: string; enabled: string[]; quarantined: Array<{name: string; reason: string;}>; providerConflicts: Array<{name: string; fileName: string;}>;}> {
+        const draft = normalizeSetupDraft(rawDraft);
+        let providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+        await this.#refreshAddonIntegrity("pre-setup");
+        const plan = resolveSoulCordSetupPlan(draft.selectedAddons, draft.addonModes);
+        const executableAddons = new Set(plan.executableAddons);
+        const stagedAddons = plan.executableAddons.filter(name => !isSoulCordBuiltInAddon(name, draft.addonModes[name]));
+        const selectedCandidates = stagedAddons.map(name => SOULCORD_RUNTIME_ADDONS.find(candidate => candidate.name === name)!);
+        const requiredDependencies = new Set(selectedCandidates.flatMap(candidate => [...candidate.dependencies]));
+        const priorAddonStates = captureExactAddonStates(PluginManager);
+        const priorThemeStates = captureExactAddonStates(ThemeManager);
+        this.#refreshReviewedExecutionOwnership([...stagedAddons, ...requiredDependencies], true);
+        providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+        let transaction: {transactionId: string;};
+        try {
+            transaction = await this.#withPrivateCapability(capability => TIMELINE_IPC.applySetup(capability, {selectedAddons: stagedAddons, selectedTheme: draft.selectedTheme})) as {transactionId: string;};
+        }
+        catch (error) {
+            this.#refreshReviewedExecutionOwnership();
+            throw error;
+        }
         const results: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}> = {};
         const enabled: string[] = [];
         const quarantined: Array<{name: string; reason: string;}> = [];
         const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+        let settingsRecorded = false;
 
         try {
             const integrity = await this.#refreshAddonIntegrity("post-setup");
-            const selectedCandidates = stagedAddons.map(name => SOULCORD_RUNTIME_ADDONS.find(candidate => candidate.name === name)!);
-            const requiredDependencies = new Set(selectedCandidates.flatMap(candidate => [...candidate.dependencies]));
             const selectedTheme = SOULCORD_THEMES.find(theme => theme.id === draft.selectedTheme)!;
             const requiredRecords = [
                 ...selectedCandidates.map(candidate => integrity.find(record => record.kind === "addon" && record.name === candidate.name)),
@@ -458,13 +582,9 @@ class SoulCordRuntimeStore extends Store {
             ];
             if (requiredRecords.some(record => record?.status !== "match")) throw new Error("SetupIntegrityValidationFailed");
 
-            for (const name of draft.selectedAddons) {
+            for (const name of plan.executableAddons) {
                 const candidate = SOULCORD_RUNTIME_ADDONS.find(entry => entry.name === name)!;
-                if (name === "SplitLargeMessages" && draft.addonModes[name] === "guarded") {
-                    results[name] = {enabled: true, reviewedSha256: candidate.sourceSha256};
-                    enabled.push(name);
-                    continue;
-                }
+                if (isSoulCordBuiltInAddon(name, draft.addonModes[name])) continue;
                 if (reducedMotion && (name === "DiscordEffects" || name === "BetterAnimations")) {
                     const reason = "Held because Windows or Discord reduced motion is active.";
                     results[name] = {enabled: false, reviewedSha256: candidate.sourceSha256, quarantineReason: reason};
@@ -505,15 +625,53 @@ class SoulCordRuntimeStore extends Store {
             if (!await this.#waitForAddon(ThemeManager, selectedTheme.fileName)) throw new Error("SelectedThemeLoadTimeout");
             if (!ThemeManager.isEnabled(selectedTheme.fileName) && ThemeManager.enableAddon(selectedTheme.fileName) !== true && !ThemeManager.isEnabled(selectedTheme.fileName)) throw new Error("SelectedThemeStartFailed");
 
+            providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+            for (const migration of providerMigrations) {
+                this.#assertProviderMigrationIdentityCurrent(migration, draft);
+                const candidate = SOULCORD_RUNTIME_ADDONS.find(entry => entry.name === migration.name)!;
+                const current = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
+                if (!current || current.filename !== migration.fileName) throw new Error("SetupCommunityCounterpartChanged");
+                if (!PluginManager.isEnabled(current.filename)) continue;
+                PluginManager.disableAddon(current.filename);
+                if (PluginManager.isEnabled(current.filename)) throw new Error("SetupCommunityCounterpartStopFailed");
+            }
+
+            const existingCurated = SoulCordSettings.snapshot().curatedAddons;
+            const requestedCurated = Object.fromEntries(Object.entries(existingCurated).map(([name, state]) => [name, {
+                ...state,
+                enabled: executableAddons.has(name),
+                mode: draft.addonModes[name] ?? state.mode,
+                provider: draft.addonProviders[name] ?? state.provider
+            }])) as Record<string, SoulCordCuratedAddonState>;
+            const adapterResults = this.#synchronizeCuratedAdapters(requestedCurated);
+            const providerConflicts = providerMigrations.filter(migration => adapterResults[migration.name]?.conflict);
+            for (const name of plan.executableAddons.filter(entry => isSoulCordBuiltInAddon(entry, draft.addonModes[entry]))) {
+                const adapter = adapterResults[name];
+                if (adapter?.enabled) {
+                    results[name] = {enabled: true};
+                    enabled.push(name);
+                    continue;
+                }
+                const reason = adapter?.reason ?? "The SoulCord adapter failed its runtime validation and stayed off.";
+                PluginDoctor.quarantine(name, reason);
+                results[name] = {enabled: false, quarantineReason: reason};
+                quarantined.push({name, reason});
+            }
+
             SoulCordSettings.completeSetup(draft, results, {id: transaction.transactionId, priorAddonStates, priorThemeStates});
+            settingsRecorded = true;
+            await this.#withPrivateCapability(capability => TIMELINE_IPC.acknowledgeSetup(capability, transaction.transactionId));
+            this.#refreshReviewedExecutionOwnership();
             await this.#synchronizeFeatures();
-            this.#synchronizeCuratedAdapters();
-            return {transactionId: transaction.transactionId, enabled, quarantined};
+            return {transactionId: transaction.transactionId, enabled, quarantined, providerConflicts};
         }
         catch (error) {
+            const settingsRestored = !settingsRecorded || SoulCordSettings.abortSetupCompletion(transaction.transactionId);
+            this.#refreshReviewedExecutionOwnership();
             const statesRestored = await this.#restoreAddonStates(priorAddonStates, priorThemeStates);
+            this.#synchronizeCuratedAdapters();
             const rollback = await this.#withPrivateCapability(capability => TIMELINE_IPC.rollbackSetup(capability, transaction.transactionId));
-            if (normalizeSetupRollbackOutcome(rollback, statesRestored).status !== "complete") throw new Error("SetupFailedRollbackIncomplete");
+            if (normalizeSetupRollbackOutcome(rollback, statesRestored && settingsRestored).status !== "complete") throw new Error("SetupFailedRollbackIncomplete");
             throw error;
         }
     }
@@ -528,8 +686,8 @@ class SoulCordRuntimeStore extends Store {
         catch {return {status: "failed", removed: 0, preserved: 0};}
         const outcome = normalizeSetupRollbackOutcome(rollback, statesRestored);
         if (outcome.status === "failed") return outcome;
-        if (!SoulCordSettings.rollback(transaction.snapshotId)) return {...outcome, status: "failed"};
-        SoulCordSettings.reopenOnboarding();
+        if (!SoulCordSettings.abortSetupCompletion(transaction.id)) return {...outcome, status: "failed"};
+        this.#refreshReviewedExecutionOwnership();
         await this.#synchronizeFeatures();
         this.#synchronizeCuratedAdapters();
         return outcome;
@@ -541,21 +699,30 @@ class SoulCordRuntimeStore extends Store {
         const integrity = await this.#refreshAddonIntegrity("toggle");
         const integrityRecord = integrity.find(record => record.kind === "addon" && record.name === name);
         const state = SoulCordSettings.snapshot().curatedAddons[name];
-        const guardedBuiltIn = name === "SplitLargeMessages" && state?.mode === "guarded";
+        const guardedBuiltIn = isSoulCordBuiltInAddon(name, state?.mode);
+        const setupExecutable = this.#setupAcceptsAddon(name, state?.mode);
         const guardedWithoutCommunityFile = guardedBuiltIn && integrityRecord?.status === "missing";
         const dependenciesVerified = candidate.dependencies.every(dependencyName => integrity.some(record => record.kind === "dependency" && record.name === dependencyName && record.status === "match"));
+        if (enabled && guardedBuiltIn && !setupExecutable) return false;
         if (enabled && reviewBlocksEnable(candidate, guardedBuiltIn)) return false;
         if (enabled && ((!guardedWithoutCommunityFile && (integrityRecord?.status !== "match" || !dependenciesVerified)) || PluginDoctor.isQuarantined(name))) return false;
         if (guardedBuiltIn) {
             SoulCordSettings.setCuratedAddonEnabled(name, enabled);
-            this.#synchronizeCuratedAdapters();
-            return true;
+            this.#refreshReviewedExecutionOwnership();
+            const result = this.#synchronizeCuratedAdapters()[name];
+            if (!enabled || result?.enabled) return true;
+            const reason = result?.reason ?? "The SoulCord adapter failed its runtime validation and stayed off.";
+            SoulCordSettings.setCuratedAddonEnabled(name, false, reason);
+            this.#refreshReviewedExecutionOwnership();
+            PluginDoctor.quarantine(name, reason);
+            return false;
         }
         if (!PluginManager.isLoaded(candidate.fileName)) return false;
         const succeeded = enabled
             ? PluginManager.enableAddon(candidate.fileName) === true || PluginManager.isEnabled(candidate.fileName)
             : PluginManager.disableAddon(candidate.fileName) === true || !PluginManager.isEnabled(candidate.fileName);
         SoulCordSettings.setCuratedAddonEnabled(name, succeeded ? enabled : false, succeeded ? undefined : "Runtime toggle failed; Plugin Doctor kept the addon off.");
+        this.#refreshReviewedExecutionOwnership();
         if (succeeded && enabled) PluginDoctor.recordSuccessfulStart(name);
         return succeeded;
     }
@@ -569,9 +736,11 @@ class SoulCordRuntimeStore extends Store {
             const name = (candidate ?? dependency)!.name;
             const record = integrity.find(entry => entry.kind === kind && entry.name === name);
             const state = candidate ? SoulCordSettings.snapshot().curatedAddons[candidate.name] : undefined;
-            const guardedBuiltIn = candidate?.name === "SplitLargeMessages" && state?.mode === "guarded";
+            const guardedBuiltIn = Boolean(candidate && isSoulCordBuiltInAddon(candidate.name, state?.mode));
+            const setupExecutable = Boolean(candidate && this.#setupAcceptsAddon(candidate.name, state?.mode));
             const guardedWithoutCommunityFile = guardedBuiltIn && record?.status === "missing";
             const dependenciesVerified = !candidate || candidate.dependencies.every(dependencyName => integrity.some(entry => entry.kind === "dependency" && entry.name === dependencyName && entry.status === "match"));
+            if (candidate && guardedBuiltIn && !setupExecutable) return false;
             if (candidate && reviewBlocksEnable(candidate, guardedBuiltIn)) return false;
             if (dependency && reviewBlocksEnable(dependency)) return false;
             if (!guardedWithoutCommunityFile && (record?.status !== "match" || !dependenciesVerified)) return false;
@@ -692,6 +861,7 @@ class SoulCordRuntimeStore extends Store {
         const snapshot = SoulCordSettings.snapshotById(snapshotId);
         const rolledBack = SoulCordSettings.rollback(snapshotId);
         if (!rolledBack) return false;
+        this.#refreshReviewedExecutionOwnership();
         let addonsRestored = true;
         if (snapshot?.activePlugins) {
             const active = new Set(snapshot.activePlugins);
@@ -711,6 +881,7 @@ class SoulCordRuntimeStore extends Store {
 
     async importSettings(text: string, expectedFingerprint: string): Promise<boolean> {
         if (!SoulCordSettings.importDocument(text, expectedFingerprint)) return false;
+        this.#refreshReviewedExecutionOwnership();
         await this.#synchronizeFeatures();
         return true;
     }
@@ -810,6 +981,28 @@ class SoulCordRuntimeStore extends Store {
         this.#download("soulcord-settings.json", SoulCordSettings.exportDocument(), "application/json");
     }
 
+    #refreshReviewedExecutionOwnership(extraPluginNames: readonly string[] = [], includeAllSoulCordThemes = false): void {
+        const settings = SoulCordSettings.snapshot();
+        const extra = new Set(extraPluginNames);
+        const records: ReviewedExecutionOwnership[] = [];
+        const acceptedAddons = SOULCORD_RUNTIME_ADDONS.filter(candidate => {
+            const state = settings.curatedAddons[candidate.name];
+            return extra.has(candidate.name) || (settings.setupTransactions.length > 0 && state?.reviewedSha256 === candidate.sourceSha256 && (state.selected || state.enabled));
+        });
+        for (const candidate of acceptedAddons) records.push({kind: "plugin", fileName: candidate.fileName, reviewedSha256: candidate.sourceSha256});
+        const dependencyNames = new Set([...extra, ...acceptedAddons.flatMap(candidate => [...candidate.dependencies])]);
+        for (const dependency of SOULCORD_RUNTIME_DEPENDENCIES) {
+            if (dependencyNames.has(dependency.name)) records.push({kind: "plugin", fileName: dependency.fileName, reviewedSha256: dependency.sourceSha256});
+        }
+        const selectedTheme = SOULCORD_THEMES.find(theme => theme.id === settings.selectedTheme);
+        for (const theme of SOULCORD_RUNTIME_THEMES) {
+            if (includeAllSoulCordThemes || (settings.setupTransactions.length > 0 && selectedTheme?.fileName === theme.fileName)) {
+                records.push({kind: "theme", fileName: theme.fileName, reviewedSha256: theme.sourceSha256});
+            }
+        }
+        configureReviewedExecutionOwnership(records);
+    }
+
     #refreshAddonIntegrity(phase: Exclude<AddonIntegrityStatus["phase"], "pending" | "failed">): Promise<AddonIntegrityRecord[]> {
         const run = async () => {
             let records: AddonIntegrityRecord[];
@@ -837,6 +1030,8 @@ class SoulCordRuntimeStore extends Store {
     }
 
     #enforceAddonIntegrity(records: readonly AddonIntegrityRecord[]): void {
+        const settings = SoulCordSettings.snapshot();
+        const ownership = {curatedAddons: settings.curatedAddons, selectedTheme: settings.selectedTheme, hasSetupTransaction: settings.setupTransactions.length > 0};
         const doctorRecords = new Map(PluginDoctor.snapshot().map(record => [record.addonId, record]));
         const quarantine = (name: string, reason: string) => {
             if (doctorRecords.get(name)?.quarantineReason === reason) return;
@@ -851,6 +1046,7 @@ class SoulCordRuntimeStore extends Store {
         };
 
         for (const record of records) {
+            if (!integrityRecordIsAccepted(record, ownership)) continue;
             if (!integrityBlocksExecution(record)) continue;
             if (record.status === "missing") {
                 if (record.kind === "addon") {
@@ -869,7 +1065,7 @@ class SoulCordRuntimeStore extends Store {
             if (record.kind === "addon") {
                 const candidate = SOULCORD_RUNTIME_ADDONS.find(entry => entry.name === record.name);
                 if (!candidate) continue;
-                const configured = SoulCordSettings.snapshot().curatedAddons[candidate.name];
+                const configured = settings.curatedAddons[candidate.name];
                 const guardedBuiltIn = candidate.name === "SplitLargeMessages" && configured?.mode === "guarded";
                 if (guardedBuiltIn && record.status === "unavailable") continue;
                 const installed = Boolean(PluginManager.resolveAddon(candidate.fileName));
@@ -888,7 +1084,7 @@ class SoulCordRuntimeStore extends Store {
                 if (!dependency) continue;
                 const dependents = SOULCORD_RUNTIME_ADDONS.filter(candidate => candidate.dependencies.some(name => String(name) === dependency.name));
                 const dependencyInstalled = Boolean(PluginManager.resolveAddon(dependency.fileName));
-                const dependentActive = dependents.some(candidate => PluginManager.isEnabled(candidate.fileName) || SoulCordSettings.snapshot().curatedAddons[candidate.name]?.enabled === true);
+                const dependentActive = dependents.some(candidate => PluginManager.isEnabled(candidate.fileName) || settings.curatedAddons[candidate.name]?.enabled === true);
                 if (record.status === "unavailable" && !dependencyInstalled && !dependentActive) continue;
                 for (const candidate of dependents) disablePlugin(candidate.fileName, candidate.name);
                 disablePlugin(dependency.fileName, dependency.name);
@@ -928,6 +1124,12 @@ class SoulCordRuntimeStore extends Store {
         const reviewed = SOULCORD_RUNTIME_ADDONS.find(candidate => candidate.fileName === fileName) ?? SOULCORD_RUNTIME_DEPENDENCIES.find(dependency => dependency.fileName === fileName);
         if (!reviewed) return false;
         const kind: AddonIntegrityKind = "dependencies" in reviewed ? "addon" : "dependency";
+        const settings = SoulCordSettings.snapshot();
+        if (settings.setupTransactions.length === 0) return false;
+        const accepted = kind === "addon"
+            ? settings.curatedAddons[reviewed.name]?.reviewedSha256 === reviewed.sourceSha256 && (settings.curatedAddons[reviewed.name]?.selected || settings.curatedAddons[reviewed.name]?.enabled)
+            : SOULCORD_RUNTIME_ADDONS.some(candidate => candidate.dependencies.some(name => name === reviewed.name) && settings.curatedAddons[candidate.name]?.reviewedSha256 === candidate.sourceSha256 && (settings.curatedAddons[candidate.name]?.selected || settings.curatedAddons[candidate.name]?.enabled));
+        if (!accepted) return false;
         const record = this.#integrity.records.find(entry => entry.kind === kind && entry.name === reviewed.name);
         return integrityBlocksExecution(record) || PluginDoctor.isQuarantined(reviewed.name) || PluginDoctor.isQuarantined(reviewed.fileName);
     }
@@ -981,49 +1183,254 @@ class SoulCordRuntimeStore extends Store {
 
     async #restoreAddonStates(priorAddonStates: Record<string, boolean>, priorThemeStates: Record<string, boolean>): Promise<boolean> {
         let complete = true;
-        for (const candidate of SOULCORD_RUNTIME_ADDONS) {
-            const desired = priorAddonStates[candidate.name] === true;
-            if (!await this.#waitForAddon(PluginManager, candidate.fileName, 1_000)) {
-                if (desired) complete = false;
-                continue;
-            }
-            const current = PluginManager.isEnabled(candidate.fileName);
-            if (desired && !current && !this.#reviewedAddonHeld(candidate.fileName)) PluginManager.enableAddon(candidate.fileName);
-            else if (!desired && current) PluginManager.disableAddon(candidate.fileName);
-            if (PluginManager.isEnabled(candidate.fileName) !== desired) complete = false;
+        const transactionPluginFiles = new Set<string>([
+            ...SOULCORD_RUNTIME_ADDONS.map(candidate => candidate.fileName),
+            ...SOULCORD_RUNTIME_DEPENDENCIES.map(candidate => candidate.fileName)
+        ]);
+        for (const addon of PluginManager.addonList) {
+            if (Object.hasOwn(priorAddonStates, addon.filename) || !transactionPluginFiles.has(addon.filename) || !PluginManager.isEnabled(addon.filename)) continue;
+            PluginManager.disableAddon(addon.filename);
+            if (PluginManager.isEnabled(addon.filename)) complete = false;
         }
-        for (const theme of SOULCORD_THEMES) {
-            const desired = priorThemeStates[theme.fileName] === true;
-            if (!await this.#waitForAddon(ThemeManager, theme.fileName, 1_000)) {
+        for (const [fileName, desired] of Object.entries(priorAddonStates)) {
+            const addon = PluginManager.resolveAddon(fileName);
+            if (!addon) {
                 if (desired) complete = false;
                 continue;
             }
-            const current = ThemeManager.isEnabled(theme.fileName);
-            if (desired && !current) ThemeManager.enableAddon(theme.fileName);
-            else if (!desired && current) ThemeManager.disableAddon(theme.fileName);
-            if (ThemeManager.isEnabled(theme.fileName) !== desired) complete = false;
+            const current = PluginManager.isEnabled(addon.filename);
+            if (desired && !current) PluginManager.enableAddon(addon.filename);
+            else if (!desired && current) PluginManager.disableAddon(addon.filename);
+            if (PluginManager.isEnabled(addon.filename) !== desired) complete = false;
+        }
+
+        const transactionThemeFiles = new Set(SOULCORD_THEMES.map(theme => theme.fileName));
+        for (const theme of ThemeManager.addonList) {
+            if (Object.hasOwn(priorThemeStates, theme.filename) || !transactionThemeFiles.has(theme.filename) || !ThemeManager.isEnabled(theme.filename)) continue;
+            ThemeManager.disableAddon(theme.filename);
+            if (ThemeManager.isEnabled(theme.filename)) complete = false;
+        }
+        for (const [fileName, desired] of Object.entries(priorThemeStates)) {
+            const theme = ThemeManager.resolveAddon(fileName);
+            if (!theme) {
+                if (desired) complete = false;
+                continue;
+            }
+            const current = ThemeManager.isEnabled(theme.filename);
+            if (desired && !current) ThemeManager.enableAddon(theme.filename);
+            else if (!desired && current) ThemeManager.disableAddon(theme.filename);
+            if (ThemeManager.isEnabled(theme.filename) !== desired) complete = false;
         }
         return complete;
     }
 
-    #synchronizeCuratedAdapters(): void {
+    #communityAddonEnabled(name: string): boolean {
+        const candidate = SOULCORD_RUNTIME_ADDONS.find(entry => entry.name === name);
+        return Boolean(candidate && communityAddonIsEnabled(PluginManager, candidate.name, candidate.fileName));
+    }
+
+    #communityAddonSignature(): string {
+        return SOULCORD_RUNTIME_ADDONS
+            .filter(candidate => isSoulCordBuiltInAddon(candidate.name, candidate.name === "SplitLargeMessages" ? "guarded" : undefined))
+            .map(candidate => {
+                const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
+                return `${candidate.name}:${addon?.filename ?? "missing"}:${addon && PluginManager.isEnabled(addon.filename) ? "on" : "off"}`;
+            })
+            .join("|");
+    }
+
+    #synchronizeCuratedAdapters(curatedOverride?: Record<string, SoulCordCuratedAddonState>): Record<string, CuratedAdapterResult> {
         this.#curatedScope.dispose();
         this.#curatedScope = new SoulCordDisposalScope();
         const scope = this.#curatedScope;
-        const split = SoulCordSettings.snapshot().curatedAddons.SplitLargeMessages;
-        if (!split?.enabled || split.mode !== "guarded") return;
-        scope.listen(window, "keydown", (rawEvent: Event) => {
-            const event = rawEvent as KeyboardEvent;
-            if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.isComposing || event.repeat) return;
-            const target = event.target instanceof HTMLElement ? event.target : undefined;
-            const editor = target?.closest<HTMLElement>("[role='textbox'][contenteditable='true']");
-            if (!editor || !editor.closest("[class*='channelTextArea']")) return;
-            const content = editor.innerText || editor.textContent || "";
-            if (content.length <= 2_000) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            this.#showGuardedSplitReview(scope, content);
-        }, true);
+        const curated = curatedOverride ?? SoulCordSettings.snapshot().curatedAddons;
+        const results: Record<string, CuratedAdapterResult> = {};
+        const communityResult = (name: string): CuratedAdapterResult => {
+            const preferred = curated[name]?.provider;
+            return preferred === "prefer-soulcord"
+                ? {enabled: true, provider: "community", conflict: true, reason: "The community addon was re-enabled; SoulCord stood down its built-in and left the owner file unchanged."}
+                : {enabled: true, provider: "community"};
+        };
+        this.#curatedCommunitySignature = this.#communityAddonSignature();
+        const split = curated.SplitLargeMessages;
+        if (!split?.enabled || split.mode !== "guarded" || !this.#setupAcceptsAddon("SplitLargeMessages", split.mode)) {
+            results.SplitLargeMessages = {enabled: false, provider: "off"};
+        }
+        else if (this.#communityAddonEnabled("SplitLargeMessages")) {
+            results.SplitLargeMessages = communityResult("SplitLargeMessages");
+        }
+        else {
+            scope.listen(window, "keydown", (rawEvent: Event) => {
+                const event = rawEvent as KeyboardEvent;
+                if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.isComposing || event.repeat) return;
+                const target = event.target instanceof HTMLElement ? event.target : undefined;
+                const editor = target?.closest<HTMLElement>("[role='textbox'][contenteditable='true']");
+                if (!editor || !editor.closest("[class*='channelTextArea']")) return;
+                const content = editor.innerText || editor.textContent || "";
+                if (content.length <= 2_000) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                this.#showGuardedSplitReview(scope, content);
+            }, true);
+            results.SplitLargeMessages = {enabled: true, provider: "soulcord"};
+        }
+
+        if (!curated.DoNotTrack?.enabled) {
+            results.DoNotTrack = {enabled: false, provider: "off"};
+        }
+        else if (this.#communityAddonEnabled("DoNotTrack")) {
+            results.DoNotTrack = communityResult("DoNotTrack");
+        }
+        else {
+            const analyticsContainer = getByKeys<Record<string, unknown>>(["AnalyticEventConfigs"]);
+            const adapter = new DoNotTrackAdapter({
+                scope,
+                patcher: Patcher,
+                methods: [{
+                    key: "track",
+                    lookup: () => resolveDiscordAnalyticsTrack(analyticsContainer),
+                    validate: target => validateDiscordAnalyticsTrack(analyticsContainer, target)
+                }],
+                getSettings: () => ({enabled: true})
+            });
+            if (adapter.start()) {
+                results.DoNotTrack = {enabled: true, provider: "soulcord"};
+                PluginDoctor.recordSuccessfulStart("DoNotTrack");
+            }
+            else {
+                const reason = "Discord analytics lookup failed structural validation; Do Not Track stayed off.";
+                results.DoNotTrack = {enabled: false, provider: "off", reason};
+                PluginDoctor.recordFailure("DoNotTrack", "start", new Error("AnalyticsTrackAdapterUnavailable"));
+            }
+        }
+
+        if (!curated.InvisibleTyping?.enabled) {
+            results.InvisibleTyping = {enabled: false, provider: "off"};
+        }
+        else if (this.#communityAddonEnabled("InvisibleTyping")) {
+            results.InvisibleTyping = communityResult("InvisibleTyping");
+        }
+        else {
+            const typingModule = getByKeys<Record<string, unknown>>(["startTyping", "stopTyping"]);
+            const adapter = new InvisibleTypingAdapter({
+                scope,
+                patcher: Patcher,
+                lookupTypingStart: () => typingModule && ({module: typingModule, key: "startTyping"}),
+                getSettings: () => ({enabled: true, allowlistChannelIds: []}),
+                validateTypingStart: target => target.module === typingModule && typeof typingModule?.stopTyping === "function"
+            });
+            if (adapter.start()) {
+                results.InvisibleTyping = {enabled: true, provider: "soulcord"};
+                PluginDoctor.recordSuccessfulStart("InvisibleTyping");
+            }
+            else {
+                const reason = "Discord typing lookup failed structural validation; Invisible Typing stayed off.";
+                results.InvisibleTyping = {enabled: false, provider: "off", reason};
+                PluginDoctor.recordFailure("InvisibleTyping", "start", new Error("TypingStartAdapterUnavailable"));
+            }
+        }
+
+        if (!curated.DoubleClickToReply?.enabled) {
+            results.DoubleClickToReply = {enabled: false, provider: "off"};
+        }
+        else if (this.#communityAddonEnabled("DoubleClickToReply")) {
+            results.DoubleClickToReply = communityResult("DoubleClickToReply");
+        }
+        else {
+            const feature = new DoubleClickReplyFeature(this.#doubleClickReplyAdapter());
+            if (feature.start()) {
+                scope.own(() => feature.stop(), "listener");
+                results.DoubleClickToReply = {enabled: true, provider: "soulcord"};
+                PluginDoctor.recordSuccessfulStart("DoubleClickToReply");
+            }
+            else {
+                const reason = "Discord reply lookup failed structural validation; Double Click to Reply stayed off.";
+                results.DoubleClickToReply = {enabled: false, provider: "off", reason};
+                PluginDoctor.recordFailure("DoubleClickToReply", "start", new Error("DoubleClickReplyAdapterUnavailable"));
+            }
+        }
+        if (!curatedOverride) {
+            for (const [name, result] of Object.entries(results)) {
+                const state = curated[name];
+                if (!state?.enabled || !isSoulCordBuiltInAddon(name, state.mode) || result.enabled || !result.reason) continue;
+                SoulCordSettings.setCuratedAddonEnabled(name, false, result.reason);
+            }
+        }
+        this.#curatedAdapterResults = structuredClone(results);
+        if (!curatedOverride) this.emitChange();
+        return results;
+    }
+
+    #doubleClickReplyAdapter(): DoubleClickReplyAdapter {
+        type DiscordMessage = {id?: string; channel_id?: string; author?: {id?: string;};};
+        type DiscordChannel = {id?: string; guild_id?: string;};
+        const messageStore = getStore("MessageStore") as {getMessage?: (channelId: string, messageId: string) => DiscordMessage | undefined;} | undefined;
+        const channelStore = getStore("ChannelStore") as {getChannel?: (channelId: string) => DiscordChannel | undefined;} | undefined;
+        const userStore = getStore("UserStore") as {getCurrentUser?: () => {id?: string;} | undefined;} | undefined;
+        const [replyModule, replyKey] = getWithKey(candidate => typeof candidate === "function" && String(candidate).includes("CREATE_PENDING_REPLY"));
+        const replyFunction = typeof replyKey === "string" && replyModule ? replyModule[replyKey] : undefined;
+
+        const messageIdentity = (element: Element): {channelId: string; messageId: string;} | undefined => {
+            const container = element.closest<HTMLElement>("[data-list-item-id^='chat-messages'], [id^='chat-messages-']");
+            const identity = container?.getAttribute("data-list-item-id") ?? container?.id;
+            const match = identity?.match(/chat-messages(?:___|[_-])(\d{1,32})[_-](\d{1,32})/);
+            if (!match) return;
+            return {channelId: match[1], messageId: match[2]};
+        };
+        const resolve = (target: DoubleClickReplyTarget): {message: DiscordMessage; channel: DiscordChannel;} | undefined => {
+            const message = messageStore?.getMessage?.(target.channelId, target.messageId);
+            const channel = channelStore?.getChannel?.(target.channelId);
+            if (message?.id !== target.messageId || message.channel_id !== target.channelId || channel?.id !== target.channelId) return;
+            return {message, channel};
+        };
+
+        return {
+            validate: () => typeof messageStore?.getMessage === "function"
+                && typeof channelStore?.getChannel === "function"
+                && typeof userStore?.getCurrentUser === "function"
+                && typeof replyFunction === "function"
+                && typeof replyKey === "string",
+            installDoubleClickListener: listener => {
+                const handler = (event: Event) => listener(event);
+                document.addEventListener("dblclick", handler, false);
+                return () => document.removeEventListener("dblclick", handler, false);
+            },
+            inspect: event => {
+                if (!(event instanceof MouseEvent) || !(event.target instanceof Element)) return null;
+                const identity = messageIdentity(event.target);
+                const resolved = identity && resolve(identity);
+                if (!identity || !resolved || resolved.message.author?.id === userStore?.getCurrentUser?.()?.id) return null;
+                const selection = window.getSelection?.();
+                const ancestors = event.composedPath().flatMap(node => node instanceof HTMLElement ? [{
+                    tagName: node.tagName,
+                    role: node.getAttribute("role"),
+                    contentEditable: node.getAttribute("contenteditable"),
+                    soulcordOwned: [...node.classList].some(name => name.startsWith("soulcord-"))
+                }] : []);
+                return {
+                    eventType: event.type,
+                    button: event.button,
+                    detail: event.detail,
+                    altKey: event.altKey,
+                    ctrlKey: event.ctrlKey,
+                    metaKey: event.metaKey,
+                    shiftKey: event.shiftKey,
+                    hasSelection: Boolean(selection && !selection.isCollapsed),
+                    ancestors,
+                    message: identity
+                } satisfies DoubleClickReplyContext;
+            },
+            requestReply: target => {
+                const resolved = resolve(target);
+                if (!resolved || typeof replyFunction !== "function" || !replyModule || typeof replyKey !== "string") return;
+                Reflect.apply(replyFunction, replyModule, [{
+                    channel: resolved.channel,
+                    message: resolved.message,
+                    shouldMention: true,
+                    showMentionToggle: Boolean(resolved.channel.guild_id)
+                }]);
+            }
+        };
     }
 
     #showGuardedSplitReview(scope: SoulCordDisposalScope, content: string): void {
@@ -1112,7 +1519,7 @@ class SoulCordRuntimeStore extends Store {
                 case "plugin-doctor": this.#startPluginDoctor(scope); break;
                 case "drift-radar": this.#startDriftRadar(scope); break;
                 case "performance-hud": this.#startPerformanceHud(scope); break;
-                case "workspace-profiles": this.#setHealth(id, {detail: "Profile preview, snapshot, apply, and rollback are available. Opted-in third-party plugins execute only after a separate action-time confirmation."}); break;
+                case "workspace-profiles": this.#setHealth(id, {detail: "Module-setting profile preview, snapshot, apply, and rollback are available. Optional exact addon states execute only after a separate action-time confirmation."}); break;
                 case "command-deck": this.#startCommandDeck(scope); break;
                 case "link-lens": await this.#startLinkLens(scope); break;
                 case "stream-shield": this.#startStreamShield(scope); break;
@@ -1261,45 +1668,30 @@ class SoulCordRuntimeStore extends Store {
         const [module, key] = getWithKey((candidate) => String(candidate).includes(".trackAnnouncementMessageLinkClicked("), {target});
         if (!module || typeof key !== "string" || typeof module[key] !== "function") throw new Error("LinkActivationAdapterUnavailable");
 
+        const lifecycle = new LinkReviewLifecycle({
+            href: () => window.location.href,
+            activeElement: () => document.activeElement instanceof HTMLElement ? document.activeElement : undefined,
+            setInterval: (callback, delay) => globalThis.setInterval(callback, delay),
+            clearInterval: handle => globalThis.clearInterval(handle as ReturnType<typeof globalThis.setInterval>)
+        });
+        scope.own(() => lifecycle.dispose(), "element");
+
         const unpatch = Patcher.instead("SoulCord~LinkLens", module, key, (thisObject, args, original) => {
             const values = SoulCordSettings.module("link-lens").values;
             return interceptLinkActivation(thisObject, args as Array<{href?: string;} | Event | undefined>, original, {
                 currentHref: window.location.href,
                 confirmAllExternal: values.confirmAllExternal === true,
                 removeTrackers: values.removeTrackers !== false,
-                review: (inspection, onConfirm) => this.#showLinkReview(scope, inspection, onConfirm),
+                review: (inspection, onConfirm, onCancel, onFailure) => this.#showLinkReview(lifecycle, inspection, onConfirm, onCancel, onFailure),
                 open: destination => window.open(destination, "_blank", "noopener,noreferrer")
             });
         }, {forcePatch: false});
         if (!unpatch) throw new Error("LinkActivationPatchRejected");
         scope.own(unpatch, "patch");
-        this.#setHealth("link-lens", {maturity: "ready", detail: "Native external-link activation adapter is attached. Internal Discord navigation is never intercepted."});
+        this.#setHealth("link-lens", {maturity: "preview", detail: "Native-only external-link activation adapter is attached. Internal Discord navigation is never intercepted; disposable modal and DM acceptance is still pending."});
     }
 
-    #showLinkReview(scope: SoulCordDisposalScope, inspection: LinkInspection, onConfirm: () => void): boolean {
-        if (this.#linkReviewOpen) return true;
-        if (scope.disposed || typeof Modals.ModalActions?.closeModal !== "function") return false;
-        this.#linkReviewOpen = true;
-        const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-        const previousHref = window.location.href;
-        let finished = false;
-        let modalKey: string | number | undefined;
-        let routeTimer = 0;
-        let release = () => {};
-        let releaseRouteTimer = () => {};
-        const dispose = () => {
-            releaseRouteTimer();
-            const shouldClose = !finished;
-            finished = true;
-            this.#linkReviewOpen = false;
-            if (shouldClose && (typeof modalKey === "string" || typeof modalKey === "number")) Modals.ModalActions?.closeModal(modalKey);
-            if (previousFocus?.isConnected) previousFocus.focus();
-        };
-        const finish = () => {
-            if (finished) return;
-            finished = true;
-            release();
-        };
+    #showLinkReview(lifecycle: LinkReviewLifecycle, inspection: LinkInspection, onConfirm: () => void, onCancel: () => void, onFailure: () => void): boolean {
         const warnings = inspection.warnings.length
             ? inspection.warnings.map(warning => `• ${warning}`)
             : ["• No local warning rules matched; review is enabled for every external link."];
@@ -1308,28 +1700,19 @@ class SoulCordRuntimeStore extends Store {
             ...(inspection.finalHost && inspection.finalHost !== inspection.host ? [`Declared final host: **${inspection.finalHost}**`] : []),
             ...warnings
         ];
-        try {
-            const openedModal = Modals.showConfirmationModal("Review external link", content, {
+        const result = lifecycle.open({
+            open: callbacks => Modals.showNativeConfirmationModal("Review external link", content, {
                 key: "soulcord-link-review",
                 confirmText: "Open reviewed link",
                 cancelText: "Cancel",
-                onConfirm: () => {finish(); onConfirm();},
-                onCancel: finish,
-                onClose: finish
-            });
-            modalKey = typeof openedModal === "string" || typeof openedModal === "number" ? openedModal : "soulcord-link-review";
-            release = scope.own(dispose, "element");
-            if (scope.disposed) return false;
-            routeTimer = globalThis.setInterval(() => {
-                if (window.location.href !== previousHref) release();
-            }, 200) as unknown as number;
-            releaseRouteTimer = scope.own(() => globalThis.clearInterval(routeTimer), "interval");
-            return true;
-        }
-        catch {
-            dispose();
-            return false;
-        }
+                onConfirm: callbacks.onConfirm,
+                onCancel: callbacks.onCancel,
+                onClose: callbacks.onClose,
+                onRenderError: callbacks.onRenderError
+            }),
+            close: modalKey => Modals.ModalActions.closeModal(modalKey)
+        }, {confirm: onConfirm, cancel: onCancel, failure: onFailure});
+        return result !== "unavailable";
     }
 
     #startStreamShield(scope: SoulCordDisposalScope): void {
@@ -1353,7 +1736,7 @@ class SoulCordRuntimeStore extends Store {
             root.classList.toggle("soulcord-stream-preview", settings.previewActive === true);
             this.#setHealth("stream-shield", {
                 maturity: getter ? "ready" : "preview",
-                detail: `${active ? "Shield active" : "Shield ready"}; ${getter ? "verified Go Live store connected" : "manual hotkey only because no validated Go Live store was found"}.`
+                detail: `${active ? "Shield active" : "Shield ready"}; ${getter ? "structural Go Live store lookup connected; live transition acceptance is still pending" : "manual hotkey only because no validated Go Live store was found"}.`
             });
         };
         const redactions: string[] = [];
@@ -1419,12 +1802,14 @@ class SoulCordRuntimeStore extends Store {
         let accountGeneration = -1;
         let accountInitialized = false;
         let accountReady = false;
+        let storageReadComplete = true;
+        let storageAttention = "";
 
         const updateHealth = () => {
             const status = this.#timeline.status();
             this.#setHealth("message-timeline", {
-                maturity: "ready",
-                detail: `${status.records} observed message record(s); ${status.deleted} deleted and ${status.edited} edited. ${this.#timelinePersistent ? "AES-256-GCM persistence is active through safeStorage." : "Session-only mode is active."}`
+                maturity: storageReadComplete ? "ready" : "preview",
+                detail: `${status.records} observed message record(s); ${status.deleted} deleted and ${status.edited} edited. ${this.#timelinePersistent ? "AES-256-GCM persistence is active through safeStorage." : "Session-only mode is active."}${storageAttention ? ` ${storageAttention}` : ""}`
             });
             this.emitChange();
         };
@@ -1437,6 +1822,8 @@ class SoulCordRuntimeStore extends Store {
             accountInitialized = true;
             accountId = valid;
             accountReady = false;
+            storageReadComplete = true;
+            storageAttention = "";
             accountGeneration = identity.generation;
             const generation = identity.generation;
             this.#timeline.clear();
@@ -1460,12 +1847,14 @@ class SoulCordRuntimeStore extends Store {
                 const opened = await this.#withTimelineAccount(targetAccountId, async capability => {
                     const storage = await TIMELINE_IPC.status(capability) as {persistent?: boolean; sessionOnly?: boolean;};
                     if (!identityIsCurrent()) throw new Error("TimelineAccountChangedBeforeRead");
-                    const loaded = await TIMELINE_IPC.read(capability, {policy}) as {events?: TimelineEvent[]; persistent?: boolean;};
+                    const loaded = normalizeTimelineReadOutcome(await TIMELINE_IPC.read(capability, {policy}));
                     return {storage, loaded};
                 }, identityIsCurrent);
                 if (scope.disposed || generation !== accountGeneration || !identityIsCurrent()) return;
                 this.#timelinePersistent = policy.retention !== "session" && opened.storage.persistent === true && opened.loaded.persistent === true;
-                this.#timeline.hydrate(Array.isArray(opened.loaded.events) ? opened.loaded.events : [], policy);
+                storageReadComplete = opened.loaded.status === "complete";
+                storageAttention = storageReadComplete ? "" : `The persistent read is partial (${opened.loaded.omittedSegments} omitted, ${opened.loaded.unreadableSegments} unreadable; retention ${opened.loaded.retentionApplied ? "applied" : "incomplete"}).`;
+                this.#timeline.hydrate(opened.loaded.events, policy);
                 accountReady = true;
                 updateHealth();
             }
@@ -1507,6 +1896,13 @@ class SoulCordRuntimeStore extends Store {
             void this.#withPrivateCapability(capability => {
                 if (this.#boundTimelineAccountId !== current) throw new Error("TimelineAccountChangedBeforeAppend");
                 return TIMELINE_IPC.append(capability, {events: [event], policy});
+            }).then(raw => {
+                if (current !== currentAccountId() || this.#boundTimelineAccountId !== current) return;
+                const result = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+                if (result.retentionApplied === true) return;
+                storageReadComplete = false;
+                storageAttention = "Retention cleanup is incomplete; ambiguous encrypted residue remains and requires review.";
+                updateHealth();
             }).catch(error => {
                 this.#timelinePersistent = false;
                 this.#setHealth("message-timeline", {maturity: "preview", detail: `A timeline segment failed closed (${errorName(error)}); renderer memory remains session-only.`});

@@ -1,30 +1,39 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /**
  * @name SoulCord — Paper Signal
  * @author slaveofsolace
- * @version 1.0.0
+ * @version 1.0.1
  * @description A warm paper SoulCord theme with ink, coral, and teal signals.
  * @source https://github.com/slaveofsolace/Solcord
  */
 
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
 :root {
-    --soulcord-paper: #f3ede3;
-    --soulcord-panel: #e8e0d5;
-    --soulcord-raised: #fffaf2;
+    --soulcord-paper: #F3EDE3;
+    --soulcord-panel: #E8E0D5;
+    --soulcord-raised: #FFFAF2;
     --soulcord-ink: #242525;
-    --soulcord-muted: #676b6a;
-    --soulcord-coral: #c95849;
-    --soulcord-teal: #287d78;
-    --soulcord-seam: #cfc4b7;
-    --soulcord-focus: #176c68;
-    --custom-message-spacing-vertical-container-cozy: .34rem;
-    --custom-message-spacing-vertical-container-compact: .1rem;
+    --soulcord-muted: #5F6462;
+    --soulcord-coral: #C95849;
+    --soulcord-teal: #287D78;
+    --soulcord-seam: #CFC4B7;
+    --soulcord-focus: #176C68;
+    --soulcord-graphite: var(--soulcord-ink);
+    --soulcord-cream: var(--soulcord-raised);
+    --soulcord-sea: var(--soulcord-teal);
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
 
 .theme-light {
+    color-scheme: light;
+
     --background-primary: var(--soulcord-paper);
     --background-secondary: var(--soulcord-panel);
-    --background-secondary-alt: #ded4c8;
-    --background-tertiary: #d5cbbf;
+    --background-secondary-alt: #DED4C8;
+    --background-tertiary: #D5CBBF;
     --background-floating: var(--soulcord-raised);
     --background-modifier-hover: rgb(40 125 120 / 9%);
     --background-modifier-active: rgb(40 125 120 / 14%);
@@ -32,30 +41,33 @@
     --background-modifier-accent: var(--soulcord-seam);
     --text-normal: var(--soulcord-ink);
     --text-muted: var(--soulcord-muted);
-    --text-link: #126f75;
-    --header-primary: #191b1b;
-    --header-secondary: #4d5251;
-    --interactive-normal: #4f5554;
-    --interactive-hover: #1d2120;
+    --text-link: #126F75;
+    --header-primary: #191B1B;
+    --header-secondary: #4D5251;
+    --interactive-normal: #4F5554;
+    --interactive-hover: #1D2120;
     --interactive-active: #131515;
-    --interactive-muted: #969b98;
+    --interactive-muted: #5F6462;
     --brand-experiment: var(--soulcord-teal);
-    --brand-experiment-560: #236e69;
+    --brand-experiment-560: #236E69;
     --status-danger: var(--soulcord-coral);
-    --channel-text-area-placeholder: #777c79;
-    --scrollbar-thin-thumb: #b3a99d;
-    --scrollbar-auto-thumb: #b3a99d;
-    --scrollbar-auto-track: #e4dcd1;
+    --channel-text-area-placeholder: #5F6462;
+    --scrollbar-thin-thumb: #B3A99D;
+    --scrollbar-auto-thumb: #B3A99D;
+    --scrollbar-auto-track: #E4DCD1;
 }
 
-::selection { color: #fffaf2; background: #287d78; }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 2px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+::selection { color: #FFFAF2; background: #287D78; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
 :where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
 :where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
-:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #c9bdb0; box-shadow: none !important; }
+:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #C9BDB0; box-shadow: none !important; }
 :where([class*="mentioned"]) { background: rgb(201 88 73 / 10%) !important; border-left: 2px solid var(--soulcord-coral); }
-:where([class*="newMessagesBar"]) { background: var(--soulcord-teal) !important; color: #fffaf2 !important; }
+:where([class*="newMessagesBar"]) { background: var(--soulcord-teal) !important; color: #FFFAF2 !important; }
 
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

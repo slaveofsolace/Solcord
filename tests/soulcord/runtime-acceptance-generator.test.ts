@@ -144,6 +144,7 @@ function runFixture(acceptance: AcceptanceLedger, candidateDisposition = "SAFE_T
         dependencies: {BDFDB: {catalogId: null, immutableRevision: DEPENDENCY_REVISION, sourceSha256: DEPENDENCY_SHA256, disposition: dependencyDisposition, reasonCodes: ["TEST_FIXTURE"]}}
     }));
     for (const fileName of [
+        "SoulCord-Default.theme.css",
         "SoulCord-ObsidianThread.theme.css",
         "SoulCord-CarbonEmber.theme.css",
         "SoulCord-MidnightGlass.theme.css",

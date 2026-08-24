@@ -1,67 +1,76 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /**
  * @name SoulCord — Midnight Glass
  * @author slaveofsolace
- * @version 1.0.0
+ * @version 1.0.1
  * @description A restrained navy-black SoulCord theme with silver seams and ice-cyan focus.
  * @source https://github.com/slaveofsolace/Solcord
  */
 
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
 :root {
-    --soulcord-midnight: #10151c;
-    --soulcord-panel: #151d26;
+    --soulcord-midnight: #10151C;
+    --soulcord-panel: #151D26;
     --soulcord-raised: rgb(29 39 51 / 94%);
-    --soulcord-silver: #dce4eb;
-    --soulcord-muted: #95a3ae;
-    --soulcord-ice: #72bfd1;
-    --soulcord-blue: #387a99;
-    --soulcord-seam: #2b3946;
-    --soulcord-focus: #8ad5e5;
-    --custom-message-spacing-vertical-container-cozy: .34rem;
-    --custom-message-spacing-vertical-container-compact: .1rem;
+    --soulcord-silver: #DCE4EB;
+    --soulcord-muted: #95A3AE;
+    --soulcord-ice: #72BFD1;
+    --soulcord-blue: #387A99;
+    --soulcord-seam: #2B3946;
+    --soulcord-focus: #8AD5E5;
+    --soulcord-graphite: var(--soulcord-midnight);
+    --soulcord-cream: var(--soulcord-silver);
+    --soulcord-sea: var(--soulcord-ice);
+    --soulcord-coral: #D36870;
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
 
 .theme-dark,
 .theme-darker,
 .theme-midnight {
+    color-scheme: dark;
+
     --background-primary: var(--soulcord-midnight);
     --background-secondary: var(--soulcord-panel);
     --background-secondary-alt: #121922;
-    --background-tertiary: #0b1016;
+    --background-tertiary: #0B1016;
     --background-floating: var(--soulcord-raised);
     --background-modifier-hover: rgb(114 191 209 / 10%);
     --background-modifier-active: rgb(114 191 209 / 16%);
     --background-modifier-selected: rgb(56 122 153 / 25%);
     --background-modifier-accent: var(--soulcord-seam);
-    --text-normal: #d6dde3;
+    --text-normal: #D6DDE3;
     --text-muted: var(--soulcord-muted);
     --text-link: var(--soulcord-ice);
     --header-primary: var(--soulcord-silver);
-    --header-secondary: #b2bec7;
-    --interactive-normal: #afbbc4;
-    --interactive-hover: #eef7fb;
+    --header-secondary: #B2BEC7;
+    --interactive-normal: #AFBBC4;
+    --interactive-hover: #EEF7FB;
     --interactive-active: var(--soulcord-silver);
-    --interactive-muted: #61717e;
+    --interactive-muted: #8294A2;
     --brand-experiment: var(--soulcord-blue);
-    --brand-experiment-560: #326d89;
-    --status-danger: #d36870;
-    --channel-text-area-placeholder: #71808b;
-    --scrollbar-thin-thumb: #40515f;
-    --scrollbar-auto-thumb: #40515f;
-    --scrollbar-auto-track: #0b1016;
+    --brand-experiment-560: #326D89;
+    --status-danger: #D36870;
+    --channel-text-area-placeholder: #8294A2;
+    --scrollbar-thin-thumb: #40515F;
+    --scrollbar-auto-thumb: #40515F;
+    --scrollbar-auto-track: #0B1016;
 }
 
-::selection { color: #071116; background: #95dce9; }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 2px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+::selection { color: #071116; background: #95DCE9; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
 :where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
 :where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
-:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #2d3d4a; background-color: rgb(16 23 31 / 88%) !important; box-shadow: none !important; }
-:where([class*="layerContainer"] [class*="menu"], [role="dialog"]) { backdrop-filter: blur(10px); }
+:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #2D3D4A; background-color: rgb(16 23 31 / 88%) !important; box-shadow: none !important; }
 :where([class*="mentioned"]) { background: rgb(56 122 153 / 16%) !important; border-left: 2px solid var(--soulcord-ice); }
-:where([class*="newMessagesBar"]) { background: var(--soulcord-blue) !important; color: #effbff !important; }
+:where([class*="newMessagesBar"]) { background: var(--soulcord-blue) !important; color: #EFFBFF !important; }
 
-@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
-    :where([class*="layerContainer"] [class*="menu"], [role="dialog"]) { backdrop-filter: none; }
-}
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 const TRACKING_PARAMETERS = new Set([
     "fbclid", "gclid", "dclid", "igshid", "mc_cid", "mc_eid", "msclkid", "ref_src", "s_cid",
     "utm_campaign", "utm_content", "utm_id", "utm_medium", "utm_name", "utm_reader", "utm_source", "utm_term"
@@ -29,8 +31,134 @@ export interface LinkActivationAdapterOptions {
     currentHref?: string;
     confirmAllExternal: boolean;
     removeTrackers: boolean;
-    review(inspection: LinkInspection, onConfirm: () => void): boolean | void;
+    review(inspection: LinkInspection, onConfirm: () => void, onCancel: () => void, onFailure: () => void): boolean | void;
     open(destination: string): void;
+}
+
+export type LinkReviewModalKey = string | number;
+
+export interface LinkReviewModalCallbacks {
+    onConfirm(): void;
+    onCancel(): void;
+    onClose(): void;
+    onRenderError(): void;
+}
+
+export interface LinkReviewModalAdapter {
+    open(callbacks: LinkReviewModalCallbacks): LinkReviewModalKey | undefined;
+    close(key: LinkReviewModalKey): void;
+}
+
+export interface LinkReviewFocusTarget {
+    readonly isConnected: boolean;
+    focus(): void;
+}
+
+export interface LinkReviewLifecycleEnvironment {
+    href(): string;
+    activeElement(): LinkReviewFocusTarget | undefined;
+    setInterval(callback: () => void, delay: number): unknown;
+    clearInterval(handle: unknown): void;
+}
+
+export interface LinkReviewLifecycleActions {
+    confirm(): void;
+    cancel(): void;
+    failure(): void;
+}
+
+export type LinkReviewOpenResult = "opened" | "busy" | "unavailable";
+
+interface ActiveLinkReview {
+    finish(reason: "confirm" | "cancel" | "failure", closeModal: boolean): void;
+}
+
+/** Owns exactly one native review modal and all of its route/focus cleanup. */
+export class LinkReviewLifecycle {
+    #active?: ActiveLinkReview;
+
+    constructor(private readonly environment: LinkReviewLifecycleEnvironment) {}
+
+    get active(): boolean {
+        return Boolean(this.#active);
+    }
+
+    open(adapter: LinkReviewModalAdapter, actions: LinkReviewLifecycleActions): LinkReviewOpenResult {
+        if (this.#active) return "busy";
+
+        const previousHref = this.environment.href();
+        const previousFocus = this.environment.activeElement();
+        let key: LinkReviewModalKey | undefined;
+        let interval: unknown;
+        let finished = false;
+        let closeWhenKeyIsKnown = false;
+        let finishReason: "confirm" | "cancel" | "failure" | undefined;
+
+        const restoreFocus = () => {
+            try {
+                if (previousFocus?.isConnected) previousFocus.focus();
+            }
+            catch {/* focus restoration is best-effort */}
+        };
+        const close = () => {
+            if (key === undefined) {
+                closeWhenKeyIsKnown = true;
+                return;
+            }
+            try {adapter.close(key);}
+            catch {/* modal drift must not retain ownership */}
+        };
+        const finish = (reason: "confirm" | "cancel" | "failure", closeModal: boolean) => {
+            if (finished) return;
+            finished = true;
+            finishReason = reason;
+            this.#active = undefined;
+            if (interval !== undefined) {
+                try {this.environment.clearInterval(interval);}
+                catch {/* timer cleanup remains best-effort */}
+                interval = undefined;
+            }
+            if (closeModal) close();
+            restoreFocus();
+            if (reason === "confirm") actions.confirm();
+            else if (reason === "cancel") actions.cancel();
+            else actions.failure();
+        };
+        const active: ActiveLinkReview = {finish};
+        this.#active = active;
+
+        try {
+            key = adapter.open({
+                onConfirm: () => finish("confirm", false),
+                onCancel: () => finish("cancel", false),
+                onClose: () => finish("cancel", false),
+                onRenderError: () => finish("failure", true)
+            });
+        }
+        catch {
+            finish("failure", false);
+            return "unavailable";
+        }
+
+        if (typeof key !== "string" && typeof key !== "number") {
+            finish("failure", false);
+            return "unavailable";
+        }
+        if (closeWhenKeyIsKnown) {
+            try {adapter.close(key);}
+            catch {/* ownership was already released */}
+        }
+        if (finished) return finishReason === "failure" ? "unavailable" : "opened";
+
+        interval = this.environment.setInterval(() => {
+            if (this.environment.href() !== previousHref) finish("cancel", true);
+        }, 200);
+        return "opened";
+    }
+
+    dispose(): void {
+        this.#active?.finish("cancel", true);
+    }
 }
 
 function safeUrl(value: string): URL | null {
@@ -92,10 +220,26 @@ export function interceptLinkActivation(
     const decision = decideLinkActivation(link.href, options.currentHref, options.confirmAllExternal, options.removeTrackers);
     if (decision.action === "pass" || !decision.destination) return original.apply(thisObject, args);
 
+    let settled = false;
+    let originalReturn: unknown;
+    const failOpen = () => {
+        if (settled) return originalReturn;
+        settled = true;
+        originalReturn = original.apply(thisObject, args);
+        return originalReturn;
+    };
+    const confirm = () => {
+        if (settled) return;
+        settled = true;
+        options.open(decision.destination!);
+    };
+    const cancel = () => {settled = true;};
+
     let reviewed: boolean | void;
-    try {reviewed = options.review(decision.inspection, () => options.open(decision.destination!));}
-    catch {return original.apply(thisObject, args);}
-    if (reviewed === false) return original.apply(thisObject, args);
+    try {reviewed = options.review(decision.inspection, confirm, cancel, failOpen);}
+    catch {return failOpen();}
+    if (reviewed === false) return failOpen();
+    if (settled) return originalReturn;
 
     const event = args[1] as Event | undefined;
     event?.preventDefault?.();

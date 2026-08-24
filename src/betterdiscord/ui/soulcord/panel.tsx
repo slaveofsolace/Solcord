@@ -38,7 +38,7 @@ function ActionButton({children, onClick, tone = "neutral", disabled = false}: {
 function ModuleTable() {
     const state = useStateFromStores([SoulCordSettings, SoulCordRuntime], () => ({settings: SoulCordSettings.snapshot(), health: SoulCordRuntime.health()}));
     return <div className="soulcord-module-table" role="table" aria-label="SoulCord module status">
-        {state.health.map(health => {
+        {state.health.length ? state.health.map(health => {
             const module = state.settings.modules[health.id];
             return <div className="soulcord-module-row" role="row" key={health.id}>
                 <div className="soulcord-module-primary" role="cell">
@@ -60,14 +60,14 @@ function ModuleTable() {
                     <span>{module.enabled ? "On" : "Off"}</span>
                 </label>
             </div>;
-        })}
+        }) : <p className="soulcord-empty" role="status">Module health will appear after SoulCord finishes starting.</p>}
     </div>;
 }
 
 function ActivityBridge() {
     const activity = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.activityHealth());
     const events = activity?.events.slice(-8).reverse() ?? [];
-    return <Section title="Activity Bridge" summary="The unrestricted preload override defaults to off. SoulCord permits one later absolute preload only when canonical paths prove it belongs to the same Discord package root.">
+    return <Section title="Activity Bridge" summary="SoulCord keeps the unrestricted override off. It accepts one later Discord-owned preload only after the file resolves inside the same installed Discord package.">
         <div className="soulcord-split">
             <div>
                 <dl className="soulcord-facts">
@@ -185,7 +185,7 @@ function ProfilesAndHistory() {
             setImportStatus("The settings file could not be read locally.");
         }
     };
-    return <Section title="Profiles and Time Machine" summary="Every apply captures a bounded local snapshot. Exports exclude secrets; applying an opted-in addon profile can execute the exact third-party plugin files shown in the separate confirmation.">
+    return <Section title="Profiles and Time Machine" summary="Profiles save SoulCord module settings and, only when selected, exact plugin/theme states. They do not capture Timeline policy or curated-addon choices. Every apply keeps a bounded rollback snapshot.">
         <div className="soulcord-split">
             <div>
                 <label className="soulcord-field">Profile
@@ -210,7 +210,7 @@ function ProfilesAndHistory() {
                 </label>
                 <div className="soulcord-inline-field">
                     <input value={newName} maxLength={80} placeholder="Custom profile name" aria-label="Custom profile name" onChange={event => setNewName(event.currentTarget.value)} />
-                    <ActionButton onClick={save} disabled={!newName.trim()}>Save current state</ActionButton>
+                    <ActionButton onClick={save} disabled={!newName.trim()}>Save module state</ActionButton>
                 </div>
                 <label className="soulcord-profile-addon-optin"><input type="checkbox" checked={includeThirdParty} onChange={event => setIncludeThirdParty(event.currentTarget.checked)} /> Include the complete currently enabled BetterDiscord plugin/theme set (executes third-party code when applied)</label>
                 {importStatus && <p className="soulcord-import-status" role="status">{importStatus}</p>}
@@ -288,6 +288,7 @@ function ScreenshotScrubber() {
     const sourceRef = useRef<HTMLImageElement | undefined>(undefined);
     const dragRef = useRef<{x: number; y: number;} | null>(null);
     const [loaded, setLoaded] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<"cover" | "blur">("cover");
     const [error, setError] = useState("");
     const [region, setRegion] = useState({x: 10, y: 10, width: 30, height: 20});
@@ -303,24 +304,41 @@ function ScreenshotScrubber() {
         if (!canvas || !image) return;
         canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
     };
+    const clearSource = () => {
+        sourceRef.current = undefined;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        canvas.width = 1;
+        canvas.height = 1;
+        canvas.getContext("2d")?.clearRect(0, 0, 1, 1);
+    };
     const load = (file?: File) => {
         setError("");
         const supportedTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
         if (!file || !supportedTypes.has(file.type)) {
+            clearSource();
+            setLoading(false);
             setLoaded(false);
             setError("Choose a PNG, JPEG, or WebP image.");
             return;
         }
         if (file.size > 25 * 1024 * 1024) {
+            clearSource();
+            setLoading(false);
             setLoaded(false);
             setError("The local image exceeds the 25 MB safety limit.");
             return;
         }
+        clearSource();
+        setLoading(true);
+        setLoaded(false);
         const reader = new FileReader();
         reader.onload = () => {
             const image = new Image();
             image.onload = () => {
                 if (image.naturalWidth * image.naturalHeight > 40_000_000) {
+                    clearSource();
+                    setLoading(false);
                     setLoaded(false);
                     setError("The decoded image exceeds the 40-megapixel safety limit.");
                     return;
@@ -332,14 +350,19 @@ function ScreenshotScrubber() {
                 sourceRef.current = image;
                 drawSource();
                 setLoaded(true);
+                setLoading(false);
             };
             image.onerror = () => {
+                clearSource();
+                setLoading(false);
                 setLoaded(false);
                 setError("The image could not be decoded locally.");
             };
             image.src = String(reader.result);
         };
         reader.onerror = () => {
+            clearSource();
+            setLoading(false);
             setLoaded(false);
             setError("The image could not be read locally.");
         };
@@ -401,12 +424,12 @@ function ScreenshotScrubber() {
     };
     return <Section title="Screenshot Scrubber" summary="Choose an image from this PC, redact by pointer or percentage fields, and download a new PNG. The image stays in this renderer and is never uploaded by SoulCord.">
         <div className="soulcord-scrubber-controls">
-            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose screenshot" onChange={event => load(event.currentTarget.files?.[0])} />
+            <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose screenshot" disabled={loading} onChange={event => load(event.currentTarget.files?.[0])} />
             <label>Tool <select value={mode} onChange={event => setMode(event.currentTarget.value as "cover" | "blur")}><option value="cover">Solid cover</option><option value="blur">Blur</option></select></label>
-            <ActionButton onClick={drawSource} disabled={!loaded}>Reset</ActionButton>
-            <ActionButton tone="accent" onClick={download} disabled={!loaded}>Download PNG</ActionButton>
+            <ActionButton onClick={drawSource} disabled={!loaded || loading}>Reset</ActionButton>
+            <ActionButton tone="accent" onClick={download} disabled={!loaded || loading}>Download PNG</ActionButton>
         </div>
-        <fieldset className="soulcord-region-grid" disabled={!loaded}>
+        <fieldset className="soulcord-region-grid" disabled={!loaded || loading}>
             <legend>Keyboard redaction region (percent)</legend>
             {(["x", "y", "width", "height"] as const).map(key => <label key={key}>{key === "x" || key === "y" ? key.toUpperCase() : key}
                 <input type="number" min={key === "width" || key === "height" ? 1 : 0} max={key === "x" || key === "y" ? 99 : 100} value={region[key]} onChange={event => setRegionValue(key, event.currentTarget.value)} />
@@ -418,12 +441,22 @@ function ScreenshotScrubber() {
             className={`soulcord-scrubber-canvas ${loaded ? "" : "soulcord-canvas-empty"}`}
             role="img"
             aria-label="Local screenshot redaction canvas"
-            onPointerDown={event => {dragRef.current = point(event); event.currentTarget.setPointerCapture(event.pointerId);}}
-            onPointerUp={finish}
+            aria-busy={loading}
+            aria-disabled={!loaded || loading}
+            onPointerDown={event => {
+                if (!loaded || loading) return;
+                dragRef.current = point(event);
+                event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerUp={event => {
+                if (!loaded || loading) return;
+                finish(event);
+            }}
             onPointerCancel={() => {dragRef.current = null;}}
         />
+        {loading && <p className="soulcord-import-status" role="status">Reading and decoding the image on this PC…</p>}
         {error && <p className="soulcord-error" role="alert">{error}</p>}
-        {!loaded && <p className="soulcord-empty">No local image selected.</p>}
+        {!loaded && !loading && !error && <p className="soulcord-empty" role="status">No local image selected.</p>}
     </Section>;
 }
 
@@ -470,7 +503,7 @@ export default function SoulCordPanel() {
     return <main className="soulcord-panel">
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
-            <div><p className="soulcord-eyebrow">Local power fork · V1</p><h1>SoulCord Suite</h1><p>Compatibility you can inspect. Recovery you control.</p></div>
+            <div><p className="soulcord-eyebrow">SoulCord V1 · Local power tools</p><h1>SoulCord Suite</h1><p>Activity compatibility, addon recovery, privacy controls, and profiles—kept on this PC.</p></div>
         </header>
         {recoveryMode && <div className="soulcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
@@ -480,7 +513,7 @@ export default function SoulCordPanel() {
         <SetupManagement />
         <CuratedAddonSet />
         <ActivityBridge />
-        <Section title="Module status" summary="Ready means a live adapter is attached. Preview means useful behavior exists but a volatile Discord lookup or a human visual gate is still pending."><ModuleTable /></Section>
+        <Section title="Module status" summary="Ready means an implemented adapter can pass its current startup validation; the separate status label shows whether it is running. Preview still needs an app-version or hands-on acceptance check."><ModuleTable /></Section>
         <PluginRecovery />
         <ProfilesAndHistory />
         <PrivacyControls />

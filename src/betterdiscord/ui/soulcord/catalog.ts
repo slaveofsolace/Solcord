@@ -15,10 +15,10 @@ export const SOULCORD_ADDON_GROUPS: readonly SoulCordAddonGroup[] = [
     {
         id: "privacy-interaction",
         title: "Privacy and interaction",
-        summary: "Quieter telemetry, deliberate presence, and faster message handling.",
+        summary: "One bounded analytics control, typing privacy, and faster reply handling.",
         addons: [
-            {name: "DoNotTrack", label: "Do Not Track", summary: "Suppresses Discord analytics and process monitoring."},
-            {name: "InvisibleTyping", label: "Invisible Typing", summary: "Stops typing indicators unless you choose otherwise."},
+            {name: "DoNotTrack", label: "Do Not Track", summary: "Stops one validated Discord analytics track path. It does not block crash reports, process checks, or network requests."},
+            {name: "InvisibleTyping", label: "Invisible Typing", summary: "Suppresses one validated outgoing typing-start path while the built-in is enabled."},
             {name: "DoubleClickToReply", label: "Double Click to Reply", summary: "Opens Discord’s normal reply composer; it never sends."},
             {name: "PinDMs", label: "Pin DMs", summary: "Keeps selected conversations in a local pinned section."},
             {name: "MessagePeek", label: "Message Peek", summary: "Previews recent conversation context without marking it read."},
@@ -46,7 +46,7 @@ export const SOULCORD_ADDON_GROUPS: readonly SoulCordAddonGroup[] = [
         summary: "Composer aids that stay visible and user-initiated.",
         addons: [
             {name: "Translator", label: "Translator", summary: "Translates selected text through a disclosed external provider."},
-            {name: "SplitLargeMessages", label: "Split Large Messages", summary: "Previews safe chunks or uses the community plugin’s native multi-send mode."},
+            {name: "SplitLargeMessages", label: "Split Large Messages", summary: "Guarded preview prepares bounded chunks for manual copy, but setup keeps it off pending Discord modal/clipboard acceptance. Native multi-send remains held."},
             {name: "CharCounter", label: "Character Counter", summary: "Shows composer length before sending."},
             {name: "SpellCheck", label: "Spell Check", summary: "Adds language-aware spelling tools."},
             {name: "InsertTimestamps", label: "Insert Timestamps", summary: "Builds Discord timestamp markup from a local picker."}

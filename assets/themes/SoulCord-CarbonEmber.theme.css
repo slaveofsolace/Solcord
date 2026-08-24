@@ -1,63 +1,76 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /**
  * @name SoulCord — Carbon Ember
  * @author slaveofsolace
- * @version 1.0.0
+ * @version 1.0.1
  * @description A dense charcoal SoulCord theme with ash, copper, and burgundy signals.
  * @source https://github.com/slaveofsolace/Solcord
  */
 
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
 :root {
     --soulcord-carbon: #191817;
-    --soulcord-panel: #211f1e;
-    --soulcord-raised: #2a2725;
-    --soulcord-ash: #e8dfd5;
-    --soulcord-muted: #aaa29b;
-    --soulcord-copper: #bc7550;
-    --soulcord-burgundy: #8e3f4c;
-    --soulcord-seam: #3a3431;
-    --soulcord-focus: #e29a6f;
-    --custom-message-spacing-vertical-container-cozy: .34rem;
-    --custom-message-spacing-vertical-container-compact: .1rem;
+    --soulcord-panel: #211F1E;
+    --soulcord-raised: #2A2725;
+    --soulcord-ash: #E8DFD5;
+    --soulcord-muted: #AAA29B;
+    --soulcord-copper: #BC7550;
+    --soulcord-burgundy: #8E3F4C;
+    --soulcord-seam: #3A3431;
+    --soulcord-focus: #E29A6F;
+    --soulcord-graphite: var(--soulcord-carbon);
+    --soulcord-cream: var(--soulcord-ash);
+    --soulcord-sea: var(--soulcord-copper);
+    --soulcord-coral: #C95F69;
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
 
 .theme-dark,
 .theme-darker,
 .theme-midnight {
+    color-scheme: dark;
+
     --background-primary: var(--soulcord-carbon);
     --background-secondary: var(--soulcord-panel);
-    --background-secondary-alt: #1b1918;
+    --background-secondary-alt: #1B1918;
     --background-tertiary: #121110;
     --background-floating: var(--soulcord-raised);
     --background-modifier-hover: rgb(188 117 80 / 12%);
     --background-modifier-active: rgb(188 117 80 / 18%);
     --background-modifier-selected: rgb(142 63 76 / 24%);
     --background-modifier-accent: var(--soulcord-seam);
-    --text-normal: #ded8d1;
+    --text-normal: #DED8D1;
     --text-muted: var(--soulcord-muted);
-    --text-link: #d89068;
+    --text-link: #D89068;
     --header-primary: var(--soulcord-ash);
-    --header-secondary: #bbb2ab;
-    --interactive-normal: #b7aea7;
-    --interactive-hover: #f1e9df;
+    --header-secondary: #BBB2AB;
+    --interactive-normal: #B7AEA7;
+    --interactive-hover: #F1E9DF;
     --interactive-active: var(--soulcord-ash);
-    --interactive-muted: #716965;
+    --interactive-muted: #9A918A;
     --brand-experiment: var(--soulcord-copper);
-    --brand-experiment-560: #a96342;
-    --status-danger: #c95f69;
-    --channel-text-area-placeholder: #817a75;
-    --scrollbar-thin-thumb: #5a504b;
-    --scrollbar-auto-thumb: #5a504b;
+    --brand-experiment-560: #A96342;
+    --status-danger: #C95F69;
+    --channel-text-area-placeholder: #9A918A;
+    --scrollbar-thin-thumb: #5A504B;
+    --scrollbar-auto-thumb: #5A504B;
     --scrollbar-auto-track: #141312;
 }
 
-::selection { color: #171310; background: #dea17e; }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 2px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+::selection { color: #171310; background: #DEA17E; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
 :where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
 :where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
-:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #3b3532; box-shadow: none !important; }
+:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #3B3532; box-shadow: none !important; }
 :where([class*="mentioned"]) { background: rgb(142 63 76 / 14%) !important; border-left: 2px solid var(--soulcord-copper); }
-:where([class*="newMessagesBar"]) { background: var(--soulcord-burgundy) !important; color: #fff5ec !important; }
+:where([class*="newMessagesBar"]) { background: var(--soulcord-burgundy) !important; color: #FFF5EC !important; }
 
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

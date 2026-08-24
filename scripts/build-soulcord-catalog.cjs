@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 "use strict";
 
 const crypto = require("node:crypto");
@@ -19,9 +20,10 @@ const requestedPreset = [
     "DiscordEffects", "CompleteTimestamps", "BetterFriendList", "BetterAnimations", "EditServers", "ImageUtilities", "HideDisabledEmojis", "BetterSearchPage", "RevealAllSpoilers", "ViewProfilePicture"
 ];
 
-const optional = new Set([
-    "ChannelTabs", "UserNotes", "Timezones", "RoleExplorer", "FavoriteMedia", "UncompressedImages", "GameActivityToggle", "InMyVoice", "ShowPing", "VoiceHub", "BetterMediaPlayer", "ChannelsPreview"
-].map(normalize));
+const optionalNames = [
+    "ChannelTabs", "UserNotes", "Timezones", "RoleExplorer", "FavoriteMedia", "Uncompressed Images", "GameActivityToggle", "InMyVoice", "ShowPing", "VoiceHub", "BetterMediaPlayer", "ChannelsPreview"
+];
+const optional = new Set(optionalNames.map(normalize));
 
 const preset = new Set(requestedPreset.map(normalize));
 const conflicts = new Map([
@@ -33,7 +35,9 @@ const conflicts = new Map([
     [normalize("BetterFolders"), ["ServerFolders"]]
 ]);
 
-const powerPattern = /(?:fake\s*(?:mute|deafen|nitro)|quest|premium|entitlement|token|self[ -]?bot|message\s*logger|deleted\s*message|anti[ -]?afk)/i;
+// Risk terms must be complete words. In particular, an unbounded `quest`
+// also matches ordinary catalog copy such as "feature requests".
+const powerPattern = /(?:fake\s*(?:mute|deafen|nitro)|\bquests?\b|\bpremium\b|\bentitlements?\b|\btokens?\b|self[ -]?bot|message\s*logger|deleted\s*message|anti[ -]?afk)/i;
 const rejectPattern = /(?:token\s*(?:grab|extract)|credential|stealer|malware)/i;
 
 function normalize(value) {
@@ -111,6 +115,8 @@ function main() {
     const themeCandidates = themes.records.map((record) => candidate(record, "theme"));
     const found = new Set(pluginCandidates.filter((entry) => entry.requestedByPreset).map((entry) => normalize(entry.name)));
     const missingRequested = requestedPreset.filter((name) => !found.has(normalize(name)));
+    const foundOptional = new Set(pluginCandidates.filter((entry) => entry.targetDisposition === "OPTIONAL").map((entry) => normalize(entry.name)));
+    const missingOptional = optionalNames.filter((name) => !foundOptional.has(normalize(name)));
 
     const manifest = {
         schemaVersion: 1,
@@ -129,6 +135,12 @@ function main() {
             missingRequested,
             note: requestedPreset.length === 36 ? null : "The approved table names 37 feature plugins even though its prose says 36; no named feature is silently discarded."
         },
+        optional: {
+            declaredCount: optionalNames.length,
+            matchedCount: foundOptional.size,
+            names: optionalNames,
+            missingOptional
+        },
         candidates: [...pluginCandidates, ...themeCandidates]
     };
 
@@ -136,6 +148,7 @@ function main() {
     fs.writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
     process.stdout.write(`${pluginCandidates.length} plugins, ${themeCandidates.length} themes, ${found.size}/${requestedPreset.length} requested preset matches.\n`);
     if (missingRequested.length) process.stdout.write(`Missing requested names: ${missingRequested.join(", ")}\n`);
+    if (missingOptional.length) process.stdout.write(`Missing optional names: ${missingOptional.join(", ")}\n`);
 }
 
 main();

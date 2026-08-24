@@ -1,7 +1,8 @@
 export type SoulCordRisk = "standard" | "experimental" | "account-risk" | "external-service";
 export type SoulCordMaturity = "ready" | "preview" | "unavailable";
-export type SoulCordThemeId = "obsidian-thread" | "carbon-ember" | "midnight-glass" | "paper-signal";
+export type SoulCordThemeId = "soulcord-default" | "obsidian-thread" | "carbon-ember" | "midnight-glass" | "paper-signal";
 export type SoulCordAddonMode = "default" | "guarded" | "native";
+export type SoulCordAddonProvider = "prefer-community" | "prefer-soulcord";
 export type SoulCordOnboardingStatus = "pending" | "complete" | "skipped";
 export type SoulCordModuleId =
     | "activity-bridge"
@@ -20,6 +21,7 @@ export interface SoulCordCuratedAddonState {
     selected: boolean;
     enabled: boolean;
     mode: SoulCordAddonMode;
+    provider: SoulCordAddonProvider;
     reviewedSha256?: string;
     quarantineReason?: string;
 }
@@ -119,6 +121,7 @@ export interface SoulCordSetupDraft {
     selectedTheme: SoulCordThemeId;
     selectedAddons: string[];
     addonModes: Record<string, SoulCordAddonMode>;
+    addonProviders: Record<string, SoulCordAddonProvider>;
     timelinePolicy: SoulCordTimelinePolicy;
 }
 

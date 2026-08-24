@@ -1,64 +1,76 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /**
  * @name SoulCord — Obsidian Thread
  * @author slaveofsolace
- * @version 1.0.0
+ * @version 1.0.1
  * @description SoulCord's dense graphite, warm-bone, oxidized-teal, and ember theme.
  * @source https://github.com/slaveofsolace/Solcord
  */
 
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
 :root {
-    --soulcord-graphite: #171a1c;
-    --soulcord-panel: #1d2224;
-    --soulcord-raised: #242a2d;
-    --soulcord-bone: #f0e5d5;
-    --soulcord-muted: #aab1b3;
-    --soulcord-teal: #4b9d96;
-    --soulcord-ember: #df6b52;
-    --soulcord-seam: #343b3e;
-    --soulcord-focus: #78c4bd;
-    --custom-message-spacing-vertical-container-cozy: .34rem;
-    --custom-message-spacing-vertical-container-compact: .1rem;
+    --soulcord-graphite: #171A1C;
+    --soulcord-panel: #1D2224;
+    --soulcord-raised: #242A2D;
+    --soulcord-bone: #F0E5D5;
+    --soulcord-muted: #AAB1B3;
+    --soulcord-teal: #4B9D96;
+    --soulcord-ember: #DF6B52;
+    --soulcord-seam: #343B3E;
+    --soulcord-focus: #78C4BD;
+    --soulcord-cream: var(--soulcord-bone);
+    --soulcord-sea: var(--soulcord-teal);
+    --soulcord-coral: var(--soulcord-ember);
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
 
 .theme-dark,
 .theme-darker,
 .theme-midnight {
+    color-scheme: dark;
+
     --background-primary: var(--soulcord-graphite);
     --background-secondary: var(--soulcord-panel);
-    --background-secondary-alt: #191d1f;
+    --background-secondary-alt: #191D1F;
     --background-tertiary: #121516;
     --background-floating: var(--soulcord-raised);
     --background-modifier-hover: rgb(75 157 150 / 12%);
     --background-modifier-active: rgb(75 157 150 / 18%);
     --background-modifier-selected: rgb(75 157 150 / 22%);
     --background-modifier-accent: var(--soulcord-seam);
-    --text-normal: #dedbd5;
+    --text-normal: #DEDBD5;
     --text-muted: var(--soulcord-muted);
-    --text-link: #70b9b2;
+    --text-link: #70B9B2;
     --header-primary: var(--soulcord-bone);
-    --header-secondary: #bdc2c3;
-    --interactive-normal: #b9bec0;
-    --interactive-hover: #f0ece5;
+    --header-secondary: #BDC2C3;
+    --interactive-normal: #B9BEC0;
+    --interactive-hover: #F0ECE5;
     --interactive-active: var(--soulcord-bone);
-    --interactive-muted: #697174;
+    --interactive-muted: #8B9496;
     --brand-experiment: var(--soulcord-teal);
-    --brand-experiment-560: #438d87;
+    --brand-experiment-560: #438D87;
     --status-danger: var(--soulcord-ember);
-    --channel-text-area-placeholder: #7d8588;
-    --scrollbar-thin-thumb: #515b5e;
-    --scrollbar-auto-thumb: #515b5e;
+    --channel-text-area-placeholder: #929A9C;
+    --scrollbar-thin-thumb: #515B5E;
+    --scrollbar-auto-thumb: #515B5E;
     --scrollbar-auto-track: #131617;
 }
 
-::selection { color: #111415; background: #91d4ce; }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 2px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+::selection { color: #111415; background: #91D4CE; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
 :where([class*="sidebar"], [class*="membersWrap"], [class*="nowPlayingColumn"], [class*="contentRegion"]) { border-color: var(--soulcord-seam) !important; }
 :where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
 :where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
-:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #30383b; box-shadow: none !important; }
+:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #30383B; box-shadow: none !important; }
 :where([class*="mentioned"]) { background: rgb(223 107 82 / 9%) !important; border-left: 2px solid var(--soulcord-ember); }
 :where([class*="newMessagesBar"]) { background: var(--soulcord-teal) !important; color: #101314 !important; }
 
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

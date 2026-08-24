@@ -31,6 +31,11 @@ interface ModalActions {
     closeAllModals(): void;
 }
 
+interface NativeConfirmationModalOptions extends ConfirmationModalOptions {
+    /** Called when the native React modal fails after its activation was intercepted. */
+    onRenderError?(): void;
+}
+
 export default class Modals {
     static get shouldShowAddonErrors() {return Settings.get("settings", "addons", "addonErrors");}
     static get hasModalOpen() {return !!document.getElementsByClassName("bd-modal").length;}
@@ -191,6 +196,64 @@ export default class Modals {
             }, props), React.createElement(ErrorBoundary, {id: "showConfirmationModal", name: "Modals"}, contentArray)));
         }, {modalKey: key});
         return modalKey;
+    }
+
+    /**
+     * Opens only through Discord's native modal actions. Unlike the public
+     * compatibility helper above, this never falls back to a raw DOM modal.
+     * Callers must fail open when this returns undefined or onRenderError fires.
+     */
+    static showNativeConfirmationModal(title: string, content: (string | ReactElement | ReadonlyArray<string | ReactElement>), options: NativeConfirmationModalOptions = {}): string | number | undefined {
+        const emptyFunction = () => {};
+        const {
+            onClose = emptyFunction,
+            onConfirm = emptyFunction,
+            onCancel = emptyFunction,
+            onRenderError = emptyFunction,
+            confirmText = t("Modals.okay"),
+            cancelText = t("Modals.cancel"),
+            danger = false,
+            key = undefined,
+            size = Root.Sizes.SMALL
+        } = options;
+
+        let actions: ModalActions;
+        try {actions = this.ModalActions;}
+        catch {return;}
+        if (typeof actions?.openModal !== "function" || typeof actions.closeModal !== "function") return;
+
+        let contentArray: Array<string | ReactElement> = Array.isArray(content) ? [...content] : [content];
+        try {contentArray = contentArray.map(item => typeof item === "string" ? SimpleMarkdownExt.parseToReact(item) : item);}
+        catch {return;}
+
+        let renderFailureQueued = false;
+        const reportRenderFailure = () => {
+            if (renderFailureQueued) return;
+            renderFailureQueued = true;
+            queueMicrotask(onRenderError);
+        };
+        try {
+            const modalKey = actions.openModal((props: any) => React.createElement(ErrorBoundary, {
+                onError: reportRenderFailure
+            }, React.createElement(ConfirmationModal, Object.assign({
+                header: title,
+                danger,
+                confirmText,
+                cancelText,
+                onConfirm,
+                onCancel,
+                className: size,
+                onCloseCallback: () => {
+                    if (props?.transitionState === 2) onClose?.();
+                }
+            }, props), React.createElement(ErrorBoundary, {
+                id: "showNativeConfirmationModal",
+                name: "Modals",
+                onError: reportRenderFailure
+            }, contentArray))), key === undefined ? undefined : {modalKey: key});
+            return typeof modalKey === "string" || typeof modalKey === "number" ? modalKey : undefined;
+        }
+        catch {return;}
     }
 
     static addonErrorsOpen = false;

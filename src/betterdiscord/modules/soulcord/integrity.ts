@@ -29,6 +29,18 @@ export interface ReviewedExecutionCheck {
     reviewedSha256?: string;
 }
 
+export interface ReviewedExecutionOwnership {
+    kind: "plugin" | "theme";
+    fileName: string;
+    reviewedSha256: string;
+}
+
+export interface IntegrityOwnershipState {
+    curatedAddons: Record<string, {selected?: boolean; enabled?: boolean; reviewedSha256?: string;}>;
+    selectedTheme: string;
+    hasSetupTransaction: boolean;
+}
+
 interface ReviewedExecutionCandidate {
     fileName: string;
     name: string;
@@ -39,9 +51,37 @@ interface ReviewedExecutionCandidate {
 const SHA256 = /^[0-9a-f]{64}$/;
 const MAX_AUDIT_RECORDS = 64;
 const QUARANTINE_STATES = new Set<AddonIntegrityState>(["mismatch", "unreadable", "unsafe", "unavailable"]);
+let REVIEWED_EXECUTION_OWNERSHIP = new Map<string, string>();
 
 function normalizeIdentity(value: string): string {
     return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
+}
+
+function executionKey(kind: "plugin" | "theme", fileName: string): string {
+    return `${kind}\0${normalizeIdentity(fileName)}`;
+}
+
+export function configureReviewedExecutionOwnership(records: readonly ReviewedExecutionOwnership[]): void {
+    const next = new Map<string, string>();
+    for (const record of records) {
+        if (!SHA256.test(record.reviewedSha256)) continue;
+        const candidates: readonly ReviewedExecutionCandidate[] = record.kind === "theme" ? REVIEWED_THEMES : REVIEWED_PLUGINS;
+        const candidate = candidates.find(entry => normalizeIdentity(entry.fileName) === normalizeIdentity(record.fileName));
+        if (!candidate || candidate.sourceSha256 !== record.reviewedSha256) continue;
+        next.set(executionKey(record.kind, candidate.fileName), candidate.sourceSha256);
+    }
+    REVIEWED_EXECUTION_OWNERSHIP = next;
+}
+
+export function integrityRecordIsAccepted(record: AddonIntegrityRecord, state: IntegrityOwnershipState): boolean {
+    if (!state.hasSetupTransaction) return false;
+    const acceptedAddons = SOULCORD_RUNTIME_ADDONS.filter(candidate => {
+        const configured = state.curatedAddons[candidate.name];
+        return configured?.reviewedSha256 === candidate.sourceSha256 && (configured.selected === true || configured.enabled === true);
+    });
+    if (record.kind === "addon") return acceptedAddons.some(candidate => candidate.name === record.name);
+    if (record.kind === "dependency") return acceptedAddons.some(candidate => candidate.dependencies.some(name => name === record.name));
+    return SOULCORD_RUNTIME_THEMES.some(theme => theme.name === record.name && theme.id === state.selectedTheme);
 }
 
 function declaredThemeName(content: string): string | undefined {
@@ -77,22 +117,14 @@ function recordKey(kind: AddonIntegrityKind, name: string): string {
  * match immediately before JavaScript evaluation or CSS injection.
  * Unreviewed owner files retain ordinary BetterDiscord behavior.
  */
-export function checkReviewedExecution(kind: "plugin" | "theme", fileName: string, declaredName: string | undefined, content: string): ReviewedExecutionCheck {
-    const candidates = kind === "theme" ? REVIEWED_THEMES : REVIEWED_PLUGINS;
-    const exact = candidates.find(entry => entry.fileName === fileName);
-    const normalizedFileName = normalizeIdentity(fileName);
-    const normalizedDeclaredName = typeof declaredName === "string" ? normalizeIdentity(declaredName) : "";
+export function checkReviewedExecution(kind: "plugin" | "theme", fileName: string, _declaredName: string | undefined, content: string): ReviewedExecutionCheck {
+    const candidates: readonly ReviewedExecutionCandidate[] = kind === "theme" ? REVIEWED_THEMES : REVIEWED_PLUGINS;
+    const candidate = candidates.find(entry => normalizeIdentity(entry.fileName) === normalizeIdentity(fileName));
+    if (!candidate || REVIEWED_EXECUTION_OWNERSHIP.get(executionKey(kind, candidate.fileName)) !== candidate.sourceSha256) return {reviewed: false, matches: true};
     const actual = crypto.createHash("sha256").update(content, "utf8").digest("hex");
-    const alias = exact ? undefined : candidates.find(entry => normalizeIdentity(entry.fileName) === normalizedFileName
-        || (normalizedDeclaredName && entry.declaredNames.some(name => normalizeIdentity(name) === normalizedDeclaredName))
-        || entry.sourceSha256 === actual);
-    const candidate = exact ?? alias;
-    if (!candidate) return {reviewed: false, matches: true};
     return {
         reviewed: true,
-        // A file claiming a reviewed identity under any other basename is not
-        // the transaction-owned artifact, even when its bytes happen to match.
-        matches: Boolean(exact) && actual === candidate.sourceSha256,
+        matches: actual === candidate.sourceSha256,
         name: candidate.name,
         reviewedSha256: candidate.sourceSha256
     };
@@ -136,8 +168,8 @@ export function integrityBlocksExecution(record: AddonIntegrityRecord | undefine
     return !record || record.status !== "match";
 }
 
-export function reviewBlocksEnable(reviewed: {installable?: boolean;} | undefined, guardedBuiltIn = false): boolean {
-    return !guardedBuiltIn && reviewed?.installable !== true;
+export function reviewBlocksEnable(reviewed: {installable?: boolean;} | undefined, soulCordBuiltIn = false): boolean {
+    return !soulCordBuiltIn && reviewed?.installable !== true;
 }
 
 export function integrityRequiresQuarantine(record: AddonIntegrityRecord | undefined): boolean {

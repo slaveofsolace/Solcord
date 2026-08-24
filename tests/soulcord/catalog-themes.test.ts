@@ -6,6 +6,7 @@ import {resolve} from "node:path";
 import {
     SOULCORD_CATALOG_INDEX,
     SOULCORD_CATALOG_SNAPSHOT,
+    SOULCORD_REVIEWED_OPTIONALS,
     SOULCORD_RUNTIME_ADDONS,
     SOULCORD_RUNTIME_DEPENDENCIES,
     SOULCORD_RUNTIME_THEMES
@@ -32,7 +33,44 @@ describe("SoulCord catalog and theme invariants", () => {
         expect(manifest.preset.matchedCount).toBe(36);
         expect(manifest.preset.missingRequested).toEqual([]);
         expect(new Set(manifest.preset.names)).toEqual(new Set(SOULCORD_PRESET_ADDONS));
+        expect(manifest.optional).toEqual(expect.objectContaining({declaredCount: 12, matchedCount: 12, missingOptional: []}));
         expect(SOULCORD_CATALOG_INDEX).toHaveLength(323);
+        for (const candidate of SOULCORD_CATALOG_INDEX) {
+            expect(candidate).toEqual(expect.objectContaining({
+                fileName: expect.any(String),
+                version: expect.any(String),
+                sourceUrl: expect.stringMatching(/^https:\/\/raw\.githubusercontent\.com\//),
+                immutableRevision: expect.stringMatching(/^[0-9a-f]{40}$/),
+                dependencies: expect.any(Array),
+                networkBehavior: expect.any(Array),
+                accountActions: expect.any(Array),
+                conflicts: expect.any(Array),
+                supportedModes: expect.any(Array),
+                installable: false
+            }));
+            expect(["standard", "experimental", "account-risk", "external-service"]).toContain(candidate.risk);
+            expect(candidate.verification).toEqual(expect.objectContaining({metadata: expect.any(String), provenance: expect.any(String), code: expect.any(String), security: expect.any(String), runtime: expect.any(String)}));
+        }
+
+        const showPing = pluginRecords.find((candidate: {name: string;}) => candidate.name === "ShowPing");
+        const uncompressedImages = pluginRecords.find((candidate: {name: string;}) => candidate.name === "Uncompressed Images");
+        const spotifyListenAlong = pluginRecords.find((candidate: {name: string;}) => candidate.name === "SpotifyListenAlong");
+        const bubbleTheme = themeRecords.find((candidate: {name: string;}) => candidate.name === "Bubble Theme v2");
+        expect(showPing).toEqual(expect.objectContaining({disposition: "OPTIONAL", targetDisposition: "OPTIONAL"}));
+        expect(uncompressedImages).toEqual(expect.objectContaining({disposition: "OPTIONAL", targetDisposition: "OPTIONAL"}));
+        expect(spotifyListenAlong).toEqual(expect.objectContaining({disposition: "POWER_LAB", targetDisposition: "POWER_LAB"}));
+        expect(bubbleTheme).toEqual(expect.objectContaining({disposition: "HOLD", targetDisposition: "HOLD"}));
+        expect(manifest.candidates.filter((candidate: {targetDisposition: string;}) => candidate.targetDisposition === "OPTIONAL")).toHaveLength(12);
+        expect(manifest.candidates.filter((candidate: {targetDisposition: string;}) => candidate.targetDisposition === "POWER_LAB")).toHaveLength(1);
+
+        const showPingIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "ShowPing");
+        expect(showPingIndex).toEqual(expect.objectContaining({targetDisposition: "OPTIONAL", securityDisposition: "HOLD", licenseStatus: "UNRESOLVED", codeStatus: "PENDING"}));
+        const uncompressedIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "Uncompressed Images");
+        expect(uncompressedIndex).toEqual(expect.objectContaining({targetDisposition: "OPTIONAL", securityDisposition: "HOLD", licenseStatus: "FOUND", codeStatus: "STATIC_REVIEWED"}));
+        const spotifyIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "SpotifyListenAlong");
+        expect(spotifyIndex).toEqual(expect.objectContaining({targetDisposition: "POWER_LAB", securityDisposition: "HOLD"}));
+        expect(SOULCORD_REVIEWED_OPTIONALS).toHaveLength(11);
+        expect(SOULCORD_REVIEWED_OPTIONALS.map(candidate => String(candidate.name))).not.toContain("ShowPing");
     });
 
     test("keeps all 36 candidates immutable while deep security dispositions gate staging", () => {
@@ -61,8 +99,8 @@ describe("SoulCord catalog and theme invariants", () => {
         expect(SOULCORD_RUNTIME_DEPENDENCIES.some(dependency => dependency.name === "BDFDB" && !dependency.stageable && !dependency.installable && dependency.reviewStatus === "HOLD")).toBeTrue();
     });
 
-    test("ships exactly four self-contained themes whose embedded bytes match disk and manifest hashes", () => {
-        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(4);
+    test("ships a recommended default and four self-contained alternatives whose embedded bytes match disk and manifest hashes", () => {
+        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(5);
         expect(new Set(SOULCORD_RUNTIME_THEMES.map(theme => theme.id))).toEqual(new Set(SOULCORD_THEMES.map(theme => theme.id)));
 
         for (const theme of SOULCORD_RUNTIME_THEMES) {

@@ -48,14 +48,19 @@ export default function MessageTimelinePanel() {
     };
     const exportTimeline = async () => {
         if (!window.confirm("Export the current account’s private Message Timeline as readable JSON? The export can contain message text, edits, channel/message identifiers, and attachment metadata. Keep it private.")) return;
-        setStatusMessage(await SoulCordRuntime.exportTimeline() ? "Timeline export downloaded locally." : "Timeline export was unavailable for the current account scope.");
+        const outcome = await SoulCordRuntime.exportTimeline();
+        setStatusMessage(outcome.status === "complete"
+            ? "Timeline export downloaded locally. The bounded read was complete."
+            : outcome.status === "incomplete"
+                ? `Timeline export was refused because the local read was incomplete: ${outcome.omittedSegments} segment(s) omitted, ${outcome.unreadableSegments} unreadable, retention ${outcome.retentionApplied ? "applied" : "incomplete"}. No partial export was written.`
+                : "Timeline export was unavailable for the current account scope.");
     };
     const toggleCurrentChannel = async () => {
         const included = !state.currentChannel.included;
         setStatusMessage(await SoulCordRuntime.setCurrentChannelInTimeline(included) ? `Current server channel ${included ? "added to" : "removed from"} Timeline scope.` : "Open a server text channel before changing its Timeline scope.");
     };
     return <section className="soulcord-section">
-        <div className="soulcord-section-heading"><h2>Message Timeline</h2><p>A private, encrypted journal for messages this running client actually observes. DMs are the default; servers require explicit channel-by-channel opt-in.</p></div>
+        <div className="soulcord-section-heading"><h2>Message Timeline</h2><p>A private local journal for messages this running client actually observes. Persistent segments are encrypted when secure storage is available; DMs are the default and servers require channel-by-channel opt-in.</p></div>
         <div className="soulcord-timeline-toolbar">
             <label><input type="checkbox" checked={state.policy.enabled} onChange={event => update({enabled: event.currentTarget.checked})} /> Timeline {state.policy.enabled ? "on" : "off"}</label>
             <label>Retention<select value={state.policy.retention} onChange={event => update({retention: event.currentTarget.value as SoulCordTimelinePolicy["retention"]})}><option value="session">Session</option><option value="24-hours">24 hours</option><option value="7-days">7 days</option><option value="30-days">30 days</option><option value="90-days">90 days</option><option value="manual">Manual clear</option></select></label>
@@ -80,7 +85,7 @@ export default function MessageTimelinePanel() {
                 {entry.attachments.length > 0 && <ul className="soulcord-attachment-metadata">{entry.attachments.map((attachment, index) => <li key={`${attachment.name}-${index}`}>{attachment.name}{attachment.contentType ? ` · ${attachment.contentType}` : ""}{typeof attachment.size === "number" ? ` · ${bytesLabel(attachment.size)}` : ""}</li>)}</ul>}
             </article>)}
             {!state.entries.length && <p className="soulcord-empty">No in-scope message event has been observed in this session. SoulCord does not backfill history.</p>}
-            {state.entries.length > 100 && <p className="soulcord-empty">Showing the 100 most recent records in settings. Export includes the active encrypted segment set.</p>}
+            {state.entries.length > 100 && <p className="soulcord-empty">Showing the 100 most recent records in settings. Export includes the complete bounded local event set only when its read succeeds.</p>}
         </div>
         <p className="soulcord-callout">Message meaning never depends on color: deleted entries carry a “Deleted” label and edit history carries an “Edited” label. Message bodies and identifiers are excluded from SoulCord diagnostics and ordinary settings exports.</p>
     </section>;

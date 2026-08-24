@@ -6,6 +6,7 @@ import SoulCordRuntime from "@modules/soulcord/runtime";
 import SoulCordSettings from "@modules/soulcord/store";
 import PluginDoctor from "@modules/soulcord/doctor";
 import {SOULCORD_CATALOG_INDEX, SOULCORD_CATALOG_SNAPSHOT, SOULCORD_RUNTIME_ADDONS} from "@common/soulcord/addon-catalog.generated";
+import {isSoulCordBuiltInAddon, resolveCommunityAddon} from "@common/soulcord/builtin-addons";
 
 import {SOULCORD_ADDON_GROUPS, SOULCORD_ADDON_PRESENTATION} from "./catalog";
 
@@ -22,18 +23,22 @@ export function CuratedAddonSet() {
         const settings = SoulCordSettings.snapshot();
         const quarantines = new Map(PluginDoctor.snapshot().filter(record => record.quarantinedAt).map(record => [record.addonId, record]));
         const integrity = SoulCordRuntime.integrityStatus();
+        const adapterStatus = SoulCordRuntime.curatedAdapterStatus();
         return {
             onboarding: settings.onboarding,
             integrity,
             addons: SOULCORD_RUNTIME_ADDONS.map(candidate => {
                 const configured = settings.curatedAddons[candidate.name];
-                const guarded = candidate.name === "SplitLargeMessages" && configured?.mode === "guarded";
-                const addon = PluginManager.resolveAddon(candidate.fileName);
+                const builtIn = isSoulCordBuiltInAddon(candidate.name, configured?.mode);
+                const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
                 return {
                     ...candidate,
                     configured,
-                    installed: guarded || Boolean(addon),
-                    enabled: guarded ? configured?.enabled === true : Boolean(addon && PluginManager.isEnabled(candidate.fileName)),
+                    builtIn,
+                    installed: builtIn || Boolean(addon),
+                    enabled: builtIn ? configured?.enabled === true : Boolean(addon && PluginManager.isEnabled(addon.filename)),
+                    communityEnabled: Boolean(addon && PluginManager.isEnabled(addon.filename)),
+                    adapter: adapterStatus[candidate.name],
                     quarantine: configured?.quarantineReason || quarantines.get(candidate.name)?.quarantineReason || quarantines.get(candidate.fileName)?.quarantineReason,
                     integrity: integrity.records.find(record => record.kind === "addon" && record.name === candidate.name)
                 };
@@ -58,17 +63,19 @@ export function CuratedAddonSet() {
                 <div className="soulcord-curated-list">
                     {group.addons.map(presentation => {
                         const addon = state.addons.find(item => item.name === presentation.name)!;
-                        const guardedBuiltIn = addon.name === "SplitLargeMessages" && addon.configured?.mode === "guarded";
-                        const integrityLabel = addon.configured?.mode === "guarded" && addon.integrity?.status === "missing"
-                            ? "guarded built-in"
+                        const usingCommunity = addon.builtIn && addon.communityEnabled;
+                        const integrityLabel = usingCommunity
+                            ? "owner-managed file"
+                            : addon.builtIn && addon.integrity?.status === "missing"
+                            ? "clean-room built-in"
                             : addon.integrity?.status === "match"
                                 ? "hash verified"
                                 : addon.integrity?.status === "missing"
                                     ? "not staged"
                                     : `${addon.integrity?.status ?? "unavailable"} · held`;
                         return <div className="soulcord-curated-row" key={addon.name}>
-                            <div><div className="soulcord-module-name"><strong>{presentation.label}</strong><span className="soulcord-maturity">{addon.installed ? guardedBuiltIn ? "SoulCord guarded" : `local ${addon.version}` : "not staged"}</span><span className="soulcord-review-chip">{guardedBuiltIn ? "guarded built-in" : addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()}</span><span className={`soulcord-status ${addon.integrity?.status === "match" || (guardedBuiltIn && addon.integrity?.status === "missing") ? "soulcord-status-active" : addon.integrity?.status === "missing" ? "soulcord-status-stopped" : "soulcord-status-quarantined"}`}>{integrityLabel}</span>{addon.quarantine && <span className="soulcord-status soulcord-status-quarantined">quarantined</span>}</div><p>{presentation.summary}</p>{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{addon.enabled && !guardedBuiltIn && !addon.installable && <small className="soulcord-error">Owner-enabled local state is preserved, but SoulCord has not accepted this candidate and will not re-enable it.</small>}{addon.quarantine && <small className="soulcord-error">{addon.quarantine}</small>}</div>
-                            <label className="soulcord-toggle"><input type="checkbox" checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !guardedBuiltIn && !addon.installable)} onChange={event => void toggle(addon.name, event.currentTarget.checked)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
+                            <div><div className="soulcord-module-name"><strong>{presentation.label}</strong><span className="soulcord-maturity">{addon.installed ? addon.builtIn ? usingCommunity ? "community provider" : "SoulCord built-in" : `local ${addon.version}` : "not staged"}</span><span className="soulcord-review-chip">{usingCommunity ? "owner-managed community" : addon.builtIn ? "clean-room built-in" : addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()}</span><span className={`soulcord-status ${usingCommunity || addon.integrity?.status === "match" || (addon.builtIn && addon.integrity?.status === "missing") ? "soulcord-status-active" : addon.integrity?.status === "missing" ? "soulcord-status-stopped" : "soulcord-status-quarantined"}`}>{integrityLabel}</span>{addon.adapter?.conflict && <span className="soulcord-status soulcord-status-quarantined">provider conflict</span>}{addon.quarantine && <span className="soulcord-status soulcord-status-quarantined">quarantined</span>}</div><p>{presentation.summary}</p>{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{usingCommunity && <small>The enabled community file remains owner-managed; SoulCord does not certify or claim it.</small>}{addon.adapter?.conflict && <small className="soulcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.builtIn && !addon.installable && <small className="soulcord-error">Owner-enabled local state is preserved, but SoulCord has not accepted this candidate and will not re-enable it.</small>}{addon.quarantine && <small className="soulcord-error">{addon.quarantine}</small>}</div>
+                            <label className="soulcord-toggle"><input type="checkbox" checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={event => void toggle(addon.name, event.currentTarget.checked)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
                         </div>;
                     })}
                 </div>
@@ -93,7 +100,7 @@ export function CatalogBrowser() {
     }, [query, type, disposition]);
     const visible = matches.slice(0, 80);
     return <section className="soulcord-section">
-        <div className="soulcord-section-heading"><h2>Catalog review</h2><p>Browse the complete pinned BetterDiscord store snapshot. Browsing does not download or enable anything; only fully reviewed candidates can graduate from HOLD.</p></div>
+        <div className="soulcord-section-heading"><h2>Catalog snapshot</h2><p>Browse 323 metadata-indexed BetterDiscord store records. Forty-seven plugin payloads were statically screened, 36 received manual dispositions, and catalog-theme source/license review is still pending. Browsing does not download or enable anything.</p></div>
         <dl className="soulcord-facts soulcord-catalog-facts"><div><dt>Plugins</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.pluginCount} · <code>{SOULCORD_CATALOG_SNAPSHOT.pluginSha256.slice(0, 12)}…</code></dd></div><div><dt>Themes</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.themeCount} · <code>{SOULCORD_CATALOG_SNAPSHOT.themeSha256.slice(0, 12)}…</code></dd></div><div><dt>Review date</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.reviewedAt}</dd></div><div><dt>Installed integrity</dt><dd>{integrity.summary.match} verified · {integrity.summary.missing} missing · {integrity.summary.attention + integrity.summary.unavailable} held</dd></div></dl>
         <div className="soulcord-catalog-controls">
             <label>Search<input type="search" value={query} onChange={event => setQuery(event.currentTarget.value)} placeholder="name, author, tag, behavior" /></label>
@@ -101,7 +108,7 @@ export function CatalogBrowser() {
             <label>Disposition<select value={disposition} onChange={event => setDisposition(event.currentTarget.value)}><option value="all">All dispositions</option><option value="CURATED">Curated target</option><option value="OPTIONAL">Optional</option><option value="POWER_LAB">Power Lab</option><option value="HOLD">Hold</option><option value="REJECT">Reject</option></select></label>
         </div>
         <p className="soulcord-catalog-count">{matches.length} matches{matches.length > visible.length ? ` · showing first ${visible.length}` : ""}</p>
-        <div className="soulcord-catalog-table" role="table" aria-label="Reviewed BetterDiscord catalog snapshot">
+        <div className="soulcord-catalog-table" role="table" aria-label="Metadata-indexed BetterDiscord catalog snapshot">
             {visible.map(candidate => <div className="soulcord-catalog-row" role="row" key={`${candidate.type}-${candidate.catalogId}`}>
                 <div role="cell"><strong>{candidate.name}</strong><small>{candidate.type} · {candidate.author} · {candidate.tags.slice(0, 4).join(", ") || "untagged"}</small></div>
                 <p role="cell">{candidate.description}</p>
@@ -109,6 +116,6 @@ export function CatalogBrowser() {
             </div>)}
         </div>
         {!visible.length && <p className="soulcord-empty">No catalog record matches these filters.</p>}
-        <p className="soulcord-callout">Catalog payloads are not bundled here. The aggressive pack totals {formatBytes(SOULCORD_RUNTIME_ADDONS.reduce((sum, addon) => sum + addon.sizeBytes, 0))} before BDFDB and themes; immutable sources are fetched only inside an explicit staged transaction.</p>
+        <p className="soulcord-callout">Catalog payloads are not bundled here. The aggressive pack totals {formatBytes(SOULCORD_RUNTIME_ADDONS.reduce((sum, addon) => sum + addon.sizeBytes, 0))} before BDFDB and themes. Every community candidate is currently non-installable, so setup cannot fetch or stage one.</p>
     </section>;
 }

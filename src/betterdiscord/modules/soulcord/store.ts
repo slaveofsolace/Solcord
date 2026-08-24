@@ -4,9 +4,12 @@ import Config from "@stores/config";
 import fs from "@polyfill/fs";
 import crypto from "crypto";
 import path from "path";
+import {isSoulCordBuiltInAddon} from "@common/soulcord/builtin-addons";
+import {recommendedSoulCordSetupAddons, resolveSoulCordSetupPlan, SOULCORD_RECOMMENDED_SETUP_ADDONS} from "@common/soulcord/setup-catalog";
 
 import type {
     SoulCordAddonMode,
+    SoulCordAddonProvider,
     SoulCordCuratedAddonState,
     SoulCordModuleId,
     SoulCordModuleSettings,
@@ -33,6 +36,7 @@ const MAX_MIGRATION_ENTRIES = 30;
 const MAX_SETUP_TRANSACTIONS = 10;
 
 export const SOULCORD_THEMES: Array<{id: SoulCordThemeId; name: string; fileName: string;}> = [
+    {id: "soulcord-default", name: "SoulCord Default", fileName: "SoulCord-Default.theme.css"},
     {id: "obsidian-thread", name: "Obsidian Thread", fileName: "SoulCord-ObsidianThread.theme.css"},
     {id: "carbon-ember", name: "Carbon Ember", fileName: "SoulCord-CarbonEmber.theme.css"},
     {id: "midnight-glass", name: "Midnight Glass", fileName: "SoulCord-MidnightGlass.theme.css"},
@@ -108,10 +112,12 @@ function normalizeTimelinePolicy(value: unknown): SoulCordTimelinePolicy {
 }
 
 export function defaultCuratedAddons(): Record<string, SoulCordCuratedAddonState> {
+    const recommended = new Set<string>(SOULCORD_RECOMMENDED_SETUP_ADDONS);
     return Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, {
-        selected: true,
+        selected: recommended.has(name),
         enabled: false,
-        mode: name === "SplitLargeMessages" ? "guarded" : "default"
+        mode: name === "SplitLargeMessages" ? "guarded" : "default",
+        provider: "prefer-community"
     }])) as Record<string, SoulCordCuratedAddonState>;
 }
 
@@ -120,16 +126,24 @@ function normalizeAddonMode(value: unknown, name: string): SoulCordAddonMode {
     return stringChoice(value, ["default", "guarded", "native"] as const, fallback);
 }
 
+function normalizeAddonProvider(value: unknown): SoulCordAddonProvider {
+    return stringChoice(value, ["prefer-community", "prefer-soulcord"] as const, "prefer-community");
+}
+
 function normalizeCuratedAddons(value: unknown): Record<string, SoulCordCuratedAddonState> {
     const record = isRecord(value) ? value : {};
     const normalized = defaultCuratedAddons();
     for (const name of SOULCORD_PRESET_ADDONS) {
         const candidate = record[name];
         if (!isRecord(candidate)) continue;
+        const mode = normalizeAddonMode(candidate.mode, name);
+        const builtInCanExecute = !isSoulCordBuiltInAddon(name, mode)
+            || resolveSoulCordSetupPlan([name], {[name]: mode}).executableAddons.includes(name);
         normalized[name] = {
-            selected: typeof candidate.selected === "boolean" ? candidate.selected : true,
-            enabled: candidate.enabled === true,
-            mode: normalizeAddonMode(candidate.mode, name),
+            selected: typeof candidate.selected === "boolean" ? candidate.selected : normalized[name].selected,
+            enabled: candidate.enabled === true && builtInCanExecute,
+            mode,
+            provider: normalizeAddonProvider(candidate.provider),
             ...(typeof candidate.reviewedSha256 === "string" && /^[0-9a-f]{64}$/i.test(candidate.reviewedSha256) ? {reviewedSha256: candidate.reviewedSha256.toLowerCase()} : {}),
             ...(typeof candidate.quarantineReason === "string" ? {quarantineReason: candidate.quarantineReason.slice(0, 160)} : {})
         };
@@ -230,6 +244,28 @@ function normalizeAddonFileNames(value: unknown, kind: "plugin" | "theme"): stri
     return [...new Set(value.filter((item): item is string => typeof item === "string" && item.endsWith(suffix) && pattern.test(item)))].slice(0, 100);
 }
 
+function safeAddonFileName(value: string, kind: "plugin" | "theme"): boolean {
+    const suffix = kind === "plugin" ? ".plugin.js" : ".theme.css";
+    const hasForbiddenCharacter = [...value].some(character => {
+        const code = character.charCodeAt(0);
+        return code < 32 || code === 127 || "<>:\"/\\|?*".includes(character);
+    });
+    return value.length > suffix.length
+        && value.length <= 220
+        && value.endsWith(suffix)
+        && value.trim() === value
+        && !hasForbiddenCharacter
+        && !value.endsWith(".")
+        && !value.endsWith(" ");
+}
+
+function normalizeAddonStateRecord(value: unknown, kind: "plugin" | "theme"): Record<string, boolean> {
+    if (!isRecord(value)) return {};
+    return Object.fromEntries(Object.entries(value)
+        .filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean" && safeAddonFileName(entry[0], kind))
+        .slice(0, 1_000));
+}
+
 function defaultProfile(id: string, name: string, enabled: SoulCordModuleId[]): SoulCordProfile {
     const modules = clone(MODULE_DEFAULTS);
     for (const key of Object.keys(modules) as SoulCordModuleId[]) modules[key].enabled = enabled.includes(key);
@@ -272,7 +308,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
                 createdAt: boundedNumber(snapshot.createdAt, Date.now(), 0, Number.MAX_SAFE_INTEGER),
                 modules: snapshotModules,
                 profiles: normalizeProfiles(snapshot.profiles),
-                selectedTheme: stringChoice(snapshot.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "obsidian-thread"),
+                selectedTheme: stringChoice(snapshot.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
                 curatedAddons: normalizeCuratedAddons(snapshot.curatedAddons),
                 timelinePolicy: normalizeTimelinePolicy(snapshot.timelinePolicy),
                 activePlugins: normalizeAddonFileNames(snapshot.activePlugins, "plugin"),
@@ -319,12 +355,8 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
     const setupTransactions = Array.isArray(record.setupTransactions)
         ? record.setupTransactions.filter(isRecord).flatMap(entry => {
             if (typeof entry.id !== "string" || !/^[a-z0-9]+-[0-9a-f]{16}$/.test(entry.id) || typeof entry.snapshotId !== "string") return [];
-            const priorAddonStates: Record<string, boolean> = isRecord(entry.priorAddonStates)
-                ? Object.fromEntries(Object.entries(entry.priorAddonStates).filter((stateEntry): stateEntry is [string, boolean] => SOULCORD_PRESET_ADDONS.includes(stateEntry[0] as typeof SOULCORD_PRESET_ADDONS[number]) && typeof stateEntry[1] === "boolean"))
-                : {};
-            const priorThemeStates: Record<string, boolean> = isRecord(entry.priorThemeStates)
-                ? Object.fromEntries(Object.entries(entry.priorThemeStates).filter((stateEntry): stateEntry is [string, boolean] => SOULCORD_THEMES.some(theme => theme.fileName === stateEntry[0]) && typeof stateEntry[1] === "boolean"))
-                : {};
+            const priorAddonStates = normalizeAddonStateRecord(entry.priorAddonStates, "plugin");
+            const priorThemeStates = normalizeAddonStateRecord(entry.priorThemeStates, "theme");
             return [{id: entry.id, at: boundedNumber(entry.at, Date.now(), 0, Number.MAX_SAFE_INTEGER), snapshotId: entry.snapshotId.slice(0, 96), priorAddonStates, priorThemeStates} satisfies SoulCordSetupTransactionRecord];
         }).slice(-MAX_SETUP_TRANSACTIONS)
         : [];
@@ -333,7 +365,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
         schemaVersion: 3,
         consentVersion: 2,
         onboarding: normalizeOnboarding(record.onboarding),
-        selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "obsidian-thread"),
+        selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
         curatedAddons: normalizeCuratedAddons(record.curatedAddons),
         timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy),
         powerLab: rawSchemaVersion < SOULCORD_SCHEMA_VERSION ? defaultPowerLab() : normalizePowerLab(record.powerLab),
@@ -358,6 +390,15 @@ export function diffModules(before: Record<SoulCordModuleId, SoulCordModuleSetti
     return changes;
 }
 
+function portableCuratedAddons(document: SoulCordSettingsDocument): Record<string, SoulCordCuratedAddonState> {
+    return Object.fromEntries(Object.entries(document.curatedAddons).map(([name, state]) => [name, {
+        selected: state.selected,
+        enabled: false,
+        mode: state.mode,
+        provider: state.provider
+    }])) as Record<string, SoulCordCuratedAddonState>;
+}
+
 export function serializeSoulCordSettingsExport(document: SoulCordSettingsDocument): string {
     const modules = clone(document.modules);
     modules["message-timeline"].values.scope = "dm-only";
@@ -366,7 +407,9 @@ export function serializeSoulCordSettingsExport(document: SoulCordSettingsDocume
         version: 2,
         schemaVersion: document.schemaVersion,
         selectedTheme: document.selectedTheme,
-        curatedAddons: document.curatedAddons,
+        // Runtime acceptance is machine-local transaction evidence, not a
+        // portable preference. Imports must re-stage and re-validate bytes.
+        curatedAddons: portableCuratedAddons(document),
         timelinePolicy: {
             ...document.timelinePolicy,
             scope: "dm-only",
@@ -403,6 +446,7 @@ export function previewSoulCordImportChanges(current: SoulCordSettingsDocument, 
         if (previous.selected !== next.selected) changes.push(`${name} selected: ${booleanLabel(previous.selected)} → ${booleanLabel(next.selected)}`);
         if (previous.enabled !== next.enabled) changes.push(`${name} enabled: ${booleanLabel(previous.enabled)} → ${booleanLabel(next.enabled)}`);
         if (previous.mode !== next.mode) changes.push(`${name} mode: ${previous.mode} → ${next.mode}`);
+        if (previous.provider !== next.provider) changes.push(`${name} provider: ${previous.provider} → ${next.provider}`);
         if (previous.reviewedSha256 !== next.reviewedSha256) changes.push(`${name} review receipt: ${previous.reviewedSha256 ? "present" : "none"} → ${next.reviewedSha256 ? "present" : "none"}`);
         if (previous.quarantineReason !== next.quarantineReason) changes.push(`${name} quarantine: ${previous.quarantineReason ? "present" : "none"} → ${next.quarantineReason ? "present" : "none"}`);
     }
@@ -476,7 +520,10 @@ export function parseSoulCordImport(text: string): SoulCordSettingsDocument | un
     try {
         const parsed: unknown = JSON.parse(text);
         if (!isRecord(parsed) || parsed.format !== "soulcord-settings" || ![1, 2].includes(Number(parsed.version))) return;
-        return normalizeSoulCordDocument(parsed);
+        const normalized = normalizeSoulCordDocument(parsed);
+        normalized.curatedAddons = portableCuratedAddons(normalized);
+        normalized.setupTransactions = [];
+        return normalized;
     }
     catch {
         return;
@@ -487,30 +534,44 @@ export function normalizeSetupDraft(value: unknown): SoulCordSetupDraft {
     const record = isRecord(value) ? value : {};
     const selected = Array.isArray(record.selectedAddons)
         ? [...new Set(record.selectedAddons.filter((name): name is typeof SOULCORD_PRESET_ADDONS[number] => typeof name === "string" && SOULCORD_PRESET_ADDONS.includes(name as typeof SOULCORD_PRESET_ADDONS[number])))]
-        : [...SOULCORD_PRESET_ADDONS];
+        : recommendedSoulCordSetupAddons();
     const rawModes = isRecord(record.addonModes) ? record.addonModes : {};
+    const rawProviders = isRecord(record.addonProviders) ? record.addonProviders : {};
     return {
-        selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "obsidian-thread"),
+        selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
         selectedAddons: selected,
         addonModes: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonMode(rawModes[name], name)])),
+        addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonProvider(rawProviders[name])])),
         timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy)
     };
 }
 
 export function previewSetupChanges(document: SoulCordSettingsDocument, rawDraft: unknown): string[] {
     const draft = normalizeSetupDraft(rawDraft);
+    const plan = resolveSoulCordSetupPlan(draft.selectedAddons, draft.addonModes);
+    const skipped = new Map(plan.skipped.map(decision => [decision.name, decision]));
     const changes: string[] = [];
     if (document.selectedTheme !== draft.selectedTheme) changes.push(`theme: ${document.selectedTheme} → ${draft.selectedTheme}`);
     for (const name of SOULCORD_PRESET_ADDONS) {
+        const skippedDecision = skipped.get(name);
+        if (skippedDecision) changes.push(`${name}: skip this run — ${skippedDecision.statusLabel}`);
         const selected = draft.selectedAddons.includes(name);
-        if (document.curatedAddons[name].selected !== selected) changes.push(`${name}: ${selected ? "select" : "deselect"}`);
-        if (selected && !document.curatedAddons[name].enabled) {
-            changes.push(name === "SplitLargeMessages" && draft.addonModes[name] === "guarded"
-                ? `${name}: enable SoulCord guarded preview adapter (no community file)`
-                : `${name}: stage, verify, and enable individually`);
+        const currentlyBuiltIn = isSoulCordBuiltInAddon(name, document.curatedAddons[name].mode);
+        if (document.curatedAddons[name].selected !== selected) {
+            if (selected && skippedDecision) changes.push(`${name}: remember request for later review`);
+            else if (!selected && document.curatedAddons[name].enabled && !currentlyBuiltIn) changes.push(`${name}: remove from SoulCord selection; existing owner file remains unchanged`);
+            else changes.push(`${name}: ${selected ? "select" : "deselect"}`);
         }
-        if (!selected && document.curatedAddons[name].enabled) changes.push(`${name}: disable`);
+        if (selected && !document.curatedAddons[name].enabled) {
+            if (!skippedDecision) {
+                changes.push(isSoulCordBuiltInAddon(name, draft.addonModes[name])
+                    ? `${name}: enable SoulCord clean-room adapter (no community file)`
+                    : `${name}: stage, verify, and enable individually`);
+            }
+        }
+        if (!selected && document.curatedAddons[name].enabled && currentlyBuiltIn) changes.push(`${name}: disable SoulCord clean-room adapter`);
         if (document.curatedAddons[name].mode !== draft.addonModes[name]) changes.push(`${name}.mode: ${document.curatedAddons[name].mode} → ${draft.addonModes[name]}`);
+        if (document.curatedAddons[name].provider !== draft.addonProviders[name]) changes.push(`${name}.provider: ${document.curatedAddons[name].provider} → ${draft.addonProviders[name]}`);
     }
     if (JSON.stringify(document.timelinePolicy) !== JSON.stringify(draft.timelinePolicy)) changes.push("Message Timeline policy");
     return changes;
@@ -678,7 +739,7 @@ class SoulCordStore extends Store {
         return previewSetupChanges(this.#document, draft);
     }
 
-    completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>;}): void {
+    completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>;}): SoulCordSetupTransactionRecord {
         const draft = normalizeSetupDraft(rawDraft);
         const snapshot = this.capture("Before completing SoulCord setup");
         this.#document.selectedTheme = draft.selectedTheme;
@@ -689,17 +750,38 @@ class SoulCordStore extends Store {
             const result = installResults[name];
             this.#document.curatedAddons[name] = {
                 selected,
-                enabled: selected && result?.enabled === true,
+                enabled: selected ? result?.enabled === true : false,
                 mode: draft.addonModes[name],
+                provider: draft.addonProviders[name],
                 ...(typeof result?.reviewedSha256 === "string" ? {reviewedSha256: result.reviewedSha256} : {}),
                 ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
             };
         }
         this.#document.onboarding = {version: 1, status: "complete", completedAt: Date.now()};
-        this.#document.setupTransactions.push({id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates});
+        const record: SoulCordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates};
+        this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
         this.#appendLedger("schema", "Completed SoulCord setup transaction version 1.");
         this.#save();
+        return clone(record);
+    }
+
+    abortSetupCompletion(transactionId: string): boolean {
+        const transaction = this.#document.setupTransactions.at(-1);
+        if (!transaction || transaction.id !== transactionId) return false;
+        const restored = restoreSnapshotState(this.#document, transaction.snapshotId);
+        if (!restored) return false;
+        this.#document.modules = restored.modules;
+        this.#document.profiles = restored.profiles;
+        this.#document.selectedTheme = restored.selectedTheme;
+        this.#document.curatedAddons = restored.curatedAddons;
+        this.#document.timelinePolicy = restored.timelinePolicy;
+        this.#document.onboarding = {version: 1, status: "pending"};
+        this.#document.setupTransactions.pop();
+        this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
+        this.#appendLedger("rollback", "Aborted an unacknowledged SoulCord setup transaction.");
+        this.#save();
+        return true;
     }
 
     skipOnboarding(): void {
