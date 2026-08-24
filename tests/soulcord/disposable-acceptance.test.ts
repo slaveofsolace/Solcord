@@ -184,10 +184,20 @@ async function createFixture(): Promise<Fixture> {
         const packageRoot = path.join(sourceApp, "modules", `${name}-1`, name);
         fs.mkdirSync(packageRoot, {recursive: true});
         const packageJson = name === "discord_desktop_core"
-            ? {name, version: "0.0.0"}
+            ? {name, version: "0.0.0", main: "index.js"}
             : {"private": "true"};
         fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify(packageJson));
         fs.writeFileSync(path.join(packageRoot, "index.js"), "module.exports = {};\n");
+        if (name === "discord_desktop_core") {
+            const coreSource = path.join(root, "discord-core-source");
+            fs.mkdirSync(coreSource);
+            fs.writeFileSync(path.join(coreSource, "index.js"), "module.exports = {};\n");
+            await asar.createPackage(coreSource, path.join(packageRoot, "core.asar"));
+            fs.writeFileSync(
+                path.join(packageRoot, "index.js"),
+                `require("C:\\\\Users\\\\owner\\\\AppData\\\\Roaming\\\\BetterDiscord\\\\data\\\\betterdiscord.asar");\nmodule.exports = require("./core.asar");\n`
+            );
+        }
     }
     const betterDiscordSource = path.join(root, "betterdiscord-source");
     fs.mkdirSync(betterDiscordSource);
@@ -237,7 +247,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.soulCordAsar);
-        expect(result.manifest.schemaVersion).toBe(6);
+        expect(result.manifest.schemaVersion).toBe(7);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.soulcordBuildMode).toBe("production");
@@ -291,6 +301,10 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(hashBytes(fs.readFileSync(copiedSoulCord))).toBe(fixture.expectedHash);
         expect(fs.readFileSync(copiedSoulCord)).toEqual(fs.readFileSync(fixture.soulCordAsar));
         expect(snapshotTree(fixture.sourceApp)).toEqual(before);
+        const desktopCoreEntry = "modules/discord_desktop_core-1/discord_desktop_core/index.js";
+        expect(fs.readFileSync(path.join(runtime, desktopCoreEntry), "utf8"))
+            .toBe(`"use strict";\n\nmodule.exports = require("./core.asar");\n`);
+        expect(result.writtenFiles).toContain(desktopCoreEntry);
 
         const shim = fs.readFileSync(path.join(runtime, "resources", "app", "index.js"), "utf8");
         const setPathIndex = shim.indexOf("app.setPath(\"userData\"");
@@ -392,6 +406,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(result.manifest.safety.filesystemProfileIsolated).toBeTrue();
         expect(result.manifest.safety.windowsAccountIsolated).toBeFalse();
         expect(result.manifest.safety.copiedNativeModules).toBeTrue();
+        expect(result.manifest.safety.legacyDesktopCoreInjectorNeutralized).toBeTrue();
         expect(result.manifest.safety.updaterDisabledInAcceptance).toBeTrue();
         expect(result.manifest.safety.runtimeLedgerSanitized).toBeTrue();
         for (const relative of Object.values(result.manifest.paths)) {
@@ -409,6 +424,49 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
             expectedSoulCordSha256: fixture.expectedHash,
             expectedSoulCordSourceCommit: fixture.expectedSourceCommit
         })).toThrow("already exists");
+    });
+
+    test("accepts an already-direct desktop-core entry without changing the source", () => {
+        const sourceEntry = path.join(
+            fixture.sourceApp,
+            "modules",
+            "discord_desktop_core-1",
+            "discord_desktop_core",
+            "index.js"
+        );
+        const direct = `module.exports = require("./core.asar");\n`;
+        fs.writeFileSync(sourceEntry, direct);
+        const result = prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        });
+        expect(result.dryRun).toBeTrue();
+        expect(fs.readFileSync(sourceEntry, "utf8")).toBe(direct);
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
+    });
+
+    test("rejects an unrecognized desktop-core injector before copying", () => {
+        const sourceEntry = path.join(
+            fixture.sourceApp,
+            "modules",
+            "discord_desktop_core-1",
+            "discord_desktop_core",
+            "index.js"
+        );
+        fs.writeFileSync(sourceEntry, `require("C:\\\\unreviewed\\\\client-mod.asar");\nmodule.exports = require("./core.asar");\n`);
+        expect(() => prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit,
+            dryRun: true
+        })).toThrow("unrecognized Discord desktop-core entry");
+        expect(fs.existsSync(fixture.destination)).toBeFalse();
     });
 
     test("fails closed before SoulCord loads when a copied native module disappears", () => {

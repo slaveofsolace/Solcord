@@ -9,6 +9,7 @@ const MANIFEST_FILE = "acceptance-manifest.json";
 const LAUNCHER_FILE = "launch-soulcord-acceptance.cmd";
 const ACCEPTANCE_SETTINGS_FILE = "profile/Roaming/discord/settings.json";
 const RUNTIME_LEDGER_FILE = "acceptance-runtime-ledger.jsonl";
+const DISCORD_DESKTOP_CORE_ENTRY = `"use strict";\n\nmodule.exports = require("./core.asar");\n`;
 const DISCORD_FIRST_RUN_MARKER = ".first-run";
 const DISCORD_VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){1,7}$/;
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
@@ -42,7 +43,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 6;
+    schemaVersion: 7;
     kind: "soulcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -75,6 +76,7 @@ export interface DisposableAcceptanceManifest {
         filesystemProfileIsolated: true;
         windowsAccountIsolated: false;
         copiedNativeModules: true;
+        legacyDesktopCoreInjectorNeutralized: true;
         updaterDisabledInAcceptance: true;
         runtimeLedgerSanitized: true;
     };
@@ -101,6 +103,7 @@ interface ValidatedInputs {
     discordReleaseChannel: string;
     discordAppPackage: DiscordAppPackageIdentity;
     discordBuildInfo: DiscordBuildInfoIdentity;
+    discordDesktopCoreEntry: string;
 }
 
 interface TreeInventory {
@@ -470,6 +473,49 @@ function readBoundedAsarEnvelope(file: string): AsarEnvelope {
     return envelope;
 }
 
+function assertBoundedGenericAsar(file: string, label: string): void {
+    const pathStat = fs.lstatSync(file);
+    if (!pathStat.isFile() || pathStat.isSymbolicLink() || pathStat.size < 16 || pathStat.size > MAX_SOULCORD_ASAR_BYTES) {
+        throw new Error(`${label} must be a regular bounded ASAR archive.`);
+    }
+    const descriptor = fs.openSync(file, "r");
+    let before: fs.Stats;
+    let after: fs.Stats;
+    try {
+        before = fs.fstatSync(descriptor);
+        const fixedHeader = Buffer.alloc(16);
+        readExactly(descriptor, fixedHeader, 0, `${label} fixed header`);
+        const outerPayloadSize = fixedHeader.readUInt32LE(0);
+        const headerSize = fixedHeader.readUInt32LE(4);
+        const innerPayloadSize = fixedHeader.readUInt32LE(8);
+        const jsonLength = fixedHeader.readInt32LE(12);
+        if (outerPayloadSize !== 4 || headerSize < 8 || headerSize > MAX_SOULCORD_ASAR_HEADER_BYTES || headerSize % 4 !== 0
+            || innerPayloadSize !== headerSize - 4 || jsonLength <= 0
+            || 4 + alignToFour(jsonLength) !== innerPayloadSize || 8 + headerSize > before.size) {
+            throw new Error(`${label} fixed header is malformed or oversized.`);
+        }
+        const headerBuffer = Buffer.alloc(headerSize);
+        readExactly(descriptor, headerBuffer, 8, `${label} header`);
+        const jsonStart = 8;
+        const jsonEnd = jsonStart + jsonLength;
+        if (jsonEnd > headerBuffer.length || headerBuffer.subarray(jsonEnd).some(byte => byte !== 0)) {
+            throw new Error(`${label} header bounds are invalid.`);
+        }
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(headerBuffer.subarray(jsonStart, jsonEnd)));
+        }
+        catch {throw new Error(`${label} header JSON is invalid.`);}
+        if (!isRecord(parsed) || !isRecord(parsed.files)) throw new Error(`${label} header root is invalid.`);
+        after = fs.fstatSync(descriptor);
+    }
+    finally {fs.closeSync(descriptor);}
+    const current = fs.lstatSync(file);
+    if (!sameFileIdentity(before, after) || !sameFileIdentity(before, current)) {
+        throw new Error(`${label} changed during validation.`);
+    }
+}
+
 function readPackedAsarEntry(file: string, envelope: AsarEnvelope, entryPath: string, label: string): Buffer {
     const entry = envelope.entries.get(entryPath);
     if (!entry || entry.size > MAX_JSON_METADATA_BYTES) {
@@ -785,6 +831,7 @@ function validateInputs(options: DisposableAcceptanceOptions): ValidatedInputs {
         throw new Error("SoulCord ASAR changed while its embedded provenance was being inspected.");
     }
     const sourceDiscordTree = createTreeInventory(sourceDiscordAppRealPath);
+    const discordDesktopCoreEntry = inspectDiscordDesktopCoreEntry(path.join(sourceDiscordAppRealPath, "modules"));
 
     return {
         sourceDiscordAppDir: sourceDiscordAppRealPath,
@@ -800,7 +847,8 @@ function validateInputs(options: DisposableAcceptanceOptions): ValidatedInputs {
         discordVersion: versionMatch[1],
         discordReleaseChannel: buildInfo.releaseChannel,
         discordAppPackage: appPackage,
-        discordBuildInfo: buildInfo
+        discordBuildInfo: buildInfo,
+        discordDesktopCoreEntry
     };
 }
 
@@ -827,7 +875,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 6,
+        schemaVersion: 7,
         kind: "soulcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -860,6 +908,7 @@ export function createDisposableAcceptanceManifest(
             filesystemProfileIsolated: true,
             windowsAccountIsolated: false,
             copiedNativeModules: true,
+            legacyDesktopCoreInjectorNeutralized: true,
             updaterDisabledInAcceptance: true,
             runtimeLedgerSanitized: true
         }
@@ -884,6 +933,58 @@ function copyPlainTree(sourceDirectory: string, destinationDirectory: string): v
         }
         fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
     }
+}
+
+function inspectDiscordDesktopCoreEntry(modulesRoot: string): string {
+    const wrappers = fs.readdirSync(modulesRoot, {withFileTypes: true})
+        .filter(entry => /^discord_desktop_core-[0-9]+$/.test(entry.name));
+    if (wrappers.length !== 1 || !wrappers[0].isDirectory()) {
+        throw new Error("SoulCord acceptance requires exactly one plain Discord desktop-core wrapper.");
+    }
+
+    const packageRoot = path.join(modulesRoot, wrappers[0].name, "discord_desktop_core");
+    const packageFile = path.join(packageRoot, "package.json");
+    const coreAsar = path.join(packageRoot, "core.asar");
+    const entryFile = path.join(packageRoot, "index.js");
+    assertDirectory(packageRoot, "Discord desktop-core package");
+    assertFile(packageFile, "Discord desktop-core package.json");
+    assertFile(coreAsar, "Discord desktop-core core.asar");
+    assertFile(entryFile, "Discord desktop-core index.js");
+    assertBoundedGenericAsar(coreAsar, "Discord desktop-core core.asar");
+
+    const packageJson = readBoundedJsonFile(packageFile, "Discord desktop-core package.json") as Record<string, unknown>;
+    if (packageJson.name !== "discord_desktop_core" || packageJson.main !== "index.js") {
+        throw new Error("SoulCord acceptance found incompatible Discord desktop-core metadata.");
+    }
+
+    const entryStat = fs.lstatSync(entryFile);
+    if (entryStat.size < 1 || entryStat.size > 16 * 1024) {
+        throw new Error("SoulCord acceptance found an invalid Discord desktop-core entry size.");
+    }
+    const entry = fs.readFileSync(entryFile, "utf8");
+    if (entry.includes("\0")) throw new Error("SoulCord acceptance found an invalid Discord desktop-core entry.");
+
+    const normalized = entry.replace(/\r\n/g, "\n").trim();
+    const directPattern = /^(?:["']use strict["'];\s*)?module\.exports\s*=\s*require\(["']\.\/core\.asar["']\);?$/;
+    const injectedPattern = /^(?:["']use strict["'];\s*)?require\(["'][A-Za-z]:(?:\\\\)(?:[^"'\r\n]+(?:\\\\))*BetterDiscord(?:\\\\)data(?:\\\\)betterdiscord\.asar["']\);\s*module\.exports\s*=\s*require\(["']\.\/core\.asar["']\);?$/i;
+    if (!directPattern.test(normalized) && !injectedPattern.test(normalized)) {
+        throw new Error("SoulCord acceptance refuses an unrecognized Discord desktop-core entry.");
+    }
+    return path.relative(path.dirname(modulesRoot), entryFile).replaceAll("\\", "/");
+}
+
+function neutralizeCopiedDesktopCoreInjector(runtime: string, expectedRelativeEntry: string): string {
+    const modulesRoot = path.join(runtime, "modules");
+    const copiedRelativeEntry = inspectDiscordDesktopCoreEntry(modulesRoot);
+    if (copiedRelativeEntry !== expectedRelativeEntry) {
+        throw new Error("Copied Discord desktop-core identity no longer matches the validated source runtime.");
+    }
+    const entryFile = path.join(runtime, copiedRelativeEntry);
+    fs.writeFileSync(entryFile, DISCORD_DESKTOP_CORE_ENTRY, {encoding: "utf8"});
+    if (fs.readFileSync(entryFile, "utf8") !== DISCORD_DESKTOP_CORE_ENTRY) {
+        throw new Error("Copied Discord desktop-core injector neutralization failed verification.");
+    }
+    return copiedRelativeEntry;
 }
 
 function captureOwnedStagingDirectory(directory: string, expectedParent: string): OwnedStagingDirectory {
@@ -995,6 +1096,17 @@ function configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage) {
             throw new Error("SoulCord acceptance found ambiguous copied Discord native-module metadata.");
         }
         discovered.add(match[1]);
+        if (match[1] === "discord_desktop_core") {
+            const coreAsar = path.join(packageRoot, "core.asar");
+            const coreEntry = path.join(packageRoot, "index.js");
+            const coreAsarStat = fs.lstatSync(coreAsar);
+            const coreEntryStat = fs.lstatSync(coreEntry);
+            if (!coreAsarStat.isFile() || coreAsarStat.isSymbolicLink()
+                || !coreEntryStat.isFile() || coreEntryStat.isSymbolicLink()
+                || fs.readFileSync(coreEntry, "utf8") !== ${JSON.stringify(DISCORD_DESKTOP_CORE_ENTRY)}) {
+                throw new Error("SoulCord acceptance found a non-isolated Discord desktop-core entry.");
+            }
+        }
         wrapperPaths.push(fs.realpathSync.native(wrapperPath));
     }
     if (!discovered.has("discord_desktop_core") || !discovered.has("discord_utils")) {
@@ -1187,6 +1299,7 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
             throw new Error("Copied Discord runtime metadata no longer matches the initially accepted package and build identity.");
         }
         assertOwnedStagingDirectory(staging);
+        neutralizeCopiedDesktopCoreInjector(runtime, validated.discordDesktopCoreEntry);
 
         const isolatedDiscordVersionRoot = path.join(
             staging.path,
@@ -1242,6 +1355,7 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
         manifest,
         writtenFiles: [
             manifest.paths.electronEntryPoint,
+            validated.discordDesktopCoreEntry,
             manifest.paths.soulcordAsar,
             manifest.paths.acceptanceSettings,
             manifest.paths.firstRunMarker,
