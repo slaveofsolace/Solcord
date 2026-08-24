@@ -50,6 +50,7 @@ function executeShim(environment: Record<string, string>, dirname: string): {
     error: Error | null;
     loaded: string[];
     moduleGlobalPaths: string[];
+    noAsar: unknown;
     userData: string | null;
 } {
     const loaded: string[] = [];
@@ -77,18 +78,27 @@ function executeShim(environment: Record<string, string>, dirname: string): {
     };
     moduleApi.prototype.require = function(request: string): unknown {return fakeRequire(request);};
     const module = {exports: {}};
+    const fakeProcess: {env: Record<string, string>; noAsar: unknown;} = {env: mutableEnvironment, noAsar: "preserved"};
     let error: Error | null = null;
     try {
         runInNewContext(renderDisposableAcceptanceShim(), {
             __dirname: dirname,
             module,
             exports: module.exports,
-            process: {env: mutableEnvironment},
+            process: fakeProcess,
             require: fakeRequire
         });
     }
     catch (caught) {error = caught instanceof Error ? caught : new Error(String(caught));}
-    return {buildInfo, environment: mutableEnvironment, error, loaded, moduleGlobalPaths: [...moduleApi.globalPaths], userData};
+    return {
+        buildInfo,
+        environment: mutableEnvironment,
+        error,
+        loaded,
+        moduleGlobalPaths: [...moduleApi.globalPaths],
+        noAsar: fakeProcess.noAsar,
+        userData
+    };
 }
 
 function snapshotTree(root: string): Record<string, string> {
@@ -327,6 +337,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(execution.error).toBeNull();
         expect(execution.userData).toBe(path.join(fixture.destination, "profile", "Roaming", "discord"));
         expect(execution.environment.SOULCORD_ACCEPTANCE_MODE).toBe("1");
+        expect(execution.noAsar).toBe("preserved");
         expect(execution.moduleGlobalPaths).toEqual([
             path.join(runtime, "modules", "discord_desktop_core-1"),
             path.join(runtime, "modules", "discord_utils-1")

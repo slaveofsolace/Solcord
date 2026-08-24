@@ -1060,6 +1060,13 @@ function safeErrorName(value) {
         : "Error";
 }
 
+function lstatPhysical(file) {
+    const previousNoAsar = process.noAsar;
+    process.noAsar = true;
+    try {return fs.lstatSync(file);}
+    finally {process.noAsar = previousNoAsar;}
+}
+
 function configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage) {
     const modulesRoot = fs.realpathSync.native(path.join(acceptanceRoot, "runtime", "modules"));
     const moduleApi = require("node:module");
@@ -1099,7 +1106,7 @@ function configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage) {
         if (match[1] === "discord_desktop_core") {
             const coreAsar = path.join(packageRoot, "core.asar");
             const coreEntry = path.join(packageRoot, "index.js");
-            const coreAsarStat = fs.lstatSync(coreAsar);
+            const coreAsarStat = lstatPhysical(coreAsar);
             const coreEntryStat = fs.lstatSync(coreEntry);
             if (!coreAsarStat.isFile() || coreAsarStat.isSymbolicLink()
                 || !coreEntryStat.isFile() || coreEntryStat.isSymbolicLink()
