@@ -45,13 +45,17 @@ function stagingRoots(root: string): string[] {
 }
 
 function executeShim(environment: Record<string, string>, dirname: string): {
+    buildInfo: Record<string, unknown> | null;
     environment: Record<string, string>;
     error: Error | null;
     loaded: string[];
+    moduleGlobalPaths: string[];
     userData: string | null;
 } {
     const loaded: string[] = [];
     const mutableEnvironment = {...environment};
+    const moduleApi = {globalPaths: [] as string[]};
+    let buildInfo: Record<string, unknown> | null = null;
     let userData: string | null = null;
     const app = {
         setPath(name: string, value: string) {
@@ -62,7 +66,12 @@ function executeShim(environment: Record<string, string>, dirname: string): {
     const fakeRequire = (request: string): unknown => {
         if (request === "node:fs") return fs;
         if (request === "node:path") return path;
+        if (request === "node:module") return moduleApi;
         if (request === "electron") return {app};
+        if (path.basename(request) === "build_info.json") {
+            buildInfo = JSON.parse(fs.readFileSync(request, "utf8")) as Record<string, unknown>;
+            return buildInfo;
+        }
         loaded.push(request);
         return {};
     };
@@ -78,7 +87,7 @@ function executeShim(environment: Record<string, string>, dirname: string): {
         });
     }
     catch (caught) {error = caught instanceof Error ? caught : new Error(String(caught));}
-    return {environment: mutableEnvironment, error, loaded, userData};
+    return {buildInfo, environment: mutableEnvironment, error, loaded, moduleGlobalPaths: [...moduleApi.globalPaths], userData};
 }
 
 function snapshotTree(root: string): Record<string, string> {
@@ -170,6 +179,12 @@ async function createFixture(): Promise<Fixture> {
     fs.writeFileSync(path.join(sourceApp, "resources", "app", "index.js"), "module.exports = require('../betterdiscord.app.asar');\n");
     fs.writeFileSync(path.join(sourceApp, "resources", "app", "package.json"), "{\"name\":\"discord\",\"main\":\"index.js\"}\n");
     fs.writeFileSync(path.join(sourceApp, "resources", "build_info.json"), JSON.stringify({releaseChannel: "stable", version: "1.0.9999"}));
+    for (const name of ["discord_desktop_core", "discord_utils"]) {
+        const packageRoot = path.join(sourceApp, "modules", `${name}-1`, name);
+        fs.mkdirSync(packageRoot, {recursive: true});
+        fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({name, version: "0.0.0"}));
+        fs.writeFileSync(path.join(packageRoot, "index.js"), "module.exports = {};\n");
+    }
     const betterDiscordSource = path.join(root, "betterdiscord-source");
     fs.mkdirSync(betterDiscordSource);
     fs.writeFileSync(path.join(betterDiscordSource, "index.js"), "module.exports = {};\n");
@@ -218,7 +233,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.soulCordAsar);
-        expect(result.manifest.schemaVersion).toBe(4);
+        expect(result.manifest.schemaVersion).toBe(5);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.soulcordBuildMode).toBe("production");
@@ -294,6 +309,12 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(execution.error).toBeNull();
         expect(execution.userData).toBe(path.join(fixture.destination, "profile", "Roaming", "discord"));
         expect(execution.environment.SOULCORD_ACCEPTANCE_MODE).toBe("1");
+        expect(execution.moduleGlobalPaths).toEqual([
+            path.join(runtime, "modules", "discord_desktop_core-1"),
+            path.join(runtime, "modules", "discord_utils-1")
+        ]);
+        expect(execution.buildInfo?.localModulesRoot).toBe(path.join(runtime, "modules"));
+        expect(execution.buildInfo?.disableUpdater).toBeTrue();
         expect(execution.loaded).toEqual(["../soulcord.asar", "../betterdiscord.app.asar"]);
         const mismatchedEnvironment = executeShim({
             SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
@@ -345,6 +366,8 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(result.manifest.safety.copiedUserProfile).toBeFalse();
         expect(result.manifest.safety.filesystemProfileIsolated).toBeTrue();
         expect(result.manifest.safety.windowsAccountIsolated).toBeFalse();
+        expect(result.manifest.safety.copiedNativeModules).toBeTrue();
+        expect(result.manifest.safety.updaterDisabledInAcceptance).toBeTrue();
         for (const relative of Object.values(result.manifest.paths)) {
             expect(path.isAbsolute(relative)).toBeFalse();
             expect(relative).not.toContain("\\");
@@ -360,6 +383,28 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
             expectedSoulCordSha256: fixture.expectedHash,
             expectedSoulCordSourceCommit: fixture.expectedSourceCommit
         })).toThrow("already exists");
+    });
+
+    test("fails closed before SoulCord loads when a copied native module disappears", () => {
+        prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        });
+        fs.rmSync(path.join(fixture.destination, "runtime", "modules", "discord_utils-1"), {recursive: true});
+
+        const execution = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Roaming"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(fixture.destination, "runtime", "resources", "app"));
+
+        expect(execution.error?.message).toContain("missing required copied Discord native modules");
+        expect(execution.loaded).toEqual([]);
     });
 
     test("rejects a Discord version that could escape the isolated version directory", () => {

@@ -40,7 +40,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 4;
+    schemaVersion: 5;
     kind: "soulcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -70,6 +70,8 @@ export interface DisposableAcceptanceManifest {
         launchPerformed: false;
         filesystemProfileIsolated: true;
         windowsAccountIsolated: false;
+        copiedNativeModules: true;
+        updaterDisabledInAcceptance: true;
     };
 }
 
@@ -743,6 +745,7 @@ function validateInputs(options: DisposableAcceptanceOptions): ValidatedInputs {
     }
 
     assertFile(path.join(sourceDiscordAppRealPath, "Discord.exe"), "source Discord.exe");
+    assertDirectory(path.join(sourceDiscordAppRealPath, "modules"), "source Discord modules");
     assertDirectory(path.join(sourceDiscordAppRealPath, "resources", "app"), "source resources/app");
     assertFile(path.join(sourceDiscordAppRealPath, "resources", "app", "index.js"), "source resources/app/index.js");
     const appPackage = validateDiscordAppPackage(readBoundedJsonFile(
@@ -819,7 +822,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 4,
+        schemaVersion: 5,
         kind: "soulcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -848,7 +851,9 @@ export function createDisposableAcceptanceManifest(
             hardlinksCreated: false,
             launchPerformed: false,
             filesystemProfileIsolated: true,
-            windowsAccountIsolated: false
+            windowsAccountIsolated: false,
+            copiedNativeModules: true,
+            updaterDisabledInAcceptance: true
         }
     };
 }
@@ -940,6 +945,64 @@ function requireCanonicalEnvironmentPath(name, expected) {
     return actual;
 }
 
+function configureCopiedNativeModules(acceptanceRoot) {
+    const modulesRoot = fs.realpathSync.native(path.join(acceptanceRoot, "runtime", "modules"));
+    const moduleApi = require("node:module");
+    if (!Array.isArray(moduleApi.globalPaths)) {
+        throw new Error("SoulCord acceptance cannot validate Node's native-module search path.");
+    }
+
+    const wrappers = fs.readdirSync(modulesRoot, {withFileTypes: true})
+        .sort((left, right) => left.name.localeCompare(right.name));
+    const discovered = new Set();
+    const wrapperPaths = [];
+    for (const entry of wrappers) {
+        const match = /^([a-z][a-z0-9_]*)-([0-9]+)$/.exec(entry.name);
+        const wrapperPath = path.join(modulesRoot, entry.name);
+        const wrapperStat = fs.lstatSync(wrapperPath);
+        if (!match || !entry.isDirectory() || !wrapperStat.isDirectory() || wrapperStat.isSymbolicLink()) {
+            throw new Error("SoulCord acceptance found an invalid copied Discord module wrapper.");
+        }
+
+        const packageRoot = path.join(wrapperPath, match[1]);
+        const packageStat = fs.lstatSync(packageRoot);
+        const packageFile = path.join(packageRoot, "package.json");
+        const packageFileStat = fs.lstatSync(packageFile);
+        if (!packageStat.isDirectory() || packageStat.isSymbolicLink()
+            || !packageFileStat.isFile() || packageFileStat.isSymbolicLink()
+            || packageFileStat.size < 2 || packageFileStat.size > 64 * 1024) {
+            throw new Error("SoulCord acceptance found an invalid copied Discord native module.");
+        }
+
+        const packageJson = JSON.parse(fs.readFileSync(packageFile, "utf8"));
+        if (!packageJson || packageJson.name !== match[1] || discovered.has(match[1])) {
+            throw new Error("SoulCord acceptance found ambiguous copied Discord native-module metadata.");
+        }
+        discovered.add(match[1]);
+        wrapperPaths.push(fs.realpathSync.native(wrapperPath));
+    }
+    if (!discovered.has("discord_desktop_core") || !discovered.has("discord_utils")) {
+        throw new Error("SoulCord acceptance is missing required copied Discord native modules.");
+    }
+
+    for (const wrapperPath of wrapperPaths) {
+        if (!moduleApi.globalPaths.some(existing => pathKey(existing) === pathKey(wrapperPath))) {
+            moduleApi.globalPaths.push(wrapperPath);
+        }
+    }
+
+    const buildInfoPath = path.join(acceptanceRoot, "runtime", "resources", "build_info.json");
+    const buildInfo = require(buildInfoPath);
+    if (!buildInfo || typeof buildInfo !== "object"
+        || Object.prototype.hasOwnProperty.call(buildInfo, "localModulesRoot")
+        || Object.prototype.hasOwnProperty.call(buildInfo, "standaloneModules")
+        || Object.prototype.hasOwnProperty.call(buildInfo, "disableUpdater")) {
+        throw new Error("SoulCord acceptance refuses ambiguous Discord module/update configuration.");
+    }
+    buildInfo.localModulesRoot = modulesRoot;
+    buildInfo.disableUpdater = true;
+}
+
 const acceptanceRoot = canonicalEnvironmentDirectory("SOULCORD_ACCEPTANCE_ROOT");
 const expectedRoot = fs.realpathSync.native(path.resolve(__dirname, "../../.."));
 if (pathKey(acceptanceRoot) !== pathKey(expectedRoot)) {
@@ -964,6 +1027,8 @@ Object.defineProperty(app, "setAsDefaultProtocolClient", {
     writable: true,
     value: () => false
 });
+
+configureCopiedNativeModules(acceptanceRoot);
 
 require("../soulcord.asar");
 module.exports = require("../betterdiscord.app.asar");
