@@ -1,4 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import path from "node:path";
+import {Buffer} from "node:buffer";
 
 import type {PreloadAssignmentResult} from "./preload-policy";
 
@@ -6,6 +9,7 @@ import type {PreloadAssignmentResult} from "./preload-policy";
 export type ActivityCompatibilityAction =
     | "window-begin"
     | "window-ready"
+    | "window-construction-failed"
     | "window-destroyed"
     | "preload-accepted"
     | "preload-rejected"
@@ -27,13 +31,14 @@ export interface ActivityCompatibilityEvent {
 
 export interface ActivityCompatibilityHealth {
     product: "SoulCord";
-    policyVersion: 1;
+    policyVersion: 2;
     mode: "verified-discord-preload-once";
     unrestrictedOverride: boolean;
     status: "idle" | "healthy" | "attention";
     counters: {
         windowsBegun: number;
         windowsReady: number;
+        windowConstructionFailures: number;
         windowsDestroyed: number;
         discordPreloadsAccepted: number;
         unrestrictedPreloadsAccepted: number;
@@ -53,12 +58,62 @@ interface WindowContext {
 }
 
 const MAX_EVENTS = 64;
+export const ACTIVITY_COMPATIBILITY_MAX_SERIALIZED_BYTES = 32 * 1024;
+
+const SAFE_PRELOAD_FILES = new Map([
+    ["mainscreenpreload.js", "mainScreenPreload.js"],
+    ["activitypreload.js", "activityPreload.js"],
+    ["overlaypreload.js", "overlayPreload.js"],
+    ["preload.js", "preload.js"]
+]);
+const SAFE_PACKAGE_FILES = new Map([
+    ["core.asar", "core.asar"],
+    ["app.asar", "app.asar"]
+]);
+const SAFE_ERROR_NAMES = new Set(["Error", "TypeError", "RangeError", "ReferenceError", "SyntaxError", "URIError", "EvalError", "AggregateError"]);
+const SAFE_REASONS = new Set([
+    "accepted-same-package",
+    "invalid-original",
+    "invalid-candidate",
+    "invalid-discord-root",
+    "mixed-path-flavor",
+    "untrusted-original",
+    "different-package",
+    "unsupported-package",
+    "assignment-limit",
+    "unsupported-extension",
+    "canonicalization-failed",
+    "canonical-root-mismatch",
+    "unrestricted-compatibility-setting",
+    ...SAFE_ERROR_NAMES,
+    "unknown-error"
+]);
 
 function safeBasename(value: unknown): string | undefined {
     if (typeof value !== "string" || !value) return undefined;
     const normalized = value.replaceAll("\\", "/");
     const name = path.posix.basename(normalized);
     return name && name.length <= 96 ? name : undefined;
+}
+
+function safePreloadFile(value: unknown): string | undefined {
+    const basename = safeBasename(value)?.toLocaleLowerCase("en-US");
+    if (!basename) return undefined;
+    return SAFE_PRELOAD_FILES.get(basename) ?? (/\.(?:cjs|mjs|js)$/.test(basename) ? "other-preload.js" : undefined);
+}
+
+function safePackageFile(value: unknown): string | undefined {
+    const basename = safeBasename(value)?.toLocaleLowerCase("en-US");
+    if (!basename) return undefined;
+    return SAFE_PACKAGE_FILES.get(basename) ?? (basename.endsWith(".asar") ? "other.asar" : undefined);
+}
+
+function safeErrorName(error: unknown): string {
+    return error instanceof Error && SAFE_ERROR_NAMES.has(error.name) ? error.name : "unknown-error";
+}
+
+function safeReason(value: unknown): string | undefined {
+    return typeof value === "string" && SAFE_REASONS.has(value) ? value : undefined;
 }
 
 function classify(title: unknown, originalPreload: unknown): WindowContext["kind"] {
@@ -80,6 +135,7 @@ class ActivityCompatibilityLedger {
     #counters: ActivityCompatibilityHealth["counters"] = {
         windowsBegun: 0,
         windowsReady: 0,
+        windowConstructionFailures: 0,
         windowsDestroyed: 0,
         discordPreloadsAccepted: 0,
         unrestrictedPreloadsAccepted: 0,
@@ -94,7 +150,7 @@ class ActivityCompatibilityLedger {
         const context: WindowContext = {
             token,
             kind: classify(title, originalPreload),
-            packageFile: safeBasename(packageRoot)
+            packageFile: safePackageFile(packageRoot)
         };
         this.#contexts.set(token, context);
         this.#counters.windowsBegun++;
@@ -107,6 +163,16 @@ class ActivityCompatibilityLedger {
         if (!context) return;
         this.#counters.windowsReady++;
         this.#record(context, "window-ready", {webContentsId});
+    }
+
+    constructionFailed(token: number, error: unknown): void {
+        const context = this.#contexts.get(token);
+        if (!context) return;
+        this.#counters.windowConstructionFailures++;
+        this.#record(context, "window-construction-failed", {
+            reason: safeErrorName(error)
+        });
+        this.#contexts.delete(token);
     }
 
     destroyed(token: number, webContentsId?: number): void {
@@ -140,8 +206,8 @@ class ActivityCompatibilityLedger {
         }
         this.#record(context, action, {
             reason: result.action === "accepted-unrestricted" ? "unrestricted-compatibility-setting" : result.reason,
-            candidateFile: result.candidateFile,
-            packageFile: result.packageFile
+            candidateFile: safePreloadFile(result.candidateFile),
+            packageFile: safePackageFile(result.packageFile)
         });
     }
 
@@ -156,7 +222,7 @@ class ActivityCompatibilityLedger {
         const context = this.#contexts.get(token);
         if (!context) return;
         this.#counters.preloadErrors++;
-        const reason = error instanceof Error ? error.name : "unknown-error";
+        const reason = safeErrorName(error);
         this.#record(context, "preload-error", {reason});
     }
 
@@ -165,14 +231,18 @@ class ActivityCompatibilityLedger {
     }
 
     snapshot(): ActivityCompatibilityHealth {
-        const status = this.#counters.preloadErrors || this.#counters.assignmentsRejected
+        const status = this.#unrestrictedOverride
+            || this.#counters.unrestrictedPreloadsAccepted
+            || this.#counters.preloadErrors
+            || this.#counters.assignmentsRejected
+            || this.#counters.windowConstructionFailures
             ? "attention"
-            : this.#counters.windowsReady
+            : this.#counters.discordPreloadsAccepted
                 ? "healthy"
                 : "idle";
         return {
             product: "SoulCord",
-            policyVersion: 1,
+            policyVersion: 2,
             mode: "verified-discord-preload-once",
             unrestrictedOverride: this.#unrestrictedOverride,
             status,
@@ -199,11 +269,14 @@ class ActivityCompatibilityLedger {
             windowToken: context.token,
             action,
             context: context.kind,
-            packageFile: context.packageFile,
-            ...extra
+            ...(Number.isSafeInteger(extra.webContentsId) && Number(extra.webContentsId) > 0 ? {webContentsId: extra.webContentsId} : {}),
+            ...(safeReason(extra.reason) ? {reason: safeReason(extra.reason)} : {}),
+            ...(safePreloadFile(extra.candidateFile) ? {candidateFile: safePreloadFile(extra.candidateFile)} : {}),
+            ...(safePackageFile(extra.packageFile ?? context.packageFile) ? {packageFile: safePackageFile(extra.packageFile ?? context.packageFile)} : {})
         };
         this.#events.push(event);
-        if (this.#events.length > MAX_EVENTS) this.#events.splice(0, this.#events.length - MAX_EVENTS);
+        while (this.#events.length > MAX_EVENTS
+            || Buffer.byteLength(JSON.stringify(this.#events), "utf8") > ACTIVITY_COMPATIBILITY_MAX_SERIALIZED_BYTES) this.#events.shift();
     }
 }
 

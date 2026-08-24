@@ -5,11 +5,24 @@ import path from "path";
 import BetterDiscord from "./betterdiscord";
 import Editor from "./editor";
 import ActivityCompatibility from "./activity-compatibility";
+import {OriginalPreloadRegistry} from "./original-preload-registry";
 import {installPreloadAssignmentPolicy, preloadTrustRoot} from "./preload-policy";
+import {ORIGINAL_PRELOAD_REQUEST} from "../../preload/original-preload";
 import * as IPCEvents from "@common/constants/ipcevents";
 import {isProxy} from "util/types";
 
 // const EDITOR_URL_REGEX = /^betterdiscord:\/\/editor\/(?:custom-css|(theme|plugin)\/([^/]+))\/?/;
+
+const originalPreloads = new OriginalPreloadRegistry();
+let originalPreloadIpcRegistered = false;
+
+function registerOriginalPreloadIpc(): void {
+    if (originalPreloadIpcRegistered) return;
+    originalPreloadIpcRegistered = true;
+    electron.ipcMain.on(ORIGINAL_PRELOAD_REQUEST, event => {
+        event.returnValue = originalPreloads.resolve(event.sender.id) ?? null;
+    });
+}
 
 function maybeHasOtherClientMod() {
     if (isProxy(electron) || isProxy(electron.BrowserWindow)) return true;
@@ -23,7 +36,6 @@ function maybeHasOtherClientMod() {
 }
 
 class BrowserWindow extends electron.BrowserWindow {
-    public __originalPreload?: string;
     public __soulcordWindowToken?: number;
 
     constructor(options: BrowserWindowConstructorOptions) {
@@ -51,47 +63,53 @@ class BrowserWindow extends electron.BrowserWindow {
         const packageRoot = preloadTrustRoot(originalPreload);
         ActivityCompatibility.setUnrestrictedOverride(BetterDiscord.clientModCompatibility.allowPreloadOverride());
         const windowToken = ActivityCompatibility.beginWindow(options.title, originalPreload, packageRoot);
-        installPreloadAssignmentPolicy(options.webPreferences, originalPreload, injectedPreload, {
-            discordTrustRoot: BetterDiscord.getDiscordTrustRoot(),
-            canonicalizeRoot(root) {
-                try {
-                    return fs.realpathSync.native(root);
+        let removeMinimumSize = false;
+        try {
+            installPreloadAssignmentPolicy(options.webPreferences, originalPreload, injectedPreload, {
+                discordTrustRoot: BetterDiscord.getDiscordTrustRoot(),
+                canonicalizeRoot(root) {
+                    try {
+                        return fs.realpathSync.native(root);
+                    }
+                    catch {
+                        return undefined;
+                    }
                 }
-                catch {
-                    return undefined;
-                }
+            }, () => BetterDiscord.clientModCompatibility.allowPreloadOverride(),
+            (result, unrestricted) => ActivityCompatibility.assignment(windowToken, result, unrestricted));
+
+            // Don't allow just "truthy" values
+            const shouldBeTransparent = BetterDiscord.getSetting("window", "transparency");
+            if (typeof (shouldBeTransparent) === "boolean" && shouldBeTransparent) {
+                options.transparent = true;
+                options.backgroundColor = "#00000000";
             }
-        }, () => BetterDiscord.clientModCompatibility.allowPreloadOverride(),
-        (result, unrestricted) => ActivityCompatibility.assignment(windowToken, result, unrestricted));
 
-        // Don't allow just "truthy" values
-        const shouldBeTransparent = BetterDiscord.getSetting("window", "transparency");
-        if (typeof (shouldBeTransparent) === "boolean" && shouldBeTransparent) {
-            options.transparent = true;
-            options.backgroundColor = "#00000000";
+            const inAppTrafficLights = Boolean(BetterDiscord.getSetting("window", "inAppTrafficLights") ?? false);
+            options.frame = Boolean(BetterDiscord.getSetting("window", "frame") ?? options.frame ?? true);
+
+            process.env.BETTERDISCORD_NATIVE_FRAME = options.frame.toString();
+            process.env.BETTERDISCORD_IN_APP_TRAFFIC_LIGHTS = inAppTrafficLights.toString();
+
+            if (inAppTrafficLights) {
+                delete options.titleBarStyle;
+            }
+
+            removeMinimumSize = Boolean(BetterDiscord.getSetting("window", "removeMinimumSize") ?? false);
+            if (removeMinimumSize) {
+                options.minWidth = 0;
+                options.minHeight = 0;
+            }
+
+            super(options);
         }
-
-        const inAppTrafficLights = Boolean(BetterDiscord.getSetting("window", "inAppTrafficLights") ?? false);
-        options.frame = Boolean(BetterDiscord.getSetting("window", "frame") ?? options.frame ?? true);
-
-        process.env.BETTERDISCORD_NATIVE_FRAME = options.frame.toString();
-        process.env.BETTERDISCORD_IN_APP_TRAFFIC_LIGHTS = inAppTrafficLights.toString();
-
-        if (inAppTrafficLights) {
-            delete options.titleBarStyle;
+        catch (error) {
+            ActivityCompatibility.constructionFailed(windowToken, error);
+            throw error;
         }
-
-        const removeMinimumSize = Boolean(BetterDiscord.getSetting("window", "removeMinimumSize") ?? false);
-        if (removeMinimumSize) {
-            options.minWidth = 0;
-            options.minHeight = 0;
-        }
-
-        super(options);
         if (removeMinimumSize) {
             this.setMinimumSize = () => {};
         }
-        this.__originalPreload = originalPreload;
         Object.defineProperty(this, "__soulcordWindowToken", {
             configurable: false,
             enumerable: false,
@@ -99,6 +117,7 @@ class BrowserWindow extends electron.BrowserWindow {
             writable: false
         });
         const webContentsId = this.webContents.id;
+        originalPreloads.register(this.webContents, originalPreload);
         ActivityCompatibility.ready(windowToken, webContentsId);
         this.webContents.on("preload-error", (_, __, error) => ActivityCompatibility.preloadError(windowToken, error));
         this.once("closed", () => ActivityCompatibility.destroyed(windowToken, webContentsId));
@@ -141,6 +160,7 @@ export default class {
         const electronPath = require.resolve("electron");
 
         if (!require.cache[electronPath]) return;
+        registerOriginalPreloadIpc();
         delete require.cache[electronPath].exports; // If it didn't work, try to delete existing
         require.cache[electronPath].exports = {...electron, BrowserWindow}; // Try to assign again after deleting
     }

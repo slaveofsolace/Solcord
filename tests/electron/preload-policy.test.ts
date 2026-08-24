@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import {describe, expect, test} from "bun:test";
 
 import {
@@ -44,6 +46,19 @@ describe("Discord-owned preload policy", () => {
         expect(evaluateDiscordPreloadOverride(first, second, {discordTrustRoot: "\\\\server\\share\\Discord"}).accepted).toBe(true);
     });
 
+    test("accepts a POSIX candidate only inside the same trusted asar", () => {
+        expect(evaluateDiscordPreloadOverride(
+            "/opt/discord/core.asar/mainScreenPreload.js",
+            "/opt/discord/core.asar/activityPreload.js",
+            {discordTrustRoot: "/opt/discord"}
+        ).accepted).toBe(true);
+        expect(evaluateDiscordPreloadOverride(
+            "/opt/discord/core.asar/mainScreenPreload.js",
+            "/opt/discord/Core.asar/activityPreload.js",
+            {discordTrustRoot: "/opt/discord"}
+        ).reason).toBe("different-package");
+    });
+
     test("rejects relative, traversal, device, sibling-asar, drive-mismatch, and malformed candidates", () => {
         const candidates: unknown[] = [
             "relative\\activityPreload.js",
@@ -81,13 +96,13 @@ describe("Discord-owned preload policy", () => {
         }).reason).toBe("canonical-root-mismatch");
     });
 
-    test("rejects a directory-package candidate whose real path escapes through a reparse point", () => {
+    test("rejects an unpacked same-directory fallback instead of widening on package drift", () => {
         const directoryOriginal = `${discordVersionRoot}\\preload\\main.js`;
         const directoryCandidate = `${discordVersionRoot}\\preload\\activity.js`;
         expect(evaluateDiscordPreloadOverride(directoryOriginal, directoryCandidate, {
             discordTrustRoot: discordVersionRoot,
-            canonicalizeRoot: value => value.endsWith("activity.js") ? "D:\\outside\\activity.js" : value
-        }).reason).toBe("canonical-root-mismatch");
+            canonicalizeRoot: value => value
+        }).reason).toBe("unsupported-package");
     });
 
     test("trust-root and containment helpers preserve asar boundaries", () => {

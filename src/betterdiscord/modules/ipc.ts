@@ -120,6 +120,14 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.SETUP_APPLY, this.#privateRequest(capability, request));
     }
 
+    acknowledgeSoulCordSetup(capability: string, transactionId: string) {
+        return invokePrivate(IPCEvents.SETUP_ACKNOWLEDGE, {capability, transactionId});
+    }
+
+    reconcileSoulCordSetup(capability: string, transactionIds: string[]) {
+        return invokePrivate(IPCEvents.SETUP_RECONCILE, {capability, transactionIds});
+    }
+
     rollbackSoulCordSetup(capability: string, transactionId: string) {
         return invokePrivate(IPCEvents.SETUP_ROLLBACK, {capability, transactionId});
     }

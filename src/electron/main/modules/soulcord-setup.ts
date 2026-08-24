@@ -5,6 +5,8 @@ import {app, net} from "electron";
 
 import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
 
+import {resolveSoulCordBetterDiscordRoot} from "./soulcord-data-root";
+
 
 type AddonCandidate = typeof SOULCORD_RUNTIME_ADDONS[number];
 type DependencyCandidate = typeof SOULCORD_RUNTIME_DEPENDENCIES[number];
@@ -149,7 +151,7 @@ export class SoulCordSetupTransactions {
 
     apply(rawRequest: unknown): Promise<{transactionId: string; added: TransactionFile[]; reused: TransactionFile[]; selectedTheme: string;}> {
         return this.#serialized(async () => {
-            this.#recoverIncompleteTransactions();
+            this.#recoverIncompleteTransactions(new Set());
             const request = this.#normalizeRequest(rawRequest);
             const selected = request.selectedAddons.map(name => {
                 const candidate = SOULCORD_RUNTIME_ADDONS.find(entry => entry.name === name);
@@ -209,9 +211,12 @@ export class SoulCordSetupTransactions {
                 const serialized = `${JSON.stringify(journal, null, 2)}\n`;
                 journalFile = path.join(journalRoot, `${transactionId}.json`);
                 atomicWrite(journalFile, serialized);
-                this.#writeMarker(transactionId, "complete", digest(serialized));
+                // The renderer must durably record the matching settings
+                // transaction before this becomes complete. Recovery either
+                // acknowledges a known prepared id or rolls its owned files
+                // back, so a crash cannot orphan an install.
+                this.#writeMarker(transactionId, "prepared", digest(serialized));
                 this.#removeStage(stage);
-                this.#removeJournalArtifact(intentFile);
                 return {transactionId, added, reused, selectedTheme: request.selectedTheme};
             }
             catch (error) {
@@ -233,6 +238,22 @@ export class SoulCordSetupTransactions {
         });
     }
 
+    acknowledge(transactionId: unknown): Promise<{transactionId: string; complete: true;}> {
+        return this.#serialized(async () => this.#commitPreparedTransaction(transactionId));
+    }
+
+    reconcile(rawTransactionIds: unknown): Promise<{committed: string[]; rolledBack: string[];}> {
+        return this.#serialized(async () => {
+            if (!Array.isArray(rawTransactionIds) || rawTransactionIds.length > 10) throw new TypeError("Invalid SoulCord transaction reconciliation request.");
+            const known = new Set<string>();
+            for (const transactionId of rawTransactionIds) {
+                if (typeof transactionId !== "string" || !TRANSACTION_ID.test(transactionId) || known.has(transactionId)) throw new TypeError("Invalid SoulCord transaction reconciliation id.");
+                known.add(transactionId);
+            }
+            return this.#recoverIncompleteTransactions(known);
+        });
+    }
+
     rollback(transactionId: unknown): Promise<SetupRollbackResult> {
         return this.#serialized(async () => {
             if (typeof transactionId !== "string" || !TRANSACTION_ID.test(transactionId)) throw new TypeError("Invalid SoulCord transaction id.");
@@ -243,12 +264,60 @@ export class SoulCordSetupTransactions {
                 this.#readMarker(rolledback, journalRoot);
                 return {complete: true, removed: [], preserved: []};
             }
-            const journal = this.#readJournal(transactionId, true);
+            const completeMarker = path.join(journalRoot, `${transactionId}.complete`);
+            const preparedMarker = path.join(journalRoot, `${transactionId}.prepared`);
+            const journal = fs.existsSync(completeMarker)
+                ? this.#readJournal(transactionId, "complete")
+                : fs.existsSync(preparedMarker)
+                    ? this.#readJournal(transactionId, "prepared")
+                    : this.#readJournal(transactionId, false);
             const cleanup = this.#cleanupTransactionFiles(transactionId, journal.added);
             const complete = cleanup.preserved.length === 0;
             this.#writeMarker(transactionId, complete ? "rolledback" : "incomplete", complete ? "owner-requested" : "cleanup-pending");
+            if (complete) {
+                if (fs.existsSync(preparedMarker)) this.#removeJournalArtifact(preparedMarker);
+                const intent = path.join(journalRoot, `${transactionId}.intent.json`);
+                if (fs.existsSync(intent)) this.#removeJournalArtifact(intent);
+            }
             return {complete, ...cleanup};
         });
+    }
+
+    #commitPreparedTransaction(rawTransactionId: unknown): {transactionId: string; complete: true;} {
+        if (typeof rawTransactionId !== "string" || !TRANSACTION_ID.test(rawTransactionId)) throw new TypeError("Invalid SoulCord transaction id.");
+        const transactionId = rawTransactionId;
+        const root = this.#journalRoot();
+        if (!this.#ensureSafeDirectory(root, false)) throw new Error("SoulCord transaction journal not found.");
+        const rolledback = path.join(root, `${transactionId}.rolledback`);
+        if (fs.existsSync(rolledback)) throw new Error("SoulCord transaction was already rolled back.");
+        const complete = path.join(root, `${transactionId}.complete`);
+        if (fs.existsSync(complete)) {
+            this.#readJournal(transactionId, "complete");
+            return {transactionId, complete: true};
+        }
+
+        const journal = this.#readJournal(transactionId, "prepared");
+        for (const file of journal.added) {
+            const targetRoot = this.#targetRoot(file.kind);
+            if (!this.#ensureSafeDirectory(targetRoot, false)) throw new Error("Prepared SoulCord target directory is missing.");
+            const target = path.join(targetRoot, safeFileName(file.fileName, file.kind));
+            if (!fs.existsSync(target)) throw new Error("Prepared SoulCord file is missing.");
+            const receipt = this.#readReceipt(transactionId, file);
+            if (!receipt || !this.#sameFileIdentity(receipt, this.#fileIdentity(target, targetRoot)) || this.#digestManagedFile(target, targetRoot) !== file.sha256) {
+                throw new Error("Prepared SoulCord file no longer matches its ownership receipt.");
+            }
+        }
+
+        const journalFile = path.join(root, `${transactionId}.json`);
+        const serialized = fs.readFileSync(journalFile, "utf8");
+        this.#writeMarker(transactionId, "complete", digest(serialized));
+        const prepared = path.join(root, `${transactionId}.prepared`);
+        if (fs.existsSync(prepared)) this.#removeJournalArtifact(prepared);
+        const intent = path.join(root, `${transactionId}.intent.json`);
+        if (fs.existsSync(intent)) this.#removeJournalArtifact(intent);
+        const stage = path.join(this.#stagingRoot(), transactionId);
+        if (fs.existsSync(stage)) this.#removeStage(stage);
+        return {transactionId, complete: true};
     }
 
     auditIntegrity(): Promise<SetupIntegrityRecord[]> {
@@ -457,7 +526,7 @@ export class SoulCordSetupTransactions {
     }
 
     #betterDiscordRoot(): string {
-        return path.join(app.getPath("appData"), "BetterDiscord");
+        return resolveSoulCordBetterDiscordRoot(app.getPath("userData"));
     }
 
     #stagingRoot(): string {
@@ -525,7 +594,7 @@ export class SoulCordSetupTransactions {
         fs.unlinkSync(target);
     }
 
-    #writeMarker(transactionId: string, marker: "complete" | "rolledback" | "incomplete", content: string): void {
+    #writeMarker(transactionId: string, marker: "prepared" | "complete" | "rolledback" | "incomplete", content: string): void {
         const root = this.#journalRoot();
         this.#ensureSafeDirectory(root, true);
         const target = path.join(root, `${transactionId}.${marker}`);
@@ -544,7 +613,7 @@ export class SoulCordSetupTransactions {
         return fs.readFileSync(target, "utf8").trim();
     }
 
-    #readJournal(transactionId: string, verifyCompletion: boolean): TransactionJournal {
+    #readJournal(transactionId: string, verifyMarker: "prepared" | "complete" | false): TransactionJournal {
         const root = this.#journalRoot();
         if (!this.#ensureSafeDirectory(root, false)) throw new Error("SoulCord transaction journal not found.");
         const journalFile = path.join(root, `${transactionId}.json`);
@@ -552,10 +621,10 @@ export class SoulCordSetupTransactions {
         const stat = fs.lstatSync(journalFile);
         if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_JOURNAL_BYTES) throw new TypeError("Invalid SoulCord transaction journal file.");
         const serialized = fs.readFileSync(journalFile, "utf8");
-        if (verifyCompletion) {
-            const complete = path.join(root, `${transactionId}.complete`);
-            if (!fs.existsSync(complete)) throw new TypeError("SoulCord transaction is not complete.");
-            const marker = this.#readMarker(complete, root);
+        if (verifyMarker) {
+            const markerFile = path.join(root, `${transactionId}.${verifyMarker}`);
+            if (!fs.existsSync(markerFile)) throw new TypeError(`SoulCord transaction is not ${verifyMarker}.`);
+            const marker = this.#readMarker(markerFile, root);
             if (!SHA256.test(marker) || marker !== digest(serialized)) throw new TypeError("SoulCord transaction journal integrity check failed.");
         }
         const raw = JSON.parse(serialized) as Partial<TransactionJournal>;
@@ -606,9 +675,9 @@ export class SoulCordSetupTransactions {
         });
     }
 
-    #recoverIncompleteTransactions(): void {
+    #recoverIncompleteTransactions(knownTransactionIds: ReadonlySet<string>): {committed: string[]; rolledBack: string[];} {
         const root = this.#journalRoot();
-        if (!this.#ensureSafeDirectory(root, false)) return;
+        if (!this.#ensureSafeDirectory(root, false)) return {committed: [], rolledBack: []};
         const transactionIds = new Set<string>();
         for (const entry of fs.readdirSync(root, {withFileTypes: true})) {
             if (!entry.isFile()) continue;
@@ -617,9 +686,12 @@ export class SoulCordSetupTransactions {
         }
         if (transactionIds.size > 2_000) throw new Error("SoulCord transaction history exceeds the bounded recovery limit.");
         let ambiguous = false;
+        const committed: string[] = [];
+        const rolledBackIds: string[] = [];
         for (const transactionId of transactionIds) {
             try {
                 const complete = path.join(root, `${transactionId}.complete`);
+                const prepared = path.join(root, `${transactionId}.prepared`);
                 const rolledback = path.join(root, `${transactionId}.rolledback`);
                 const intentFile = path.join(root, `${transactionId}.intent.json`);
                 const stage = path.join(this.#stagingRoot(), transactionId);
@@ -631,10 +703,16 @@ export class SoulCordSetupTransactions {
                     continue;
                 }
                 if (fs.existsSync(complete)) {
-                    this.#readJournal(transactionId, true);
+                    this.#readJournal(transactionId, "complete");
                     try {if (fs.existsSync(stage)) this.#removeStage(stage);}
                     catch {ambiguous = true;}
                     if (fs.existsSync(intentFile)) this.#removeJournalArtifact(intentFile);
+                    if (fs.existsSync(prepared)) this.#removeJournalArtifact(prepared);
+                    continue;
+                }
+                if (fs.existsSync(prepared) && knownTransactionIds.has(transactionId)) {
+                    this.#commitPreparedTransaction(transactionId);
+                    committed.push(transactionId);
                     continue;
                 }
                 const files = fs.existsSync(intentFile)
@@ -650,11 +728,14 @@ export class SoulCordSetupTransactions {
                     continue;
                 }
                 this.#writeMarker(transactionId, "rolledback", "recovered-incomplete");
+                rolledBackIds.push(transactionId);
                 if (fs.existsSync(intentFile)) this.#removeJournalArtifact(intentFile);
+                if (fs.existsSync(prepared)) this.#removeJournalArtifact(prepared);
             }
             catch {ambiguous = true;}
         }
         if (ambiguous) throw new Error("SoulCord found an ambiguous transaction journal; setup is paused for manual review.");
+        return {committed, rolledBack: rolledBackIds};
     }
 
     #serialized<T>(task: () => Promise<T>): Promise<T> {

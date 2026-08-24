@@ -1,11 +1,14 @@
 import fs from "fs";
 import path from "path";
-import electron, {BrowserWindow, systemPreferences} from "electron";
+import electron, {BrowserWindow, systemPreferences, type WebFrameMain} from "electron";
 import {spawn} from "child_process";
 
 import ReactDevTools from "./reactdevtools";
 import * as IPCEvents from "@common/constants/ipcevents";
+import {isSoulCordAcceptanceMode} from "@common/soulcord/acceptance-mode";
 import ActivityCompatibility from "./activity-compatibility";
+import {resolveSoulCordBetterDiscordRoot} from "./soulcord-data-root";
+import {RendererDocumentInjectionGuard} from "./renderer-document-guard";
 
 // Build info file only exists for non-linux (for current injection)
 const appPath = electron.app.getAppPath();
@@ -14,9 +17,10 @@ const buildInfoFile = path.resolve(appPath, "..", "build_info.json");
 
 // Locate data path to find transparency settings
 export let bdFolder = "";
-if (process.platform === "win32" || process.platform === "darwin") bdFolder = path.join(electron.app.getPath("userData"), "..");
+if (process.platform === "win32" || process.platform === "darwin") bdFolder = resolveSoulCordBetterDiscordRoot(electron.app.getPath("userData"));
 else bdFolder = process.env.XDG_CONFIG_HOME ? process.env.XDG_CONFIG_HOME : path.join(process.env.HOME!, ".config"); // This will help with snap packages eventually
-bdFolder = path.join(bdFolder, "BetterDiscord") + "/";
+if (process.platform !== "win32" && process.platform !== "darwin") bdFolder = path.join(bdFolder, "BetterDiscord");
+bdFolder += "/";
 
 const BD_ACCENT_COLOR = "#3E82E5";
 
@@ -24,7 +28,7 @@ let hasCrashed = false;
 export default class BetterDiscord {
     static _settings: Record<string, Record<string, any>>;
     private static initializedWindows = new WeakSet<BrowserWindow>();
-    private static injectedWebContents = new WeakSet<Electron.WebContents>();
+    private static rendererDocuments = new RendererDocumentInjectionGuard<Electron.WebContents>();
     private static protocolListenersRegistered = false;
 
     static getDiscordTrustRoot(): string {
@@ -109,20 +113,36 @@ export default class BetterDiscord {
         if (!fs.existsSync(path.join(bdFolder, "themes"))) fs.mkdirSync(path.join(bdFolder, "themes"));
     }
 
-    static async injectRenderer(browserWindow: BrowserWindow) {
+    static async injectRenderer(browserWindow: BrowserWindow, frame: WebFrameMain, documentGeneration: string) {
         if (hasCrashed) return;
-        if (this.injectedWebContents.has(browserWindow.webContents)) return;
-        this.injectedWebContents.add(browserWindow.webContents);
+        const webContents = browserWindow.webContents;
+        const claim = this.rendererDocuments.claim(webContents, documentGeneration);
+        if (claim === "duplicate") return;
+        if (claim === "invalid") throw new Error("SoulCord renderer document generation was rejected.");
+
+        try {
+            const current = webContents.mainFrame;
+            if (frame.isDestroyed() || frame.detached
+                || frame.processId !== current.processId
+                || frame.routingId !== current.routingId) {
+                this.rendererDocuments.fail(webContents, documentGeneration);
+                throw new Error("SoulCord renderer frame changed before injection.");
+            }
+        }
+        catch {
+            this.rendererDocuments.fail(webContents, documentGeneration);
+            throw new Error("SoulCord renderer frame could not be validated.");
+        }
 
         const location = path.join(__dirname, "soulcord.js");
         if (!fs.existsSync(location)) {
-            this.injectedWebContents.delete(browserWindow.webContents);
+            this.rendererDocuments.fail(webContents, documentGeneration);
             return; // TODO: cut a fatal log
         }
         const content = fs.readFileSync(location).toString();
         let success = false;
         try {
-            success = await browserWindow.webContents.executeJavaScript(`
+            success = await frame.executeJavaScript(`
                 (() => {
                     try {
                         ${content}
@@ -133,17 +153,18 @@ export default class BetterDiscord {
                     }
                 })();
                 //# sourceURL=soulcord/soulcord.js
-            `);
+            `) === true;
         }
         catch {
-            this.injectedWebContents.delete(browserWindow.webContents);
+            this.rendererDocuments.fail(webContents, documentGeneration);
             throw new Error("SoulCord renderer injection failed.");
         }
 
         if (!success) {
-            this.injectedWebContents.delete(browserWindow.webContents);
+            this.rendererDocuments.fail(webContents, documentGeneration);
             return; // TODO: cut a fatal log
         }
+        if (!this.rendererDocuments.complete(webContents, documentGeneration)) return;
         // @ts-expect-error SoulCord adds an internal non-enumerable window token.
         ActivityCompatibility.injection(browserWindow.__soulcordWindowToken);
     }
@@ -177,8 +198,6 @@ export default class BetterDiscord {
             process.env.DISCORD_RELEASE_CHANNEL = "stable";
         }
 
-        // @ts-expect-error adding new property, don't want to override object
-        process.env.BD_DISCORD_PRELOAD = browserWindow.__originalPreload;
         process.env.DISCORD_APP_PATH = appPath;
         process.env.DISCORD_USER_DATA = electron.app.getPath("userData");
         process.env.BETTERDISCORD_DATA_PATH = bdFolder;
@@ -238,7 +257,7 @@ export default class BetterDiscord {
         });
 
         // Seems to be windows exclusive. MacOS requires a build plist change
-        if (!this.protocolListenersRegistered && electron.app.setAsDefaultProtocolClient("betterdiscord")) {
+        if (!isSoulCordAcceptanceMode() && !this.protocolListenersRegistered && electron.app.setAsDefaultProtocolClient("betterdiscord")) {
             this.protocolListenersRegistered = true;
             // If application was opened via protocol, set process.env.BETTERDISCORD_PROTOCOL
             const protocol = process.argv.find((arg) => arg.startsWith("betterdiscord://"));

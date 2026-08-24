@@ -2,6 +2,9 @@ export interface OriginalPreloadState {
     attempted: boolean;
 }
 
+/** Private synchronous bridge used before SoulCord exposes any renderer API. */
+export const ORIGINAL_PRELOAD_REQUEST = "sc-original-preload-for-webcontents";
+
 export interface OriginalPreloadRuntime {
     register(preload: string): void;
     load(preload: string): void;

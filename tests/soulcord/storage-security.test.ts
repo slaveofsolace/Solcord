@@ -11,7 +11,7 @@ let appDataPath = "";
 let encryptionAvailable = true;
 
 mock.module("electron", () => ({
-    app: {getPath: () => appDataPath},
+    app: {getPath: (name: string) => name === "userData" ? path.join(appDataPath, "Discord") : appDataPath},
     net: {fetch: async () => {throw new Error("Unexpected network request in storage security test.");}},
     safeStorage: {
         isEncryptionAvailable: () => encryptionAvailable,
@@ -157,10 +157,10 @@ describe("SoulCord setup transaction security", () => {
     test("installs embedded themes transactionally and preserves a changed file on rollback", async () => {
         const setup = new SoulCordSetupTransactions();
         const result = await setup.apply({selectedAddons: [], selectedTheme: "obsidian-thread"});
-        expect(result.added).toHaveLength(4);
+        expect(result.added).toHaveLength(5);
 
         const before = await setup.auditIntegrity();
-        expect(before.filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(4);
+        expect(before.filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
         expect(JSON.stringify(before)).not.toContain(appDataPath);
 
         const changed = path.join(appDataPath, "BetterDiscord", "themes", "SoulCord-ObsidianThread.theme.css");
@@ -168,13 +168,13 @@ describe("SoulCord setup transaction security", () => {
         fs.appendFileSync(changed, "\n/* owner change */\n", "utf8");
         const rollback = await setup.rollback(result.transactionId);
         expect(rollback.complete).toBeFalse();
-        expect(rollback.removed).toHaveLength(3);
+        expect(rollback.removed).toHaveLength(4);
         expect(rollback.preserved).toHaveLength(1);
         expect(fs.readFileSync(changed, "utf8")).toContain("owner change");
 
         const after = await setup.auditIntegrity();
         expect(after.find(record => record.kind === "theme" && record.name === "Obsidian Thread")?.status).toBe("mismatch");
-        expect(after.filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(3);
+        expect(after.filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(4);
 
         fs.writeFileSync(changed, reviewedContent, "utf8");
         const retry = await setup.rollback(result.transactionId);
@@ -182,6 +182,29 @@ describe("SoulCord setup transaction security", () => {
         expect(retry.removed).toHaveLength(1);
         expect(retry.preserved).toHaveLength(0);
         expect(fs.existsSync(changed)).toBeFalse();
+    });
+
+    test("acknowledges a settings-known prepared transaction after a renderer crash", async () => {
+        const setup = new SoulCordSetupTransactions();
+        const prepared = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.prepared`))).toBeTrue();
+        expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.complete`))).toBeFalse();
+
+        const recovered = await new SoulCordSetupTransactions().reconcile([prepared.transactionId]);
+        expect(recovered).toEqual({committed: [prepared.transactionId], rolledBack: []});
+        expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.prepared`))).toBeFalse();
+        expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.complete`))).toBeTrue();
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
+    });
+
+    test("rolls back a prepared transaction that renderer settings never recorded", async () => {
+        const setup = new SoulCordSetupTransactions();
+        const prepared = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const recovered = await new SoulCordSetupTransactions().reconcile([]);
+
+        expect(recovered).toEqual({committed: [], rolledBack: [prepared.transactionId]});
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(5);
     });
 
     test("rejects a theme directory junction instead of writing through it", async () => {
@@ -198,6 +221,7 @@ describe("SoulCord setup transaction security", () => {
     test("retries incomplete recovery without falsely journaling preserved owner changes as rolled back", async () => {
         const setup = new SoulCordSetupTransactions();
         const original = await setup.apply({selectedAddons: [], selectedTheme: "obsidian-thread"});
+        await setup.acknowledge(original.transactionId);
         const changed = path.join(appDataPath, "BetterDiscord", "themes", "SoulCord-ObsidianThread.theme.css");
         const reviewedContent = fs.readFileSync(changed, "utf8");
         fs.appendFileSync(changed, "\n/* owner change during recovery */\n", "utf8");
@@ -213,7 +237,7 @@ describe("SoulCord setup transaction security", () => {
         const retry = await setup.apply({selectedAddons: [], selectedTheme: "obsidian-thread"});
         expect(retry.transactionId).not.toBe(original.transactionId);
         expect(fs.existsSync(path.join(journalRoot, `${original.transactionId}.rolledback`))).toBeTrue();
-        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(4);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
     });
 });
 
@@ -270,7 +294,7 @@ describe("SoulCord Message Timeline storage security", () => {
     test("falls back to account-isolated memory without creating plaintext files", async () => {
         encryptionAvailable = false;
         const timeline = new SoulCordTimelineStorage();
-        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: false});
+        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: false, retentionApplied: true});
         expect((await timeline.read("111222333", {policy: {retention: "7-days"}})).events).toHaveLength(1);
         expect((await timeline.read("444555666", {policy: {retention: "7-days"}})).events).toHaveLength(0);
         expect(fs.existsSync(path.join(appDataPath, "BetterDiscord"))).toBeFalse();
@@ -278,7 +302,7 @@ describe("SoulCord Message Timeline storage security", () => {
 
     test("encrypts persistent records, obscures the account directory, and completely clears its store", async () => {
         const timeline = new SoulCordTimelineStorage();
-        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: true});
+        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: true, retentionApplied: true});
         const store = firstTimelineStore();
         expect(path.basename(store)).not.toContain("111222333");
         const segment = fs.readdirSync(store).find(file => file.endsWith(".scseg"));
@@ -305,6 +329,112 @@ describe("SoulCord Message Timeline storage security", () => {
         const read = await timeline.read("111222333", {policy: {retention: "7-days"}});
         expect(read.events).toHaveLength(1);
         expect(read.events[0]?.content).toBe("private-message-sentinel-25e14565");
+        expect(read.complete).toBeFalse();
+        expect(read.truncated).toBeFalse();
+        expect(read.unreadableSegments).toBe(1);
+        expect(read.retentionApplied).toBeFalse();
+    });
+
+    test("physically purges expired segments and the wrapped store key when retention becomes shorter", async () => {
+        const timeline = new SoulCordTimelineStorage();
+        await timeline.append("111222333", timelineRequest({
+            events: [timelineEvent({eventId: "evt-expired", observedAt: Date.now() - 172_800_000})],
+            policy: {retention: "manual"}
+        }));
+        const store = firstTimelineStore();
+        expect(fs.existsSync(path.join(store, "data.sc-key"))).toBeTrue();
+
+        const read = await timeline.read("111222333", {policy: {retention: "24-hours"}});
+
+        expect(read).toEqual({
+            events: [],
+            persistent: true,
+            complete: true,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied: true
+        });
+        expect(fs.existsSync(store)).toBeFalse();
+        expect((await timeline.read("111222333", {policy: {retention: "manual"}})).events).toHaveLength(0);
+    });
+
+    test("session retention removes the persistent account store before returning memory", async () => {
+        const timeline = new SoulCordTimelineStorage();
+        await timeline.append("111222333", timelineRequest({policy: {retention: "7-days"}}));
+        const store = firstTimelineStore();
+
+        const session = await timeline.read("111222333", {policy: {retention: "session"}});
+
+        expect(session.complete).toBeTrue();
+        expect(session.retentionApplied).toBeTrue();
+        expect(session.persistent).toBeFalse();
+        expect(session.events).toHaveLength(0);
+        expect(fs.existsSync(store)).toBeFalse();
+        expect((await timeline.read("111222333", {policy: {retention: "manual"}})).events).toHaveLength(0);
+    });
+
+    test("session retention preserves every opaque account store until explicit recovery", async () => {
+        const writer = new SoulCordTimelineStorage();
+        await writer.append("111222333", timelineRequest({events: [timelineEvent({eventId: "account-a"})]}));
+        await writer.append("444555666", timelineRequest({events: [timelineEvent({eventId: "account-b"})]}));
+        const root = path.join(appDataPath, "BetterDiscord", "soulcord-timeline-v1");
+        const stores = fs.readdirSync(root).filter(entry => entry.startsWith("store-")).sort();
+        expect(stores).toHaveLength(2);
+
+        encryptionAvailable = false;
+        const recovery = new SoulCordTimelineStorage();
+        const session = await recovery.read("111222333", {policy: {retention: "session"}});
+
+        expect(session.persistent).toBeFalse();
+        expect(session.complete).toBeFalse();
+        expect(session.retentionApplied).toBeFalse();
+        expect(session.events).toHaveLength(0);
+        expect(fs.readdirSync(root).filter(entry => entry.startsWith("store-")).sort()).toEqual(stores);
+        for (const store of stores) expect(fs.readdirSync(path.join(root, store)).some(entry => entry.endsWith(".scseg"))).toBeTrue();
+    });
+
+    test("memory-only reads apply a newly shortened retention policy", async () => {
+        encryptionAvailable = false;
+        const timeline = new SoulCordTimelineStorage();
+        await timeline.append("111222333", timelineRequest({
+            events: [timelineEvent({eventId: "memory-expired", observedAt: Date.now() - 172_800_000})],
+            policy: {retention: "7-days"}
+        }));
+
+        const read = await timeline.read("111222333", {policy: {retention: "24-hours"}});
+
+        expect(read).toEqual({
+            events: [],
+            persistent: false,
+            complete: true,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied: true
+        });
+        expect((await timeline.read("111222333", {policy: {retention: "manual"}})).events).toHaveLength(0);
+    });
+
+    test("returns the newest bounded suffix and explicitly reports export truncation", async () => {
+        const timeline = new SoulCordTimelineStorage({readEvents: 1});
+        const now = Date.now();
+        await timeline.append("111222333", timelineRequest({
+            events: [
+                timelineEvent({eventId: "evt-older", observedAt: now - 10, content: "older"}),
+                timelineEvent({eventId: "evt-newer", observedAt: now, content: "newer"})
+            ],
+            policy: {retention: "manual"}
+        }));
+
+        const read = await timeline.read("111222333", {policy: {retention: "manual"}});
+
+        expect(read.events.map(event => event.content)).toEqual(["newer"]);
+        expect(read.complete).toBeFalse();
+        expect(read.truncated).toBeTrue();
+        expect(read.omittedSegments).toBe(1);
+        expect(read.unreadableSegments).toBe(0);
+        expect(read.retentionApplied).toBeTrue();
     });
 
     test("fails closed to session-only when a wrapped key is corrupted", async () => {
@@ -312,7 +442,15 @@ describe("SoulCord Message Timeline storage security", () => {
         await timeline.append("111222333", timelineRequest());
         fs.writeFileSync(path.join(firstTimelineStore(), "data.sc-key"), "not-valid-wrapped-key", "utf8");
         const read = await timeline.read("111222333", {policy: {retention: "7-days"}});
-        expect(read).toEqual({events: [], persistent: false});
+        expect(read).toEqual({
+            events: [],
+            persistent: false,
+            complete: false,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied: false
+        });
         expect(timeline.status().sessionOnly).toBeTrue();
         expect(timeline.status().reason).not.toContain(appDataPath);
     });
@@ -324,7 +462,7 @@ describe("SoulCord Message Timeline storage security", () => {
         fs.symlinkSync(outside, path.join(betterDiscord, "soulcord-timeline-v1"), "junction");
 
         const timeline = new SoulCordTimelineStorage();
-        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: false});
+        expect(await timeline.append("111222333", timelineRequest())).toEqual({stored: 1, persistent: false, retentionApplied: false});
         expect(timeline.status().sessionOnly).toBeTrue();
         expect(fs.readdirSync(outside)).toHaveLength(0);
     });

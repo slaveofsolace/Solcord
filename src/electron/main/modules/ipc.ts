@@ -8,6 +8,7 @@ import ActivityCompatibility from "./activity-compatibility";
 import SoulCordTimeline from "./soulcord-timeline";
 import SoulCordSetup from "./soulcord-setup";
 import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
+import {isRendererDocumentGeneration} from "./renderer-document-guard";
 import type {DialogOptions} from "@common/types/ipc";
 
 const getPath = (event: IpcMainEvent, pathReq: string) => {
@@ -264,6 +265,16 @@ const applySoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
     return SoulCordSetup.apply(authorized.request);
 };
+const acknowledgeSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordSetup.acknowledge(authorized.request.transactionId);
+};
+const reconcileSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordSetup.reconcile(authorized.request.transactionIds);
+};
 const rollbackSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSoulCordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
@@ -275,11 +286,15 @@ const auditSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     return SoulCordSetup.auditIntegrity();
 };
 
-const runRenderer = (event: IpcMainInvokeEvent) => {
+const runRenderer = (event: IpcMainInvokeEvent, documentGeneration: unknown) => {
     requireTrustedSoulCordSender(event);
+    if (!isRendererDocumentGeneration(documentGeneration)) throw new Error("SoulCord renderer document generation was rejected.");
+    const senderFrame = event.senderFrame;
+    const browserWindow = BrowserWindow.fromWebContents(event.sender);
+    if (!senderFrame || !browserWindow) throw new Error("SoulCord renderer frame is unavailable.");
     ensureTimelineReleaseHook(event.sender);
     const bootstrap = timelineAuthority.bootstrap(event.sender.id);
-    void BetterDiscord.injectRenderer(BrowserWindow.fromWebContents(event.sender)!).catch(() => {
+    void BetterDiscord.injectRenderer(browserWindow, senderFrame, documentGeneration).catch(() => {
         timelineAuthority.release(event.sender.id);
     });
     return bootstrap;
@@ -318,6 +333,8 @@ export default class IPCMain {
             ipc.handle(IPCEvents.TIMELINE_READ, readTimeline);
             ipc.handle(IPCEvents.TIMELINE_CLEAR, clearTimeline);
             ipc.handle(IPCEvents.SETUP_APPLY, applySoulCordSetup);
+            ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSoulCordSetup);
+            ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_AUDIT, auditSoulCordSetup);
         }

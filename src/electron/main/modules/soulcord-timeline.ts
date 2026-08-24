@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import {app, safeStorage} from "electron";
 
+import {resolveSoulCordBetterDiscordRoot} from "./soulcord-data-root";
+
 
 interface TimelineEvent {
     eventId: string;
@@ -52,6 +54,28 @@ export interface TimelineClearResult {
     remaining: number;
     opaqueStores: number;
     requiresOpaqueRecovery: boolean;
+}
+
+export interface TimelineReadResult {
+    events: TimelineEvent[];
+    persistent: boolean;
+    /** True only when every eligible segment was returned and the requested retention policy was durably applied. */
+    complete: boolean;
+    /** True when otherwise-readable eligible segments were omitted by the bounded read limits. */
+    truncated: boolean;
+    omittedSegments: number;
+    unreadableSegments: number;
+    retentionApplied: boolean;
+}
+
+interface TimelineStorageLimits {
+    readBytes?: number;
+    readEvents?: number;
+}
+
+interface TimelinePruneResult {
+    removed: number;
+    complete: boolean;
 }
 
 function validId(value: unknown): value is string {
@@ -129,6 +153,17 @@ export class SoulCordTimelineStorage {
     #persistenceFailure?: string;
     #session = new Map<string, TimelineEvent[]>();
     #queue = Promise.resolve();
+    #readBytes: number;
+    #readEvents: number;
+
+    constructor(limits: TimelineStorageLimits = {}) {
+        const readBytes = limits.readBytes ?? MAX_READ_BYTES;
+        const readEvents = limits.readEvents ?? MAX_READ_EVENTS;
+        if (!Number.isSafeInteger(readBytes) || readBytes < 1 || readBytes > MAX_READ_BYTES) throw new RangeError("Invalid Timeline read byte limit.");
+        if (!Number.isSafeInteger(readEvents) || readEvents < 1 || readEvents > MAX_READ_EVENTS) throw new RangeError("Invalid Timeline read event limit.");
+        this.#readBytes = readBytes;
+        this.#readEvents = readEvents;
+    }
 
     status(): {persistent: boolean; sessionOnly: boolean; reason?: string;} {
         const persistent = this.#secureStorageAvailable();
@@ -137,11 +172,18 @@ export class SoulCordTimelineStorage {
             : {persistent: false, sessionOnly: true, reason: this.#persistenceFailure ?? "Electron safeStorage is unavailable; timeline data remains in memory only."};
     }
 
-    append(rawAccountScope: unknown, rawRequest: unknown): Promise<{stored: number; persistent: boolean;}> {
+    append(rawAccountScope: unknown, rawRequest: unknown): Promise<{stored: number; persistent: boolean; retentionApplied: boolean;}> {
         const accountScope = normalizeAccountScope(rawAccountScope);
         const request = normalizeRequest(rawRequest, "append");
         return this.#serialized(async () => {
-            if (request.policy.retention === "session" || !this.#secureStorageAvailable()) return this.#appendSession(accountScope, request);
+            if (request.policy.retention === "session") {
+                const purge = this.#purgePersistentForSession(accountScope);
+                return {...this.#appendSession(accountScope, request), retentionApplied: purge.complete};
+            }
+            if (!this.#secureStorageAvailable()) {
+                const opaque = this.#opaqueRecoveryRequired(0);
+                return {...this.#appendSession(accountScope, request), retentionApplied: opaque.complete};
+            }
 
             let directory: string;
             let key: Buffer;
@@ -152,7 +194,8 @@ export class SoulCordTimelineStorage {
             }
             catch {
                 this.#disablePersistence();
-                return this.#appendSession(accountScope, request);
+                const opaque = this.#opaqueRecoveryRequired(0);
+                return {...this.#appendSession(accountScope, request), retentionApplied: opaque.complete};
             }
 
             const written: string[] = [];
@@ -168,8 +211,8 @@ export class SoulCordTimelineStorage {
                     }
                     finally {payload.fill(0);}
                 }
-                this.#pruneFiles(directory, request.policy);
-                return {stored: request.events.length, persistent: true};
+                const prune = this.#pruneFiles(directory, request.policy, key);
+                return {stored: request.events.length, persistent: true, retentionApplied: prune.complete};
             }
             catch (error) {
                 for (const file of written) this.#removeWrittenSegment(file, directory);
@@ -179,48 +222,34 @@ export class SoulCordTimelineStorage {
         });
     }
 
-    read(rawAccountScope: unknown, rawRequest: unknown): Promise<{events: TimelineEvent[]; persistent: boolean;}> {
+    read(rawAccountScope: unknown, rawRequest: unknown): Promise<TimelineReadResult> {
         const accountScope = normalizeAccountScope(rawAccountScope);
         const request = normalizeRequest(rawRequest, "read");
         return this.#serialized(async () => {
-            if (request.policy.retention === "session" || !this.#secureStorageAvailable()) {
-                return {events: [...(this.#session.get(accountScope) ?? [])], persistent: false};
+            if (request.policy.retention === "session") {
+                const purge = this.#purgePersistentForSession(accountScope);
+                return this.#memoryReadResult(accountScope, request.policy, purge.complete);
+            }
+            if (!this.#secureStorageAvailable()) {
+                const opaque = this.#opaqueRecoveryRequired(0);
+                return this.#memoryReadResult(accountScope, request.policy, opaque.complete);
             }
             let directory: string | undefined;
             let key: Buffer | undefined;
             try {
                 directory = this.#accountDirectory(accountScope, false);
-                if (!directory) return {events: [], persistent: true};
+                if (!directory) return this.#emptyReadResult(true);
                 key = this.#dataKey(directory, false);
-                if (!key) return {events: [], persistent: true};
+                if (!key) return this.#emptyReadResult(true);
             }
             catch {
                 this.#disablePersistence();
-                return {events: [...(this.#session.get(accountScope) ?? [])], persistent: false};
+                const opaque = this.#opaqueRecoveryRequired(0);
+                return this.#memoryReadResult(accountScope, request.policy, opaque.complete);
             }
 
-            const cutoff = retentionCutoff(request.policy.retention);
-            const events: TimelineEvent[] = [];
-            let bytes = 0;
             try {
-                for (const file of this.#segmentFiles(directory)) {
-                    if (events.length >= MAX_READ_EVENTS || bytes >= MAX_READ_BYTES) break;
-                    try {
-                        const stat = fs.lstatSync(file);
-                        if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_SEGMENT_BYTES || stat.mtimeMs < cutoff || bytes + stat.size > MAX_READ_BYTES) continue;
-                        const serialized = fs.readFileSync(file, "utf8");
-                        bytes += stat.size;
-                        const envelope = JSON.parse(serialized) as TimelineEnvelope;
-                        const plaintext = this.#decrypt(key, envelope);
-                        try {
-                            const event = normalizeEvent(JSON.parse(plaintext.toString("utf8")));
-                            if (event) events.push(event);
-                        }
-                        finally {plaintext.fill(0);}
-                    }
-                    catch {/* corrupt or undecryptable segments are ignored and never exposed */}
-                }
-                return {events, persistent: true};
+                return this.#readPersistent(directory, key, request.policy);
             }
             finally {key.fill(0);}
         });
@@ -278,6 +307,50 @@ export class SoulCordTimelineStorage {
         existing.push(...request.events);
         this.#session.set(accountScope, this.#pruneMemory(existing, request.policy));
         return {stored: request.events.length, persistent: false};
+    }
+
+    #emptyReadResult(persistent: boolean, retentionApplied = true): TimelineReadResult {
+        return {
+            events: [],
+            persistent,
+            complete: retentionApplied,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied
+        };
+    }
+
+    #memoryReadResult(accountScope: string, policy: TimelinePolicy, retentionApplied: boolean): TimelineReadResult {
+        const events = this.#pruneMemory(this.#session.get(accountScope) ?? [], policy);
+        if (events.length > 0) this.#session.set(accountScope, events);
+        else this.#session.delete(accountScope);
+        return {
+            events: [...events],
+            persistent: false,
+            complete: retentionApplied,
+            truncated: false,
+            omittedSegments: 0,
+            unreadableSegments: 0,
+            retentionApplied
+        };
+    }
+
+    /** Session retention is a deletion request, not merely a renderer filter. */
+    #purgePersistentForSession(accountScope: string): TimelineClearResult {
+        try {
+            if (this.#identityKey || this.#secureStorageAvailable()) {
+                const directory = this.#accountDirectory(accountScope, false);
+                if (!directory) return {cleared: 0, complete: true, remaining: 0, opaqueStores: 0, requiresOpaqueRecovery: false};
+                return this.#clearStoreDirectories([directory], 0, 0, false);
+            }
+        }
+        catch {this.#disablePersistence();}
+
+        // Without the identity key the account directory cannot be selected safely. Never
+        // broaden this account-scoped retention change into deletion of every opaque account
+        // store. Report the residue and require the separate explicit recovery action.
+        return this.#opaqueRecoveryRequired(0);
     }
 
     #opaqueRecoveryRequired(memoryCount: number): TimelineClearResult {
@@ -417,7 +490,7 @@ export class SoulCordTimelineStorage {
     }
 
     #betterDiscordRoot(): string {
-        return path.join(app.getPath("appData"), "BetterDiscord");
+        return resolveSoulCordBetterDiscordRoot(app.getPath("userData"));
     }
 
     #root(create: boolean): string | undefined {
@@ -527,16 +600,136 @@ export class SoulCordTimelineStorage {
             .sort();
     }
 
-    #pruneFiles(directory: string, policy: TimelinePolicy): void {
+    #readPersistent(directory: string, key: Buffer, policy: TimelinePolicy): TimelineReadResult {
         const cutoff = retentionCutoff(policy.retention);
-        const files = this.#segmentFiles(directory).map(file => ({file, stat: fs.lstatSync(file)})).filter(item => item.stat.isFile() && !item.stat.isSymbolicLink());
-        for (const item of files) if (item.stat.mtimeMs < cutoff) fs.unlinkSync(item.file);
+        const events: TimelineEvent[] = [];
+        let bytes = 0;
+        let omittedSegments = 0;
+        let unreadableSegments = 0;
+        let retentionApplied = true;
+        let readBoundReached = false;
+
+        // Read newest-first so a bounded read/export is a contiguous recent suffix rather
+        // than an arbitrary old prefix. Reverse once before returning chronological events.
+        for (const file of this.#segmentFiles(directory).reverse()) {
+            let plaintext: Buffer | undefined;
+            try {
+                const stat = fs.lstatSync(file);
+                if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_SEGMENT_BYTES) {
+                    unreadableSegments++;
+                    retentionApplied = false;
+                    continue;
+                }
+                const envelope = JSON.parse(fs.readFileSync(file, "utf8")) as TimelineEnvelope;
+                plaintext = this.#decrypt(key, envelope);
+                const event = normalizeEvent(JSON.parse(plaintext.toString("utf8")));
+                if (!event) {
+                    unreadableSegments++;
+                    retentionApplied = false;
+                    continue;
+                }
+
+                if (event.observedAt < cutoff) {
+                    try {fs.unlinkSync(file);}
+                    catch {retentionApplied = false;}
+                    continue;
+                }
+
+                if (readBoundReached || events.length >= this.#readEvents || bytes + stat.size > this.#readBytes) {
+                    readBoundReached = true;
+                    omittedSegments++;
+                    continue;
+                }
+                bytes += stat.size;
+                events.push(event);
+            }
+            catch {
+                unreadableSegments++;
+                retentionApplied = false;
+            }
+            finally {plaintext?.fill(0);}
+        }
+
+        if (!this.#removeEmptyAccountStore(directory)) retentionApplied = false;
+        const truncated = omittedSegments > 0;
+        return {
+            events: events.reverse(),
+            persistent: true,
+            complete: retentionApplied && !truncated && unreadableSegments === 0,
+            truncated,
+            omittedSegments,
+            unreadableSegments,
+            retentionApplied
+        };
+    }
+
+    #pruneFiles(directory: string, policy: TimelinePolicy, key: Buffer): TimelinePruneResult {
+        const cutoff = retentionCutoff(policy.retention);
+        let removed = 0;
+        let complete = true;
+        for (const file of this.#segmentFiles(directory)) {
+            let plaintext: Buffer | undefined;
+            try {
+                const stat = fs.lstatSync(file);
+                if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_SEGMENT_BYTES) {
+                    complete = false;
+                    continue;
+                }
+                const envelope = JSON.parse(fs.readFileSync(file, "utf8")) as TimelineEnvelope;
+                plaintext = this.#decrypt(key, envelope);
+                const event = normalizeEvent(JSON.parse(plaintext.toString("utf8")));
+                if (!event) {
+                    complete = false;
+                    continue;
+                }
+                if (event.observedAt < cutoff) {
+                    fs.unlinkSync(file);
+                    removed++;
+                }
+            }
+            catch {complete = false;}
+            finally {plaintext?.fill(0);}
+        }
+
         const remaining = this.#segmentFiles(directory).map(file => ({file, stat: fs.lstatSync(file)})).filter(item => item.stat.isFile() && !item.stat.isSymbolicLink());
         let total = remaining.reduce((sum, item) => sum + item.stat.size, 0);
         for (const item of remaining) {
             if (total <= TEXT_BUDGET_BYTES) break;
-            fs.unlinkSync(item.file);
-            total -= item.stat.size;
+            try {
+                fs.unlinkSync(item.file);
+                total -= item.stat.size;
+                removed++;
+            }
+            catch {complete = false;}
+        }
+        if (!this.#removeEmptyAccountStore(directory)) complete = false;
+        return {removed, complete};
+    }
+
+    #removeEmptyAccountStore(directory: string): boolean {
+        try {
+            this.#assertExistingSafeDirectory(directory);
+            if (this.#segmentFiles(directory).length > 0) return true;
+            for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+                if (!TEMPORARY_FILE.test(entry.name)) continue;
+                const file = path.join(directory, entry.name);
+                const stat = fs.lstatSync(file);
+                if (!stat.isFile() || stat.isSymbolicLink()) return false;
+                fs.unlinkSync(file);
+            }
+            const key = path.join(directory, "data.sc-key");
+            if (fs.existsSync(key)) {
+                const stat = fs.lstatSync(key);
+                if (!stat.isFile() || stat.isSymbolicLink()) return false;
+                fs.unlinkSync(key);
+            }
+            if (fs.readdirSync(directory).length > 0) return false;
+            fs.rmdirSync(directory);
+            return true;
+        }
+        catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
+            return false;
         }
     }
 

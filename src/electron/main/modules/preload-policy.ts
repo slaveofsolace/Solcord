@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import path from "node:path";
 
 
@@ -11,6 +13,7 @@ export type PreloadPolicyReason =
     | "mixed-path-flavor"
     | "untrusted-original"
     | "different-package"
+    | "unsupported-package"
     | "assignment-limit"
     | "unsupported-extension"
     | "canonicalization-failed"
@@ -153,6 +156,9 @@ export function evaluateDiscordPreloadOverride(
     if (comparisonValue(packageRoot, original.flavor) !== comparisonValue(candidatePackageRoot, original.flavor)) {
         return {accepted: false, reason: "different-package", candidateFile, packageFile};
     }
+    if (!api.basename(packageRoot).toLocaleLowerCase("en-US").endsWith(".asar")) {
+        return {accepted: false, reason: "unsupported-package", candidateFile, packageFile};
+    }
 
     const canonicalPackage = canonicalizePair(packageRoot, candidatePackageRoot, original.flavor, options.canonicalizeRoot);
     const canonicalDiscord = canonicalizePair(discordRoot.value, packageRoot, original.flavor, options.canonicalizeRoot);
@@ -162,16 +168,6 @@ export function evaluateDiscordPreloadOverride(
     if (comparisonValue(canonicalPackage.left, original.flavor) !== comparisonValue(canonicalPackage.right, original.flavor)
         || !relativeWithin(canonicalDiscord.left, canonicalDiscord.right, original.flavor)) {
         return {accepted: false, reason: "canonical-root-mismatch", candidateFile, packageFile};
-    }
-
-    const isAsarPackage = api.basename(packageRoot).toLocaleLowerCase("en-US").endsWith(".asar");
-    if (!isAsarPackage && options.canonicalizeRoot) {
-        const canonicalFiles = canonicalizePair(original.value, candidate.value, original.flavor, options.canonicalizeRoot);
-        if (!canonicalFiles) return {accepted: false, reason: "canonicalization-failed", candidateFile, packageFile};
-        if (!relativeWithin(canonicalPackage.left, canonicalFiles.left, original.flavor)
-            || !relativeWithin(canonicalPackage.left, canonicalFiles.right, original.flavor)) {
-            return {accepted: false, reason: "canonical-root-mismatch", candidateFile, packageFile};
-        }
     }
 
     return {accepted: true, reason: "accepted-same-package", candidateFile, packageFile};

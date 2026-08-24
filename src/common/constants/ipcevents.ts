@@ -37,5 +37,7 @@ export const TIMELINE_APPEND             = "sc-timeline-append";
 export const TIMELINE_READ               = "sc-timeline-read";
 export const TIMELINE_CLEAR              = "sc-timeline-clear";
 export const SETUP_APPLY                 = "sc-setup-apply";
+export const SETUP_ACKNOWLEDGE           = "sc-setup-acknowledge";
+export const SETUP_RECONCILE             = "sc-setup-reconcile";
 export const SETUP_ROLLBACK              = "sc-setup-rollback";
 export const SETUP_AUDIT                 = "sc-setup-audit";

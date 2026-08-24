@@ -28,6 +28,9 @@ import {fetch} from "./net";
 import AddonStore from "./addonstore";
 import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
 import {isSoulCordTransactionOwnedAcceptedArtifact} from "./soulcord/updater-ownership";
+import {isSoulCordAcceptanceMode} from "@common/soulcord/acceptance-mode";
+
+const ACCEPTANCE_UPDATE_HOLD = "SoulCord update checks and addon writes are disabled in disposable acceptance mode.";
 
 function acceptedSoulCordArtifact(type: AddonType, fileName: string): {fileName: string; reviewedSha256: string;} | undefined {
     if (type === "theme") {
@@ -57,6 +60,11 @@ export default class Updater {
             }
         });
 
+        if (isSoulCordAcceptanceMode()) {
+            Logger.info("SoulCord Acceptance", ACCEPTANCE_UPDATE_HOLD);
+            return;
+        }
+
         CoreUpdater.initialize();
         PluginUpdater.initialize();
         ThemeUpdater.initialize();
@@ -77,7 +85,7 @@ export default class Updater {
             this.updateCheckInterval = null;
         }
 
-        if (!SettingsStore.get("addons", "checkForUpdates")) return;
+        if (isSoulCordAcceptanceMode() || !SettingsStore.get("addons", "checkForUpdates")) return;
 
         const hours = SettingsStore.get<number>("addons", "updateInterval");
         this.updateCheckInterval = setInterval(async () => {
@@ -137,6 +145,7 @@ export class AddonUpdater {
     }
 
     async initialize() {
+        if (isSoulCordAcceptanceMode()) return;
         AddonStore.getAddons();
         if (SettingsStore.get("addons", "checkForUpdates")) this.checkAll();
 
@@ -153,6 +162,7 @@ export class AddonUpdater {
 
     async checkAll(showNotice = true) {
         this.pending.length = 0;
+        if (isSoulCordAcceptanceMode()) return;
 
         await AddonStore.updaterRequestAddons();
 
@@ -178,6 +188,11 @@ export class AddonUpdater {
     }
 
     async updateAddon(filename: string) {
+        if (isSoulCordAcceptanceMode()) {
+            Logger.warn("SoulCord Acceptance", ACCEPTANCE_UPDATE_HOLD);
+            Toasts.error(ACCEPTANCE_UPDATE_HOLD);
+            return;
+        }
         const basename = path.basename(filename);
         const reviewed = acceptedSoulCordArtifact(this.type, basename);
         const transactionOwned = reviewed && isSoulCordTransactionOwnedAcceptedArtifact({
