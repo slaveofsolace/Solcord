@@ -975,7 +975,9 @@ function configureCopiedNativeModules(acceptanceRoot) {
         }
 
         const packageJson = JSON.parse(fs.readFileSync(packageFile, "utf8"));
-        if (!packageJson || packageJson.name !== match[1] || discovered.has(match[1])) {
+        if (!packageJson || typeof packageJson !== "object"
+            || (packageJson.name !== undefined && packageJson.name !== match[1])
+            || discovered.has(match[1])) {
             throw new Error("SoulCord acceptance found ambiguous copied Discord native-module metadata.");
         }
         discovered.add(match[1]);

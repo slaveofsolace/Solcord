@@ -182,7 +182,10 @@ async function createFixture(): Promise<Fixture> {
     for (const name of ["discord_desktop_core", "discord_utils"]) {
         const packageRoot = path.join(sourceApp, "modules", `${name}-1`, name);
         fs.mkdirSync(packageRoot, {recursive: true});
-        fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({name, version: "0.0.0"}));
+        const packageJson = name === "discord_desktop_core"
+            ? {name, version: "0.0.0"}
+            : {"private": "true"};
+        fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify(packageJson));
         fs.writeFileSync(path.join(packageRoot, "index.js"), "module.exports = {};\n");
     }
     const betterDiscordSource = path.join(root, "betterdiscord-source");
@@ -404,6 +407,31 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         }, path.join(fixture.destination, "runtime", "resources", "app"));
 
         expect(execution.error?.message).toContain("missing required copied Discord native modules");
+        expect(execution.loaded).toEqual([]);
+    });
+
+    test("rejects conflicting copied native-module metadata before SoulCord loads", () => {
+        prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        });
+        fs.writeFileSync(
+            path.join(fixture.destination, "runtime", "modules", "discord_utils-1", "discord_utils", "package.json"),
+            JSON.stringify({name: "discord_voice"})
+        );
+
+        const execution = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Roaming"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(fixture.destination, "runtime", "resources", "app"));
+
+        expect(execution.error?.message).toContain("ambiguous copied Discord native-module metadata");
         expect(execution.loaded).toEqual([]);
     });
 
