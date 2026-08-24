@@ -10,7 +10,7 @@
     --soulcord-focus: var(--soulcord-sea);
 }
 
-.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: 100%; min-width: 0; max-width: 1080px; padding: 0 0 48px; color: var(--text-normal); overflow-x: clip; }
+.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: auto; min-width: 0; max-width: 1080px; padding: 0 0 48px; color: var(--text-normal); overflow-x: clip; }
 .soulcord-panel *,
 .soulcord-panel *::before,
 .soulcord-panel *::after { box-sizing: border-box; }
