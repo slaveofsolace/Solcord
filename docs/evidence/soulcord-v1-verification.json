@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
   "baseCommit": "9e2b67532f5fde991994b094ac42c5ac9ed101dd",
-  "sourceState": "DISPOSABLE_PREPARED_PENDING_LAUNCH_AND_INSTALLED_ACCEPTANCE",
+  "sourceState": "DISPOSABLE_STARTUP_VALIDATED_PENDING_OWNER_AUTHENTICATED_ACCEPTANCE",
   "archives": {
     "sourceSha256": "6c14165e1a6517d17dca401408b8299b68b39afd413196c64a22e7b0e6b777d9",
     "deliverySha256": "3032773607fae5477f9c1dedfdc4e39125ea82acff242e4ce27099a0a4f75f18",
@@ -18,15 +18,15 @@
     "runtimeAcceptance": "PENDING"
   },
   "automatedVerification": {
-    "tests": {"status": "PASS_EXACT_COMMIT", "passed": 521, "failed": 0, "assertions": 2929, "files": 46},
+    "tests": {"status": "PASS_EXACT_REPAIR_COMMIT", "passed": 526, "failed": 0, "assertions": 2969, "files": 46},
     "typecheck": "PASS",
     "eslint": {"status": "PASS", "errors": 0, "inheritedWarnings": 3},
     "soulcordCssLint": "PASS",
     "upstreamCssLint": {"status": "INHERITED_NON_GREEN", "errors": 509, "warnings": 895, "baselineErrors": 509, "baselineWarnings": 895, "changedSoulCordFilesClean": true, "measurement": "explicit **/*.css; package lint-css short-circuits after its first inherited failure"},
     "circularAnalysis": {"status": "PASS", "inheritedCyclesReported": 11},
-    "productionBuild": "PASS_EXACT_COMMIT",
-    "asarPackaging": "PASS_EXACT_COMMIT",
-    "reproducibility": "PASS_BYTE_IDENTICAL_TWO_CLEAN_RUNS",
+    "productionBuild": "PASS_EXACT_REPAIR_COMMIT",
+    "asarPackaging": "PASS_EXACT_REPAIR_COMMIT",
+    "reproducibility": "PENDING_FINAL_DOCUMENTATION_BOUND_REBUILD",
     "typeGeneration": "PASS",
     "diffCheck": "PASS"
   },
@@ -48,15 +48,15 @@
     "editor/index.html"
   ],
   "productionArtifact": {
-    "status": "BUILT_HASH_VERIFIED_SECURITY_REVIEWED_PENDING_RUNTIME_ACCEPTANCE",
-    "path": "../../outputs/soulcord-v1-d1744c5/final/soulcord.asar",
-    "sha256": "02f25dbc26bee3004a3a9f5278bba5e077677505358218d1adfe5ee3819255b0",
-    "sourceRevision": "d1744c573f12745b6262f2176c969bf232349915",
-    "bytes": 1280533
+    "status": "REPAIR_CHECKPOINT_BUILT_HASH_VERIFIED_SECURITY_REVIEWED_PENDING_FINAL_REBUILD_AND_OWNER_ACCEPTANCE",
+    "path": "../../work/Solcord/dist/soulcord.asar",
+    "sha256": "8564888b63fc1e6eb33095b0dbe9691d14db9f67ee3c106767b419b09b9ebce3",
+    "sourceRevision": "32e65a3b23e1020891d70ec17a2e5131bc949fcf",
+    "bytes": 1280595
   },
   "securityReview": {
-    "latestSealedScanId": "a9966a2f-4c3e-49e0-bed7-2fd3a50aca3f",
-    "latestSealedSnapshot": "codex-security-snapshot/v1:sha256:a2006d4791c20883df7228163f4c58411c643f9a13fc6d20663f4c731141e188",
+    "latestSealedScanId": "90cf3078-93d0-4e20-9839-ff93b439d999",
+    "latestSealedSnapshot": "DIFF_SCAN_D1744C5_TO_32E65A3",
     "latestFindings": {"critical": 0, "high": 0, "medium": 0, "low": 0, "remediatedAfterScan": false},
     "previousSealedScan": {
       "id": "63440b76-b835-4767-80ca-21dd80597eb3",
@@ -70,38 +70,45 @@
       "Provider migration revalidates the sealed plan immediately before disabling and rolls back on post-transaction drift.",
       "Memory-only Timeline reads enforce shortened retention while session retention preserves opaque account stores for explicit recovery."
     ],
-    "finalRescan": "PASS_EXACT_COMMIT_ZERO_FINDINGS",
-    "independentDeltaScan": {"id": "0cb25018-ca18-412b-a83c-650c4d7fea4e", "findings": 0}
+    "finalRescan": "PASS_EXACT_REPAIR_COMMIT_ZERO_FINDINGS_TWO_OF_TWO_SURFACES",
+    "independentDeltaScan": {"id": "90cf3078-93d0-4e20-9839-ff93b439d999", "findings": 0, "coverage": "COMPLETE", "productionSurfaces": 2}
   },
   "humanEye": {
     "sourceAssetReview": "COMPLETE",
-    "installedRuntimeReview": "TOOL_LIMITED_PENDING_LAUNCH",
+    "installedRuntimeReview": "DISPOSABLE_STARTUP_ACCEPTED_PENDING_OWNER_AUTHENTICATED_UI",
     "ownerTasteAcceptance": "PENDING"
   },
   "disposableAcceptance": {
-    "status": "PREPARED_NOT_LAUNCHED",
-    "path": "../../outputs/soulcord-acceptance-d1744c5",
+    "status": "STARTUP_LAUNCHED_GREEN_PENDING_OWNER_AUTHENTICATED_UI",
+    "path": "../../outputs/soulcord-acceptance-32e65a3",
     "discordVersion": "1.0.9253",
     "discordReleaseChannel": "stable",
-    "sourceTreeSha256": "8c03cc60b3c7e6d41db97ae2787e949a5526bf0f9d169b3ed16949a94f6e47cd",
+    "sourceTreeSha256": "068c667c2521667135d9b298a57799e0b7cdb450cde02eab24a0c7ae2ed498c2",
     "sourceFiles": 1146,
     "sourceDirectories": 103,
-    "sourceBytes": 503626198,
-    "soulcordSha256": "02f25dbc26bee3004a3a9f5278bba5e077677505358218d1adfe5ee3819255b0",
+    "sourceBytes": 503626928,
+    "soulcordSha256": "8564888b63fc1e6eb33095b0dbe9691d14db9f67ee3c106767b419b09b9ebce3",
+    "soulcordSourceRevision": "32e65a3b23e1020891d70ec17a2e5131bc949fcf",
     "copiedUserProfile": false,
     "filesystemProfileIsolated": true,
     "windowsAccountIsolated": false,
-    "launchPerformed": false,
-    "uiAutomation": "TOOL_LIMITED_CODEX_RESTART_REQUIRED"
+    "launchPerformed": true,
+    "computerUseCanary": "PASS_EXACTLY_ONCE",
+    "runtimeStages": ["environment-validated", "native-module-policy-installed:18", "soulcord-require-complete", "discord-app-require-returned", "desktop-core-require-complete", "desktop-core-startup-returned", "desktop-core-main-visibility-requested"],
+    "legacyDesktopCoreInjectorNeutralizedInCopy": true,
+    "liveInstalledCoreLoaded": false,
+    "authenticatedUi": "PENDING_OWNER_SIGN_IN",
+    "uiAutomation": "AVAILABLE_PENDING_AUTHENTICATED_RENDERER"
   },
   "installation": {
-    "authorized": true,
+    "authorizedInPriorPlan": true,
+    "freshActionTimeApproval": false,
     "currentWaveInstalled": false,
-    "status": "PENDING_DISPOSABLE_AND_INSTALLED_RUNTIME_GATES",
+    "status": "PENDING_OWNER_AUTHENTICATED_DISPOSABLE_AND_LIVE_INSTALL_APPROVAL",
     "blockers": [
-      "The disposable runtime is prepared but not launched; the Codex Computer Use node_repl host failed before app discovery and requires a Codex restart.",
+      "The disposable runtime reaches SoulCord and Discord startup, but the clean isolated profile requires manual owner authentication before DM, settings, theme, Link Lens, and Activity acceptance.",
       "The 36 community addons have no isolated disposable-profile runtime acceptance and remain installable false.",
-      "Installed Discord visual, focus, scaling, and rollback acceptance has not run."
+      "Live installation requires fresh owner approval after disposable acceptance; installed visual, focus, scaling, and rollback acceptance has not run."
     ]
   },
   "nonclaims": [
