@@ -2,6 +2,12 @@
 
 SoulCord V1 is installed only after tests, lint, type checks, production build, packaging, security review, artifact hashing, disposable acceptance, and the live-install checkpoint pass. Source work does not authorize closing Discord or changing the live profile; fresh owner approval is required at that checkpoint. Windows security, authentication, and permission dialogs remain manual.
 
+## Current live checkpoint
+
+Fresh owner approval for a reversible live install was received during the V1 acceptance task. The task created a complete pre-install backup and hash inventory, preserved the vanilla Activities launcher, installed a byte-verified production ASAR through the supported injector path, and launched Discord Stable. No-send acceptance covered startup stability, the SoulCord navigation label, the Suite/settings surface, the setup no-change boundary, Command Deck cleanup, and an already-read DM route without the defective Link Lens overlay. The owner separately confirmed Activities are working and waived a repeated Activity launch.
+
+The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Setup **Finish**, theme activation, Message Timeline persistence, and Link Lens’s external-link modal remain separate optional gates.
+
 ## Compatibility paths
 
 - Staged production artifact: repository `dist\soulcord.asar`
@@ -64,6 +70,8 @@ After the owner presses `Finish`, SoulCord stages only accepted requested candid
 The setup rollback action restores the recorded prior plugin/theme enabled states and the pre-setup SoulCord snapshot, then asks the main process to remove only unchanged files added by that transaction. Identical pre-existing files are reused and never removed. A user-modified file is preserved rather than overwritten or deleted.
 
 ## Owner Activity acceptance
+
+The owner reported Activities working for the accepted live build. The matrix below remains the regression procedure after a Discord, Electron, preload-policy, or packaging change; it is not repeated automatically and no agent starts an Activity on the owner’s behalf.
 
 1. Open SoulCord Suite → Activity Bridge and confirm the unrestricted override reads **Off by default**.
 2. In a designated low-risk server/channel, start **Codenames** yourself. Wait for READY and complete one join/leave/rejoin cycle.

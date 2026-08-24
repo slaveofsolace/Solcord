@@ -1,31 +1,40 @@
-# Morning queue
+# Owner follow-up queue
 
-The source, build, and disposable-runtime work below is already complete. These remaining actions require the owner because they cross an authentication, account-representational, live-profile, or human-taste gate.
+SoulCord V1 has passed its source, deterministic build, security, reversible backup, live-install, and no-send UI gates. The owner separately confirmed Discord Activities are working and waived a repeated Activity launch. Exact commit, artifact, backup, process, and rollback identities belong in the local machine-readable install evidence rather than this repository document.
 
-## 1. Authenticate only the disposable profile
+SoulCord is currently left at its fail-closed setup boundary: the first-run transaction has not been finished, the owner’s existing plugin/theme states remain unchanged, Message Timeline is off, Link Lens is off, and Power Lab is off.
 
-1. Confirm ordinary Discord is closed or leave it untouched; do not copy its profile or tokens.
-2. From the task root, run `outputs\soulcord-acceptance-final\launch-soulcord-acceptance.cmd`.
-3. Sign in manually inside that copied runtime. Do not paste credentials into diagnostics or this repository.
-4. Confirm the account is the intended test account before any interaction.
+## 1. Review setup when ready
 
-## 2. Human Eye and interaction acceptance
+Open **User Settings → SoulCord Suite** and review all four setup steps. The wizard must show the complete file/state diff before **Finish**. Skipping changes nothing. Do not accept a candidate merely because it is present in the catalog; `NOT STAGED`, `HOLD`, and owner-managed community files are intentionally not claimed live.
 
-With all community addons still unavailable and Power Lab off, check DMs, guild navigation, SoulCord Suite label, setup Skip/no-change behavior, About, Activity Bridge, Plugin Doctor, recovery, Link Lens warning modal, all five bundled themes, keyboard focus/Escape, reduced motion, and 100%/125% Windows scaling. Mark every surface `ACCEPT` or `REVISE`. Do not treat the current unauthenticated loading screenshot as acceptance evidence.
+The 36-entry aggressive catalog is a reviewed choice set, not an enabled-addon count. Only candidates with exact staged bytes, dependencies, and runtime evidence may become installable. A failing addon is quarantined and reported rather than counted as working.
 
-Link Lens must not intercept internal Discord routes or DM selection. Open only a deliberately chosen harmless external URL; confirm one native modal, readable contrast, focus restoration, route cleanup, and ordinary navigation when the adapter fails open.
+## 2. Optional local appearance acceptance
 
-## 3. Owner Activity acceptance
+Preview the five bundled SoulCord themes and activate at most one. Check ordinary chat, settings, plugin/theme pages, popouts, focus order, reduced motion, and the relevant Windows scaling modes. The container-responsive settings fix should keep its header, setup tabs, and copy inside the actual settings column rather than keying breakpoints to the whole Discord window.
 
-Start Codenames and one second Activity yourself in a designated low-risk location. For each, check open, READY, close, reload, and rejoin. Then confirm Activity Bridge reports the restricted same-package policy, the unrestricted override remains off, the ledger stays bounded, and no duplicate injection or crash loop appears. No agent starts or joins an Activity on the owner's behalf.
+Theme activation is a local reversible change, but it was deliberately not performed during unattended acceptance. The owner’s existing `midnight.theme.css` remains untouched.
 
-## 4. Fresh approval before live installation
+## 3. Optional Link Lens acceptance
 
-If and only if the disposable UI and Activity matrix are accepted, give fresh approval to close live Discord, create the timestamped backup, install the exact verified final ASAR, launch the live client, and leave setup at preview. Until that approval, do not mutate `%APPDATA%\BetterDiscord`, plugins, themes, Custom CSS, MessageLogger data, Timeline state, or the vanilla Activities launcher.
+Link Lens remains off. If enabling it later, use a deliberately chosen harmless external URL and confirm one native Discord review modal, readable contrast, final-host disclosure, Escape/cancel behavior, focus restoration, route cleanup, and ordinary fail-open navigation when the adapter drifts.
+
+Internal Discord routes and DM selection must never trigger Link Lens. No agent opens an external link or enables this feature without fresh action-time approval.
+
+## 4. Activities status
+
+The owner reported Activities working and explicitly waived a repeated live Activity test for this acceptance pass. Activity Bridge must continue to show the restricted same-package policy with the unrestricted override off. A future Discord update that changes the package/preload structure should fail closed and return the bridge to review instead of silently broadening the policy.
+
+## 5. Rollback if needed
+
+Close Discord before running the manifest-recorded core rollback script. The rollback stages and byte-verifies the previous core and restores the injector entry files. It does not delete or reset plugins, themes, stable settings, Custom CSS, MessageLogger data, Timeline state, or the preserved vanilla Activities launcher.
 
 ## Current nonclaims
 
-- The isolated runtime startup is green; authenticated DM/settings/theme/Activity behavior is not yet accepted.
-- The 36 community catalog entries remain metadata-reviewed and `installable: false`; none is claimed enabled or live.
-- Message Timeline persistent Windows behavior and setup rollback remain runtime-pending.
-- No live message, upload, notification read, recording, voice join, stream, OAuth mutation, or Activity launch has been performed.
+- The setup **Finish** transaction and setup rollback were not run in the owner profile.
+- No SoulCord theme was activated in the owner profile during unattended acceptance.
+- Link Lens’s native external-link modal remains unexercised because Link Lens stayed off.
+- Message Timeline persistent Windows behavior remains runtime-pending and no existing MessageLogger data was inspected or imported.
+- No message, upload, notification-read action, recording, voice join, stream, OAuth mutation, or Activity launch was performed by Codex.
+- The owner’s existing plugins and themes were preserved; presence or enabled state is not a SoulCord compatibility certification.
