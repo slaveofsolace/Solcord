@@ -7,6 +7,8 @@ import path from "path";
 
 const MANIFEST_FILE = "acceptance-manifest.json";
 const LAUNCHER_FILE = "launch-soulcord-acceptance.cmd";
+const DISCORD_FIRST_RUN_MARKER = ".first-run";
+const DISCORD_VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){1,7}$/;
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
 const CANONICAL_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FULL_COMMIT_PATTERN = /^[a-f0-9]{40}$/;
@@ -38,7 +40,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 3;
+    schemaVersion: 4;
     kind: "soulcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -56,6 +58,7 @@ export interface DisposableAcceptanceManifest {
         betterdiscordAppAsar: "runtime/resources/betterdiscord.app.asar";
         electronEntryPoint: "runtime/resources/app/index.js";
         userData: "profile/Roaming/discord";
+        firstRunMarker: string;
         betterdiscordData: "profile/Roaming/BetterDiscord";
         localAppData: "profile/Local";
         launcher: "launch-soulcord-acceptance.cmd";
@@ -759,7 +762,7 @@ function validateInputs(options: DisposableAcceptanceOptions): ValidatedInputs {
     assertPlainTree(sourceDiscordAppRealPath);
 
     const versionMatch = /^app-(.+)$/i.exec(path.basename(sourceDiscordAppRealPath));
-    if (!versionMatch?.[1] || Array.from(versionMatch[1]).some(character => character.charCodeAt(0) < 32)) {
+    if (!versionMatch?.[1] || !DISCORD_VERSION_PATTERN.test(versionMatch[1])) {
         throw new Error("sourceDiscordAppDir must be a versioned app-<version> Discord directory.");
     }
     const buildInfo = validateDiscordBuildInfo(rawBuildInfo, versionMatch[1], "source resources/build_info.json");
@@ -804,7 +807,7 @@ export function createDisposableAcceptanceManifest(
     betterdiscordAppSha256: string,
     sourceDiscordTree: TreeInventory
 ): DisposableAcceptanceManifest {
-    if (!discordVersion || !/^[a-z][a-z0-9-]{0,31}$/.test(discordReleaseChannel)
+    if (!DISCORD_VERSION_PATTERN.test(discordVersion) || !/^[a-z][a-z0-9-]{0,31}$/.test(discordReleaseChannel)
         || !HASH_PATTERN.test(soulcordSha256) || !HASH_PATTERN.test(betterdiscordAppSha256)
         || !FULL_COMMIT_PATTERN.test(soulcordSourceCommit) || !soulcordVersion
         || (soulcordBuildMode !== "production" && soulcordBuildMode !== "release")
@@ -816,7 +819,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 3,
+        schemaVersion: 4,
         kind: "soulcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -834,6 +837,7 @@ export function createDisposableAcceptanceManifest(
             betterdiscordAppAsar: "runtime/resources/betterdiscord.app.asar",
             electronEntryPoint: "runtime/resources/app/index.js",
             userData: "profile/Roaming/discord",
+            firstRunMarker: `profile/Roaming/discord/${discordVersion}/${DISCORD_FIRST_RUN_MARKER}`,
             betterdiscordData: "profile/Roaming/BetterDiscord",
             localAppData: "profile/Local",
             launcher: "launch-soulcord-acceptance.cmd"
@@ -1032,9 +1036,21 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
         }
         assertOwnedStagingDirectory(staging);
 
-        fs.mkdirSync(path.join(staging.path, "profile", "Roaming", "discord"), {recursive: true});
+        const isolatedDiscordVersionRoot = path.join(
+            staging.path,
+            "profile",
+            "Roaming",
+            "discord",
+            validated.discordVersion
+        );
+        fs.mkdirSync(isolatedDiscordVersionRoot, {recursive: true});
         fs.mkdirSync(path.join(staging.path, "profile", "Roaming", "BetterDiscord"), {recursive: true});
         fs.mkdirSync(path.join(staging.path, "profile", "Local", "Discord"), {recursive: true});
+        fs.writeFileSync(
+            path.join(isolatedDiscordVersionRoot, DISCORD_FIRST_RUN_MARKER),
+            "true",
+            {encoding: "utf8", flag: "wx"}
+        );
 
         const copiedSoulCord = path.join(runtime, "resources", "soulcord.asar");
         if (lstatIfPresent(copiedSoulCord)) {
@@ -1070,6 +1086,7 @@ export function prepareSoulCordDisposableAcceptance(options: DisposableAcceptanc
         writtenFiles: [
             manifest.paths.electronEntryPoint,
             manifest.paths.soulcordAsar,
+            manifest.paths.firstRunMarker,
             manifest.paths.launcher,
             MANIFEST_FILE
         ]

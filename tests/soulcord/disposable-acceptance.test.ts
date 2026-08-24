@@ -9,7 +9,11 @@ import {runInNewContext} from "vm";
 import asar from "@electron/asar";
 import {afterEach, beforeEach, describe, expect, test} from "bun:test";
 
-import {prepareSoulCordDisposableAcceptance, renderDisposableAcceptanceShim} from "../../scripts/prepare-soulcord-disposable-acceptance";
+import {
+    createDisposableAcceptanceManifest,
+    prepareSoulCordDisposableAcceptance,
+    renderDisposableAcceptanceShim
+} from "../../scripts/prepare-soulcord-disposable-acceptance";
 
 
 interface Fixture {
@@ -214,7 +218,7 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.soulCordAsar);
-        expect(result.manifest.schemaVersion).toBe(3);
+        expect(result.manifest.schemaVersion).toBe(4);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.soulcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.soulcordBuildMode).toBe("production");
@@ -314,6 +318,16 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         const shimComputedUserData = path.resolve(path.dirname(path.join(runtime, "resources", "app", "index.js")), "../../../profile/Roaming/discord");
         expect(shimComputedUserData).toBe(discordComputedUserData);
         expect(result.manifest.paths.userData).toBe("profile/Roaming/discord");
+        expect(result.manifest.paths.firstRunMarker).toBe("profile/Roaming/discord/1.0.9999/.first-run");
+        expect(fs.readFileSync(
+            path.join(fixture.destination, result.manifest.paths.firstRunMarker),
+            "utf8"
+        )).toBe("true");
+        expect(snapshotTree(path.join(fixture.destination, "profile", "Roaming", "discord"))).toEqual({
+            "1.0.9999/": "directory",
+            "1.0.9999/.first-run": hashBytes("true")
+        });
+        expect(result.writtenFiles).toContain(result.manifest.paths.firstRunMarker);
         expect(path.join(path.dirname(shimComputedUserData), "BetterDiscord"))
             .toBe(path.join(fixture.destination, "profile", "Roaming", "BetterDiscord"));
         expect(fs.statSync(shimComputedUserData).isDirectory()).toBeTrue();
@@ -346,6 +360,19 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
             expectedSoulCordSha256: fixture.expectedHash,
             expectedSoulCordSourceCommit: fixture.expectedSourceCommit
         })).toThrow("already exists");
+    });
+
+    test("rejects a Discord version that could escape the isolated version directory", () => {
+        expect(() => createDisposableAcceptanceManifest(
+            "..",
+            "stable",
+            "a".repeat(64),
+            "b".repeat(40),
+            "1.0.0-test",
+            "production",
+            "c".repeat(64),
+            {sha256: "d".repeat(64), files: 1, directories: 1, bytes: 1}
+        )).toThrow("complete artifact hashes");
     });
 
     test("rejects a non-CommonJS or noncanonical Discord app package in dry-run", () => {
