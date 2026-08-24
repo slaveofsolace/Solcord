@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
-import {Buffer} from "node:buffer";
 
 import type {PreloadAssignmentResult} from "./preload-policy";
 
