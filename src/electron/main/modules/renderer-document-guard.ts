@@ -1,37 +1,49 @@
 // SPDX-License-Identifier: Apache-2.0
 
-const DOCUMENT_GENERATION = /^[A-Za-z0-9_-]{22}$/;
+export type RendererDocumentToken = symbol;
+export type RendererDocumentClaim =
+    | {status: "claimed"; token: RendererDocumentToken;}
+    | {status: "duplicate" | "unbound";};
 
-export type RendererDocumentClaim = "claimed" | "duplicate" | "invalid";
-
-export function isRendererDocumentGeneration(value: unknown): value is string {
-    return typeof value === "string" && DOCUMENT_GENERATION.test(value);
+interface RendererDocumentState {
+    token: RendererDocumentToken;
+    status: "ready" | "in-flight" | "finished";
 }
 
 /**
- * Tracks renderer injection per preload document rather than for the lifetime of
- * a WebContents. A full navigation receives a new isolated-preload generation;
- * repeated calls from the same document remain idempotent.
+ * Tracks renderer injection against a document boundary minted only by the
+ * Electron main process. The renderer cannot invent another generation: a
+ * successful top-level `did-navigate` event begins one new document, and that
+ * document receives at most one fixed-bundle execution attempt.
  */
 export class RendererDocumentInjectionGuard<TOwner extends object> {
-    #inFlight = new WeakMap<TOwner, string>();
-    #completed = new WeakMap<TOwner, string>();
+    #documents = new WeakMap<TOwner, RendererDocumentState>();
 
-    claim(owner: TOwner, generation: unknown): RendererDocumentClaim {
-        if (!isRendererDocumentGeneration(generation)) return "invalid";
-        if (this.#inFlight.get(owner) === generation || this.#completed.get(owner) === generation) return "duplicate";
-        this.#inFlight.set(owner, generation);
-        return "claimed";
+    beginDocument(owner: TOwner): void {
+        this.#documents.set(owner, {token: Symbol("soulcord-renderer-document"), status: "ready"});
     }
 
-    complete(owner: TOwner, generation: string): boolean {
-        if (this.#inFlight.get(owner) !== generation) return false;
-        this.#inFlight.delete(owner);
-        this.#completed.set(owner, generation);
+    claim(owner: TOwner): RendererDocumentClaim {
+        const document = this.#documents.get(owner);
+        if (!document) return {status: "unbound"};
+        if (document.status !== "ready") return {status: "duplicate"};
+        document.status = "in-flight";
+        return {status: "claimed", token: document.token};
+    }
+
+    complete(owner: TOwner, token: RendererDocumentToken): boolean {
+        const document = this.#documents.get(owner);
+        if (!document || document.token !== token || document.status !== "in-flight") return false;
+        document.status = "finished";
         return true;
     }
 
-    fail(owner: TOwner, generation: string): void {
-        if (this.#inFlight.get(owner) === generation) this.#inFlight.delete(owner);
+    fail(owner: TOwner, token: RendererDocumentToken): void {
+        const document = this.#documents.get(owner);
+        if (document?.token === token && document.status === "in-flight") document.status = "finished";
+    }
+
+    release(owner: TOwner): void {
+        this.#documents.delete(owner);
     }
 }

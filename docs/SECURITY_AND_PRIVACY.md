@@ -33,7 +33,7 @@ Ordinary settings exports also remove every selected Timeline channel identifier
 - Candidate preloads must resolve to the same `.asar` package under that captured version directory; sibling Discord versions and unpacked same-directory fallbacks remain outside the V1 trust policy.
 - Runtime canonicalization failure, reparse divergence, traversal, device namespace, drive/share mismatch, sibling package, malformed type, or a second non-duplicate assignment is rejected.
 - The original Discord preload is required exactly once and `process.kill` is restored in `finally`.
-- Each trusted main-frame document carries a fresh preload nonce. Duplicate requests for that document are ignored, while a full navigation in the same `webContents` can receive one new injection through its exact `WebFrameMain`.
+- Each successful top-level `did-navigate` creates a fresh document boundary in the Electron main process. Renderer callers cannot mint another boundary; duplicate requests for that document are ignored, while a full navigation in the same `webContents` can receive one new injection attempt through its exact `WebFrameMain`.
 - The compatibility ledger allowlists every stored string label, retains at most 64 events and 32 KiB serialized, and keeps unsafe-preload attention sticky once an unrestricted assignment has been accepted.
 
 ## IPC

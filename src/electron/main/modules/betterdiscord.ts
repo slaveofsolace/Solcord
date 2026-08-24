@@ -113,30 +113,33 @@ export default class BetterDiscord {
         if (!fs.existsSync(path.join(bdFolder, "themes"))) fs.mkdirSync(path.join(bdFolder, "themes"));
     }
 
-    static async injectRenderer(browserWindow: BrowserWindow, frame: WebFrameMain, documentGeneration: string) {
+    static async injectRenderer(browserWindow: BrowserWindow, frame: WebFrameMain) {
         if (hasCrashed) return;
         const webContents = browserWindow.webContents;
-        const claim = this.rendererDocuments.claim(webContents, documentGeneration);
-        if (claim === "duplicate") return;
-        if (claim === "invalid") throw new Error("SoulCord renderer document generation was rejected.");
+        const claim = this.rendererDocuments.claim(webContents);
+        if (claim.status !== "claimed") {
+            if (claim.status === "duplicate") return;
+            throw new Error("SoulCord renderer document boundary is unavailable.");
+        }
+        const documentToken = claim.token;
 
         try {
             const current = webContents.mainFrame;
             if (frame.isDestroyed() || frame.detached
                 || frame.processId !== current.processId
                 || frame.routingId !== current.routingId) {
-                this.rendererDocuments.fail(webContents, documentGeneration);
+                this.rendererDocuments.fail(webContents, documentToken);
                 throw new Error("SoulCord renderer frame changed before injection.");
             }
         }
         catch {
-            this.rendererDocuments.fail(webContents, documentGeneration);
+            this.rendererDocuments.fail(webContents, documentToken);
             throw new Error("SoulCord renderer frame could not be validated.");
         }
 
         const location = path.join(__dirname, "soulcord.js");
         if (!fs.existsSync(location)) {
-            this.rendererDocuments.fail(webContents, documentGeneration);
+            this.rendererDocuments.fail(webContents, documentToken);
             return; // TODO: cut a fatal log
         }
         const content = fs.readFileSync(location).toString();
@@ -156,15 +159,15 @@ export default class BetterDiscord {
             `) === true;
         }
         catch {
-            this.rendererDocuments.fail(webContents, documentGeneration);
+            this.rendererDocuments.fail(webContents, documentToken);
             throw new Error("SoulCord renderer injection failed.");
         }
 
         if (!success) {
-            this.rendererDocuments.fail(webContents, documentGeneration);
+            this.rendererDocuments.fail(webContents, documentToken);
             return; // TODO: cut a fatal log
         }
-        if (!this.rendererDocuments.complete(webContents, documentGeneration)) return;
+        if (!this.rendererDocuments.complete(webContents, documentToken)) return;
         // @ts-expect-error SoulCord adds an internal non-enumerable window token.
         ActivityCompatibility.injection(browserWindow.__soulcordWindowToken);
     }
@@ -188,6 +191,13 @@ export default class BetterDiscord {
     static setup(browserWindow: BrowserWindow) {
         if (this.initializedWindows.has(browserWindow)) return;
         this.initializedWindows.add(browserWindow);
+        const rendererOwner = browserWindow.webContents;
+        const beginRendererDocument = () => this.rendererDocuments.beginDocument(rendererOwner);
+        rendererOwner.on("did-navigate", beginRendererDocument);
+        browserWindow.once("closed", () => {
+            rendererOwner.off("did-navigate", beginRendererDocument);
+            this.rendererDocuments.release(rendererOwner);
+        });
 
         // Setup some useful vars to avoid blocking IPC calls
         try {

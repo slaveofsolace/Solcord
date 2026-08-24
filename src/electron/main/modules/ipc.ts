@@ -8,7 +8,6 @@ import ActivityCompatibility from "./activity-compatibility";
 import SoulCordTimeline from "./soulcord-timeline";
 import SoulCordSetup from "./soulcord-setup";
 import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
-import {isRendererDocumentGeneration} from "./renderer-document-guard";
 import type {DialogOptions} from "@common/types/ipc";
 
 const getPath = (event: IpcMainEvent, pathReq: string) => {
@@ -286,15 +285,14 @@ const auditSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     return SoulCordSetup.auditIntegrity();
 };
 
-const runRenderer = (event: IpcMainInvokeEvent, documentGeneration: unknown) => {
+const runRenderer = (event: IpcMainInvokeEvent) => {
     requireTrustedSoulCordSender(event);
-    if (!isRendererDocumentGeneration(documentGeneration)) throw new Error("SoulCord renderer document generation was rejected.");
     const senderFrame = event.senderFrame;
     const browserWindow = BrowserWindow.fromWebContents(event.sender);
     if (!senderFrame || !browserWindow) throw new Error("SoulCord renderer frame is unavailable.");
     ensureTimelineReleaseHook(event.sender);
     const bootstrap = timelineAuthority.bootstrap(event.sender.id);
-    void BetterDiscord.injectRenderer(browserWindow, senderFrame, documentGeneration).catch(() => {
+    void BetterDiscord.injectRenderer(browserWindow, senderFrame).catch(() => {
         timelineAuthority.release(event.sender.id);
     });
     return bootstrap;

@@ -1,5 +1,4 @@
 import {contextBridge, ipcRenderer} from "electron";
-import {randomBytes} from "node:crypto";
 import newProcess from "./process";
 import * as BdApi from "./api";
 import init from "./init";
@@ -32,7 +31,6 @@ let bootstrapPromise: Promise<string> | undefined;
 let bootstrapClaimed = false;
 let hasRanRenderer = false;
 if (exposure.exposeSoulCord) {
-    const rendererDocumentGeneration = randomBytes(16).toString("base64url");
     DiscordNativePatch.init();
     contextBridge.exposeInMainWorld("process", newProcess);
     contextBridge.exposeInMainWorld("BetterDiscordPreload", () => {
@@ -54,7 +52,7 @@ if (exposure.exposeSoulCord) {
         if (hasRanRenderer) return null;
         hasRanRenderer = true;
 
-        bootstrapPromise = ipcRenderer.invoke(IPCEvents.RUN_RENDERER, rendererDocumentGeneration).then((response: unknown) => {
+        bootstrapPromise = ipcRenderer.invoke(IPCEvents.RUN_RENDERER).then((response: unknown) => {
             const capability = (response as {bootstrapCapability?: unknown;} | undefined)?.bootstrapCapability;
             if (typeof capability !== "string" || !/^[a-zA-Z0-9_-]{43}$/.test(capability)) throw new Error("SoulCord timeline bootstrap was rejected.");
             return capability;

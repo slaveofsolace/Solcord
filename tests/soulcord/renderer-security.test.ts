@@ -7,16 +7,19 @@ const ROOT = path.resolve(import.meta.dir, "../..");
 const source = (relative: string) => fs.readFileSync(path.join(ROOT, relative), "utf8");
 
 describe("SoulCord renderer security contracts", () => {
-    test("binds renderer injection to one preload nonce and the exact main-frame document", () => {
+    test("binds renderer injection to one main-process navigation boundary and the exact main frame", () => {
         const preload = source("src/electron/preload/index.ts");
         const ipc = source("src/electron/main/modules/ipc.ts");
         const betterDiscord = source("src/electron/main/modules/betterdiscord.ts");
 
-        expect(preload).toContain("randomBytes(16).toString(\"base64url\")");
-        expect(preload).toContain("ipcRenderer.invoke(IPCEvents.RUN_RENDERER, rendererDocumentGeneration)");
-        expect(ipc).toContain("isRendererDocumentGeneration(documentGeneration)");
-        expect(ipc).toContain("BetterDiscord.injectRenderer(browserWindow, senderFrame, documentGeneration)");
+        expect(preload).not.toContain("rendererDocumentGeneration");
+        expect(preload).toContain("ipcRenderer.invoke(IPCEvents.RUN_RENDERER)");
+        expect(ipc).not.toContain("isRendererDocumentGeneration");
+        expect(ipc).toContain("BetterDiscord.injectRenderer(browserWindow, senderFrame)");
         expect(betterDiscord).toContain("new RendererDocumentInjectionGuard<Electron.WebContents>()");
+        expect(betterDiscord).toContain("rendererOwner.on(\"did-navigate\", beginRendererDocument)");
+        expect(betterDiscord).toContain("this.rendererDocuments.beginDocument(rendererOwner)");
+        expect(betterDiscord).toContain("this.rendererDocuments.claim(webContents)");
         expect(betterDiscord).toContain("frame.executeJavaScript");
         expect(betterDiscord).not.toContain("injectedWebContents");
     });
