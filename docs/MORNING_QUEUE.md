@@ -5,7 +5,7 @@ The source, build, and disposable-runtime work below is already complete. These 
 ## 1. Authenticate only the disposable profile
 
 1. Confirm ordinary Discord is closed or leave it untouched; do not copy its profile or tokens.
-2. From the task root, run `outputs\soulcord-acceptance-32e65a3\launch-soulcord-acceptance.cmd`.
+2. From the task root, run `outputs\soulcord-acceptance-final\launch-soulcord-acceptance.cmd`.
 3. Sign in manually inside that copied runtime. Do not paste credentials into diagnostics or this repository.
 4. Confirm the account is the intended test account before any interaction.
 
