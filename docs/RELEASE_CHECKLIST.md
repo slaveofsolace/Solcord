@@ -2,7 +2,7 @@
 
 No V1 release is authorized by this document.
 
-- [ ] Owner branch is clean, pushed, and remote SHA verified.
+- [x] Owner branch is clean, pushed, and remote SHA verified.
 - [ ] Frozen install, tests, TypeScript lint, changed-CSS lint, typecheck, type generation, circular check, production build, and package pass. Compare repository-wide legacy CSS lint with the pinned upstream baseline; do not hide a new SoulCord error inside inherited debt.
 - [x] Artifact contents and SHA-256 are recorded.
 - [x] BrowserWindow/preload, IPC, updater, installer, network, addon execution, and diagnostics static security review passes.

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
   "baseCommit": "9e2b67532f5fde991994b094ac42c5ac9ed101dd",
-  "sourceState": "EXACT_COMMIT_BUILT_SECURITY_REVIEWED_PENDING_DISPOSABLE_ACCEPTANCE",
+  "sourceState": "DISPOSABLE_PREPARED_PENDING_LAUNCH_AND_INSTALLED_ACCEPTANCE",
   "archives": {
     "sourceSha256": "6c14165e1a6517d17dca401408b8299b68b39afd413196c64a22e7b0e6b777d9",
     "deliverySha256": "3032773607fae5477f9c1dedfdc4e39125ea82acff242e4ce27099a0a4f75f18",
@@ -75,14 +75,31 @@
   },
   "humanEye": {
     "sourceAssetReview": "COMPLETE",
-    "installedRuntimeReview": "PENDING",
+    "installedRuntimeReview": "TOOL_LIMITED_PENDING_LAUNCH",
     "ownerTasteAcceptance": "PENDING"
+  },
+  "disposableAcceptance": {
+    "status": "PREPARED_NOT_LAUNCHED",
+    "path": "../../outputs/soulcord-acceptance-d1744c5",
+    "discordVersion": "1.0.9253",
+    "discordReleaseChannel": "stable",
+    "sourceTreeSha256": "8c03cc60b3c7e6d41db97ae2787e949a5526bf0f9d169b3ed16949a94f6e47cd",
+    "sourceFiles": 1146,
+    "sourceDirectories": 103,
+    "sourceBytes": 503626198,
+    "soulcordSha256": "02f25dbc26bee3004a3a9f5278bba5e077677505358218d1adfe5ee3819255b0",
+    "copiedUserProfile": false,
+    "filesystemProfileIsolated": true,
+    "windowsAccountIsolated": false,
+    "launchPerformed": false,
+    "uiAutomation": "TOOL_LIMITED_CODEX_RESTART_REQUIRED"
   },
   "installation": {
     "authorized": true,
     "currentWaveInstalled": false,
     "status": "PENDING_DISPOSABLE_AND_INSTALLED_RUNTIME_GATES",
     "blockers": [
+      "The disposable runtime is prepared but not launched; the Codex Computer Use node_repl host failed before app discovery and requires a Codex restart.",
       "The 36 community addons have no isolated disposable-profile runtime acceptance and remain installable false.",
       "Installed Discord visual, focus, scaling, and rollback acceptance has not run."
     ]
