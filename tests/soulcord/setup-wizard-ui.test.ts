@@ -26,6 +26,14 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
     });
 
+    test("keys responsive layout to the actual settings content container", () => {
+        expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size");
+        expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 900px)");
+        expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 760px)");
+        expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 520px)");
+        expect(WIZARD_CSS).not.toContain("@media (max-width:");
+    });
+
     test("renders only accepted ready tools and directs pending work to the catalog", () => {
         expect(WIZARD_SOURCE).toContain("addons: group.addons.filter(addon => isReadyDecision(decisions.get(addon.name)))");
         expect(WIZARD_SOURCE).toContain("const pendingDecisions = useMemo");
