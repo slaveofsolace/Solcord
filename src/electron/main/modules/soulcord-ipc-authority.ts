@@ -1,7 +1,14 @@
 import crypto from "node:crypto";
 
 
-const SOULCORD_APP_HOSTS = new Set(["discord.com", "canary.discord.com", "ptb.discord.com"]);
+const SOULCORD_APP_HOSTS = new Set([
+    "discord.com",
+    "discordapp.com",
+    "canary.discord.com",
+    "canary.discordapp.com",
+    "ptb.discord.com",
+    "ptb.discordapp.com"
+]);
 const ACCOUNT_ID = /^\d{1,32}$/;
 const CAPABILITY = /^[a-zA-Z0-9_-]{43}$/;
 

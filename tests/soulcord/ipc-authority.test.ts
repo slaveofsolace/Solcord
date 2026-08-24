@@ -10,15 +10,20 @@ describe("SoulCord private IPC sender origin", () => {
     test("accepts only the exact HTTPS Discord application hosts", () => {
         for (const value of [
             "https://discord.com/channels/@me",
+            "https://discordapp.com/login",
             "https://canary.discord.com/channels/@me",
-            "https://ptb.discord.com/channels/@me"
+            "https://canary.discordapp.com/login",
+            "https://ptb.discord.com/channels/@me",
+            "https://ptb.discordapp.com/login"
         ]) expect(isTrustedSoulCordIpcUrl(value)).toBeTrue();
 
         for (const value of [
             "http://discord.com/channels/@me",
             "https://cdn.discord.com/attachments/x",
             "https://evil.discord.com/channels/@me",
+            "https://evil.discordapp.com/login",
             "https://discord.com.evil.example/channels/@me",
+            "https://discordapp.com.evil.example/login",
             "https://user@discord.com/channels/@me",
             "https://discord.com:444/channels/@me",
             "file:///discord.com/channels/@me",
