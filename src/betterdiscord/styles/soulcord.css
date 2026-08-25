@@ -26,15 +26,78 @@
     --sc-danger: var(--soulcord-coral);
 }
 
-.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 0 48px; color: var(--sc-text); overflow-x: clip; }
+.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 0 48px; color: var(--sc-text); background: var(--sc-surface-0); overflow-x: clip; }
 .soulcord-panel.soulcord-density-compact { --sc-space-3: 9px; --sc-space-4: 12px; --sc-space-5: 18px; }
 html[data-soulcord-accent="system"] .soulcord-panel { --sc-accent: var(--brand-500, var(--soulcord-sea)); }
 html[data-soulcord-accent="signal"] .soulcord-panel { --sc-accent: #E8AA45; }
 html[data-soulcord-accent="coral"] .soulcord-panel { --sc-accent: #E77362; }
 html[data-soulcord-accent="forest"] .soulcord-panel { --sc-accent: #65AD82; }
-html[data-soulcord-mode="soul-dark"] .soulcord-panel { --sc-surface-0: #171A1C; --sc-surface-1: #202528; --sc-surface-2: #292F33; --sc-text: #F2EADF; --sc-muted: #B9B4AD; --sc-border: #3B4348; }
-html[data-soulcord-mode="soul-light"] .soulcord-panel { --sc-surface-0: #F4EDE1; --sc-surface-1: #EBE2D5; --sc-surface-2: #DED4C7; --sc-text: #24211F; --sc-muted: #625D57; --sc-border: #C9BEB0; }
-html[data-soulcord-mode="oled"] .soulcord-panel { --sc-surface-0: #000000; --sc-surface-1: #090B0C; --sc-surface-2: #121517; --sc-text: #F5F7F8; --sc-muted: #AEB6BD; --sc-border: #30363A; }
+html[data-soulcord-mode="soul-dark"] .soulcord-panel {
+    color-scheme: dark;
+
+    --sc-surface-0: #171A1C;
+    --sc-surface-1: #202528;
+    --sc-surface-2: #292F33;
+    --sc-text: #F2EADF;
+    --sc-muted: #B9B4AD;
+    --sc-border: #3B4348;
+    --background-primary: var(--sc-surface-0);
+    --background-secondary: var(--sc-surface-1);
+    --background-tertiary: var(--sc-surface-2);
+    --input-background: var(--sc-surface-2);
+    --text-normal: var(--sc-text);
+    --text-muted: var(--sc-muted);
+    --header-primary: var(--sc-text);
+    --header-secondary: var(--sc-muted);
+    --border-subtle: var(--sc-border);
+    --interactive-normal: var(--sc-muted);
+    --interactive-hover: var(--sc-text);
+    --interactive-active: var(--sc-text);
+}
+html[data-soulcord-mode="soul-light"] .soulcord-panel {
+    color-scheme: light;
+
+    --sc-surface-0: #F4EDE1;
+    --sc-surface-1: #EBE2D5;
+    --sc-surface-2: #DED4C7;
+    --sc-text: #24211F;
+    --sc-muted: #625D57;
+    --sc-border: #C9BEB0;
+    --background-primary: var(--sc-surface-0);
+    --background-secondary: var(--sc-surface-1);
+    --background-tertiary: var(--sc-surface-2);
+    --input-background: var(--sc-surface-2);
+    --text-normal: var(--sc-text);
+    --text-muted: var(--sc-muted);
+    --header-primary: var(--sc-text);
+    --header-secondary: var(--sc-muted);
+    --border-subtle: var(--sc-border);
+    --interactive-normal: var(--sc-muted);
+    --interactive-hover: var(--sc-text);
+    --interactive-active: var(--sc-text);
+}
+html[data-soulcord-mode="oled"] .soulcord-panel {
+    color-scheme: dark;
+
+    --sc-surface-0: #000000;
+    --sc-surface-1: #090B0C;
+    --sc-surface-2: #121517;
+    --sc-text: #F5F7F8;
+    --sc-muted: #AEB6BD;
+    --sc-border: #30363A;
+    --background-primary: var(--sc-surface-0);
+    --background-secondary: var(--sc-surface-1);
+    --background-tertiary: var(--sc-surface-2);
+    --input-background: var(--sc-surface-2);
+    --text-normal: var(--sc-text);
+    --text-muted: var(--sc-muted);
+    --header-primary: var(--sc-text);
+    --header-secondary: var(--sc-muted);
+    --border-subtle: var(--sc-border);
+    --interactive-normal: var(--sc-muted);
+    --interactive-hover: var(--sc-text);
+    --interactive-active: var(--sc-text);
+}
 html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bottom: 1px solid color-mix(in srgb, var(--border-subtle, currentcolor) 52%, transparent); }
 .soulcord-panel *,
 .soulcord-panel *::before,

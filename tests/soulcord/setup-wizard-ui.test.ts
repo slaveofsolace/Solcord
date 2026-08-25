@@ -37,6 +37,23 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_CSS).not.toContain("@media (max-width:");
     });
 
+    test("keeps explicit appearance modes self-contained instead of inheriting contradictory Discord colors", () => {
+        expect(WIZARD_CSS).toContain("background: var(--sc-surface-0)");
+        for (const mode of ["soul-dark", "soul-light", "oled"]) {
+            const block = WIZARD_CSS.match(new RegExp(`html\\[data-soulcord-mode="${mode}"\\] \\.soulcord-panel \\{([^}]+)}`, "s"))?.[1];
+            expect(block).toBeDefined();
+            expect(block).toContain("--background-primary: var(--sc-surface-0)");
+            expect(block).toContain("--background-secondary: var(--sc-surface-1)");
+            expect(block).toContain("--background-tertiary: var(--sc-surface-2)");
+            expect(block).toContain("--input-background: var(--sc-surface-2)");
+            expect(block).toContain("--text-normal: var(--sc-text)");
+            expect(block).toContain("--text-muted: var(--sc-muted)");
+            expect(block).toContain("--header-primary: var(--sc-text)");
+            expect(block).toContain("--border-subtle: var(--sc-border)");
+            expect(block).toContain(`color-scheme: ${mode === "soul-light" ? "light" : "dark"}`);
+        }
+    });
+
     test("renders only accepted ready tools and directs pending work to the catalog", () => {
         expect(WIZARD_SOURCE).toContain("addons: group.addons.filter(addon => isReadyDecision(decisions.get(addon.name)))");
         expect(WIZARD_SOURCE).toContain("const pendingDecisions = useMemo");
