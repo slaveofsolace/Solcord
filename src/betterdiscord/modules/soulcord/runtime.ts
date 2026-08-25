@@ -1,6 +1,7 @@
 import Logger from "@common/logger";
 import Store from "@stores/base";
 import JsonStore from "@stores/json";
+import Toasts from "@stores/toasts";
 import IPC from "@modules/ipc";
 import Patcher from "@modules/patcher";
 import PluginManager from "@modules/pluginmanager";
@@ -26,6 +27,10 @@ import {resolveSoulCordSetupPlan} from "@common/soulcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
 import {DoNotTrackAdapter, resolveDiscordAnalyticsTrack, validateDiscordAnalyticsTrack} from "./do-not-track";
+import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, reconcileSoulCordRelationships, SoulCordFriendWatchJournal, type SoulCordFriendWatchNoticeState, type SoulCordOwnerRelationshipAction, type SoulCordRelationshipEvent, type SoulCordRelationshipSnapshot} from "@common/soulcord/friend-watch";
+import {inspectSoulCordDomain, SoulCordDomainMemory, type SoulCordDomainDecision, type SoulCordDomainMemoryRecord, type SoulCordDomainRisk} from "@common/soulcord/domain-memory";
+import {inspectSoulCordAttachment, type SoulCordAttachmentInspection} from "@common/soulcord/attachment-guard";
+import {normalizeSoulCordReturnRoute, SoulCordReturnLaterJournal, type SoulCordReturnLaterItem} from "@common/soulcord/return-later";
 
 interface ActivityCompatibilityHealth {
     status: "idle" | "healthy" | "attention";
@@ -93,6 +98,7 @@ const FEATURE_META: Record<SoulCordModuleId, {name: string; risk: SoulCordModule
     "stream-shield": {name: "Stream Shield + Screenshot Scrubber", risk: "standard", maturity: "preview", detail: "Manual shield is ready; Go Live detection is validated at runtime."},
     "settings-time-machine": {name: "Settings Time Machine + Update Ledger", risk: "standard", maturity: "ready", detail: "Bounded snapshots and migration records are active."},
     "accessibility-toolkit": {name: "Accessibility Toolkit", risk: "standard", maturity: "preview", detail: "Local reversible presentation controls."},
+    "friend-watch": {name: "Friend Watch", risk: "experimental", maturity: "preview", detail: "Disabled until separate consent. Uses only the already-loaded relationship store and never polls Discord."},
     "message-timeline": {name: "Message Timeline", risk: "experimental", maturity: "preview", detail: "Observed-message journal is disabled until setup consent is completed."}
 };
 
@@ -204,6 +210,10 @@ const TIMELINE_IPC = Object.freeze({
     append: IPC.appendTimeline.bind(IPC),
     read: IPC.readTimeline.bind(IPC),
     clear: IPC.clearTimeline.bind(IPC),
+    friendStatus: IPC.getFriendWatchStatus.bind(IPC),
+    friendAppend: IPC.appendFriendWatch.bind(IPC),
+    friendRead: IPC.readFriendWatch.bind(IPC),
+    friendClear: IPC.clearFriendWatch.bind(IPC),
     applySetup: IPC.applySoulCordSetup.bind(IPC),
     acknowledgeSetup: IPC.acknowledgeSoulCordSetup.bind(IPC),
     reconcileSetup: IPC.reconcileSoulCordSetup.bind(IPC),
@@ -223,6 +233,12 @@ class SoulCordRuntimeStore extends Store {
     #sampler = new BoundedPerformanceSampler();
     #lastPerformanceSample?: PerformanceSample;
     #timeline = new MessageTimelineJournal();
+    #friendWatch = new SoulCordFriendWatchJournal();
+    #friendWatchPersistent = false;
+    #friendWatchAccountGuard = new TimelineAccountGuard();
+    #friendWatchIdentity?: TimelineAccountIdentity;
+    #domainMemory = new SoulCordDomainMemory();
+    #returnLater = new SoulCordReturnLaterJournal();
     #timelinePersistent = false;
     #curatedScope = new SoulCordDisposalScope();
     #curatedCommunitySignature = "";
@@ -243,6 +259,8 @@ class SoulCordRuntimeStore extends Store {
         if (this.#initialized) return;
         this.#initialized = true;
         SoulCordSettings.initialize();
+        this.#domainMemory = new SoulCordDomainMemory(JsonStore.get("misc", "soulcordDomainMemory"));
+        this.#returnLater = new SoulCordReturnLaterJournal(JsonStore.get("misc", "soulcordReturnLater"));
         this.#refreshReviewedExecutionOwnership();
         PluginDoctor.initialize();
         this.#recoveryMode = this.#initializeCrashGuard();
@@ -266,6 +284,7 @@ class SoulCordRuntimeStore extends Store {
     async start(): Promise<void> {
         if (this.#started) return;
         this.#started = true;
+        this.#applyProductPresentation();
         await this.#bootstrapPrivateCapability();
         try {
             const transactionIds = SoulCordSettings.snapshot().setupTransactions.map(transaction => transaction.id);
@@ -369,6 +388,25 @@ class SoulCordRuntimeStore extends Store {
         return this.#timelineAccountGuard.matches(identity, this.#currentTimelineAccountId());
     }
 
+    #observeFriendWatchIdentity(value: unknown = this.#currentTimelineAccountId()): {identity: TimelineAccountIdentity; changed: boolean;} {
+        const identity = this.#friendWatchAccountGuard.observe(value);
+        const previous = this.#friendWatchIdentity;
+        const changed = !previous || previous.accountId !== identity.accountId || previous.generation !== identity.generation;
+        if (changed) {
+            this.#friendWatchIdentity = identity;
+            this.#friendWatch.clear();
+            this.#friendWatchPersistent = false;
+        }
+        return {identity, changed};
+    }
+
+    #friendWatchIdentityIsCurrent(identity: TimelineAccountIdentity): boolean {
+        const current = this.#friendWatchIdentity;
+        return current?.accountId === identity.accountId
+            && current?.generation === identity.generation
+            && this.#friendWatchAccountGuard.matches(identity, this.#currentTimelineAccountId());
+    }
+
     async #releaseTimelineAccount(): Promise<void> {
         if (!this.#privateCapability || !this.#boundTimelineAccountId) return;
         try {
@@ -469,6 +507,68 @@ class SoulCordRuntimeStore extends Store {
         const current = SoulCordSettings.snapshot().timelinePolicy;
         SoulCordSettings.setTimelinePolicy({...current, ...value});
         await this.#synchronizeFeatures();
+    }
+
+    friendWatchEvents(): SoulCordRelationshipEvent[] {
+        this.#observeFriendWatchIdentity();
+        return this.#friendWatch.snapshot();
+    }
+
+    friendWatchPersistent(): boolean {
+        this.#observeFriendWatchIdentity();
+        return this.#friendWatchPersistent;
+    }
+
+    async setProductPreferences(value: unknown): Promise<void> {
+        SoulCordSettings.setProductPreferences(value);
+        this.#applyProductPresentation();
+        await this.#synchronizeFeatures();
+    }
+
+    #applyProductPresentation(): void {
+        const appearance = SoulCordSettings.snapshot().productPreferences.appearance;
+        const root = document.documentElement;
+        root.dataset.soulcordMode = appearance.mode;
+        root.dataset.soulcordAccent = appearance.accent;
+        root.dataset.soulcordDensity = appearance.density;
+        root.dataset.soulcordMotion = appearance.motion;
+        root.dataset.soulcordMessageShape = appearance.messageShape;
+    }
+
+    async clearFriendWatch(): Promise<boolean> {
+        const {identity} = this.#observeFriendWatchIdentity();
+        if (!identity.accountId) return false;
+        const identityIsCurrent = () => this.#friendWatchIdentityIsCurrent(identity);
+        try {
+            const result = await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.friendClear(capability, {retentionDays: SoulCordSettings.snapshot().productPreferences.friendWatch.retentionDays}), identityIsCurrent) as {complete?: boolean; persistent?: boolean;};
+            if (result.complete !== true || !identityIsCurrent()) return false;
+            this.#friendWatch.clear();
+            this.#friendWatchPersistent = result.persistent === true;
+            this.#setHealth("friend-watch", {detail: "This account's Friend Watch history is empty. The relationship snapshot remains subscribed until the feature is disabled."});
+            this.emitChange();
+            return true;
+        }
+        catch {return false;}
+    }
+
+    async exportFriendWatch(format: "json" | "csv"): Promise<boolean> {
+        const {identity} = this.#observeFriendWatchIdentity();
+        if (!identity.accountId || !globalThis.crypto?.subtle) return false;
+        const identityIsCurrent = () => this.#friendWatchIdentityIsCurrent(identity);
+        const events = this.#friendWatch.snapshot();
+        const scoped = await Promise.all(events.map(async event => {
+            const subjectKey = event.transition === "reconciled" ? "" : event.subjectKey ?? [...new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${identity.accountId}:${event.subjectId}`)))].map(byte => byte.toString(16).padStart(2, "0")).join("");
+            const {subjectId: _subjectId, subjectKey: _subjectKey, displayLabel: _displayLabel, ...safe} = event;
+            return {...safe, subjectKey};
+        }));
+        if (!identityIsCurrent()) return false;
+        if (format === "csv") {
+            const quote = (value: unknown) => `"${String(value ?? "").replaceAll("\"", "\"\"")}"`;
+            const rows = ["observedAt,subjectKey,transition,label,source,confidence", ...scoped.map(event => [event.observedAt, event.subjectKey, event.transition, event.label, event.source, event.confidence].map(quote).join(","))];
+            this.#download(`soulcord-friend-watch-${new Date().toISOString().slice(0, 10)}.csv`, `${rows.join("\n")}\n`, "text/csv");
+        }
+        else {this.#download(`soulcord-friend-watch-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify({format: "soulcord-friend-watch", version: 1, exportedAt: new Date().toISOString(), limitations: ["Observed relationship-store transitions only", "No cause guess for relationship loss", "No extra Discord requests"], events: scoped}, null, 2)}\n`, "application/json");}
+        return identityIsCurrent();
     }
 
     async exportTimeline(): Promise<TimelineExportOutcome> {
@@ -950,6 +1050,72 @@ class SoulCordRuntimeStore extends Store {
 
     inspectLink(input: string): LinkInspection {
         return inspectLink(input);
+    }
+
+    domainMemoryDecision(input: string): SoulCordDomainMemoryRecord | undefined {
+        return this.#domainMemory.decision(input);
+    }
+
+    inspectDomain(input: string): SoulCordDomainRisk {
+        return inspectSoulCordDomain(input);
+    }
+
+    rememberDomain(input: string, decision: SoulCordDomainDecision, ttlMs = 7 * 24 * 60 * 60 * 1_000): boolean {
+        const record = this.#domainMemory.remember(input, decision, ttlMs);
+        if (!record) return false;
+        JsonStore.set("misc", "soulcordDomainMemory", this.#domainMemory.snapshot());
+        this.emitChange();
+        return true;
+    }
+
+    forgetDomain(host: string): boolean {
+        if (!this.#domainMemory.forget(host)) return false;
+        JsonStore.set("misc", "soulcordDomainMemory", this.#domainMemory.snapshot());
+        this.emitChange();
+        return true;
+    }
+
+    inspectAttachment(input: string, declaredMime?: string): SoulCordAttachmentInspection {
+        return inspectSoulCordAttachment(input, declaredMime);
+    }
+
+    returnLaterItems(): SoulCordReturnLaterItem[] {
+        return this.#returnLater.snapshot();
+    }
+
+    addCurrentViewToReturnLater(label: string, dueAt: number): boolean {
+        const id = `return_${globalThis.crypto?.randomUUID?.().replaceAll("-", "") ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`}`;
+        const item = this.#returnLater.add(id, window.location.href, label, dueAt);
+        if (!item) return false;
+        this.#persistReturnLater();
+        this.emitChange();
+        return true;
+    }
+
+    snoozeReturnLater(id: string, durationMs: number): boolean {
+        if (!this.#returnLater.snooze(id, durationMs)) return false;
+        this.#persistReturnLater();
+        this.emitChange();
+        return true;
+    }
+
+    completeReturnLater(id: string): boolean {
+        if (!this.#returnLater.complete(id)) return false;
+        this.#persistReturnLater();
+        this.emitChange();
+        return true;
+    }
+
+    openReturnLater(id: string): boolean {
+        const item = this.#returnLater.snapshot().find(candidate => candidate.id === id);
+        const route = item ? normalizeSoulCordReturnRoute(item.route) : undefined;
+        if (!route) return false;
+        window.location.assign(`https://discord.com${route}`);
+        return true;
+    }
+
+    #persistReturnLater(): void {
+        JsonStore.set("misc", "soulcordReturnLater", this.#returnLater.snapshot(true));
     }
 
     exportDiagnostics(): void {
@@ -1494,6 +1660,10 @@ class SoulCordRuntimeStore extends Store {
     }
 
     async #synchronizeFeatures(): Promise<void> {
+        this.#applyProductPresentation();
+        // Settings import, setup completion, profile apply, and rollback all converge here.
+        // Reapply presentation so those atomic paths do not leave the saved controls inert
+        // until a restart or a later direct Appearance edit.
         for (const id of FEATURE_IDS) {
             const shouldRun = !this.#recoveryMode || id === "plugin-doctor";
             const enabled = SoulCordSettings.module(id).enabled && shouldRun;
@@ -1525,6 +1695,7 @@ class SoulCordRuntimeStore extends Store {
                 case "stream-shield": this.#startStreamShield(scope); break;
                 case "settings-time-machine": this.#setHealth(id, {detail: `${SoulCordSettings.snapshot().snapshots.length} bounded local snapshot(s); exports contain no secrets.`}); break;
                 case "accessibility-toolkit": this.#startAccessibilityToolkit(scope); break;
+                case "friend-watch": await this.#startFriendWatch(scope); break;
                 case "message-timeline": await this.#startMessageTimeline(scope); break;
             }
             this.#setHealth(id, {
@@ -1678,11 +1849,19 @@ class SoulCordRuntimeStore extends Store {
 
         const unpatch = Patcher.instead("SoulCord~LinkLens", module, key, (thisObject, args, original) => {
             const values = SoulCordSettings.module("link-lens").values;
+            const href = typeof (args[0] as {href?: unknown;} | undefined)?.href === "string" ? (args[0] as {href: string;}).href : "";
+            const memoryEnabled = SoulCordSettings.snapshot().productPreferences.safety.domainMemory === "warn-only";
+            const remembered = memoryEnabled && href ? this.#domainMemory.decision(href) : undefined;
+            const domainRisk = href ? inspectSoulCordDomain(href) : {restricted: false, reasons: []};
             return interceptLinkActivation(thisObject, args as Array<{href?: string;} | Event | undefined>, original, {
                 currentHref: window.location.href,
-                confirmAllExternal: values.confirmAllExternal === true,
+                confirmAllExternal: values.confirmAllExternal === true || domainRisk.restricted || remembered?.decision === "warn" || remembered?.decision === "block",
                 removeTrackers: values.removeTrackers !== false,
-                review: (inspection, onConfirm, onCancel, onFailure) => this.#showLinkReview(lifecycle, inspection, onConfirm, onCancel, onFailure),
+                review: (inspection, onConfirm, onCancel, onFailure) => {
+                    const warnings = [...new Set([...inspection.warnings, ...domainRisk.reasons.map(reason => `Domain check: ${reason}.`)])];
+                    const enriched = {...inspection, warnings, requiresConfirmation: true};
+                    return this.#showLinkReview(lifecycle, enriched, remembered?.decision === "block" ? onCancel : onConfirm, onCancel, onFailure, remembered?.decision === "warn" || remembered?.decision === "block" ? remembered.decision : undefined);
+                },
                 open: destination => window.open(destination, "_blank", "noopener,noreferrer")
             });
         }, {forcePatch: false});
@@ -1691,20 +1870,21 @@ class SoulCordRuntimeStore extends Store {
         this.#setHealth("link-lens", {maturity: "preview", detail: "Native-only external-link activation adapter is attached. Internal Discord navigation is never intercepted; disposable modal and DM acceptance is still pending."});
     }
 
-    #showLinkReview(lifecycle: LinkReviewLifecycle, inspection: LinkInspection, onConfirm: () => void, onCancel: () => void, onFailure: () => void): boolean {
+    #showLinkReview(lifecycle: LinkReviewLifecycle, inspection: LinkInspection, onConfirm: () => void, onCancel: () => void, onFailure: () => void, remembered?: "warn" | "block"): boolean {
         const warnings = inspection.warnings.length
             ? inspection.warnings.map(warning => `• ${warning}`)
             : ["• No local warning rules matched; review is enabled for every external link."];
         const content = [
             `Visible host: **${inspection.host ?? "invalid"}**`,
             ...(inspection.finalHost && inspection.finalHost !== inspection.host ? [`Declared final host: **${inspection.finalHost}**`] : []),
+            ...(remembered ? [`Domain Memory: **${remembered === "block" ? "blocked" : "warn on access"}** for this scheme and exact host.`] : []),
             ...warnings
         ];
         const result = lifecycle.open({
-            open: callbacks => Modals.showNativeConfirmationModal("Review external link", content, {
+            open: callbacks => Modals.showNativeConfirmationModal(remembered === "block" ? "Blocked external link" : "Review external link", content, {
                 key: "soulcord-link-review",
-                confirmText: "Open reviewed link",
-                cancelText: "Cancel",
+                confirmText: remembered === "block" ? "Keep blocked" : "Open reviewed link",
+                cancelText: "Close",
                 onConfirm: callbacks.onConfirm,
                 onCancel: callbacks.onCancel,
                 onClose: callbacks.onClose,
@@ -1780,6 +1960,164 @@ class SoulCordRuntimeStore extends Store {
         if (width >= 480) rules.push(`[class*="messagesWrapper"] [class*="messageListItem"] {max-width: ${Math.min(width, 1_200)}px;}`);
         if (values.readingRuler === true) rules.push(`[class*="messageListItem"]:focus-within, [class*="messageListItem"]:hover {background: color-mix(in srgb, #4ecdc4 10%, transparent) !important;}`);
         scope.style("soulcord-accessibility-style", rules.join("\n"));
+    }
+
+    async #startFriendWatch(scope: SoulCordDisposalScope): Promise<void> {
+        type RelationshipStore = {
+            getRelationships?: () => unknown;
+            addChangeListener?: (callback: () => void) => void;
+            removeChangeListener?: (callback: () => void) => void;
+        };
+        type UserStore = {
+            getCurrentUser?: () => {id?: string;} | undefined;
+            getUser?: (id: string) => {globalName?: string; username?: string;} | undefined;
+            addChangeListener?: (callback: () => void) => void;
+            removeChangeListener?: (callback: () => void) => void;
+        };
+        type RelationshipActions = Record<"removeRelationship" | "blockUser" | "unblockUser", (...args: unknown[]) => unknown>;
+        const relationships = getStore("RelationshipStore") as RelationshipStore | undefined;
+        const users = getStore("UserStore") as UserStore | undefined;
+        if (typeof relationships?.getRelationships !== "function" || typeof relationships.addChangeListener !== "function" || typeof relationships.removeChangeListener !== "function") throw new Error("FriendWatchRelationshipStoreUnavailable");
+        const getRelationships = relationships.getRelationships.bind(relationships);
+
+        let accountId: string | undefined;
+        let accountGeneration = -1;
+        let previous = normalizeDiscordRelationships(getRelationships());
+        let ready = false;
+        let work = Promise.resolve();
+        let noticeState: SoulCordFriendWatchNoticeState = {};
+        let ownerActions: SoulCordOwnerRelationshipAction[] = [];
+        const policy = () => SoulCordSettings.snapshot().productPreferences.friendWatch;
+        const actionModule = getByKeys<RelationshipActions>(["removeRelationship", "blockUser", "unblockUser"]);
+        if (actionModule) {
+            const recordOwnerAction = (action: SoulCordOwnerRelationshipAction["action"], args: unknown[]) => {
+                const subjectId = args.find(value => typeof value === "string" && /^\d{1,32}$/.test(value)) as string | undefined;
+                if (!subjectId) return;
+                const observedAt = Date.now();
+                ownerActions = [...ownerActions.filter(entry => observedAt - entry.observedAt <= 5_000), {subjectId, action, observedAt}].slice(-32);
+            };
+            for (const [key, action] of [["removeRelationship", "remove"], ["blockUser", "block"], ["unblockUser", "unblock"]] as const) {
+                const unpatch = Patcher.before("SoulCord~FriendWatch", actionModule, key, (_this, args) => recordOwnerAction(action, args), {forcePatch: false});
+                if (unpatch) scope.own(unpatch, "patch");
+            }
+        }
+        const activate = async (nextAccountId: string | undefined) => {
+            const {identity} = this.#observeFriendWatchIdentity(nextAccountId);
+            accountId = identity.accountId;
+            accountGeneration = identity.generation;
+            const targetIdentity: TimelineAccountIdentity = {accountId, generation: accountGeneration};
+            const identityIsCurrent = () => this.#friendWatchIdentityIsCurrent(targetIdentity);
+            ready = false;
+            noticeState = {};
+            previous = normalizeDiscordRelationships(getRelationships());
+            this.#friendWatch.clear();
+            this.#friendWatchPersistent = false;
+            if (!accountId) {
+                await this.#releaseTimelineAccount();
+                this.#setHealth("friend-watch", {maturity: "preview", detail: "Logged out; relationship memory is empty."});
+                this.emitChange();
+                return;
+            }
+            const target = accountId;
+            try {
+                const opened = await this.#withTimelineAccount(target, async capability => ({
+                    status: await TIMELINE_IPC.friendStatus(capability) as {persistent?: boolean;},
+                    read: await TIMELINE_IPC.friendRead(capability, {retentionDays: policy().retentionDays}) as {events?: unknown[]; persistent?: boolean; complete?: boolean;}
+                }), identityIsCurrent);
+                if (scope.disposed || !identityIsCurrent()) return;
+                const loaded = Array.isArray(opened.read.events) ? opened.read.events as SoulCordRelationshipEvent[] : [];
+                this.#friendWatch.append(loaded, policy().retentionDays);
+                const observedAt = Date.now();
+                const random = globalThis.crypto?.randomUUID?.().replaceAll("-", "").slice(0, 16) ?? Math.random().toString(36).slice(2, 18);
+                const reconciliation: SoulCordRelationshipEvent = {
+                    eventId: `reconcile_${observedAt.toString(36)}_${random}`,
+                    observedAt,
+                    transition: "reconciled",
+                    label: "Session relationship snapshot reconciled",
+                    source: "reconciliation",
+                    confidence: "unknown",
+                    schemaVersion: 1
+                };
+                this.#friendWatch.append([reconciliation], policy().retentionDays);
+                const persisted = await this.#withTimelineAccount(target, capability => TIMELINE_IPC.friendAppend(capability, {events: [reconciliation], retentionDays: policy().retentionDays}), identityIsCurrent) as {persistent?: boolean;};
+                if (scope.disposed || !identityIsCurrent()) return;
+                this.#friendWatchPersistent = opened.status.persistent === true && opened.read.persistent === true && persisted.persistent === true;
+                ready = true;
+                this.#setHealth("friend-watch", {maturity: opened.read.complete === true ? "ready" : "preview", detail: `${this.#friendWatch.snapshot().length} account-isolated relationship event(s) loaded. ${this.#friendWatchPersistent ? "AES-256-GCM persistence is active through safeStorage." : "Session-only fallback is active."}`});
+            }
+            catch (error) {
+                if (scope.disposed || !identityIsCurrent()) return;
+                ready = true;
+                this.#friendWatchPersistent = false;
+                this.#setHealth("friend-watch", {maturity: "preview", detail: `Encrypted history failed closed (${errorName(error)}); this account remains session-only.`});
+            }
+            this.emitChange();
+        };
+        const reconcile = async () => {
+            const currentAccountId = normalizeTimelineAccountId(users?.getCurrentUser?.()?.id);
+            const observed = this.#observeFriendWatchIdentity(currentAccountId);
+            if (observed.identity.accountId !== accountId || observed.identity.generation !== accountGeneration || !ready) {await activate(currentAccountId); return;}
+            if (!accountId || scope.disposed) return;
+            const activeIdentity: TimelineAccountIdentity = {accountId, generation: accountGeneration};
+            const identityIsCurrent = () => this.#friendWatchIdentityIsCurrent(activeIdentity);
+            const next = normalizeDiscordRelationships(getRelationships());
+            const now = Date.now();
+            ownerActions = ownerActions.filter(action => now - action.observedAt <= 5_000);
+            const rawEvents = reconcileSoulCordRelationships(previous, next, ownerActions, now);
+            previous = next;
+            const settings = policy();
+            const events = rawEvents.map(event => {
+                if (!settings.includeDisplaySnapshot) return event;
+                const user = event.subjectId ? users?.getUser?.(event.subjectId) : undefined;
+                const displayLabel = user?.globalName ?? user?.username;
+                return displayLabel ? {...event, displayLabel: displayLabel.slice(0, 160)} : event;
+            });
+            if (events.length) {
+                this.#friendWatch.append(events, settings.retentionDays);
+                try {
+                    const result = await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.friendAppend(capability, {events, retentionDays: settings.retentionDays}), identityIsCurrent) as {persistent?: boolean;};
+                    if (!identityIsCurrent()) return;
+                    this.#friendWatchPersistent = result.persistent === true;
+                }
+                catch {
+                    this.#observeFriendWatchIdentity();
+                    if (identityIsCurrent()) this.#friendWatchPersistent = false;
+                    else return;
+                }
+                if (!identityIsCurrent()) return;
+                const noticePlan = planSoulCordFriendWatchNotices(settings.digest, events, this.#friendWatch.snapshot(), noticeState);
+                noticeState = noticePlan.state;
+                for (const message of noticePlan.messages) Toasts.info(message, {timeout: 7_500});
+            }
+            if (!identityIsCurrent()) return;
+            const count = this.#friendWatch.snapshot().length;
+            this.#setHealth("friend-watch", {maturity: this.#friendWatchPersistent ? "ready" : "preview", detail: `${count} relationship event(s). Zero REST or Gateway requests are initiated; ${this.#friendWatchPersistent ? "encrypted account-isolated persistence is active" : "session-only fallback is active"}.`});
+            this.emitChange();
+        };
+        const schedule = () => {
+            const run = () => reconcile();
+            work = work.then(run, run).then(() => undefined, error => {
+                this.#friendWatchPersistent = false;
+                this.#setHealth("friend-watch", {maturity: "preview", detail: `Relationship reconciliation failed closed (${errorName(error)}); the next bounded reconciliation may retry.`});
+                this.emitChange();
+            });
+        };
+        relationships.addChangeListener(schedule);
+        scope.own(() => relationships.removeChangeListener?.(schedule), "listener");
+        scope.listen(window, "online", schedule);
+        scope.listen(document, "visibilitychange", () => {if (document.visibilityState === "visible") schedule();});
+        if (typeof users?.addChangeListener === "function" && typeof users.removeChangeListener === "function") {
+            const onAccountChange = () => {
+                const {changed} = this.#observeFriendWatchIdentity(normalizeTimelineAccountId(users.getCurrentUser?.()?.id));
+                if (changed) this.emitChange();
+                schedule();
+            };
+            users.addChangeListener(onAccountChange);
+            scope.own(() => users.removeChangeListener?.(onAccountChange), "listener");
+        }
+        scope.interval(schedule, 60_000);
+        scope.own(() => {ready = false; noticeState = {}; ownerActions = []; previous = new Map<string, SoulCordRelationshipSnapshot>(); this.#friendWatch.clear(); this.#friendWatchPersistent = false; this.#friendWatchIdentity = undefined; accountId = undefined; accountGeneration = -1;}, "cache");
+        await activate(normalizeTimelineAccountId(users?.getCurrentUser?.()?.id));
     }
 
     async #startMessageTimeline(scope: SoulCordDisposalScope): Promise<void> {

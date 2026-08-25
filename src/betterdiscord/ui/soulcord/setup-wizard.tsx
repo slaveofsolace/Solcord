@@ -9,12 +9,13 @@ import type {SoulCordAddonProvider, SoulCordSettingsDocument, SoulCordSetupDraft
 import {SOULCORD_CATALOG_SNAPSHOT, SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
 import {communityAddonIsEnabled, isSoulCordBuiltInAddon, resolveCommunityAddon, type SoulCordProviderMigrationPlan} from "@common/soulcord/builtin-addons";
 import {recommendedSoulCordSetupAddons, resolveSoulCordSetupPlan, type SoulCordSetupCandidateDecision} from "@common/soulcord/setup-catalog";
+import {SOULCORD_SETUP_STEPS, type SoulCordAppearancePreferences, type SoulCordSafetyPreferences, type SoulCordSetupPreset} from "@common/soulcord/product";
 
 import {SOULCORD_ADDON_GROUPS} from "./catalog";
 
 const {useMemo, useState} = React;
 
-const WIZARD_STEPS = ["Current state", "Theme", "Ready tools", "Review"] as const;
+const WIZARD_STEPS = SOULCORD_SETUP_STEPS;
 
 const THEME_NOTES: Record<SoulCordThemeId, string> = {
     "soulcord-default": "Recommended · Graphite, warm text, oxidized teal, and ember reserved for warnings.",
@@ -26,11 +27,13 @@ const THEME_NOTES: Record<SoulCordThemeId, string> = {
 
 function draftFrom(document: SoulCordSettingsDocument): SoulCordSetupDraft {
     return {
+        preset: "recommended",
         selectedTheme: document.selectedTheme,
         selectedAddons: SOULCORD_PRESET_ADDONS.filter(name => document.curatedAddons[name]?.selected),
         addonModes: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, document.curatedAddons[name]?.mode ?? (name === "SplitLargeMessages" ? "guarded" : "default")])),
         addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, document.curatedAddons[name]?.provider ?? "prefer-community"])),
-        timelinePolicy: document.timelinePolicy
+        timelinePolicy: document.timelinePolicy,
+        productPreferences: document.productPreferences
     };
 }
 
@@ -62,6 +65,15 @@ function StepNavigation({step, setStep, disabled}: {step: number; setStep(step: 
     </ol>;
 }
 
+function WelcomeStep() {
+    return <div className="soulcord-wizard-body soulcord-welcome-step">
+        <p className="soulcord-eyebrow">Private desktop client mod</p>
+        <h3>Make Discord yours without hiding the tradeoffs.</h3>
+        <p>SoulCord is an independent BetterDiscord-based client modification. Discord does not officially support client mods, so updates can break adapters and optional capabilities may carry platform risk.</p>
+        <p className="soulcord-callout"><strong>Your account stays yours.</strong> SoulCord does not extract tokens, automate your account, send messages, join calls, open Activities, or enable private history without a separate choice.</p>
+    </div>;
+}
+
 function CurrentStateStep() {
     const state = useStateFromStores([PluginManager, ThemeManager], () => ({
         installed: SOULCORD_RUNTIME_ADDONS.filter(addon => Boolean(PluginManager.resolveAddon(addon.fileName))).length,
@@ -71,7 +83,7 @@ function CurrentStateStep() {
     }));
     return <div className="soulcord-wizard-body">
         <h3>Protected starting point</h3>
-        <p>No setting or file changes while you move through these four steps. Finish records a rollback transaction, validates the ready adapters, and stops without overwriting a different local file.</p>
+        <p>Only your current setup step is saved while you move through setup. Apply records a rollback transaction, validates ready adapters, and stops without overwriting a different local file.</p>
         <dl className="soulcord-facts">
             <div><dt>Catalog files already present</dt><dd>{state.installed}</dd></div>
             <div><dt>Catalog features currently enabled</dt><dd>{state.enabled}</dd></div>
@@ -83,10 +95,31 @@ function CurrentStateStep() {
     </div>;
 }
 
-function ThemeStep({value, onChange}: {value: SoulCordThemeId; onChange(value: SoulCordThemeId): void;}) {
+function PresetStep({value, onChange}: {value: SoulCordSetupPreset; onChange(value: SoulCordSetupPreset): void;}) {
+    const options: Array<{id: SoulCordSetupPreset; title: string; detail: string;}> = [
+        {id: "recommended", title: "Recommended", detail: "Activity safety, recovery, and the three accepted local interaction tools."},
+        {id: "minimal", title: "Minimal", detail: "Core compatibility and recovery only; no daily interaction tools."},
+        {id: "power-user", title: "Power User", detail: "Requests the complete catalog set for review. Held tools stay uninstalled."}
+    ];
     return <div className="soulcord-wizard-body">
-        <h3>Base theme</h3>
-        <p>Each theme is self-contained and uses the same compact layout, visible keyboard focus, and reduced-motion rules. Choosing here does not activate it.</p>
+        <h3>Choose a starting point</h3>
+        <p>This changes only the draft. You will see every resulting change before Apply.</p>
+        <div className="soulcord-choice-stack">{options.map(option => <label key={option.id} className="soulcord-choice-row"><input type="radio" name="soulcord-preset" checked={value === option.id} onChange={() => onChange(option.id)} /><span><strong>{option.title}</strong><small>{option.detail}</small></span></label>)}</div>
+    </div>;
+}
+
+function ThemeStep({value, appearance, onChange, onAppearance}: {value: SoulCordThemeId; appearance: SoulCordAppearancePreferences; onChange(value: SoulCordThemeId): void; onAppearance(value: SoulCordAppearancePreferences): void;}) {
+    return <div className="soulcord-wizard-body">
+        <h3>Appearance</h3>
+        <p>Choose the product mode first. The compatibility theme files remain available during migration, but one semantic token layer owns SoulCord controls.</p>
+        <div className="soulcord-appearance-controls">
+            <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SoulCordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="soul-dark">Soul Dark</option><option value="soul-light">Soul Light</option><option value="oled">OLED</option></select></label>
+            <label>Accent<select value={appearance.accent} onChange={event => onAppearance({...appearance, accent: event.currentTarget.value as SoulCordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
+            <label>Density<select value={appearance.density} onChange={event => onAppearance({...appearance, density: event.currentTarget.value as SoulCordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+            <label>Motion<select value={appearance.motion} onChange={event => onAppearance({...appearance, motion: event.currentTarget.value as SoulCordAppearancePreferences["motion"]})}><option value="follow-system">Follow Discord / Windows</option><option value="full">Full</option><option value="reduced">Reduced</option></select></label>
+        </div>
+        <div className={`soulcord-live-preview soulcord-mode-${appearance.mode} soulcord-accent-${appearance.accent}`} aria-label="SoulCord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>No remote font, image, or style import.</small></div>
+        <details className="soulcord-legacy-themes"><summary>Compatibility theme package</summary>
         <div className="soulcord-theme-options">
             {SOULCORD_THEMES.map(theme => <label key={theme.id} className={`soulcord-theme-option soulcord-theme-${theme.id}`}>
                 <input type="radio" name="soulcord-theme" value={theme.id} checked={value === theme.id} onChange={() => onChange(theme.id)} />
@@ -94,7 +127,43 @@ function ThemeStep({value, onChange}: {value: SoulCordThemeId; onChange(value: S
                 <span><strong>{theme.name}</strong><small>{THEME_NOTES[theme.id]}</small></span>
             </label>)}
         </div>
-        <p className="soulcord-callout">Only the selected SoulCord theme is enabled. Existing third-party themes are not modified; possible visual overlap is shown in the final review.</p>
+        </details>
+        <p className="soulcord-callout">Only the selected SoulCord package is enabled. Existing third-party themes are not modified; possible visual overlap is shown in the final review.</p>
+    </div>;
+}
+
+function SafetyStep({value, onChange}: {value: SoulCordSafetyPreferences; onChange(value: SoulCordSafetyPreferences): void;}) {
+    return <div className="soulcord-wizard-body">
+        <h3>Safety defaults</h3>
+        <p>These are local review tools. None silently opens, downloads, uploads, or navigates.</p>
+        <div className="soulcord-choice-stack">
+            <label className="soulcord-choice-row"><input type="checkbox" checked={value.linkLens} onChange={event => onChange({...value, linkLens: event.currentTarget.checked})} /><span><strong>Link Lens</strong><small>Review verified external-link activations in a native modal. Internal Discord routes remain untouched.</small></span></label>
+            <label className="soulcord-choice-row"><input type="checkbox" checked={value.attachmentGuard} onChange={event => onChange({...value, attachmentGuard: event.currentTarget.checked})} /><span><strong>Attachment Guard</strong><small>Require a local review before opening high-risk file types.</small></span></label>
+            <label className="soulcord-choice-row"><input type="checkbox" checked={value.privacyModeReady} onChange={event => onChange({...value, privacyModeReady: event.currentTarget.checked})} /><span><strong>Privacy Mode ready</strong><small>Keep the reversible redaction action available, but off.</small></span></label>
+        </div>
+    </div>;
+}
+
+function PrivateHistoryStep({draft, onChange}: {draft: SoulCordSetupDraft; onChange(value: SoulCordSetupDraft): void;}) {
+    const friendWatch = draft.productPreferences.friendWatch;
+    return <div className="soulcord-wizard-body">
+        <h3>Private local history</h3>
+        <p>Both capabilities are off until you choose them. They observe only data already loaded by this running client and never make extra Discord requests.</p>
+        <div className="soulcord-choice-stack">
+            <label className="soulcord-choice-row"><input type="checkbox" checked={friendWatch.enabled} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, enabled: event.currentTarget.checked}}})} /><span><strong>Friend Watch</strong><small>Relationship transitions only; 30-day encrypted local retention by default. It never guesses who blocked you.</small></span></label>
+            <label className="soulcord-choice-row"><input type="checkbox" disabled={!friendWatch.enabled} checked={friendWatch.includeDisplaySnapshot} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, includeDisplaySnapshot: event.currentTarget.checked}}})} /><span><strong>Keep display snapshots</strong><small>Store the already-loaded display name inside the encrypted account history. Turn this off to keep only an account-scoped subject key.</small></span></label>
+            <label className="soulcord-choice-row"><span><strong>Local notifications</strong><small>Daily shows one bounded in-app summary after a new transition; per-event is capped to prevent notification storms.</small></span><select aria-label="Friend Watch notification mode" disabled={!friendWatch.enabled} value={friendWatch.digest} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, digest: event.currentTarget.value as typeof friendWatch.digest}}})}><option value="off">Off</option><option value="daily">Daily in-app</option><option value="per-event">Per event, local</option></select></label>
+            <label className="soulcord-choice-row"><input type="checkbox" checked={draft.timelinePolicy.enabled} onChange={event => onChange({...draft, timelinePolicy: {...draft.timelinePolicy, enabled: event.currentTarget.checked}})} /><span><strong>Message Timeline</strong><small>DM-only, text-only, seven days by default. This stores observed message edits/deletes locally.</small></span></label>
+        </div>
+        <p className="soulcord-callout">On Windows, safeStorage uses the signed-in Windows account boundary. It does not promise protection from every process already running as you. Without secure storage, persistence falls back to session-only.</p>
+    </div>;
+}
+
+function ApplyStep({draft}: {draft: SoulCordSetupDraft;}) {
+    return <div className="soulcord-wizard-body">
+        <h3>Ready to apply</h3>
+        <p>Apply revalidates the reviewed bytes and provider identities, captures a rollback point, performs the transaction, and verifies the result. A failure aborts or rolls back without overwriting a different local file.</p>
+        <dl className="soulcord-facts"><div><dt>Preset</dt><dd>{draft.preset}</dd></div><div><dt>Friend Watch</dt><dd>{draft.productPreferences.friendWatch.enabled ? "consented" : "off"}</dd></div><div><dt>Message Timeline</dt><dd>{draft.timelinePolicy.enabled ? "consented" : "off"}</dd></div><div><dt>Power Lab</dt><dd>off</dd></div></dl>
     </div>;
 }
 
@@ -130,16 +199,16 @@ function AddonStep({draft, toggle, selectRecommended, setProvider}: {draft: Soul
                             <span className="soulcord-review-chip">{decision.statusLabel}</span>
                         </label>
                         {showProviderChoice && <fieldset className="soulcord-provider-choice">
-                            <legend>Choose one provider for <code>{communityFile}</code></legend>
+                        <legend>Provider for <code>{communityFile}</code></legend>
                             <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-community"} onChange={() => setProvider(addon.name, "prefer-community")} /><span><strong>Keep community addon (recommended)</strong><small>The owner file stays enabled and SoulCord’s matching built-in stands down.</small></span></label>
-                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-soulcord"} onChange={() => setProvider(addon.name, "prefer-soulcord")} /><span><strong>Use SoulCord built-in</strong><small>Finish disables this exact community file. Rollback restores its exact prior state.</small></span></label>
+                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-soulcord"} onChange={() => setProvider(addon.name, "prefer-soulcord")} /><span><strong>Use SoulCord built-in</strong><small>Apply and verify disables this exact community file. Rollback restores its exact prior state.</small></span></label>
                         </fieldset>}
                     </React.Fragment>;
                 })}
             </fieldset>)}
         </div>
         <div className="soulcord-catalog-handoff">
-            <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOULCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is preview-only.</strong> Its modal/clipboard adapter remains implemented, but Finish will not enable it until a disposable Discord acceptance receipt exists.</p></div>
+            <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOULCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is preview-only.</strong> Its modal/clipboard adapter remains implemented, but Apply and verify will not enable it until a disposable Discord acceptance receipt exists.</p></div>
             <button type="button" className="soulcord-action" onClick={revealCatalog}>Review pending</button>
         </div>
     </div>;
@@ -182,28 +251,28 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SoulCordSetupDraft; 
             <div><dt>Ready tools selected</dt><dd>{plan.executableAddons.length} of {readyCount}</dd></div>
             <div><dt>Pending catalog requests</dt><dd>{plan.skipped.length} · no download</dd></div>
             <div><dt>Dependencies</dt><dd>{dependencies.map(item => item.name).join(", ") || "none"}</dd></div>
-            <div><dt>Theme enabled after Finish</dt><dd>{selectedTheme.name}</dd></div>
+            <div><dt>Theme enabled after Apply and verify</dt><dd>{selectedTheme.name}</dd></div>
             <div><dt>Bundled theme files in transaction</dt><dd>{SOULCORD_RUNTIME_THEMES.length}</dd></div>
             <div><dt>Maximum staged disk use</dt><dd>{bytesLabel(diskBytes)}</dd></div>
         </dl>
         <div className="soulcord-review-columns">
-            <div><strong>Settings diff</strong>{changes.length ? <ul>{changes.map(change => <li key={change}>{change}</li>)}</ul> : <p>No stored-selection difference; Finish still verifies and tests selected files.</p>}</div>
+            <div><strong>Settings diff</strong>{changes.length ? <ul>{changes.map(change => <li key={change}>{change}</li>)}</ul> : <p>No stored-selection difference; Apply and verify still checks selected files.</p>}</div>
             <div><strong>Known conflict checks</strong>{conflicts.length ? <ul>{conflicts.map(conflict => <li key={conflict}>{conflict}</li>)}</ul> : <p>No catalog-declared conflicts in this selection.</p>}</div>
         </div>
         {plan.skipped.length > 0 && <p className="soulcord-callout"><strong>Pending stays pending:</strong> {plan.skipped.length} saved catalog request(s) remain uninstalled. Review their individual evidence and status in the catalog after setup.</p>}
         {activeSkipped.length > 0 && <p className="soulcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SoulCordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. SoulCord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
-        {activeUnrequested.length > 0 && <p className="soulcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Finish leaves them unchanged and outside this transaction.</p>}
+        {activeUnrequested.length > 0 && <p className="soulcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
         {communityKeeps.length > 0 && <p className="soulcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName})`).join(", ")} remain enabled and owner-managed. Matching SoulCord built-ins stand down.</p>}
-        {communitySwitches.length > 0 && <p className="soulcord-callout soulcord-callout-danger"><strong>Explicit provider migration:</strong> Finish disables only {communitySwitches.map(counterpart => counterpart.fileName).join(", ")} and starts the matching SoulCord built-in(s). The rollback journal stores every exact prior plugin state.</p>}
-        {liveThemeState.activeThirdPartyNames.length > 0 && <p className="soulcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Finish does not modify third-party themes.</p>}
-        <div className="soulcord-callout"><strong>Exact theme transaction</strong><p>All five bundled files are included and hash-verified; missing files are staged: {SOULCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Finish {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
-        <p className="soulcord-callout">Finish applies only the accepted ready set, leaves pending catalog choices uninstalled, verifies accepted hashes and dependencies, activates one SoulCord theme, and keeps a one-click rollback record.</p>
+        {communitySwitches.length > 0 && <p className="soulcord-callout soulcord-callout-danger"><strong>Explicit provider migration:</strong> Apply and verify disables only {communitySwitches.map(counterpart => counterpart.fileName).join(", ")} and starts the matching SoulCord built-in(s). The rollback journal stores every exact prior plugin state.</p>}
+        {liveThemeState.activeThirdPartyNames.length > 0 && <p className="soulcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
+        <div className="soulcord-callout"><strong>Exact theme transaction</strong><p>All five bundled files are included and hash-verified; missing files are staged: {SOULCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
+        <p className="soulcord-callout">Apply and verify changes only the accepted ready set, leaves pending catalog choices uninstalled, verifies accepted hashes and dependencies, activates one SoulCord theme, and keeps a one-click rollback record.</p>
     </div>;
 }
 
 export default function SetupWizard() {
     const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
-    const [step, setStep] = useState(0);
+    const [step, setStepState] = useState(document.onboarding.lastStep);
     const [draft, setDraft] = useState<SoulCordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState("");
@@ -211,6 +280,16 @@ export default function SetupWizard() {
     const providerMigrationPlan = useStateFromStores([PluginManager], () => SoulCordRuntime.prepareProviderMigrationPlan(draft), [draft]);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setProvider = (name: string, provider: SoulCordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
+    const setStep = (next: number) => {
+        const bounded = Math.min(WIZARD_STEPS.length - 1, Math.max(0, next));
+        setStepState(bounded);
+        SoulCordSettings.setOnboardingStep(bounded);
+    };
+    const setPreset = (preset: SoulCordSetupPreset) => setDraft(current => ({
+        ...current,
+        preset,
+        selectedAddons: preset === "minimal" ? [] : preset === "power-user" ? [...SOULCORD_PRESET_ADDONS] : recommendedSoulCordSetupAddons()
+    }));
     const selectRecommended = () => setDraft(current => {
         const recommended = recommendedSoulCordSetupAddons();
         const readyNames = new Set(resolveSoulCordSetupPlan(SOULCORD_PRESET_ADDONS, current.addonModes).decisions.filter(isReadyDecision).map(decision => decision.name));
@@ -248,14 +327,18 @@ export default function SetupWizard() {
     };
 
     return <section className="soulcord-wizard" aria-labelledby="soulcord-setup-title" aria-busy={busy}>
-        <div className="soulcord-wizard-title"><div><p className="soulcord-eyebrow">First-run setup · every change previewed</p><h2 id="soulcord-setup-title">SoulCord first-run setup</h2><p>Four bounded steps: inspect current state, select a theme and ready tools, then review the exact transaction. The catalog stays separate.</p></div><span>{step + 1} / {WIZARD_STEPS.length}</span></div>
+        <div className="soulcord-wizard-title"><div><p className="soulcord-eyebrow">Resumable setup · only your place is saved before Apply</p><h2 id="soulcord-setup-title">Set up SoulCord</h2><p>Eight short steps cover risk, rollback, appearance, safety, optional private history, and the exact transaction.</p></div><span>{step + 1} / {WIZARD_STEPS.length}</span></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
-        {step === 0 && <CurrentStateStep />}
-        {step === 1 && <ThemeStep value={draft.selectedTheme} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} />}
-        {step === 2 && <AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} />}
-        {step === 3 && <ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} />}
+        {step === 0 && <WelcomeStep />}
+        {step === 1 && <CurrentStateStep />}
+        {step === 2 && <PresetStep value={draft.preset} onChange={setPreset} />}
+        {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
+        {step === 4 && <SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} />}
+        {step === 5 && <PrivateHistoryStep draft={draft} onChange={setDraft} />}
+        {step === 6 && <><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} /><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /></>}
+        {step === 7 && <ApplyStep draft={draft} />}
         <div className="soulcord-wizard-footer">
-            <div className="soulcord-actions"><button type="button" className="soulcord-action" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => setStep(Math.min(WIZARD_STEPS.length - 1, step + 1))}>Next</button> : <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Checking files…" : "Install accepted now"}</button>}<button type="button" className="soulcord-action" disabled={busy} onClick={skip}>Skip without changes</button></div>
+            <div className="soulcord-actions"><button type="button" className="soulcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Verifying and applying…" : "Apply and verify"}</button>}<button type="button" className="soulcord-action" disabled={busy} onClick={skip}>Skip without changes</button></div>
             {status && <p role="status" aria-live="polite" className="soulcord-setup-status">{status}</p>}
         </div>
     </section>;

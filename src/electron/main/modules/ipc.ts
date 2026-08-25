@@ -6,6 +6,7 @@ import Editor from "./editor";
 import BetterDiscord from "./betterdiscord";
 import ActivityCompatibility from "./activity-compatibility";
 import SoulCordTimeline from "./soulcord-timeline";
+import SoulCordFriendWatch from "./soulcord-friend-watch";
 import SoulCordSetup from "./soulcord-setup";
 import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
 import type {DialogOptions} from "@common/types/ipc";
@@ -259,6 +260,26 @@ const clearTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
     const authorized = timelineAuthority.authorize(event.sender.id, request);
     return SoulCordTimeline.clear(authorized.accountScope, authorized.request);
 };
+const getFriendWatchStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordFriendWatch.status();
+};
+const appendFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordFriendWatch.append(authorized.accountScope, authorized.request);
+};
+const readFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordFriendWatch.read(authorized.accountScope, authorized.request);
+};
+const clearFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordFriendWatch.clear(authorized.accountScope, authorized.request);
+};
 const applySoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSoulCordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
@@ -330,6 +351,10 @@ export default class IPCMain {
             ipc.handle(IPCEvents.TIMELINE_APPEND, appendTimeline);
             ipc.handle(IPCEvents.TIMELINE_READ, readTimeline);
             ipc.handle(IPCEvents.TIMELINE_CLEAR, clearTimeline);
+            ipc.handle(IPCEvents.FRIEND_WATCH_STATUS, getFriendWatchStatus);
+            ipc.handle(IPCEvents.FRIEND_WATCH_APPEND, appendFriendWatch);
+            ipc.handle(IPCEvents.FRIEND_WATCH_READ, readFriendWatch);
+            ipc.handle(IPCEvents.FRIEND_WATCH_CLEAR, clearFriendWatch);
             ipc.handle(IPCEvents.SETUP_APPLY, applySoulCordSetup);
             ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSoulCordSetup);

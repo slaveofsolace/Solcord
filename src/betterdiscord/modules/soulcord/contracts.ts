@@ -4,6 +4,19 @@ export type SoulCordThemeId = "soulcord-default" | "obsidian-thread" | "carbon-e
 export type SoulCordAddonMode = "default" | "guarded" | "native";
 export type SoulCordAddonProvider = "prefer-community" | "prefer-soulcord";
 export type SoulCordOnboardingStatus = "pending" | "complete" | "skipped";
+export type {
+    SoulCordAccent,
+    SoulCordAppearancePreferences,
+    SoulCordDensity,
+    SoulCordFriendWatchPolicy,
+    SoulCordMessageShape,
+    SoulCordMotion,
+    SoulCordProductPreferences,
+    SoulCordSafetyPreferences,
+    SoulCordSetupPreset,
+    SoulCordVisualMode,
+    SoulCordWorkspaceId
+} from "@common/soulcord/product";
 export type SoulCordModuleId =
     | "activity-bridge"
     | "plugin-doctor"
@@ -15,6 +28,7 @@ export type SoulCordModuleId =
     | "stream-shield"
     | "settings-time-machine"
     | "accessibility-toolkit"
+    | "friend-watch"
     | "message-timeline";
 
 export interface SoulCordCuratedAddonState {
@@ -45,8 +59,9 @@ export interface SoulCordPowerConsent {
 export type SoulCordPowerExperimentId = "voice-anchor" | "expression-relay" | "decor" | "fake-deafen" | "fake-mute" | "stream-rtc";
 
 export interface SoulCordOnboardingState {
-    version: 1;
+    version: 2;
     status: SoulCordOnboardingStatus;
+    lastStep: number;
     completedAt?: number;
 }
 
@@ -90,6 +105,7 @@ export interface SoulCordSnapshot {
     selectedTheme: SoulCordThemeId;
     curatedAddons: Record<string, SoulCordCuratedAddonState>;
     timelinePolicy: SoulCordTimelinePolicy;
+    productPreferences: import("@common/soulcord/product").SoulCordProductPreferences;
     activePlugins?: string[];
     activeThemes?: string[];
 }
@@ -102,12 +118,13 @@ export interface SoulCordUpdateEntry {
 }
 
 export interface SoulCordSettingsDocument {
-    schemaVersion: 3;
+    schemaVersion: 4;
     consentVersion: 2;
     onboarding: SoulCordOnboardingState;
     selectedTheme: SoulCordThemeId;
     curatedAddons: Record<string, SoulCordCuratedAddonState>;
     timelinePolicy: SoulCordTimelinePolicy;
+    productPreferences: import("@common/soulcord/product").SoulCordProductPreferences;
     powerLab: Record<SoulCordPowerExperimentId, SoulCordPowerConsent>;
     migrationProvenance: SoulCordMigrationRecord[];
     setupTransactions: SoulCordSetupTransactionRecord[];
@@ -118,11 +135,13 @@ export interface SoulCordSettingsDocument {
 }
 
 export interface SoulCordSetupDraft {
+    preset: import("@common/soulcord/product").SoulCordSetupPreset;
     selectedTheme: SoulCordThemeId;
     selectedAddons: string[];
     addonModes: Record<string, SoulCordAddonMode>;
     addonProviders: Record<string, SoulCordAddonProvider>;
     timelinePolicy: SoulCordTimelinePolicy;
+    productPreferences: import("@common/soulcord/product").SoulCordProductPreferences;
 }
 
 export interface SoulCordModuleHealth {

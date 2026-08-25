@@ -14,13 +14,15 @@ SoulCord is an owner-controlled Discord desktop power fork built on BetterDiscor
 
 V1 exists for one concrete reason: Discord Activities that work in browser and vanilla desktop must not be broken merely because the client is injected. SoulCord replaces BetterDiscord’s all-or-nothing late-preload behavior with a narrow policy: one later absolute preload may be accepted only when canonical path checks prove it belongs to the same Discord package. The unrestricted compatibility override remains off.
 
-This branch is a review build, not a published release. Automated and synthetic gates can prove policy behavior, cleanup, and build integrity. The owner’s post-install Codenames and second-Activity checks remain the live acceptance gate.
+This branch is a review build, not a published release. The owner accepted Activities on the previous installed generation; every newly packaged artifact still requires a disposable regression pass before live replacement. Automated checks do not substitute for owner-visible UI acceptance.
 
 ## What changes
 
 | Area | V1 behavior | Maturity |
 | --- | --- | --- |
-| Activity Bridge | Same-package preload policy, bounded sanitized ledger, diagnostics | Ready; owner Activity check pending |
+| Control Center | Five responsive workspaces, semantic appearance modes, eight-step resumable setup, and bounded Session Pulse | Source-implemented; new Human Eye captures pending |
+| Launch identity | `SOLcord` resolves to `SOULcord` over Discord's native splash with reduced-motion, timeout, and failure fallbacks | Source-implemented; cold/warm/update frame acceptance pending |
+| Activity Bridge | Same-package preload policy, bounded sanitized ledger, diagnostics | Mechanism accepted on the prior live generation; exact new artifact regression pending |
 | Plugin Doctor | Failure history, three-in-ten-minute quarantine, explicit retry | Ready |
 | Drift Radar | Structural probes plus adapter-local fail-closed lookup checks | Preview |
 | Performance HUD | Bounded renderer lag, heap-when-available, and owned-resource samples | Ready |
@@ -35,6 +37,9 @@ This branch is a review build, not a published release. Automated and synthetic 
 | Guarded Split Large Messages | Implemented modal/clipboard preview path; never multi-sends | Preview; not recommended or setup-enabled until a disposable Discord acceptance receipt exists |
 | Setup and catalog | Recommended theme plus four alternatives, three ready clean-room features, optional 36-addon review catalog, immutable-source/hash checks, dependency closure, conflicts, quarantine and rollback | Community candidates and built-in previews remain fail-closed until their individual security/runtime gates pass |
 | Message Timeline | Opt-in observed-message journal, DM-only default, explicit deleted/edited labels, retention/cap controls, AES-256-GCM persistence with a safeStorage-wrapped key | Experimental; media cache unavailable and live acceptance pending |
+| Friend Watch | Opt-in already-loaded relationship reconciliation, encrypted account-isolated history, unknown-cause labels, local export and clear | Source-implemented; disabled by default and disposable runtime pending |
+| Safety and return tools | Expiring exact-host Domain Memory, local Attachment Guard inspection, consolidated Privacy Mode, and internal-route Return Later reminders | Source-implemented; live interception/context adapters remain separately labeled |
+| Windows installer | Stable/PTB/Canary detection, manifest-bound install/verify/repair/update, backup rollback/uninstall, explicit launch | Unsigned internal candidate; signing and lifecycle acceptance pending |
 
 The global `BdApi`, plugin/theme folders, `betterdiscord://` protocol, preload globals, CSS hooks, and existing addon contracts remain unchanged for compatibility. These retained identifiers are documented in [the brand migration ledger](docs/BRAND_MIGRATION_LEDGER.md).
 
@@ -46,7 +51,7 @@ Anti-AFK audio pulses, Fake-Nitro-like expression experiments, Decor/OAuth, stre
 
 ## Privacy and recovery
 
-SoulCord stores settings, profiles, snapshots, quarantine state, and—when enabled—encrypted Message Timeline segments locally in the existing BetterDiscord compatibility data directory. Sanitized diagnostics omit tokens, message content, server names, account identifiers, and absolute local paths. Link inspection and screenshot redaction run locally. No SoulCord service receives data. Timeline persistence fails closed to session-only when Electron secure storage is unavailable.
+SoulCord stores settings, profiles, snapshots, quarantine state, expiring domain decisions, local reminders, and—when enabled—encrypted Message Timeline and Friend Watch records in the existing BetterDiscord compatibility data directory. Sanitized diagnostics omit tokens, message content, server names, account identifiers, and absolute local paths. Link/attachment inspection and screenshot redaction run locally. No SoulCord service receives data. Private-history persistence fails closed to session-only when Electron secure storage is unavailable.
 
 After three interrupted SoulCord renderer starts within ten minutes, startup recovery loads only Plugin Doctor. Quarantined addons are never silently re-enabled. The core updater is intentionally disabled until SoulCord has owner-controlled signed integrity metadata, so an upstream BetterDiscord artifact cannot replace the fork.
 
@@ -65,7 +70,9 @@ bun run typecheck
 bun run dist
 ```
 
-The production artifact is `dist/soulcord.asar`. Windows installation stages that exact file, records its SHA-256, backs up the existing injector and `%APPDATA%\BetterDiscord` data, then copies it to the legacy `betterdiscord.asar` filename expected by the installed injector. SoulCord does not rename or erase the compatibility directory.
+An unsigned framework-dependent installer candidate can be built after `dist` with `bun run installer:candidate -- dist/soulcord.asar <new-output-directory> <40-character-source-commit>`. Its built-in `--self-test` exercises install, exact verification, and rollback only in disposable directories.
+
+The production artifact is `dist/soulcord.asar`. The manual live-install procedure first makes and hashes a broader owner-data backup. The one-click installer candidate itself backs up the existing core ASAR and injector entry files, then copies the verified artifact to the legacy `betterdiscord.asar` filename expected by the installed injector. Neither path renames or erases the `%APPDATA%\BetterDiscord` compatibility directory.
 
 ## Update and upstream strategy
 

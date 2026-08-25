@@ -9,13 +9,14 @@ import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_THEMES} from "../../src/common
 
 let appDataPath = "";
 let encryptionAvailable = true;
+let oversizedWrappedKey = false;
 
 mock.module("electron", () => ({
     app: {getPath: (name: string) => name === "userData" ? path.join(appDataPath, "Discord") : appDataPath},
     net: {fetch: async () => {throw new Error("Unexpected network request in storage security test.");}},
     safeStorage: {
         isEncryptionAvailable: () => encryptionAvailable,
-        encryptString: (value: string) => Buffer.from(`soulcord-test:${value}`, "utf8"),
+        encryptString: (value: string) => oversizedWrappedKey ? Buffer.alloc(9 * 1024, 1) : Buffer.from(`soulcord-test:${value}`, "utf8"),
         decryptString: (value: Buffer) => {
             const decoded = value.toString("utf8");
             if (!decoded.startsWith("soulcord-test:")) throw new Error("Invalid wrapped test key.");
@@ -26,6 +27,7 @@ mock.module("electron", () => ({
 
 const {SoulCordSetupTransactions, validatePinnedSourceUrl} = await import("../../src/electron/main/modules/soulcord-setup");
 const {SoulCordTimelineStorage} = await import("../../src/electron/main/modules/soulcord-timeline");
+const {SoulCordFriendWatchStorage} = await import("../../src/electron/main/modules/soulcord-friend-watch");
 
 const temporaryRoots: string[] = [];
 
@@ -61,6 +63,28 @@ function firstTimelineStore(): string {
     const name = fs.readdirSync(root).find(entry => entry.startsWith("store-"));
     if (!name) throw new Error("Timeline account store was not created.");
     return path.join(root, name);
+}
+
+function firstFriendWatchStore(): string {
+    const root = path.join(appDataPath, "BetterDiscord", "soulcord-friend-watch-v1");
+    const name = fs.readdirSync(root).find(entry => entry.startsWith("store-"));
+    if (!name) throw new Error("Friend Watch account store was not created.");
+    return path.join(root, name);
+}
+
+function friendWatchEvent(overrides: Record<string, unknown> = {}) {
+    return {
+        eventId: "friend_evt_1",
+        subjectId: "123456789",
+        transition: "relationship-ended",
+        observedAt: Date.now(),
+        label: "Relationship ended - cause unavailable",
+        source: "observed-store-transition",
+        confidence: "unknown",
+        displayLabel: "private-profile-sentinel-f99b0a",
+        schemaVersion: 1,
+        ...overrides
+    };
 }
 
 const recoveryTheme = SOULCORD_RUNTIME_THEMES[0];
@@ -126,6 +150,7 @@ async function triggerRecovery(): Promise<void> {
 beforeEach(() => {
     appDataPath = makeAppData();
     encryptionAvailable = true;
+    oversizedWrappedKey = false;
 });
 
 afterEach(() => {
@@ -578,5 +603,136 @@ describe("SoulCord Message Timeline storage security", () => {
         expect(result.remaining).toBe(0);
         expect(fs.existsSync(identity)).toBeTrue();
         expect(fs.existsSync(temporary)).toBeFalse();
+    });
+});
+
+describe("SoulCord Friend Watch storage security", () => {
+    test("persists a subject-free account reconciliation marker", async () => {
+        const storage = new SoulCordFriendWatchStorage();
+        const marker = {eventId: "reconcile_evt_1", observedAt: Date.now(), transition: "reconciled", label: "Session relationship snapshot reconciled", source: "reconciliation", confidence: "unknown", schemaVersion: 1};
+
+        await storage.append("111222333", {events: [marker], retentionDays: 30});
+        const [stored] = (await storage.read("111222333", {retentionDays: 30})).events;
+
+        expect(stored).toMatchObject({eventId: "reconcile_evt_1", transition: "reconciled", source: "reconciliation"});
+        expect(stored?.subjectId).toBeUndefined();
+        expect(stored?.subjectKey).toBeUndefined();
+    });
+
+    test("falls back to account-isolated memory without writing plaintext", async () => {
+        encryptionAvailable = false;
+        const storage = new SoulCordFriendWatchStorage();
+        const appended = await storage.append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+        expect(appended.persistent).toBeFalse();
+        expect((await storage.read("111222333", {retentionDays: 30})).events).toHaveLength(1);
+        expect((await storage.read("444555666", {retentionDays: 30})).events).toHaveLength(0);
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord"))).toBeFalse();
+    });
+
+    test("encrypts account-isolated history and clears only the bound store", async () => {
+        const storage = new SoulCordFriendWatchStorage();
+        expect((await storage.append("111222333", {events: [friendWatchEvent()], retentionDays: 30})).persistent).toBeTrue();
+        const store = firstFriendWatchStore();
+        expect(path.basename(store)).not.toContain("111222333");
+        const serialized = fs.readFileSync(path.join(store, "events.scdb"), "utf8");
+        expect(serialized).not.toContain("private-profile-sentinel-f99b0a");
+        expect(serialized).not.toContain("123456789");
+        const storedEvent = (await storage.read("111222333", {retentionDays: 30})).events[0];
+        expect(storedEvent?.displayLabel).toBe("private-profile-sentinel-f99b0a");
+        expect(storedEvent?.subjectId).toBeUndefined();
+        expect(storedEvent?.subjectKey).toMatch(/^[0-9a-f]{64}$/);
+        expect(await storage.clear("111222333", {retentionDays: 30})).toMatchObject({complete: true});
+        expect(fs.existsSync(store)).toBeFalse();
+    });
+
+    test("binds encrypted key-envelope pairs to the opaque account store", async () => {
+        const writer = new SoulCordFriendWatchStorage();
+        await writer.append("111222333", {events: [friendWatchEvent({eventId: "friend_evt_account_a", displayLabel: "account-a"})], retentionDays: 30});
+        const root = path.dirname(firstFriendWatchStore());
+        const storeA = path.join(root, fs.readdirSync(root).find(entry => entry.startsWith("store-"))!);
+        await writer.append("444555666", {events: [friendWatchEvent({eventId: "friend_evt_account_b", displayLabel: "account-b"})], retentionDays: 30});
+        const storeB = path.join(root, fs.readdirSync(root).filter(entry => entry.startsWith("store-")).find(entry => path.join(root, entry) !== storeA)!);
+        fs.copyFileSync(path.join(storeB, "data.sc-key"), path.join(storeA, "data.sc-key"));
+        fs.copyFileSync(path.join(storeB, "events.scdb"), path.join(storeA, "events.scdb"));
+
+        const swapped = await new SoulCordFriendWatchStorage().read("111222333", {retentionDays: 30});
+
+        expect(swapped).toMatchObject({persistent: false, complete: false, events: []});
+        expect(JSON.stringify(swapped)).not.toContain("account-b");
+    });
+
+    test("rejects renderer account selection and a linked storage root", async () => {
+        const storage = new SoulCordFriendWatchStorage();
+        expect(() => storage.append("111222333", {accountId: "444555666", events: [friendWatchEvent()], retentionDays: 30})).toThrow("cannot select an account");
+
+        const betterDiscord = path.join(appDataPath, "BetterDiscord");
+        const outside = makeAppData();
+        fs.mkdirSync(betterDiscord, {recursive: true});
+        fs.symlinkSync(outside, path.join(betterDiscord, "soulcord-friend-watch-v1"), "junction");
+        const fallback = await new SoulCordFriendWatchStorage().append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+        expect(fallback.persistent).toBeFalse();
+        expect(fs.readdirSync(outside)).toHaveLength(0);
+    });
+
+    test("recovers one interrupted replacement and removes recognized temporary residue", async () => {
+        const writer = new SoulCordFriendWatchStorage();
+        await writer.append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+        const store = firstFriendWatchStore();
+        const target = path.join(store, "events.scdb");
+        const backup = path.join(store, "events.scdb.1234.abcdef12.old");
+        const temporary = path.join(store, "events.scdb.1234.1234abcd.tmp");
+        fs.renameSync(target, backup);
+        fs.writeFileSync(temporary, "interrupted-new-envelope", "utf8");
+
+        const recovered = await new SoulCordFriendWatchStorage().read("111222333", {retentionDays: 30});
+
+        expect(recovered).toMatchObject({persistent: true, complete: true});
+        expect(recovered.events[0]?.displayLabel).toBe("private-profile-sentinel-f99b0a");
+        expect(fs.existsSync(target)).toBeTrue();
+        expect(fs.existsSync(backup)).toBeFalse();
+        expect(fs.existsSync(temporary)).toBeFalse();
+    });
+
+    test("authenticates a replacement before discarding the known-good backup", async () => {
+        const writer = new SoulCordFriendWatchStorage();
+        await writer.append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+        const store = firstFriendWatchStore();
+        const target = path.join(store, "events.scdb");
+        const backup = path.join(store, "events.scdb.1234.abcdef12.old");
+        fs.copyFileSync(target, backup, fs.constants.COPYFILE_EXCL);
+        fs.writeFileSync(target, "corrupt-replacement", "utf8");
+
+        const recovered = await new SoulCordFriendWatchStorage().read("111222333", {retentionDays: 30});
+
+        expect(recovered).toMatchObject({persistent: true, complete: true});
+        expect(recovered.events[0]?.eventId).toBe("friend_evt_1");
+        expect(fs.existsSync(backup)).toBeFalse();
+        expect(fs.readFileSync(target, "utf8")).not.toBe("corrupt-replacement");
+    });
+
+    test("preserves and reports an unexpected account-store artifact during clear", async () => {
+        const storage = new SoulCordFriendWatchStorage();
+        await storage.append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+        const store = firstFriendWatchStore();
+        const unexpected = path.join(store, "owner-residue.bin");
+        fs.writeFileSync(unexpected, "preserve", "utf8");
+
+        const result = await storage.clear("111222333", {retentionDays: 30});
+
+        expect(result.complete).toBeFalse();
+        expect(result.persistent).toBeFalse();
+        expect(fs.readFileSync(unexpected, "utf8")).toBe("preserve");
+    });
+
+    test("fails closed to memory when secure storage returns an oversized wrapped key", async () => {
+        oversizedWrappedKey = true;
+        const storage = new SoulCordFriendWatchStorage();
+
+        const appended = await storage.append("111222333", {events: [friendWatchEvent()], retentionDays: 30});
+
+        expect(appended.persistent).toBeFalse();
+        expect(appended.events).toHaveLength(1);
+        expect(storage.status().sessionOnly).toBeTrue();
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "soulcord-friend-watch-v1", "identity.sc-key"))).toBeFalse();
     });
 });

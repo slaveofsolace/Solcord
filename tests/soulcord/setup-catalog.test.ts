@@ -43,7 +43,7 @@ describe("SoulCord beginner-first setup catalog", () => {
             willApply: false
         }));
         expect(guarded.skipped[0].reason).toContain("modal/clipboard");
-        expect(guarded.skipped[0].reason).toContain("Finish will not enable it");
+        expect(guarded.skipped[0].reason).toContain("Apply and verify will not enable it");
         expect(native.executableAddons).toEqual([]);
         expect(native.skipped[0]).toEqual(expect.objectContaining({name: "SplitLargeMessages", availability: "dependency-held"}));
         expect(native.skipped[0].reason).toContain("BDFDB");

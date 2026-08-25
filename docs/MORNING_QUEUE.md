@@ -1,12 +1,12 @@
 # Owner follow-up queue
 
-SoulCord V1 has passed its source, deterministic build, security, reversible backup, live-install, and no-send UI gates. The owner separately confirmed Discord Activities are working and waived a repeated Activity launch. Exact commit, artifact, backup, process, and rollback identities belong in the local machine-readable install evidence rather than this repository document.
+The previously installed pre-productization `e1b40dff` generation passed its source, deterministic build, security, reversible backup, live-install, and no-send UI gates. The owner separately confirmed Discord Activities are working and waived a repeated Activity launch. The current productization wave is not installed and must carry its own exact-commit artifact, security, disposable-runtime, and Human Eye evidence. Exact commit, artifact, backup, process, and rollback identities belong in the local machine-readable install evidence rather than this repository document.
 
 SoulCord is currently left at its fail-closed setup boundary: the first-run transaction has not been finished, the owner’s existing plugin/theme states remain unchanged, Message Timeline is off, Link Lens is off, and Power Lab is off.
 
 ## 1. Review setup when ready
 
-Open **User Settings → SoulCord Suite** and review all four setup steps. The wizard must show the complete file/state diff before **Finish**. Skipping changes nothing. Do not accept a candidate merely because it is present in the catalog; `NOT STAGED`, `HOLD`, and owner-managed community files are intentionally not claimed live.
+After a newly packaged productization build passes disposable acceptance, open **User Settings → SoulCord Suite** and review all eight resumable setup steps. The wizard must show the complete file/state diff before **Apply and verify**. Before Apply, only the resumable step marker changes; skipping leaves addon files, enabled states, themes, private-history policy, and account state untouched. Do not accept a candidate merely because it is present in the catalog; `NOT STAGED`, `HOLD`, and owner-managed community files are intentionally not claimed live.
 
 The 36-entry aggressive catalog is a reviewed choice set, not an enabled-addon count. Only candidates with exact staged bytes, dependencies, and runtime evidence may become installable. A failing addon is quarantined and reported rather than counted as working.
 
@@ -32,9 +32,10 @@ Close Discord before running the manifest-recorded core rollback script. The rol
 
 ## Current nonclaims
 
-- The setup **Finish** transaction and setup rollback were not run in the owner profile.
+- The setup **Apply and verify** transaction and setup rollback were not run in the owner profile.
 - No SoulCord theme was activated in the owner profile during unattended acceptance.
 - Link Lens’s native external-link modal remains unexercised because Link Lens stayed off.
 - Message Timeline persistent Windows behavior remains runtime-pending and no existing MessageLogger data was inspected or imported.
 - No message, upload, notification-read action, recording, voice join, stream, OAuth mutation, or Activity launch was performed by Codex.
 - The owner’s existing plugins and themes were preserved; presence or enabled state is not a SoulCord compatibility certification.
+- The `e1b40dff` live generation does not include the productization wave. Do not replace it until the exact new ASAR and unsigned installer candidate pass source, disposable runtime, and Human Eye gates.

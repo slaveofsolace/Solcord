@@ -57,7 +57,8 @@ describe("SoulCord settings schema", () => {
             profiles: defaultProfiles().slice(0, 1),
             selectedTheme: document.selectedTheme,
             curatedAddons: structuredClone(document.curatedAddons),
-            timelinePolicy: structuredClone(document.timelinePolicy)
+            timelinePolicy: structuredClone(document.timelinePolicy),
+            productPreferences: structuredClone(document.productPreferences)
         });
 
         const restored = restoreSnapshotState(document, "known");
@@ -77,7 +78,7 @@ describe("SoulCord settings schema", () => {
 
     test("ordinary settings exports omit Timeline channel identifiers and normalize their scope", () => {
         const document = normalizeSoulCordDocument({
-            schemaVersion: 3,
+            schemaVersion: 4,
             timelinePolicy: {enabled: true, scope: "selected-channels", serverChannelIds: ["123456789012345678"], retention: "30-days", content: "text-only"},
             modules: {"message-timeline": {enabled: true, values: {scope: "selected-channels", retention: "30-days", content: "text-only"}}}
         });
@@ -107,7 +108,7 @@ describe("SoulCord settings schema", () => {
         const imported = parseSoulCordImport(JSON.stringify({
             format: "soulcord-settings",
             version: 2,
-            schemaVersion: 3,
+            schemaVersion: 4,
             curatedAddons: {
                 DoNotTrack: {
                     selected: true,
@@ -127,12 +128,12 @@ describe("SoulCord settings schema", () => {
 
     test("previews every imported theme, addon, Timeline, and Power Lab mutation without exposing channel identifiers", () => {
         const current = normalizeSoulCordDocument({
-            schemaVersion: 3,
+            schemaVersion: 4,
             powerLab: {decor: {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 5}},
             timelinePolicy: {enabled: false, scope: "dm-only", serverChannelIds: [], retention: "7-days", content: "text-only"}
         });
         const candidate = normalizeSoulCordDocument({
-            schemaVersion: 3,
+            schemaVersion: 4,
             selectedTheme: "paper-signal",
             curatedAddons: {DoNotTrack: {selected: false, enabled: true, mode: "native", reviewedSha256: "a".repeat(64), quarantineReason: "held"}},
             timelinePolicy: {enabled: true, scope: "selected-channels", serverChannelIds: ["987654321098765432"], retention: "90-days", content: "encrypted-media", mediaBudgetBytes: 5_368_709_120}
@@ -215,24 +216,24 @@ describe("SoulCord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates schema v2 to v3 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v4 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSoulCordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(3);
+        expect(document.schemaVersion).toBe(4);
         expect(document.consentVersion).toBe(2);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 3}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 4}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
         const document = normalizeSoulCordDocument({
-            schemaVersion: 3,
+            schemaVersion: 4,
             powerLab: {
                 "voice-anchor": {enabled: true, acknowledgementVersion: 1, acknowledgedAt: 1},
                 "decor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 2}
@@ -302,7 +303,7 @@ describe("SoulCord settings schema", () => {
             timelinePolicy: document.timelinePolicy
         };
 
-        expect(document.onboarding).toEqual({version: 1, status: "skipped", completedAt: 10});
+        expect(document.onboarding).toEqual({version: 2, status: "skipped", lastStep: 0, completedAt: 10});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
         expect(enablePreview).toHaveLength(3);
         expect(enablePreview.filter(change => change.endsWith(": stage, verify, and enable individually"))).toHaveLength(0);

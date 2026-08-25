@@ -102,6 +102,35 @@ describe("SoulCord renderer security contracts", () => {
         expect(exportTimeline.lastIndexOf("identityIsCurrent")).toBeLessThan(exportTimeline.indexOf("this.#download"));
     });
 
+    test("clears Friend Watch synchronously across account changes and revalidates clear and export effects", () => {
+        const runtime = source("src/betterdiscord/modules/soulcord/runtime.ts");
+        expect(runtime).toContain("#friendWatchAccountGuard = new TimelineAccountGuard()");
+        expect(runtime).toContain("const {changed} = this.#observeFriendWatchIdentity");
+        expect(runtime).toContain("if (changed) this.emitChange()");
+
+        const observe = runtime.slice(runtime.indexOf("#observeFriendWatchIdentity"), runtime.indexOf("#friendWatchIdentityIsCurrent"));
+        expect(observe.indexOf("this.#friendWatch.clear()")).toBeLessThan(observe.indexOf("return {identity, changed}"));
+
+        const clear = runtime.slice(runtime.indexOf("async clearFriendWatch"), runtime.indexOf("async exportFriendWatch"));
+        expect(clear).toContain("identityIsCurrent");
+        expect(clear.indexOf("identityIsCurrent")).toBeLessThan(clear.indexOf("TIMELINE_IPC.friendClear"));
+        expect(clear.lastIndexOf("identityIsCurrent")).toBeLessThan(clear.indexOf("this.#friendWatch.clear()"));
+
+        const exportFriend = runtime.slice(runtime.indexOf("async exportFriendWatch"), runtime.indexOf("async exportTimeline"));
+        expect(exportFriend).toContain("identityIsCurrent");
+        expect(exportFriend.lastIndexOf("identityIsCurrent")).toBeGreaterThan(exportFriend.indexOf("this.#download"));
+
+        const startFriend = runtime.slice(runtime.indexOf("async #startFriendWatch"), runtime.indexOf("async #startMessageTimeline"));
+        expect(startFriend).toContain("type RelationshipActions = Record<\"removeRelationship\" | \"blockUser\" | \"unblockUser\"");
+        expect(startFriend).toContain("getByKeys<RelationshipActions>");
+        expect(startFriend).toContain("Patcher.before(\"SoulCord~FriendWatch\"");
+        expect(startFriend).toContain("scope.own(unpatch, \"patch\")");
+        expect(startFriend).toContain("scope.listen(window, \"online\", schedule)");
+        expect(startFriend).toContain("scope.listen(document, \"visibilitychange\"");
+        expect(startFriend).toContain("planSoulCordFriendWatchNotices");
+        expect(startFriend).not.toContain("fetch(");
+    });
+
     test("surfaces partial Timeline reads and incomplete retention instead of claiming success", () => {
         const runtime = source("src/betterdiscord/modules/soulcord/runtime.ts");
         expect(runtime).toContain("storageReadComplete = opened.loaded.status === \"complete\"");
@@ -184,6 +213,8 @@ describe("SoulCord renderer security contracts", () => {
         expect(runtime).toContain("releaseRouteTimer = scope.own(() => globalThis.clearInterval(routeTimer), \"interval\")");
         expect(runtime).toContain("if (window.location.href !== previousHref) release()");
         expect(runtime).toContain("Modals.ModalActions?.closeModal(modalKey)");
+        expect(runtime).toContain("productPreferences.safety.domainMemory === \"warn-only\"");
+        expect(runtime).toContain("remembered?.decision === \"block\" ? onCancel : onConfirm");
     });
 
     test("keeps clear and setup rollback claims conditional on complete typed results", () => {
@@ -209,7 +240,7 @@ describe("SoulCord renderer security contracts", () => {
     test("separates code maturity, running status, and the bounded profile payload", () => {
         const runtime = source("src/betterdiscord/modules/soulcord/runtime.ts");
         const panel = source("src/betterdiscord/ui/soulcord/panel.tsx");
-        expect(panel).toContain("the separate status label shows whether it is running");
+        expect(panel).toContain("Ready means an implemented adapter passed its current startup validation");
         expect(panel).not.toContain("Ready modules are connected to Discord now");
         expect(panel).toContain("Profiles save SoulCord module settings");
         expect(panel).toContain("They do not capture Timeline policy or curated-addon choices");

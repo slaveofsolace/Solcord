@@ -116,6 +116,22 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.TIMELINE_CLEAR, this.#timelineRequest(capability, request));
     }
 
+    getFriendWatchStatus(capability: string) {
+        return invokePrivate(IPCEvents.FRIEND_WATCH_STATUS, {capability});
+    }
+
+    appendFriendWatch(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.FRIEND_WATCH_APPEND, this.#timelineRequest(capability, request));
+    }
+
+    readFriendWatch(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.FRIEND_WATCH_READ, this.#timelineRequest(capability, request));
+    }
+
+    clearFriendWatch(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.FRIEND_WATCH_CLEAR, this.#timelineRequest(capability, request));
+    }
+
     applySoulCordSetup(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.SETUP_APPLY, this.#privateRequest(capability, request));
     }

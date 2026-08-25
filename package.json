@@ -22,6 +22,7 @@
         "lint-css:soulcord": "stylelint src/betterdiscord/styles/index.css src/betterdiscord/styles/soulcord.css",
         "test": "bun test tests/",
         "dist": "bun run build:production && bun scripts/pack.ts",
+        "installer:candidate": "bun scripts/build-soulcord-installer.cjs",
         "api": "bun run --bun jsdoc -X -r src/betterdiscord/api/ > dist/jsdoc-ast.json",
         "translations": "bun -r dotenv/config scripts/translations.ts",
         "circulars": "bun run --bun dpdm -T --no-warning --no-tree src/betterdiscord/index.ts",

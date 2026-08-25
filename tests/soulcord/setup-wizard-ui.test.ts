@@ -9,17 +9,19 @@ const REPOSITORY_ROOT = resolve(import.meta.dir, "../..");
 const WIZARD_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/setup-wizard.tsx"), "utf8");
 const WIZARD_CSS = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styles/soulcord.css"), "utf8");
 const CATALOG_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/catalog.ts"), "utf8");
+const PRODUCT_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/common/soulcord/product.ts"), "utf8");
 
 function stepLabels(): string[] {
-    const declaration = WIZARD_SOURCE.match(/const WIZARD_STEPS = \[([^\]]+)] as const;/)?.[1];
+    const declaration = PRODUCT_SOURCE.match(/SOULCORD_SETUP_STEPS = Object\.freeze\(\[([^\]]+)] as const\)/s)?.[1];
     if (!declaration) throw new Error("SoulCord wizard step declaration is missing.");
     return [...declaration.matchAll(/"([^"]+)"/g)].map(match => match[1]);
 }
 
 describe("SoulCord beginner-first setup UI", () => {
-    test("uses four bounded steps without mandatory Timeline or Power Lab pages", () => {
-        expect(stepLabels()).toEqual(["Current state", "Theme", "Ready tools", "Review"]);
-        expect(WIZARD_SOURCE).not.toContain("function OutgoingTimelineStep");
+    test("uses eight resumable steps with separate private-history consent and no Power Lab page", () => {
+        expect(stepLabels()).toEqual(["Welcome", "Preflight", "Preset", "Appearance", "Safety", "Private history", "Review", "Apply"]);
+        expect(WIZARD_SOURCE).toContain("function PrivateHistoryStep");
+        expect(WIZARD_SOURCE).toContain("SoulCordSettings.setOnboardingStep(bounded)");
         expect(WIZARD_SOURCE).not.toContain("function PowerLabStep");
         expect(WIZARD_SOURCE).not.toContain("SOULCORD_POWER_LAB");
         expect(WIZARD_SOURCE).not.toContain("Request all 36");
@@ -27,7 +29,7 @@ describe("SoulCord beginner-first setup UI", () => {
     });
 
     test("keys responsive layout to the actual settings content container", () => {
-        expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size; width: min(1080px, 58vw); min-width: 0");
+        expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 900px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 520px)");
@@ -39,11 +41,13 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("const pendingDecisions = useMemo");
         expect(WIZARD_SOURCE).toContain("Review pending tools separately");
         expect(WIZARD_SOURCE).toContain("Review pending");
-        expect(WIZARD_SOURCE).toContain("Install accepted now");
+        expect(WIZARD_SOURCE).toContain("Apply and verify");
         expect(WIZARD_SOURCE).toContain(".soulcord-catalog-table");
         expect(WIZARD_SOURCE).toContain("leaves pending catalog choices uninstalled");
         expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is preview-only.");
-        expect(WIZARD_SOURCE).toContain("Finish will not enable it until a disposable Discord acceptance receipt exists.");
+        expect(WIZARD_SOURCE).toContain("Apply and verify will not enable it until a disposable Discord acceptance receipt exists.");
+        expect(WIZARD_SOURCE).toContain("Keep display snapshots");
+        expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
         expect(WIZARD_SOURCE).not.toContain("addonModes: {...current.addonModes, SplitLargeMessages: \"guarded\"}");
     });
 
@@ -59,7 +63,7 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("showProviderChoice = selected.has(addon.name) && Boolean(communityFile) && isSoulCordBuiltInAddon");
         expect(WIZARD_SOURCE).toContain("Keep community addon (recommended)");
         expect(WIZARD_SOURCE).toContain("Use SoulCord built-in");
-        expect(WIZARD_SOURCE).toContain("Finish disables this exact community file. Rollback restores its exact prior state.");
+        expect(WIZARD_SOURCE).toContain("Apply and verify disables this exact community file. Rollback restores its exact prior state.");
         expect(WIZARD_SOURCE).toContain("SoulCordRuntime.prepareProviderMigrationPlan(draft)");
         expect(WIZARD_SOURCE).toContain("SoulCordRuntime.prepareProviderMigrationPlan(draft), [draft]");
         expect(WIZARD_SOURCE).toContain("SoulCordRuntime.finishSetup(draft, providerMigrationPlan)");

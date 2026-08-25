@@ -63,7 +63,7 @@ function decisionFor(candidate: (typeof SOULCORD_RUNTIME_ADDONS)[number], select
     if (guardedSplitterPreview) {
         availability = "runtime-pending";
         statusLabel = "preview · SoulCord built-in";
-        reason = "The guarded modal/clipboard adapter is implemented without a community file, but disposable Discord acceptance is still pending. Finish will not enable it.";
+        reason = "The guarded modal/clipboard adapter is implemented without a community file, but disposable Discord acceptance is still pending. Apply and verify will not enable it.";
     }
     else if (builtIn) {
         availability = "built-in";

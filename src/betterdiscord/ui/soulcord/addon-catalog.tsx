@@ -7,6 +7,7 @@ import SoulCordSettings from "@modules/soulcord/store";
 import PluginDoctor from "@modules/soulcord/doctor";
 import {SOULCORD_CATALOG_INDEX, SOULCORD_CATALOG_SNAPSHOT, SOULCORD_RUNTIME_ADDONS} from "@common/soulcord/addon-catalog.generated";
 import {isSoulCordBuiltInAddon, resolveCommunityAddon} from "@common/soulcord/builtin-addons";
+import {inferSoulCordPermissionCard, type SoulCordPermissionCard} from "@common/soulcord/product";
 
 import {SOULCORD_ADDON_GROUPS, SOULCORD_ADDON_PRESENTATION} from "./catalog";
 
@@ -14,6 +15,18 @@ const {useMemo, useState} = React;
 
 function formatBytes(bytes: number): string {
     return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+}
+
+function PermissionCard({permissions}: {permissions: SoulCordPermissionCard;}) {
+    const labels = [
+        permissions.network && "Network",
+        permissions.filesystem && "Files",
+        permissions.patching && "Discord patches",
+        permissions.messageAccess !== "none" && `Messages: ${permissions.messageAccess}`,
+        permissions.accountContext && "Account context",
+        permissions.localStorage && "Local storage"
+    ].filter(Boolean);
+    return <small className="soulcord-permission-card" aria-label="Conservative static capability signals">Capability signals: {labels.length ? labels.join(" · ") : "none found in the reviewed snapshot"}. A signal is not permission to run.</small>;
 }
 
 export function CuratedAddonSet() {
@@ -31,6 +44,7 @@ export function CuratedAddonSet() {
                 const configured = settings.curatedAddons[candidate.name];
                 const builtIn = isSoulCordBuiltInAddon(candidate.name, configured?.mode);
                 const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
+                const catalog = SOULCORD_CATALOG_INDEX.find(record => record.type === "plugin" && record.name === candidate.name);
                 return {
                     ...candidate,
                     configured,
@@ -39,6 +53,7 @@ export function CuratedAddonSet() {
                     enabled: builtIn ? configured?.enabled === true : Boolean(addon && PluginManager.isEnabled(addon.filename)),
                     communityEnabled: Boolean(addon && PluginManager.isEnabled(addon.filename)),
                     adapter: adapterStatus[candidate.name],
+                    permissions: catalog ? inferSoulCordPermissionCard(catalog) : undefined,
                     quarantine: configured?.quarantineReason || quarantines.get(candidate.name)?.quarantineReason || quarantines.get(candidate.fileName)?.quarantineReason,
                     integrity: integrity.records.find(record => record.kind === "addon" && record.name === candidate.name)
                 };
@@ -74,7 +89,7 @@ export function CuratedAddonSet() {
                                     ? "not staged"
                                     : `${addon.integrity?.status ?? "unavailable"} · held`;
                         return <div className="soulcord-curated-row" key={addon.name}>
-                            <div><div className="soulcord-module-name"><strong>{presentation.label}</strong><span className="soulcord-maturity">{addon.installed ? addon.builtIn ? usingCommunity ? "community provider" : "SoulCord built-in" : `local ${addon.version}` : "not staged"}</span><span className="soulcord-review-chip">{usingCommunity ? "owner-managed community" : addon.builtIn ? "clean-room built-in" : addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()}</span><span className={`soulcord-status ${usingCommunity || addon.integrity?.status === "match" || (addon.builtIn && addon.integrity?.status === "missing") ? "soulcord-status-active" : addon.integrity?.status === "missing" ? "soulcord-status-stopped" : "soulcord-status-quarantined"}`}>{integrityLabel}</span>{addon.adapter?.conflict && <span className="soulcord-status soulcord-status-quarantined">provider conflict</span>}{addon.quarantine && <span className="soulcord-status soulcord-status-quarantined">quarantined</span>}</div><p>{presentation.summary}</p>{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{usingCommunity && <small>The enabled community file remains owner-managed; SoulCord does not certify or claim it.</small>}{addon.adapter?.conflict && <small className="soulcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.builtIn && !addon.installable && <small className="soulcord-error">Owner-enabled local state is preserved, but SoulCord has not accepted this candidate and will not re-enable it.</small>}{addon.quarantine && <small className="soulcord-error">{addon.quarantine}</small>}</div>
+                            <div><div className="soulcord-module-name"><strong>{presentation.label}</strong><span className="soulcord-maturity">{addon.installed ? addon.builtIn ? usingCommunity ? "community provider" : "SoulCord built-in" : `local ${addon.version}` : "not staged"}</span><span className="soulcord-review-chip">{usingCommunity ? "owner-managed community" : addon.builtIn ? "clean-room built-in" : addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()}</span><span className={`soulcord-status ${usingCommunity || addon.integrity?.status === "match" || (addon.builtIn && addon.integrity?.status === "missing") ? "soulcord-status-active" : addon.integrity?.status === "missing" ? "soulcord-status-stopped" : "soulcord-status-quarantined"}`}>{integrityLabel}</span>{addon.adapter?.conflict && <span className="soulcord-status soulcord-status-quarantined">provider conflict</span>}{addon.quarantine && <span className="soulcord-status soulcord-status-quarantined">quarantined</span>}</div><p>{presentation.summary}</p>{addon.permissions && <PermissionCard permissions={addon.permissions} />}{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{usingCommunity && <small>The enabled community file remains owner-managed; SoulCord does not certify or claim it.</small>}{addon.adapter?.conflict && <small className="soulcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.builtIn && !addon.installable && <small className="soulcord-error">Owner-enabled local state is preserved, but SoulCord has not accepted this candidate and will not re-enable it.</small>}{addon.quarantine && <small className="soulcord-error">{addon.quarantine}</small>}</div>
                             <label className="soulcord-toggle"><input type="checkbox" checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={event => void toggle(addon.name, event.currentTarget.checked)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
                         </div>;
                     })}

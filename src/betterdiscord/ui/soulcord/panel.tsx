@@ -12,6 +12,7 @@ import SetupWizard from "./setup-wizard";
 import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOULCORD_POWER_LAB} from "./catalog";
+import {prioritizeSoulCordPulse, SOULCORD_WORKSPACES, type SoulCordAppearancePreferences, type SoulCordProductPreferences, type SoulCordWorkspaceId} from "@common/soulcord/product";
 
 const {useRef, useState} = React;
 
@@ -234,15 +235,12 @@ function ProfilesAndHistory() {
     </Section>;
 }
 
-function PrivacyControls() {
+function StreamShieldControls() {
     const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
-    const performance = document.modules["performance-hud"].values;
     const shield = document.modules["stream-shield"].values;
-    const accessibility = document.modules["accessibility-toolkit"].values;
     const setting = (id: SoulCordModuleId, key: string, value: unknown) => void SoulCordRuntime.setValue(id, key, value);
-    return <Section title="Live controls" summary="Every control is local and reversible. No control sends a message, joins a call, starts a stream, uploads a file, or changes account state.">
+    return <Section title="Privacy Mode" summary="Preview or apply reversible local redaction before you share a screen. This does not start a stream, upload a file, or change account state.">
         <div className="soulcord-control-grid">
-            <label><input type="checkbox" checked={performance.showOverlay === true} onChange={event => setting("performance-hud", "showOverlay", event.currentTarget.checked)} /> Performance overlay</label>
             <label><input type="checkbox" checked={shield.previewActive === true} onChange={event => setting("stream-shield", "previewActive", event.currentTarget.checked)} /> Stream Shield preview</label>
             <label><input type="checkbox" checked={shield.manualActive === true} onChange={event => setting("stream-shield", "manualActive", event.currentTarget.checked)} /> Stream Shield manual state</label>
             <label><input type="checkbox" checked={shield.redactGuilds === true} onChange={event => setting("stream-shield", "redactGuilds", event.currentTarget.checked)} /> Redact guild identity</label>
@@ -251,21 +249,44 @@ function PrivacyControls() {
             <label><input type="checkbox" checked={shield.redactNotifications === true} onChange={event => setting("stream-shield", "redactNotifications", event.currentTarget.checked)} /> Redact notifications</label>
             <label><input type="checkbox" checked={shield.redactNotes === true} onChange={event => setting("stream-shield", "redactNotes", event.currentTarget.checked)} /> Redact local notes</label>
             <label><input type="checkbox" checked={shield.redactAccount === true} onChange={event => setting("stream-shield", "redactAccount", event.currentTarget.checked)} /> Redact account area</label>
-            <label><input type="checkbox" checked={accessibility.reducedMotion === true} onChange={event => setting("accessibility-toolkit", "reducedMotion", event.currentTarget.checked)} /> Reduced motion</label>
-            <label><input type="checkbox" checked={accessibility.roleContrast === true} onChange={event => setting("accessibility-toolkit", "roleContrast", event.currentTarget.checked)} /> Role contrast aid</label>
-            <label><input type="checkbox" checked={accessibility.readingRuler === true} onChange={event => setting("accessibility-toolkit", "readingRuler", event.currentTarget.checked)} /> Reading ruler</label>
+        </div>
+        <p className="soulcord-key-hint"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> toggles Privacy Mode when Stream Shield is enabled.</p>
+    </Section>;
+}
+
+function AccessibilityControls() {
+    const accessibility = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().modules["accessibility-toolkit"].values);
+    const setting = (key: string, value: unknown) => void SoulCordRuntime.setValue("accessibility-toolkit", key, value);
+    return <Section title="Accessibility" summary="Local focus, motion, contrast, and reading-width controls use SoulCord's reversible accessibility adapter.">
+        <div className="soulcord-control-grid">
+            <label><input type="checkbox" checked={accessibility.reducedMotion === true} onChange={event => setting("reducedMotion", event.currentTarget.checked)} /> Reduced motion</label>
+            <label><input type="checkbox" checked={accessibility.roleContrast === true} onChange={event => setting("roleContrast", event.currentTarget.checked)} /> Role contrast aid</label>
+            <label><input type="checkbox" checked={accessibility.readingRuler === true} onChange={event => setting("readingRuler", event.currentTarget.checked)} /> Reading ruler</label>
             <label className="soulcord-range-control">Reading width
-                <input type="range" min="0" max="1200" step="40" value={Number(accessibility.readingWidth) || 0} aria-label="Reading width in pixels; zero uses Discord default" onChange={event => setting("accessibility-toolkit", "readingWidth", Number(event.currentTarget.value))} />
+                <input type="range" min="0" max="1200" step="40" value={Number(accessibility.readingWidth) || 0} aria-label="Reading width in pixels; zero uses Discord default" onChange={event => setting("readingWidth", Number(event.currentTarget.value))} />
                 <output>{Number(accessibility.readingWidth) ? `${accessibility.readingWidth} px` : "Discord default"}</output>
             </label>
         </div>
-        <p className="soulcord-key-hint"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> opens Command Deck. <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> toggles Stream Shield when enabled.</p>
+    </Section>;
+}
+
+function PerformanceControls() {
+    const values = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().modules["performance-hud"].values);
+    return <Section title="Performance HUD" summary="Bounded local samples report observed SoulCord startup, memory, event-loop, and owned-resource measurements without claiming to optimize Discord.">
+        <label><input type="checkbox" checked={values.showOverlay === true} onChange={event => void SoulCordRuntime.setValue("performance-hud", "showOverlay", event.currentTarget.checked)} /> Show the local performance overlay</label>
+        <p className="soulcord-key-hint"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> opens Command Deck.</p>
     </Section>;
 }
 
 function LinkWorkbench() {
     const [input, setInput] = useState("");
     const [inspection, setInspection] = useState<LinkInspection>();
+    const [memoryRevision, setMemoryRevision] = useState(0);
+    const remembered = inspection?.valid ? SoulCordRuntime.domainMemoryDecision(input) : undefined;
+    const domainRisk = inspection?.valid ? SoulCordRuntime.inspectDomain(input) : undefined;
+    const remember = (decision: "allow" | "warn" | "block") => {
+        if (SoulCordRuntime.rememberDomain(input, decision)) setMemoryRevision(memoryRevision + 1);
+    };
     return <Section title="Link Lens" summary="Paste a link for a local inspection of the visible host, declared redirect target, tracking parameters, confusable-domain signals, and Discord invite code.">
         <div className="soulcord-inline-field">
             <input type="url" value={input} placeholder="https://example.com/path" aria-label="Link to inspect" onChange={event => setInput(event.currentTarget.value)} />
@@ -279,6 +300,34 @@ function LinkWorkbench() {
                 <div><dt>Removed trackers</dt><dd>{inspection.removedParameters.join(", ") || "none"}</dd></div>
             </dl>
             {inspection.warnings.length ? <ul>{inspection.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul> : <p>No local warning signal was found. That is not a safety guarantee.</p>}
+            <div className="soulcord-domain-memory">
+                <strong>Domain Memory</strong>
+                <p>{remembered ? `${remembered.decision} until ${timestamp(remembered.expiresAt)}` : "No expiring decision is stored for this exact host."}</p>
+                {domainRisk?.reasons.length ? <small>Allow is unavailable: {domainRisk.reasons.join(", ")}.</small> : <small>Scheme-and-host decisions expire after seven days and never apply to subdomains. In warn-only mode, allow never bypasses a Link Lens warning.</small>}
+                <div className="soulcord-actions">
+                    <ActionButton disabled={domainRisk?.restricted !== false} onClick={() => remember("allow")}>Remember allow</ActionButton>
+                    <ActionButton onClick={() => remember("warn")}>Remember warning</ActionButton>
+                    <ActionButton tone="danger" onClick={() => remember("block")}>Remember block</ActionButton>
+                    <ActionButton disabled={!remembered || !inspection.host} onClick={() => {if (inspection.host && SoulCordRuntime.forgetDomain(inspection.host)) setMemoryRevision(memoryRevision + 1);}}>Forget</ActionButton>
+                </div>
+            </div>
+        </div>}
+    </Section>;
+}
+
+function AttachmentGuardWorkbench() {
+    const [input, setInput] = useState("");
+    const [mime, setMime] = useState("");
+    const [inspection, setInspection] = useState<ReturnType<typeof SoulCordRuntime.inspectAttachment>>();
+    return <Section title="Attachment Guard" summary="Review a visible attachment URL, filename, extension, declared MIME, and risk reason locally. This tool never downloads, opens, scans, or uploads the file.">
+        <div className="soulcord-inline-field">
+            <input type="url" value={input} placeholder="https://cdn.example/file.zip" aria-label="Attachment URL to inspect" onChange={event => setInput(event.currentTarget.value)} />
+            <input value={mime} placeholder="Optional MIME type" aria-label="Declared attachment MIME type" onChange={event => setMime(event.currentTarget.value)} />
+            <ActionButton tone="accent" onClick={() => setInspection(SoulCordRuntime.inspectAttachment(input, mime || undefined))} disabled={!input.trim()}>Inspect locally</ActionButton>
+        </div>
+        {inspection && <div className={`soulcord-link-result ${inspection.risk === "block" ? "soulcord-link-invalid" : ""}`} role="status">
+            <dl className="soulcord-facts"><div><dt>Source host</dt><dd>{inspection.host ?? "invalid"}</dd></div><div><dt>Filename</dt><dd>{inspection.filename ?? "unavailable"}</dd></div><div><dt>Extension</dt><dd>{inspection.extension ?? "none"}</dd></div><div><dt>Local result</dt><dd>{inspection.risk}</dd></div></dl>
+            {inspection.reasons.length ? <ul>{inspection.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul> : <p>No high-risk filename signal was found. This is not a malware verdict.</p>}
         </div>}
     </Section>;
 }
@@ -472,6 +521,93 @@ function AboutSoulCord() {
     </Section>;
 }
 
+function SessionPulse({openWorkspace}: {openWorkspace(workspace: SoulCordWorkspaceId): void;}) {
+    const state = useStateFromStores([SoulCordSettings, SoulCordRuntime, PluginDoctor], () => ({
+        document: SoulCordSettings.snapshot(),
+        health: SoulCordRuntime.health(),
+        recovery: SoulCordRuntime.recoveryMode,
+        quarantined: PluginDoctor.snapshot().filter(record => record.quarantinedAt).length,
+        activity: SoulCordRuntime.activityHealth(),
+        relationshipChanges: SoulCordRuntime.friendWatchEvents().length,
+        dueReminders: SoulCordRuntime.returnLaterItems().filter(item => item.dueAt <= Date.now()).length
+    }));
+    const failed = state.health.filter(item => item.status === "failed" || item.status === "quarantined").length;
+    const drift = state.health.find(item => item.id === "drift-radar");
+    const signals = prioritizeSoulCordPulse([
+        ...(state.recovery ? [{id: "recovery", priority: 100, tone: "danger" as const, label: "Safe Start is active", detail: "Optional SoulCord capabilities are held off until you retry normal startup.", action: "Open recovery"}] : []),
+        ...(failed || state.quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} module failure(s), ${state.quarantined} quarantined add-on(s).`, action: "Review add-ons"}] : []),
+        ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
+        ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
+        ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Setup is unfinished", detail: `Resume at step ${state.document.onboarding.lastStep + 1} without reapplying earlier choices.`, action: "Continue setup"}] : []),
+        ...(state.dueReminders ? [{id: "return-later", priority: 65, tone: "attention" as const, label: "Return Later is due", detail: `${state.dueReminders} local reminder(s) are ready.`, action: "Open People"}] : []),
+        ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} relationship transition(s) are available in this session.`, action: "Open People"}] : []),
+        {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
+    ]);
+    return <Section title="Session Pulse" summary="One local startup digest. The three highest-priority items win; lower-priority noise stays out of the way.">
+        <div className="soulcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`soulcord-pulse soulcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" || signal.id === "activity" ? "home" : signal.id === "return-later" || signal.id === "friend-watch" ? "people" : "tools")}>{signal.action}</ActionButton>}</article>)}</div>
+    </Section>;
+}
+
+function AppearanceWorkspace() {
+    const preferences = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().productPreferences);
+    const appearance = preferences.appearance;
+    const update = (next: SoulCordAppearancePreferences) => void SoulCordRuntime.setProductPreferences({...preferences, appearance: next});
+    return <>
+        <Section title="Appearance" summary="One semantic token system follows Discord or applies a SoulCord mode without remote CSS, fonts, or imagery.">
+            <div className="soulcord-appearance-controls">
+                <label>Mode<select value={appearance.mode} onChange={event => update({...appearance, mode: event.currentTarget.value as SoulCordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="soul-dark">Soul Dark</option><option value="soul-light">Soul Light</option><option value="oled">OLED</option></select></label>
+                <label>Accent<select value={appearance.accent} onChange={event => update({...appearance, accent: event.currentTarget.value as SoulCordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
+                <label>Density<select value={appearance.density} onChange={event => update({...appearance, density: event.currentTarget.value as SoulCordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+                <label>Motion<select value={appearance.motion} onChange={event => update({...appearance, motion: event.currentTarget.value as SoulCordAppearancePreferences["motion"]})}><option value="follow-system">Follow Discord / Windows</option><option value="full">Full</option><option value="reduced">Reduced</option></select></label>
+                <label>Message shape<select value={appearance.messageShape} onChange={event => update({...appearance, messageShape: event.currentTarget.value as SoulCordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
+            </div>
+            <div className={`soulcord-live-preview soulcord-mode-${appearance.mode} soulcord-accent-${appearance.accent}`}><span>Appearance preview</span><strong>Reply context stays readable at every density.</strong><small>Focus, warning, success, and danger keep distinct semantic colors.</small><button type="button">Keyboard focus sample</button></div>
+        </Section>
+        <AccessibilityControls />
+    </>;
+}
+
+function FriendWatchPanel() {
+    const state = useStateFromStores([SoulCordSettings, SoulCordRuntime], () => ({preferences: SoulCordSettings.snapshot().productPreferences, events: SoulCordRuntime.friendWatchEvents(), persistent: SoulCordRuntime.friendWatchPersistent()}));
+    const policy = state.preferences.friendWatch;
+    const update = (next: Partial<typeof policy>) => {
+        const productPreferences: SoulCordProductPreferences = {...state.preferences, friendWatch: {...policy, ...next}};
+        void SoulCordRuntime.setProductPreferences(productPreferences).then(() => SoulCordRuntime.setEnabled("friend-watch", productPreferences.friendWatch.enabled));
+    };
+    return <Section title="Friend Watch" summary="Local relationship transitions from Discord’s already-loaded store. No REST polling, presence history, messages, mutual-server graph, or block guessing.">
+        <div className="soulcord-control-strip">
+            <label><input type="checkbox" checked={policy.enabled} onChange={event => update({enabled: event.currentTarget.checked})} /> Enabled with separate consent</label>
+            <label><input type="checkbox" checked={policy.includeDisplaySnapshot} onChange={event => update({includeDisplaySnapshot: event.currentTarget.checked})} /> Encrypted display snapshots</label>
+            <label>Retention<select value={policy.retentionDays} onChange={event => update({retentionDays: Number(event.currentTarget.value) as 7 | 30 | 90})}><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select></label>
+            <label>Digest<select value={policy.digest} onChange={event => update({digest: event.currentTarget.value as typeof policy.digest})}><option value="off">Off</option><option value="daily">Daily in-app</option><option value="per-event">Per event, local</option></select></label>
+        </div>
+        <p className="soulcord-callout">Storage: {state.persistent ? "AES-256-GCM account-isolated persistence; its random key is wrapped by Electron safeStorage." : "session-only fallback; no plaintext persistence."} Disabling or changing accounts clears renderer memory.</p>
+        <div className="soulcord-actions"><ActionButton disabled={!state.events.length} onClick={() => void SoulCordRuntime.exportFriendWatch("json")}>Export JSON</ActionButton><ActionButton disabled={!state.events.length} onClick={() => void SoulCordRuntime.exportFriendWatch("csv")}>Export CSV</ActionButton><ActionButton tone="danger" disabled={!state.events.length} onClick={() => {if (window.confirm("Clear this account's local Friend Watch history?")) void SoulCordRuntime.clearFriendWatch();}}>Clear history</ActionButton></div>
+        <div className="soulcord-people-history" aria-label="Friend Watch relationship history">{state.events.slice(-100).reverse().map(event => <article key={event.eventId}><div><strong>{event.transition === "reconciled" ? "Account scope" : event.displayLabel ?? `Local relationship •${(event.subjectKey ?? event.subjectId).slice(-4)}`}</strong><span>{event.label}</span></div><small>{timestamp(event.observedAt)} · {event.source} · {event.confidence}</small></article>)}{!state.events.length && <p className="soulcord-empty">No relationship transition has been observed in this session.</p>}</div>
+    </Section>;
+}
+
+function ReturnLaterPanel() {
+    const items = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.returnLaterItems());
+    const [label, setLabel] = useState("");
+    const [delay, setDelay] = useState(24 * 60 * 60 * 1_000);
+    const [status, setStatus] = useState("");
+    const add = () => {
+        const added = SoulCordRuntime.addCurrentViewToReturnLater(label, Date.now() + delay);
+        setStatus(added ? "Saved this Discord channel or DM route locally." : "Open a DM or channel, then use Return Later from that view. No reminder was saved from Settings.");
+        if (added) setLabel("");
+    };
+    return <Section title="Return Later" summary="Save an internal Discord channel or message route with a local due time. It never sends, reacts, fetches history, backfills, or syncs remotely.">
+        <div className="soulcord-inline-field">
+            <input value={label} maxLength={80} placeholder="Optional private label" aria-label="Return Later label" onChange={event => setLabel(event.currentTarget.value)} />
+            <select aria-label="Return Later due time" value={delay} onChange={event => setDelay(Number(event.currentTarget.value))}><option value={60 * 60 * 1_000}>In one hour</option><option value={24 * 60 * 60 * 1_000}>Tomorrow</option><option value={7 * 24 * 60 * 60 * 1_000}>In seven days</option></select>
+            <ActionButton tone="accent" onClick={add}>Save current view</ActionButton>
+        </div>
+        {status && <p role="status" className="soulcord-import-status">{status}</p>}
+        <div className="soulcord-people-history" aria-label="Return Later reminders">{items.map(item => <article key={item.id}><div><strong>{item.label}</strong><span>Due {timestamp(item.dueAt)}</span></div><div className="soulcord-actions"><ActionButton onClick={() => SoulCordRuntime.openReturnLater(item.id)}>Open</ActionButton><ActionButton onClick={() => SoulCordRuntime.snoozeReturnLater(item.id, 24 * 60 * 60 * 1_000)}>Snooze one day</ActionButton><ActionButton onClick={() => SoulCordRuntime.completeReturnLater(item.id)}>Complete</ActionButton></div></article>)}{!items.length && <p className="soulcord-empty">No local reminder is due. Open a DM or channel and save that view when you want to return.</p>}</div>
+    </Section>;
+}
+
 function SetupManagement() {
     const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
     const [status, setStatus] = useState("");
@@ -500,28 +636,42 @@ function PowerLabStatus() {
 export default function SoulCordPanel() {
     const recoveryMode = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.recoveryMode);
     const onboarding = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().onboarding);
-    return <main className="soulcord-panel">
+    const appearance = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().productPreferences.appearance);
+    const [workspace, setWorkspace] = useState<SoulCordWorkspaceId>("home");
+    const selectedWorkspace = SOULCORD_WORKSPACES.find(item => item.id === workspace)!;
+    return <main className={`soulcord-panel soulcord-density-${appearance.density} soulcord-motion-${appearance.motion}`}>
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
-            <div><p className="soulcord-eyebrow">SoulCord V1 · Local power tools</p><h1>SoulCord Suite</h1><p>Activity compatibility, addon recovery, privacy controls, and profiles—kept on this PC.</p></div>
+            <div><p className="soulcord-eyebrow">SoulCord V1 · Private desktop control</p><h1>SoulCord Control Center</h1><p>Compatibility, safety, people, appearance, and recovery—organized around what you need now.</p></div>
         </header>
         {recoveryMode && <div className="soulcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
             <ActionButton tone="danger" onClick={() => void SoulCordRuntime.leaveRecoveryMode()}>Try normal startup</ActionButton>
         </div>}
-        {onboarding.status === "pending" && <SetupWizard />}
-        <SetupManagement />
-        <CuratedAddonSet />
-        <ActivityBridge />
-        <Section title="Module status" summary="Ready means an implemented adapter can pass its current startup validation; the separate status label shows whether it is running. Preview still needs an app-version or hands-on acceptance check."><ModuleTable /></Section>
-        <PluginRecovery />
-        <ProfilesAndHistory />
-        <PrivacyControls />
-        <MessageTimelinePanel />
-        <LinkWorkbench />
-        <ScreenshotScrubber />
-        <CatalogBrowser />
-        <PowerLabStatus />
-        <AboutSoulCord />
+        <div className="soulcord-control-center">
+            <nav className="soulcord-workspace-nav" aria-label="SoulCord workspaces">{SOULCORD_WORKSPACES.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => setWorkspace(item.id)}><strong>{item.label}</strong><small>{item.summary}</small></button>)}</nav>
+            <div className="soulcord-workspace" data-workspace={workspace}>
+                <header className="soulcord-workspace-heading"><p className="soulcord-eyebrow">Workspace</p><h2>{selectedWorkspace.label}</h2><p>{selectedWorkspace.summary}</p></header>
+                {workspace === "home" && <>
+                    {onboarding.status === "pending" && <SetupWizard />}
+                    <SessionPulse openWorkspace={setWorkspace} />
+                    <ActivityBridge />
+                </>}
+                {workspace === "appearance" && <AppearanceWorkspace />}
+                {workspace === "safety" && <><StreamShieldControls /><LinkWorkbench /><AttachmentGuardWorkbench /><ScreenshotScrubber /></>}
+                {workspace === "people" && <><FriendWatchPanel /><MessageTimelinePanel /><ReturnLaterPanel /></>}
+                {workspace === "tools" && <>
+                    <SetupManagement />
+                    <Section title="Module status" summary="Ready means an implemented adapter passed its current startup validation. Preview still needs a version-specific or hands-on gate."><ModuleTable /></Section>
+                    <PluginRecovery />
+                    <PerformanceControls />
+                    <ProfilesAndHistory />
+                    <CuratedAddonSet />
+                    <CatalogBrowser />
+                    <PowerLabStatus />
+                    <AboutSoulCord />
+                </>}
+            </div>
+        </div>
     </main>;
 }

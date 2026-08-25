@@ -6,6 +6,7 @@ import crypto from "crypto";
 import path from "path";
 import {isSoulCordBuiltInAddon} from "@common/soulcord/builtin-addons";
 import {recommendedSoulCordSetupAddons, resolveSoulCordSetupPlan, SOULCORD_RECOMMENDED_SETUP_ADDONS} from "@common/soulcord/setup-catalog";
+import {normalizeSoulCordProductPreferences} from "@common/soulcord/product";
 
 import type {
     SoulCordAddonMode,
@@ -26,9 +27,9 @@ import type {
 } from "./contracts";
 
 
-export const SOULCORD_SCHEMA_VERSION = 3;
+export const SOULCORD_SCHEMA_VERSION = 4;
 export const SOULCORD_CONSENT_VERSION = 2;
-export const SOULCORD_ONBOARDING_VERSION = 1;
+export const SOULCORD_ONBOARDING_VERSION = 2;
 const MAX_SNAPSHOTS = 20;
 const MAX_LEDGER_ENTRIES = 100;
 const MAX_PROFILES = 50;
@@ -64,6 +65,7 @@ export const MODULE_DEFAULTS: Record<SoulCordModuleId, SoulCordModuleSettings> =
     "stream-shield": {enabled: false, values: {manualActive: false, previewActive: false, redactGuilds: true, redactChannels: true, redactDMs: true, redactNotifications: true, redactNotes: true, redactAccount: true}},
     "settings-time-machine": {enabled: true, values: {}},
     "accessibility-toolkit": {enabled: false, values: {reducedMotion: true, roleContrast: true, readingRuler: false, readingWidth: 0}},
+    "friend-watch": {enabled: false, values: {retentionDays: 30, digest: "daily"}},
     "message-timeline": {enabled: false, values: {scope: "dm-only", retention: "7-days", content: "text-only"}}
 };
 
@@ -173,8 +175,9 @@ function normalizePowerLab(value: unknown): Record<SoulCordPowerExperimentId, So
 function normalizeOnboarding(value: unknown): SoulCordOnboardingState {
     const record = isRecord(value) ? value : {};
     return {
-        version: 1,
+        version: 2,
         status: stringChoice(record.status, ["pending", "complete", "skipped"] as const, "pending"),
+        lastStep: boundedNumber(record.lastStep, 0, 0, 7),
         ...(typeof record.completedAt === "number" ? {completedAt: boundedNumber(record.completedAt, 0, 0, Number.MAX_SAFE_INTEGER)} : {})
     };
 }
@@ -195,6 +198,10 @@ function normalizeModule(id: SoulCordModuleId, value: unknown): SoulCordModuleSe
         values.failureWindowMinutes = boundedNumber(values.failureWindowMinutes, 10, 1, 60);
     }
     if (id === "accessibility-toolkit") values.readingWidth = boundedNumber(values.readingWidth, 0, 0, 1_200);
+    if (id === "friend-watch") {
+        values.retentionDays = stringChoice(values.retentionDays, [7, 30, 90] as const, 30);
+        values.digest = stringChoice(values.digest, ["off", "daily", "per-event"] as const, "daily");
+    }
     if (id === "message-timeline") {
         values.scope = stringChoice(values.scope, ["dm-only", "selected-channels"] as const, "dm-only");
         values.retention = stringChoice(values.retention, ["session", "24-hours", "7-days", "30-days", "90-days", "manual"] as const, "7-days");
@@ -311,6 +318,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
                 selectedTheme: stringChoice(snapshot.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
                 curatedAddons: normalizeCuratedAddons(snapshot.curatedAddons),
                 timelinePolicy: normalizeTimelinePolicy(snapshot.timelinePolicy),
+                productPreferences: normalizeSoulCordProductPreferences(snapshot.productPreferences),
                 activePlugins: normalizeAddonFileNames(snapshot.activePlugins, "plugin"),
                 activeThemes: normalizeAddonFileNames(snapshot.activeThemes, "theme")
             } satisfies SoulCordSnapshot];
@@ -347,7 +355,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
             at: Date.now(),
             fromSchema: rawSchemaVersion,
             toSchema: SOULCORD_SCHEMA_VERSION,
-            detail: "Added onboarding, theme selection, curated-addon state, Message Timeline policy, and versioned Power Lab consent; Link Lens was disabled for repaired-modal acceptance."
+            detail: "Added Control Center preferences and resumable eight-step setup state; privacy-sensitive capabilities remain off until consent or final Apply."
         });
         migrationProvenance.splice(0, Math.max(0, migrationProvenance.length - MAX_MIGRATION_ENTRIES));
     }
@@ -362,12 +370,13 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
         : [];
 
     return {
-        schemaVersion: 3,
+        schemaVersion: 4,
         consentVersion: 2,
         onboarding: normalizeOnboarding(record.onboarding),
         selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
         curatedAddons: normalizeCuratedAddons(record.curatedAddons),
         timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy),
+        productPreferences: normalizeSoulCordProductPreferences(record.productPreferences),
         powerLab: rawSchemaVersion < SOULCORD_SCHEMA_VERSION ? defaultPowerLab() : normalizePowerLab(record.powerLab),
         migrationProvenance,
         setupTransactions,
@@ -415,6 +424,7 @@ export function serializeSoulCordSettingsExport(document: SoulCordSettingsDocume
             scope: "dm-only",
             serverChannelIds: []
         },
+        productPreferences: document.productPreferences,
         modules,
         profiles: document.profiles,
         updateLedger: document.updateLedger,
@@ -462,6 +472,7 @@ export function previewSoulCordImportChanges(current: SoulCordSettingsDocument, 
     if (previousPolicy.content !== nextPolicy.content) changes.push(`Message Timeline content: ${previousPolicy.content} → ${nextPolicy.content}`);
     if (previousPolicy.textBudgetBytes !== nextPolicy.textBudgetBytes) changes.push(`Message Timeline text budget: ${previousPolicy.textBudgetBytes} → ${nextPolicy.textBudgetBytes} bytes`);
     if (previousPolicy.mediaBudgetBytes !== nextPolicy.mediaBudgetBytes) changes.push(`Message Timeline media budget: ${previousPolicy.mediaBudgetBytes} → ${nextPolicy.mediaBudgetBytes} bytes`);
+    if (JSON.stringify(current.productPreferences) !== JSON.stringify(candidate.productPreferences)) changes.push("Control Center appearance, safety, or People preferences");
 
     const resetPowerLab = defaultPowerLab();
     if (JSON.stringify(current.powerLab) !== JSON.stringify(resetPowerLab)) {
@@ -484,6 +495,7 @@ function importState(document: SoulCordSettingsDocument): object {
         selectedTheme: document.selectedTheme,
         curatedAddons: document.curatedAddons,
         timelinePolicy: document.timelinePolicy,
+        productPreferences: document.productPreferences,
         powerLab: document.powerLab
     };
 }
@@ -504,7 +516,7 @@ export function verifySoulCordImportAtApply(current: SoulCordSettingsDocument, t
     return candidate;
 }
 
-export function restoreSnapshotState(document: SoulCordSettingsDocument, snapshotId: string): Pick<SoulCordSettingsDocument, "modules" | "profiles" | "selectedTheme" | "curatedAddons" | "timelinePolicy"> | undefined {
+export function restoreSnapshotState(document: SoulCordSettingsDocument, snapshotId: string): Pick<SoulCordSettingsDocument, "modules" | "profiles" | "selectedTheme" | "curatedAddons" | "timelinePolicy" | "productPreferences"> | undefined {
     const snapshot = document.snapshots.find(item => item.id === snapshotId);
     if (!snapshot) return;
     return {
@@ -512,7 +524,8 @@ export function restoreSnapshotState(document: SoulCordSettingsDocument, snapsho
         profiles: snapshot.profiles.length ? clone(snapshot.profiles) : clone(document.profiles),
         selectedTheme: snapshot.selectedTheme,
         curatedAddons: clone(snapshot.curatedAddons),
-        timelinePolicy: clone(snapshot.timelinePolicy)
+        timelinePolicy: clone(snapshot.timelinePolicy),
+        productPreferences: clone(snapshot.productPreferences)
     };
 }
 
@@ -538,11 +551,13 @@ export function normalizeSetupDraft(value: unknown): SoulCordSetupDraft {
     const rawModes = isRecord(record.addonModes) ? record.addonModes : {};
     const rawProviders = isRecord(record.addonProviders) ? record.addonProviders : {};
     return {
+        preset: stringChoice(record.preset, ["recommended", "minimal", "power-user"] as const, "recommended"),
         selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
         selectedAddons: selected,
         addonModes: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonMode(rawModes[name], name)])),
         addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonProvider(rawProviders[name])])),
-        timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy)
+        timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy),
+        productPreferences: normalizeSoulCordProductPreferences(record.productPreferences)
     };
 }
 
@@ -574,6 +589,7 @@ export function previewSetupChanges(document: SoulCordSettingsDocument, rawDraft
         if (document.curatedAddons[name].provider !== draft.addonProviders[name]) changes.push(`${name}.provider: ${document.curatedAddons[name].provider} → ${draft.addonProviders[name]}`);
     }
     if (JSON.stringify(document.timelinePolicy) !== JSON.stringify(draft.timelinePolicy)) changes.push("Message Timeline policy");
+    if (JSON.stringify(document.productPreferences) !== JSON.stringify(draft.productPreferences)) changes.push("Control Center product preferences");
     return changes;
 }
 
@@ -590,7 +606,7 @@ class SoulCordStore extends Store {
         }
         this.#document = normalizeSoulCordDocument(raw);
         if (!isRecord(raw) || raw.schemaVersion !== SOULCORD_SCHEMA_VERSION) {
-            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 3.");
+            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 4.");
         }
         this.#save();
     }
@@ -622,6 +638,23 @@ class SoulCordStore extends Store {
         this.#save();
     }
 
+    setProductPreferences(rawPreferences: unknown): void {
+        const preferences = normalizeSoulCordProductPreferences(rawPreferences);
+        if (JSON.stringify(preferences) === JSON.stringify(this.#document.productPreferences)) return;
+        this.capture("Before changing Control Center preferences");
+        this.#document.productPreferences = preferences;
+        this.#appendLedger("setting", "Control Center appearance, safety, or People preferences changed.");
+        this.#save();
+    }
+
+    setOnboardingStep(rawStep: number): void {
+        if (this.#document.onboarding.status !== "pending") return;
+        const lastStep = boundedNumber(rawStep, this.#document.onboarding.lastStep, 0, 7);
+        if (lastStep === this.#document.onboarding.lastStep) return;
+        this.#document.onboarding.lastStep = lastStep;
+        this.#save();
+    }
+
     capture(reason: string, activeAddons?: {plugins?: string[]; themes?: string[]}): SoulCordSnapshot {
         const snapshot: SoulCordSnapshot = {
             id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
@@ -632,6 +665,7 @@ class SoulCordStore extends Store {
             selectedTheme: this.#document.selectedTheme,
             curatedAddons: clone(this.#document.curatedAddons),
             timelinePolicy: clone(this.#document.timelinePolicy),
+            productPreferences: clone(this.#document.productPreferences),
             ...(activeAddons ? {
                 activePlugins: normalizeAddonFileNames(activeAddons.plugins, "plugin"),
                 activeThemes: normalizeAddonFileNames(activeAddons.themes, "theme")
@@ -679,6 +713,7 @@ class SoulCordStore extends Store {
         this.#document.selectedTheme = restored.selectedTheme;
         this.#document.curatedAddons = restored.curatedAddons;
         this.#document.timelinePolicy = restored.timelinePolicy;
+        this.#document.productPreferences = restored.productPreferences;
         this.#appendLedger("rollback", `Rolled back to snapshot ${snapshotId}.`);
         this.#save();
         return true;
@@ -729,6 +764,7 @@ class SoulCordStore extends Store {
         this.#document.selectedTheme = candidate.selectedTheme;
         this.#document.curatedAddons = candidate.curatedAddons;
         this.#document.timelinePolicy = candidate.timelinePolicy;
+        this.#document.productPreferences = candidate.productPreferences;
         this.#document.powerLab = defaultPowerLab();
         this.#appendLedger("schema", "Imported and validated SoulCord settings format 2; Power Lab acknowledgements were not imported.");
         this.#save();
@@ -744,7 +780,12 @@ class SoulCordStore extends Store {
         const snapshot = this.capture("Before completing SoulCord setup");
         this.#document.selectedTheme = draft.selectedTheme;
         this.#document.timelinePolicy = draft.timelinePolicy;
+        this.#document.productPreferences = draft.productPreferences;
         this.#document.modules["message-timeline"].enabled = draft.timelinePolicy.enabled;
+        this.#document.modules["link-lens"].enabled = draft.productPreferences.safety.linkLens;
+        this.#document.modules["friend-watch"].enabled = draft.productPreferences.friendWatch.enabled;
+        this.#document.modules["friend-watch"].values.retentionDays = draft.productPreferences.friendWatch.retentionDays;
+        this.#document.modules["friend-watch"].values.digest = draft.productPreferences.friendWatch.digest;
         for (const name of SOULCORD_PRESET_ADDONS) {
             const selected = draft.selectedAddons.includes(name);
             const result = installResults[name];
@@ -757,7 +798,7 @@ class SoulCordStore extends Store {
                 ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
             };
         }
-        this.#document.onboarding = {version: 1, status: "complete", completedAt: Date.now()};
+        this.#document.onboarding = {version: 2, status: "complete", lastStep: 7, completedAt: Date.now()};
         const record: SoulCordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates};
         this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
@@ -776,7 +817,8 @@ class SoulCordStore extends Store {
         this.#document.selectedTheme = restored.selectedTheme;
         this.#document.curatedAddons = restored.curatedAddons;
         this.#document.timelinePolicy = restored.timelinePolicy;
-        this.#document.onboarding = {version: 1, status: "pending"};
+        this.#document.productPreferences = restored.productPreferences;
+        this.#document.onboarding = {version: 2, status: "pending", lastStep: 6};
         this.#document.setupTransactions.pop();
         this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
         this.#appendLedger("rollback", "Aborted an unacknowledged SoulCord setup transaction.");
@@ -786,13 +828,13 @@ class SoulCordStore extends Store {
 
     skipOnboarding(): void {
         if (this.#document.onboarding.status !== "pending") return;
-        this.#document.onboarding = {version: 1, status: "skipped", completedAt: Date.now()};
+        this.#document.onboarding = {version: 2, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
         this.#appendLedger("schema", "Skipped SoulCord setup; addon and theme state was not changed.");
         this.#save();
     }
 
     reopenOnboarding(): void {
-        this.#document.onboarding = {version: 1, status: "pending"};
+        this.#document.onboarding = {version: 2, status: "pending", lastStep: 0};
         this.#appendLedger("schema", "Reopened SoulCord setup.");
         this.#save();
     }

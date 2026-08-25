@@ -60,7 +60,7 @@ The recommended default and four alternatives share dense Discord-compatible spa
 
 All five are original. The MIT-licensed `midnight-discord` candidate was considered as a possible reference, but no file, selector block, asset, or code from it was used. The owner’s existing `midnight.theme.css` is a separate user file and is not inspected, modified, or replaced by this theme family.
 
-Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before `Finish`; skipping the wizard changes no theme state.
+Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before **Apply and verify**; skipping the wizard changes no theme state.
 
 ## UI rules
 

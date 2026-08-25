@@ -648,14 +648,25 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
     });
 
     test("rejects an oversized ASAR before hashing or parser allocation", () => {
-        fs.truncateSync(fixture.soulCordAsar, 512 * 1024 * 1024 + 1);
-        expect(() => prepareSoulCordDisposableAcceptance({
-            sourceDiscordAppDir: fixture.sourceApp,
-            soulCordAsar: fixture.soulCordAsar,
-            destinationRoot: fixture.destination,
-            expectedSoulCordSha256: fixture.expectedHash,
-            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
-        })).toThrow("between 16 bytes and 512 MiB");
+        const originalLstatSync = fs.lstatSync;
+        const mutableFs = fs as unknown as {lstatSync: typeof fs.lstatSync;};
+        mutableFs.lstatSync = ((target, options) => {
+            const stat = originalLstatSync(target, options as never);
+            if (path.resolve(String(target)) !== path.resolve(fixture.soulCordAsar)) return stat;
+            return new Proxy(stat, {get: (value, property) => property === "size" ? 512 * 1024 * 1024 + 1 : Reflect.get(value, property)});
+        }) as typeof fs.lstatSync;
+        try {
+            expect(() => prepareSoulCordDisposableAcceptance({
+                sourceDiscordAppDir: fixture.sourceApp,
+                soulCordAsar: fixture.soulCordAsar,
+                destinationRoot: fixture.destination,
+                expectedSoulCordSha256: fixture.expectedHash,
+                expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+            })).toThrow("between 16 bytes and 512 MiB");
+        }
+        finally {
+            mutableFs.lstatSync = originalLstatSync;
+        }
         expect(fs.existsSync(fixture.destination)).toBeFalse();
     });
 

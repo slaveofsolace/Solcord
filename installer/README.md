@@ -1,0 +1,7 @@
+# SoulCord Installer Candidate
+
+This is a SoulCord-owned, framework-dependent Windows installer candidate. It supports Stable, PTB, and Canary detection; authoritative-build-manifest-bound Install, Verify, Repair/Update, receipt-bound rollback/uninstall, and explicit re-detected launch. It refuses shared-core mutation while any Discord channel is running. It never terminates Discord silently and does not delete BetterDiscord plugins, themes, settings, custom CSS, or message data.
+
+It is intentionally unsigned and is not a public stable installer. After a clean exact-commit production package writes `dist/soulcord.asar` and `dist/soulcord-build-manifest.json`, build the candidate with `bun run installer:candidate -- dist/soulcord.asar <new-output-directory> <40-character-source-commit>`. The builder verifies source and artifact provenance, publishes the executable, writes the installer manifest and checksums, and runs `SoulCordInstaller.exe --self-test` before returning success.
+
+The self-test covers install, exact verification, receipt-bound rollback, rejection of a rogue newer backup, and rejection of a tampered injector backup in disposable directories. The current recovery route is the retained receipt-selected backup and the separately preserved vanilla launcher. Authentic signing or independently authenticated release metadata, SmartScreen evidence, clean lifecycle acceptance, and a stable distribution URL remain release gates.
