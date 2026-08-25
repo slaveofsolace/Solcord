@@ -35,9 +35,14 @@ describe("SoulCord installer security contracts", () => {
         expect(engine.indexOf("The current core changed while its rollback backup was captured")).toBeLessThan(engine.indexOf("File.Move(temporary, installed, overwrite: true)"));
     });
 
-    test("keeps a pending recovery receipt and accepts a mixed retry state", () => {
+    test("keeps pending recovery, preserves unknown current core, and accepts a mixed retry state", () => {
         expect(engine).toContain("pending.json");
         expect(engine).toContain("The pending receipt was preserved for Roll Back");
+        expect(engine).toContain("if (!candidatePresent && !priorPresent && !priorAbsent) throw new InvalidDataException");
+        expect(engine).not.toContain("requireUnchangedInjector");
+        expect(engine).toContain("install-after-core");
+        expect(selfTest).toContain("automatic-recovery-owner-change");
+        expect(selfTest).toContain("owner-changed-core");
         expect(engine).toContain("rollback-after-injector");
         expect(selfTest).toContain("partial-rollback");
     });

@@ -127,6 +127,23 @@ internal static class InstallerSelfTest
             try {engine.Install(target, repair: true); return 8;}
             catch (InvalidDataException) {/* existing unsafe receipts must fail closed */}
             File.WriteAllText(currentReceipt, currentReceiptText);
+            string installedCore = Path.Combine(data, "betterdiscord.asar");
+            var racedEngine = new InstallerEngine(bundle, local, roaming, _ => 0, point =>
+            {
+                if (point == "install-after-core")
+                {
+                    File.WriteAllText(installedCore, "owner-changed-core");
+                    throw new IOException("fixture owner change");
+                }
+            });
+            stage = "automatic-recovery-owner-change";
+            try {racedEngine.Install(target, repair: true); return 11;}
+            catch (AggregateException) {/* automatic recovery must preserve an unexpected current core */}
+            if (File.ReadAllText(installedCore) != "owner-changed-core") return 12;
+            string pendingReceipt = Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "pending.json");
+            if (!File.Exists(pendingReceipt)) return 13;
+            File.Copy(artifact, installedCore, overwrite: true);
+            File.Delete(pendingReceipt);
             string rogue = Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "backups", "zzzz-unbound-newest");
             Directory.CreateDirectory(rogue);
             File.WriteAllText(Path.Combine(rogue, "backup-state.json"), "{}");
@@ -138,7 +155,7 @@ internal static class InstallerSelfTest
             try {engine.RollBack(target); return 7;}
             catch (InvalidDataException) {/* expected hash-bound refusal */}
             File.WriteAllText(injectorIndex, originalInjector);
-            File.Copy(currentReceipt, Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "pending.json"), overwrite: false);
+            File.Copy(currentReceipt, pendingReceipt, overwrite: false);
             bool interrupted = false;
             var interruptingEngine = new InstallerEngine(bundle, local, roaming, _ => 0, point =>
             {

@@ -10,6 +10,7 @@ const WIZARD_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/u
 const WIZARD_CSS = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styles/soulcord.css"), "utf8");
 const CATALOG_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/catalog.ts"), "utf8");
 const PRODUCT_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/common/soulcord/product.ts"), "utf8");
+const PANEL_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/panel.tsx"), "utf8");
 
 function stepLabels(): string[] {
     const declaration = PRODUCT_SOURCE.match(/SOULCORD_SETUP_STEPS = Object\.freeze\(\[([^\]]+)] as const\)/s)?.[1];
@@ -48,6 +49,8 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Apply and verify will not enable it until a disposable Discord acceptance receipt exists.");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
+        expect(WIZARD_SOURCE).toContain("You may opt in during the Private history step; skipping setup leaves its policy unchanged.");
+        expect(WIZARD_SOURCE).not.toContain("this wizard does not change its policy");
         expect(WIZARD_SOURCE).not.toContain("addonModes: {...current.addonModes, SplitLargeMessages: \"guarded\"}");
     });
 
@@ -75,5 +78,12 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(CATALOG_SOURCE).toContain("Suppresses one validated outgoing typing-start path while the built-in is enabled.");
         expect(CATALOG_SOURCE).not.toContain("Stops typing indicators unless you choose otherwise.");
         expect(CATALOG_SOURCE).toContain("Guarded preview prepares bounded chunks for manual copy, but setup keeps it off pending Discord modal/clipboard acceptance. Native multi-send remains held.");
+    });
+
+    test("keeps Attachment Guard truthful and gives its setup switch a visible effect", () => {
+        expect(WIZARD_SOURCE).toContain("Show the manual Attachment Guard inspector");
+        expect(WIZARD_SOURCE).toContain("It does not intercept clicks, open files, or claim automatic protection.");
+        expect(WIZARD_SOURCE).not.toContain("Require a local review before opening high-risk file types.");
+        expect(PANEL_SOURCE).toContain("productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />");
     });
 });

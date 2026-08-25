@@ -636,7 +636,8 @@ function PowerLabStatus() {
 export default function SoulCordPanel() {
     const recoveryMode = useStateFromStores(SoulCordRuntime, () => SoulCordRuntime.recoveryMode);
     const onboarding = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().onboarding);
-    const appearance = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().productPreferences.appearance);
+    const productPreferences = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().productPreferences);
+    const appearance = productPreferences.appearance;
     const [workspace, setWorkspace] = useState<SoulCordWorkspaceId>("home");
     const selectedWorkspace = SOULCORD_WORKSPACES.find(item => item.id === workspace)!;
     return <main className={`soulcord-panel soulcord-density-${appearance.density} soulcord-motion-${appearance.motion}`}>
@@ -658,7 +659,7 @@ export default function SoulCordPanel() {
                     <ActivityBridge />
                 </>}
                 {workspace === "appearance" && <AppearanceWorkspace />}
-                {workspace === "safety" && <><StreamShieldControls /><LinkWorkbench /><AttachmentGuardWorkbench /><ScreenshotScrubber /></>}
+                {workspace === "safety" && <><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /></>}
                 {workspace === "people" && <><FriendWatchPanel /><MessageTimelinePanel /><ReturnLaterPanel /></>}
                 {workspace === "tools" && <>
                     <SetupManagement />

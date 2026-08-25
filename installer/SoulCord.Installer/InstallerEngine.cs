@@ -145,6 +145,7 @@ internal sealed class InstallerEngine
             File.Move(temporary, installed, overwrite: true);
             coreReplaced = true;
             if (!HashFile(installed).Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The installed ASAR failed verification.");
+            _mutationHook?.Invoke("install-after-core");
             injectorReplaced = true;
             InstallInjector(target, injector.OriginalModule, installed);
             WriteAtomic(Path.Combine(receiptRoot, "current.json"), JsonSerializer.Serialize(receipt, new JsonSerializerOptions {WriteIndented = true}));
@@ -156,7 +157,7 @@ internal sealed class InstallerEngine
         {
             try
             {
-                RestoreBackup(target, backupDirectory, backupState, coreReplaced, injectorReplaced, false);
+                RestoreBackup(target, backupDirectory, backupState, coreReplaced, injectorReplaced);
                 File.Delete(pendingReceipt);
             }
             catch (Exception restoreError)
@@ -194,7 +195,7 @@ internal sealed class InstallerEngine
         if (state is null || state.Injector.Channel != target.Channel || state.Injector.DiscordVersion != target.Version || !Sha256Pattern.IsMatch(state.InstalledArtifactSha256) || state.InstalledArtifactSha256 != receipt.ArtifactSha256 || state.CandidateVersion != receipt.Version || state.CandidateSourceCommit != receipt.SourceCommit) throw new InvalidDataException("The rollback state does not match the receipt-bound Discord target.");
         if (state.HadCore != (state.ExistingCoreSha256 is not null) || state.ExistingCoreSha256 is not null && !Sha256Pattern.IsMatch(state.ExistingCoreSha256)) throw new InvalidDataException("The rollback core metadata is invalid.");
         if (state.Injector.HadAppDirectory != (state.Injector.IndexSha256 is not null && state.Injector.PackageSha256 is not null) || state.Injector.IndexSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.IndexSha256) || state.Injector.PackageSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.PackageSha256)) throw new InvalidDataException("The rollback injector metadata is invalid.");
-        RestoreBackup(target, backupDirectory, state, true, true, true);
+        RestoreBackup(target, backupDirectory, state, true, true);
         File.Delete(receiptFile);
         return backupDirectory;
     }
@@ -296,7 +297,7 @@ internal sealed class InstallerEngine
         WriteAtomic(Path.Combine(appDirectory, "index.js"), $"require({encodedCore});{Environment.NewLine}module.exports = require({JsonSerializer.Serialize(originalModule)});{Environment.NewLine}");
     }
 
-    private void RestoreBackup(DiscordTarget target, string backupDirectory, BackupState state, bool restoreCore, bool restoreInjector, bool requireUnchangedInjector)
+    private void RestoreBackup(DiscordTarget target, string backupDirectory, BackupState state, bool restoreCore, bool restoreInjector)
     {
         string installed = Path.Combine(_roamingAppData, "BetterDiscord", "data", "betterdiscord.asar");
         string? appDirectory = null;
@@ -348,7 +349,7 @@ internal sealed class InstallerEngine
             bool candidatePresent = currentHash?.Equals(state.InstalledArtifactSha256, StringComparison.OrdinalIgnoreCase) == true;
             bool priorPresent = state.HadCore && currentHash?.Equals(state.ExistingCoreSha256, StringComparison.OrdinalIgnoreCase) == true;
             bool priorAbsent = !state.HadCore && currentHash is null;
-            if (!candidatePresent && !priorPresent && !priorAbsent && requireUnchangedInjector) throw new InvalidDataException("The installed core changed after the backup. Rollback preserved it for manual review.");
+            if (!candidatePresent && !priorPresent && !priorAbsent) throw new InvalidDataException("The installed core changed after the backup. Rollback preserved it for manual review.");
             restoreCoreBytes = state.HadCore && !priorPresent;
             deleteCore = !state.HadCore && !priorAbsent;
         }

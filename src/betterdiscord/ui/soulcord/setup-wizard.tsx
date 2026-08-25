@@ -91,7 +91,7 @@ function CurrentStateStep() {
             <div><dt>SoulCord themes active</dt><dd>{state.activeSoulCordThemes}</dd></div>
         </dl>
         <p className="soulcord-callout">Existing MessageLogger data, unrelated plugins, themes, custom CSS, settings, and the vanilla Activities launcher are outside this transaction and remain untouched.</p>
-        <p className="soulcord-callout">On a new setup, Message Timeline stays off. Configure it later in its own section; this wizard does not change its policy.</p>
+        <p className="soulcord-callout">On a new setup, Message Timeline starts off. You may opt in during the Private history step; skipping setup leaves its policy unchanged.</p>
     </div>;
 }
 
@@ -138,7 +138,7 @@ function SafetyStep({value, onChange}: {value: SoulCordSafetyPreferences; onChan
         <p>These are local review tools. None silently opens, downloads, uploads, or navigates.</p>
         <div className="soulcord-choice-stack">
             <label className="soulcord-choice-row"><input type="checkbox" checked={value.linkLens} onChange={event => onChange({...value, linkLens: event.currentTarget.checked})} /><span><strong>Link Lens</strong><small>Review verified external-link activations in a native modal. Internal Discord routes remain untouched.</small></span></label>
-            <label className="soulcord-choice-row"><input type="checkbox" checked={value.attachmentGuard} onChange={event => onChange({...value, attachmentGuard: event.currentTarget.checked})} /><span><strong>Attachment Guard</strong><small>Require a local review before opening high-risk file types.</small></span></label>
+            <label className="soulcord-choice-row"><input type="checkbox" checked={value.attachmentGuard} onChange={event => onChange({...value, attachmentGuard: event.currentTarget.checked})} /><span><strong>Show the manual Attachment Guard inspector</strong><small>Keep the local filename, MIME, and extension review tool in Safety. It does not intercept clicks, open files, or claim automatic protection.</small></span></label>
             <label className="soulcord-choice-row"><input type="checkbox" checked={value.privacyModeReady} onChange={event => onChange({...value, privacyModeReady: event.currentTarget.checked})} /><span><strong>Privacy Mode ready</strong><small>Keep the reversible redaction action available, but off.</small></span></label>
         </div>
     </div>;
