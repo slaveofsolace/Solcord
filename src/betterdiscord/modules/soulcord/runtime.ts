@@ -27,7 +27,7 @@ import {resolveSoulCordSetupPlan} from "@common/soulcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
 import {DoNotTrackAdapter, resolveDiscordAnalyticsTrack, validateDiscordAnalyticsTrack} from "./do-not-track";
-import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, reconcileSoulCordRelationships, SoulCordFriendWatchJournal, type SoulCordFriendWatchNoticeState, type SoulCordOwnerRelationshipAction, type SoulCordRelationshipEvent, type SoulCordRelationshipSnapshot} from "@common/soulcord/friend-watch";
+import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, reconcileSoulCordRelationships, SoulCordFriendWatchAccountBarrier, SoulCordFriendWatchJournal, type SoulCordFriendWatchNoticeState, type SoulCordOwnerRelationshipAction, type SoulCordRelationshipEvent, type SoulCordRelationshipSnapshot} from "@common/soulcord/friend-watch";
 import {inspectSoulCordDomain, SoulCordDomainMemory, type SoulCordDomainDecision, type SoulCordDomainMemoryRecord, type SoulCordDomainRisk} from "@common/soulcord/domain-memory";
 import {inspectSoulCordAttachment, type SoulCordAttachmentInspection} from "@common/soulcord/attachment-guard";
 import {normalizeSoulCordReturnRoute, SoulCordReturnLaterJournal, type SoulCordReturnLaterItem} from "@common/soulcord/return-later";
@@ -1987,6 +1987,7 @@ class SoulCordRuntimeStore extends Store {
         let work = Promise.resolve();
         let noticeState: SoulCordFriendWatchNoticeState = {};
         let ownerActions: SoulCordOwnerRelationshipAction[] = [];
+        const accountBarrier = new SoulCordFriendWatchAccountBarrier();
         const policy = () => SoulCordSettings.snapshot().productPreferences.friendWatch;
         const actionModule = getByKeys<RelationshipActions>(["removeRelationship", "blockUser", "unblockUser"]);
         if (actionModule) {
@@ -2001,7 +2002,20 @@ class SoulCordRuntimeStore extends Store {
                 if (unpatch) scope.own(unpatch, "patch");
             }
         }
+        const holdAfterAccountChange = () => {
+            ready = false;
+            accountId = undefined;
+            accountGeneration = -1;
+            noticeState = {};
+            ownerActions = [];
+            previous = new Map<string, SoulCordRelationshipSnapshot>();
+            this.#friendWatch.clear();
+            this.#friendWatchPersistent = false;
+            this.#setHealth("friend-watch", {maturity: "preview", detail: "Paused after an account identity change because Discord does not account-bind RelationshipStore snapshots. Retry Friend Watch after the new account finishes loading."});
+            this.emitChange();
+        };
         const activate = async (nextAccountId: string | undefined) => {
+            if (accountBarrier.observe(nextAccountId) === "hold") {holdAfterAccountChange(); return;}
             const {identity} = this.#observeFriendWatchIdentity(nextAccountId);
             accountId = identity.accountId;
             accountGeneration = identity.generation;
@@ -2055,6 +2069,7 @@ class SoulCordRuntimeStore extends Store {
         };
         const reconcile = async () => {
             const currentAccountId = normalizeTimelineAccountId(users?.getCurrentUser?.()?.id);
+            if (accountBarrier.observe(currentAccountId) === "hold") {holdAfterAccountChange(); return;}
             const observed = this.#observeFriendWatchIdentity(currentAccountId);
             if (observed.identity.accountId !== accountId || observed.identity.generation !== accountGeneration || !ready) {await activate(currentAccountId); return;}
             if (!accountId || scope.disposed) return;

@@ -20,13 +20,15 @@ internal sealed class InstallerEngine
     private readonly string _localAppData;
     private readonly string _roamingAppData;
     private readonly Func<string, int> _runningProcessCount;
+    private readonly Action<string>? _mutationHook;
 
-    internal InstallerEngine(string bundleRoot, string localAppData, string roamingAppData, Func<string, int>? runningProcessCount = null)
+    internal InstallerEngine(string bundleRoot, string localAppData, string roamingAppData, Func<string, int>? runningProcessCount = null, Action<string>? mutationHook = null)
     {
         _bundleRoot = Path.GetFullPath(bundleRoot);
         _localAppData = Path.GetFullPath(localAppData);
         _roamingAppData = Path.GetFullPath(roamingAppData);
         _runningProcessCount = runningProcessCount ?? (name => Process.GetProcessesByName(name).Length);
+        _mutationHook = mutationHook;
     }
 
     internal ReleaseManifest LoadManifest()
@@ -97,6 +99,7 @@ internal sealed class InstallerEngine
         RequireAllDiscordStopped();
         if (!File.Exists(target.ExecutablePath)) throw new FileNotFoundException("The selected Discord target changed after preflight.");
         RejectLinkedPath(_localAppData, target.ExecutablePath);
+        RequireNoPendingRecovery();
         RejectDowngrade(manifest);
 
         string dataDirectory = Path.Combine(_roamingAppData, "BetterDiscord", "data");
@@ -113,10 +116,24 @@ internal sealed class InstallerEngine
         RejectLinkedPath(_roamingAppData, backupDirectory);
         Directory.CreateDirectory(backupDirectory);
         RejectReparsePoint(backupDirectory);
-        if (hadCore) File.Copy(installed, Path.Combine(backupDirectory, "betterdiscord.asar"), overwrite: false);
+        if (hadCore)
+        {
+            string coreBackup = Path.Combine(backupDirectory, "betterdiscord.asar");
+            RejectLinkedPath(dataDirectory, installed);
+            File.Copy(installed, coreBackup, overwrite: false);
+            if (existingHash is null || !HashFile(coreBackup).Equals(existingHash, StringComparison.OrdinalIgnoreCase) || !HashFile(installed).Equals(existingHash, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The current core changed while its rollback backup was captured; installation was held before mutation.");
+        }
         InjectorBackupState injector = BackupInjector(target, backupDirectory, installed);
         var backupState = new BackupState(hadCore, existingHash, manifest.ArtifactSha256, manifest.Version, manifest.SourceCommit, injector);
         WriteAtomic(Path.Combine(backupDirectory, "backup-state.json"), JsonSerializer.Serialize(backupState, new JsonSerializerOptions {WriteIndented = true}));
+
+        var receipt = new InstallReceipt(manifest.Version, manifest.SourceCommit, manifest.ArtifactSha256, target.Channel, target.Version, DateTime.UtcNow.ToString("O"), backupDirectory);
+        string receiptRoot = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer");
+        RejectLinkedPath(_roamingAppData, receiptRoot);
+        Directory.CreateDirectory(receiptRoot);
+        RejectReparsePoint(receiptRoot);
+        string pendingReceipt = Path.Combine(receiptRoot, "pending.json");
+        WriteAtomic(pendingReceipt, JsonSerializer.Serialize(receipt, new JsonSerializerOptions {WriteIndented = true}));
 
         string temporary = Path.Combine(dataDirectory, $".soulcord-{Guid.NewGuid():N}.tmp");
         File.Copy(artifact, temporary, overwrite: false);
@@ -130,15 +147,22 @@ internal sealed class InstallerEngine
             if (!HashFile(installed).Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The installed ASAR failed verification.");
             injectorReplaced = true;
             InstallInjector(target, injector.OriginalModule, installed);
-            var receipt = new InstallReceipt(manifest.Version, manifest.SourceCommit, manifest.ArtifactSha256, target.Channel, target.Version, DateTime.UtcNow.ToString("O"), backupDirectory);
-            string receiptRoot = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer");
-            Directory.CreateDirectory(receiptRoot);
             WriteAtomic(Path.Combine(receiptRoot, "current.json"), JsonSerializer.Serialize(receipt, new JsonSerializerOptions {WriteIndented = true}));
+            try {File.Delete(pendingReceipt);}
+            catch {/* current.json durably records the successful install; a matching stale pending receipt is reconciled before the next mutation */}
             return receipt;
         }
-        catch
+        catch (Exception installError)
         {
-            RestoreBackup(target, backupDirectory, backupState, coreReplaced, injectorReplaced, false);
+            try
+            {
+                RestoreBackup(target, backupDirectory, backupState, coreReplaced, injectorReplaced, false);
+                File.Delete(pendingReceipt);
+            }
+            catch (Exception restoreError)
+            {
+                throw new AggregateException("SoulCord installation failed and automatic recovery is incomplete. The pending receipt was preserved for Roll Back.", installError, restoreError);
+            }
             throw;
         }
         finally {if (File.Exists(temporary)) File.Delete(temporary);}
@@ -159,7 +183,7 @@ internal sealed class InstallerEngine
         if (!Directory.Exists(backupRoot)) throw new InvalidOperationException("No SoulCord installer backup is available.");
         RejectLinkedPath(_roamingAppData, backupRoot);
         RejectReparsePoint(backupRoot);
-        InstallReceipt receipt = LoadCurrentReceipt();
+        (InstallReceipt receipt, string receiptFile) = LoadRecoveryReceipt();
         if (receipt.Channel != target.Channel || receipt.DiscordVersion != target.Version || receipt.BackupDirectory is null) throw new InvalidDataException("The current install receipt does not match the selected Discord target.");
         string backupDirectory = Path.GetFullPath(receipt.BackupDirectory);
         RejectLinkedPath(backupRoot, backupDirectory);
@@ -171,6 +195,7 @@ internal sealed class InstallerEngine
         if (state.HadCore != (state.ExistingCoreSha256 is not null) || state.ExistingCoreSha256 is not null && !Sha256Pattern.IsMatch(state.ExistingCoreSha256)) throw new InvalidDataException("The rollback core metadata is invalid.");
         if (state.Injector.HadAppDirectory != (state.Injector.IndexSha256 is not null && state.Injector.PackageSha256 is not null) || state.Injector.IndexSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.IndexSha256) || state.Injector.PackageSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.PackageSha256)) throw new InvalidDataException("The rollback injector metadata is invalid.");
         RestoreBackup(target, backupDirectory, state, true, true, true);
+        File.Delete(receiptFile);
         return backupDirectory;
     }
 
@@ -191,12 +216,29 @@ internal sealed class InstallerEngine
     private void RejectDowngrade(ReleaseManifest manifest)
     {
         string receipt = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer", "current.json");
-        if (!File.Exists(receipt) || new FileInfo(receipt).Length > 64 * 1024) return;
+        if (!File.Exists(receipt)) return;
+        RejectLinkedPath(_roamingAppData, receipt);
+        FileInfo receiptInfo = new(receipt);
+        if ((receiptInfo.Attributes & FileAttributes.ReparsePoint) != 0 || receiptInfo.Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The current SoulCord installer receipt is unsafe; update is held for review.");
         InstallReceipt? current;
         try {current = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(receipt));}
         catch {throw new InvalidDataException("The current SoulCord installer receipt is malformed; repair is held for review.");}
         if (current is null || !Version.TryParse(current.Version, out Version? installed) || !Version.TryParse(manifest.Version, out Version? candidate)) throw new InvalidDataException("SoulCord version provenance is malformed; update is held for review.");
         if (candidate < installed) throw new InvalidOperationException("The candidate is older than the recorded SoulCord install. Use an explicit reviewed rollback instead of downgrading through Update.");
+    }
+
+    private void RequireNoPendingRecovery()
+    {
+        string root = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer");
+        string pending = Path.Combine(root, "pending.json");
+        if (!File.Exists(pending)) return;
+        string current = Path.Combine(root, "current.json");
+        if (File.Exists(current) && MatchingSafeReceiptFiles(current, pending))
+        {
+            File.Delete(pending);
+            return;
+        }
+        throw new InvalidOperationException("A prior SoulCord installation needs Roll Back before another install or update.");
     }
 
     private static InjectorBackupState BackupInjector(DiscordTarget target, string backupDirectory, string installedCore)
@@ -212,13 +254,25 @@ internal sealed class InstallerEngine
             RejectReparsePoint(appDirectory);
             string[] entries = Directory.GetFileSystemEntries(appDirectory).Select(Path.GetFileName).Order().ToArray()!;
             if (!entries.SequenceEqual(new[] {"index.js", "package.json"})) throw new InvalidDataException("The existing Discord injector directory contains unrecognized files; nothing was overwritten.");
-            string index = File.ReadAllText(Path.Combine(appDirectory, "index.js"));
-            string package = File.ReadAllText(Path.Combine(appDirectory, "package.json"));
+            string indexFile = Path.Combine(appDirectory, "index.js");
+            string packageFile = Path.Combine(appDirectory, "package.json");
+            RejectLinkedPath(appDirectory, indexFile);
+            RejectLinkedPath(appDirectory, packageFile);
+            string capturedIndexSha256 = HashFile(indexFile);
+            string capturedPackageSha256 = HashFile(packageFile);
+            string index = File.ReadAllText(indexFile);
+            string package = File.ReadAllText(packageFile);
             if (!RecognizedInjector(index, package, installedCore)) throw new InvalidDataException("The existing Discord injector is not a recognized BetterDiscord or SoulCord entry; nothing was overwritten.");
             string injectorBackup = Path.Combine(backupDirectory, "injector-app");
             Directory.CreateDirectory(injectorBackup);
-            File.Copy(Path.Combine(appDirectory, "index.js"), Path.Combine(injectorBackup, "index.js"), overwrite: false);
-            File.Copy(Path.Combine(appDirectory, "package.json"), Path.Combine(injectorBackup, "package.json"), overwrite: false);
+            string backupIndex = Path.Combine(injectorBackup, "index.js");
+            string backupPackage = Path.Combine(injectorBackup, "package.json");
+            File.Copy(indexFile, backupIndex, overwrite: false);
+            File.Copy(packageFile, backupPackage, overwrite: false);
+            if (!HashFile(backupIndex).Equals(capturedIndexSha256, StringComparison.OrdinalIgnoreCase)
+                || !HashFile(backupPackage).Equals(capturedPackageSha256, StringComparison.OrdinalIgnoreCase)
+                || !HashFile(indexFile).Equals(capturedIndexSha256, StringComparison.OrdinalIgnoreCase)
+                || !HashFile(packageFile).Equals(capturedPackageSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The injector changed while its rollback backup was captured; installation was held before mutation.");
         }
         string? indexSha256 = null;
         string? packageSha256 = null;
@@ -250,23 +304,23 @@ internal sealed class InstallerEngine
         string? coreBackup = null;
         string? injectorIndexContent = null;
         string? injectorPackageContent = null;
+        bool restoreIndex = false;
+        bool restorePackage = false;
+        bool removeInjectorDirectory = false;
+        bool restoreCoreBytes = false;
+        bool deleteCore = false;
         if (restoreInjector)
         {
             string resources = Path.Combine(Path.GetDirectoryName(target.ExecutablePath)!, "resources");
             appDirectory = Path.Combine(resources, "app");
-            if (!Directory.Exists(appDirectory)) throw new InvalidDataException("The installed injector directory is missing; nothing was rolled back.");
-            RejectReparsePoint(appDirectory);
-            currentEntries = Directory.GetFileSystemEntries(appDirectory).Select(Path.GetFileName).Order().ToArray()!;
-            if (currentEntries.Except(new[] {"index.js", "package.json"}).Any()) throw new InvalidDataException("The injector directory gained owner files; nothing was rolled back.");
-            if (requireUnchangedInjector)
+            if (Directory.Exists(appDirectory))
             {
-                if (!currentEntries.SequenceEqual(new[] {"index.js", "package.json"})) throw new InvalidDataException("The installed injector is incomplete; nothing was rolled back.");
-                string currentIndex = File.ReadAllText(Path.Combine(appDirectory, "index.js"));
-                string currentPackage = File.ReadAllText(Path.Combine(appDirectory, "package.json"));
-                if (!RecognizedInjector(currentIndex, currentPackage, installed)) throw new InvalidDataException("The injector changed after installation; nothing was rolled back.");
+                RejectReparsePoint(appDirectory);
+                currentEntries = Directory.GetFileSystemEntries(appDirectory).Select(Path.GetFileName).Order().ToArray()!;
+                if (currentEntries.Except(new[] {"index.js", "package.json"}).Any()) throw new InvalidDataException("The injector directory gained owner files; nothing was rolled back.");
             }
+            else if (state.Injector.HadAppDirectory) throw new InvalidDataException("The installed injector directory is missing; nothing was rolled back.");
         }
-        if (restoreCore && (!File.Exists(installed) || !HashFile(installed).Equals(state.InstalledArtifactSha256, StringComparison.OrdinalIgnoreCase))) throw new InvalidDataException("The installed core changed after the backup. Rollback preserved it for manual review.");
         if (restoreCore && state.HadCore)
         {
             coreBackup = Path.Combine(backupDirectory, "betterdiscord.asar");
@@ -288,45 +342,116 @@ internal sealed class InstallerEngine
             injectorPackageContent = File.ReadAllText(backupPackage);
         }
 
-        if (restoreCore && state.HadCore)
+        if (restoreCore)
+        {
+            string? currentHash = File.Exists(installed) ? HashFile(installed) : null;
+            bool candidatePresent = currentHash?.Equals(state.InstalledArtifactSha256, StringComparison.OrdinalIgnoreCase) == true;
+            bool priorPresent = state.HadCore && currentHash?.Equals(state.ExistingCoreSha256, StringComparison.OrdinalIgnoreCase) == true;
+            bool priorAbsent = !state.HadCore && currentHash is null;
+            if (!candidatePresent && !priorPresent && !priorAbsent && requireUnchangedInjector) throw new InvalidDataException("The installed core changed after the backup. Rollback preserved it for manual review.");
+            restoreCoreBytes = state.HadCore && !priorPresent;
+            deleteCore = !state.HadCore && !priorAbsent;
+        }
+
+        if (restoreInjector && state.Injector.HadAppDirectory)
+        {
+            string currentIndexFile = Path.Combine(appDirectory!, "index.js");
+            string currentPackageFile = Path.Combine(appDirectory!, "package.json");
+            if (!File.Exists(currentIndexFile) || !File.Exists(currentPackageFile)) throw new InvalidDataException("The installed injector is incomplete; nothing was rolled back.");
+            RejectLinkedPath(appDirectory!, currentIndexFile);
+            RejectLinkedPath(appDirectory!, currentPackageFile);
+            string currentIndexHash = HashFile(currentIndexFile);
+            string currentPackageHash = HashFile(currentPackageFile);
+            bool indexRestored = currentIndexHash.Equals(state.Injector.IndexSha256, StringComparison.OrdinalIgnoreCase);
+            bool packageRestored = currentPackageHash.Equals(state.Injector.PackageSha256, StringComparison.OrdinalIgnoreCase);
+            if (!indexRestored && !IsSoulCordInjectorIndex(File.ReadAllText(currentIndexFile), installed)) throw new InvalidDataException("The injector entry changed after installation; nothing was rolled back.");
+            if (!packageRestored && !IsSoulCordInjectorPackage(File.ReadAllText(currentPackageFile))) throw new InvalidDataException("The injector package changed after installation; nothing was rolled back.");
+            restoreIndex = !indexRestored;
+            restorePackage = !packageRestored;
+        }
+        else if (restoreInjector && Directory.Exists(appDirectory!))
+        {
+            foreach (string name in currentEntries)
+            {
+                string currentFile = Path.Combine(appDirectory!, name);
+                RejectLinkedPath(appDirectory!, currentFile);
+                string content = File.ReadAllText(currentFile);
+                if (name == "index.js" ? !IsSoulCordInjectorIndex(content, installed) : !IsSoulCordInjectorPackage(content)) throw new InvalidDataException("The new injector directory changed after installation; nothing was rolled back.");
+            }
+            removeInjectorDirectory = true;
+        }
+
+        // Restore the injector first. If a later core operation fails, retry can
+        // recognize either the candidate bytes or each already-restored file.
+        if (restoreIndex) WriteAtomic(Path.Combine(appDirectory!, "index.js"), injectorIndexContent!);
+        if (restorePackage) WriteAtomic(Path.Combine(appDirectory!, "package.json"), injectorPackageContent!);
+        if (restoreInjector && state.Injector.HadAppDirectory)
+        {
+            if (!HashFile(Path.Combine(appDirectory!, "index.js")).Equals(state.Injector.IndexSha256, StringComparison.OrdinalIgnoreCase)
+                || !HashFile(Path.Combine(appDirectory!, "package.json")).Equals(state.Injector.PackageSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Injector rollback verification failed.");
+        }
+        if (removeInjectorDirectory)
+        {
+            foreach (string name in currentEntries) File.Delete(Path.Combine(appDirectory!, name));
+            if (Directory.Exists(appDirectory!) && Directory.GetFileSystemEntries(appDirectory!).Length == 0) Directory.Delete(appDirectory!);
+        }
+        _mutationHook?.Invoke("rollback-after-injector");
+
+        if (restoreCoreBytes)
         {
             string temporary = $"{installed}.rollback-{Guid.NewGuid():N}.tmp";
             File.Copy(coreBackup!, temporary, overwrite: false);
             File.Move(temporary, installed, overwrite: true);
             if (!HashFile(installed).Equals(state.ExistingCoreSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Rollback verification failed.");
         }
-        else if (restoreCore) File.Delete(installed);
-
-        if (!restoreInjector) return;
-        if (state.Injector.HadAppDirectory)
-        {
-            WriteAtomic(Path.Combine(appDirectory!, "index.js"), injectorIndexContent!);
-            WriteAtomic(Path.Combine(appDirectory!, "package.json"), injectorPackageContent!);
-        }
-        else
-        {
-            foreach (string name in currentEntries) File.Delete(Path.Combine(appDirectory!, name));
-            Directory.Delete(appDirectory!);
-        }
+        else if (deleteCore && File.Exists(installed)) File.Delete(installed);
     }
+
+    private static bool IsSoulCordInjectorIndex(string index, string installedCore) => index.Contains(JsonSerializer.Serialize(Path.GetFullPath(installedCore)), StringComparison.OrdinalIgnoreCase) && index.Contains("module.exports = require", StringComparison.Ordinal);
+    private static bool IsSoulCordInjectorPackage(string package) => package == "{\"main\":\"./index.js\",\"name\":\"discord\"}";
 
     private static bool RecognizedInjector(string index, string package, string installedCore)
     {
         if (!package.Contains("\"main\"", StringComparison.Ordinal) || !package.Contains("index.js", StringComparison.Ordinal) || !package.Contains("\"discord\"", StringComparison.OrdinalIgnoreCase)) return false;
-        bool soulCord = index.Contains(JsonSerializer.Serialize(Path.GetFullPath(installedCore)), StringComparison.OrdinalIgnoreCase) && index.Contains("module.exports = require", StringComparison.Ordinal);
+        bool soulCord = IsSoulCordInjectorIndex(index, installedCore);
         bool betterDiscord = index.Contains("BetterDiscord", StringComparison.OrdinalIgnoreCase) && index.Contains("betterdiscord.asar", StringComparison.OrdinalIgnoreCase) && index.Contains("module.exports = require", StringComparison.Ordinal);
         return soulCord || betterDiscord;
     }
 
-    private InstallReceipt LoadCurrentReceipt()
+    private (InstallReceipt Receipt, string File) LoadRecoveryReceipt()
     {
-        string file = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer", "current.json");
+        string root = Path.Combine(_roamingAppData, "BetterDiscord", "soulcord-installer");
+        string pending = Path.Combine(root, "pending.json");
+        string current = Path.Combine(root, "current.json");
+        string file;
+        if (File.Exists(pending) && File.Exists(current) && MatchingSafeReceiptFiles(current, pending))
+        {
+            // A successful install may leave an identical pending receipt when
+            // cleanup is interrupted. Canonicalize it before rollback so the
+            // completed candidate receipt is removed with the restored core.
+            File.Delete(pending);
+            file = current;
+        }
+        else file = File.Exists(pending) ? pending : current;
         if (!File.Exists(file) || new FileInfo(file).Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The current SoulCord install receipt is unavailable.");
+        RejectLinkedPath(_roamingAppData, file);
+        if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("The current SoulCord install receipt is unsafe.");
         InstallReceipt? receipt;
         try {receipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(file));}
         catch {throw new InvalidDataException("The current SoulCord install receipt is malformed.");}
         if (receipt is null || !Sha256Pattern.IsMatch(receipt.ArtifactSha256) || !Regex.IsMatch(receipt.SourceCommit, "^[0-9a-f]{40}$") || !Version.TryParse(receipt.Version, out _)) throw new InvalidDataException("The current SoulCord install receipt failed validation.");
-        return receipt;
+        return (receipt, file);
+    }
+
+    private bool MatchingSafeReceiptFiles(string left, string right)
+    {
+        foreach (string file in new[] {left, right})
+        {
+            RejectLinkedPath(_roamingAppData, file);
+            FileInfo info = new(file);
+            if (!info.Exists || (info.Attributes & FileAttributes.ReparsePoint) != 0 || info.Length is <= 0 or > 64 * 1024) throw new InvalidDataException("A SoulCord installer receipt is unsafe.");
+        }
+        return CryptographicOperations.FixedTimeEquals(SHA256.HashData(File.ReadAllBytes(left)), SHA256.HashData(File.ReadAllBytes(right)));
     }
 
     private void RequireAllDiscordStopped()

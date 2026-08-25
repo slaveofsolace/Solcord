@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const {spawnSync} = require("child_process");
+const asar = require("@electron/asar");
 
 const [artifactInput, outputInput, sourceCommit] = process.argv.slice(2);
 if (!artifactInput || !outputInput || !/^[0-9a-f]{40}$/.test(sourceCommit ?? "")) {
@@ -13,7 +14,6 @@ if (!artifactInput || !outputInput || !/^[0-9a-f]{40}$/.test(sourceCommit ?? "")
 const repo = path.resolve(__dirname, "..");
 const artifact = path.resolve(artifactInput);
 const output = path.resolve(outputInput);
-if (!fs.existsSync(artifact) || !fs.lstatSync(artifact).isFile() || fs.lstatSync(artifact).isSymbolicLink()) throw new Error("The SoulCord ASAR is missing or linked.");
 if (artifact !== path.join(repo, "dist", "soulcord.asar")) throw new Error("The installer accepts only the repository's authoritative dist/soulcord.asar.");
 if (fs.existsSync(output)) throw new Error("The installer output directory must not already exist.");
 if (output === repo || output.startsWith(`${repo}${path.sep}`)) throw new Error("Installer artifacts must be generated outside the source checkout.");
@@ -26,6 +26,17 @@ const gitText = args => {
 };
 const head = gitText(["rev-parse", "HEAD"]).toLowerCase();
 if (head !== sourceCommit || gitText(["status", "--porcelain=v1", "--untracked-files=all"])) throw new Error("The installer requires the exact clean source commit supplied on the command line.");
+const dist = path.join(repo, "dist");
+if (fs.existsSync(dist)) {
+    const stat = fs.lstatSync(dist);
+    if (!stat.isDirectory() || stat.isSymbolicLink() || path.dirname(dist) !== repo) throw new Error("The SoulCord dist path is unsafe.");
+    // dist is ignored generated output. Recreate it from the already-verified
+    // clean commit so mutually forged ASAR/manifest files cannot be relabeled.
+    fs.rmSync(dist, {recursive: true});
+}
+const freshBuild = spawnSync(process.execPath, ["run", "dist"], {cwd: repo, stdio: "inherit", windowsHide: true});
+if (freshBuild.status !== 0) throw new Error(`Fresh SoulCord production build failed with status ${freshBuild.status}.`);
+if (!fs.existsSync(artifact) || !fs.lstatSync(artifact).isFile() || fs.lstatSync(artifact).isSymbolicLink()) throw new Error("The freshly built SoulCord ASAR is missing or linked.");
 const sourceBuildManifest = path.join(repo, "dist", "soulcord-build-manifest.json");
 if (!fs.existsSync(sourceBuildManifest) || !fs.lstatSync(sourceBuildManifest).isFile() || fs.lstatSync(sourceBuildManifest).isSymbolicLink() || fs.statSync(sourceBuildManifest).size > 256 * 1024) throw new Error("The authoritative SoulCord build manifest is missing or unsafe.");
 const postBuild = JSON.parse(fs.readFileSync(sourceBuildManifest, "utf8"));
@@ -41,16 +52,22 @@ if (postBuild?.schemaVersion !== 1
     || postBuild?.artifacts?.asar?.file !== "soulcord.asar"
     || postBuild?.artifacts?.asar?.sha256 !== artifactHash
     || postBuild?.artifacts?.asar?.bytes !== artifactBytes) throw new Error("The ASAR is not bound to the requested clean production source commit.");
+const embeddedProvenance = JSON.parse(asar.extractFile(artifact, "build-provenance.json").toString("utf8"));
+if (JSON.stringify(embeddedProvenance) !== JSON.stringify(postBuild.build)) throw new Error("The ASAR's embedded provenance does not match the authoritative build manifest.");
+const sourceBuildManifestHash = hashFile(sourceBuildManifest);
 fs.mkdirSync(output, {recursive: true});
 
 const project = path.join(repo, "installer", "SoulCord.Installer", "SoulCord.Installer.csproj");
 const publish = spawnSync("dotnet", ["publish", project, "-c", "Release", "--no-self-contained", "-o", output], {stdio: "inherit", windowsHide: true});
 if (publish.status !== 0) throw new Error(`dotnet publish failed with status ${publish.status}.`);
+if (gitText(["rev-parse", "HEAD"]).toLowerCase() !== sourceCommit || gitText(["status", "--porcelain=v1", "--untracked-files=all"])) throw new Error("The source changed while the installer was being built.");
+if (hashFile(artifact) !== artifactHash || hashFile(sourceBuildManifest) !== sourceBuildManifestHash) throw new Error("Fresh build output changed while the installer was being built.");
 
 const bundledArtifact = path.join(output, "soulcord.asar");
 fs.copyFileSync(artifact, bundledArtifact, fs.constants.COPYFILE_EXCL);
 const bundledBuildManifest = path.join(output, "soulcord-build-manifest.json");
 fs.copyFileSync(sourceBuildManifest, bundledBuildManifest, fs.constants.COPYFILE_EXCL);
+if (hashFile(bundledArtifact) !== artifactHash || hashFile(bundledBuildManifest) !== sourceBuildManifestHash) throw new Error("The staged installer payload differs from the fresh build.");
 const manifest = {
     version: postBuild.build.version,
     sourceCommit,

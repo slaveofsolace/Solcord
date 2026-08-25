@@ -56,6 +56,33 @@ export interface SoulCordFriendWatchNoticePlan {
     state: SoulCordFriendWatchNoticeState;
 }
 
+export type SoulCordFriendWatchAccountDecision = "initialize" | "continue" | "hold";
+
+/**
+ * RelationshipStore snapshots do not carry the account that produced them.
+ * Once a running adapter observes an identity change, it therefore cannot
+ * safely decide whether the next snapshot belongs to the old or new account.
+ * Hold until the feature is restarted and a fresh baseline can be established.
+ */
+export class SoulCordFriendWatchAccountBarrier {
+    #initialized = false;
+    #accountId?: string;
+    #held = false;
+
+    observe(accountId: string | undefined): SoulCordFriendWatchAccountDecision {
+        if (this.#held) return "hold";
+        if (!this.#initialized) {
+            this.#initialized = true;
+            this.#accountId = accountId;
+            return "initialize";
+        }
+        if (this.#accountId === accountId) return "continue";
+        this.#held = true;
+        this.#accountId = undefined;
+        return "hold";
+    }
+}
+
 const VALID_SUBJECT = /^\d{1,32}$/;
 
 export function normalizeDiscordRelationships(value: unknown): Map<string, SoulCordRelationshipSnapshot> {

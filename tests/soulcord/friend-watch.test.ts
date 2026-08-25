@@ -1,9 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
-import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, pruneSoulCordRelationshipEvents, reconcileSoulCordRelationships, SoulCordFriendWatchJournal} from "../../src/common/soulcord/friend-watch";
+import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, pruneSoulCordRelationshipEvents, reconcileSoulCordRelationships, SoulCordFriendWatchAccountBarrier, SoulCordFriendWatchJournal} from "../../src/common/soulcord/friend-watch";
 
 describe("SoulCord Friend Watch domain", () => {
+    test("holds fail-closed after an account identity change until adapter restart", () => {
+        const barrier = new SoulCordFriendWatchAccountBarrier();
+        expect(barrier.observe("100")).toBe("initialize");
+        expect(barrier.observe("100")).toBe("continue");
+        expect(barrier.observe("200")).toBe("hold");
+        expect(barrier.observe("200")).toBe("hold");
+        expect(barrier.observe("100")).toBe("hold");
+
+        const restarted = new SoulCordFriendWatchAccountBarrier();
+        expect(restarted.observe("200")).toBe("initialize");
+    });
     test("normalizes only already-loaded relationship state without a network interface", () => {
         expect([...normalizeDiscordRelationships({1: 1, 2: 2, 3: 3, 4: 4, bad: 1, 5: 0}).entries()]).toEqual([
             ["1", {subjectId: "1", state: "friend"}],

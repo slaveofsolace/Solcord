@@ -120,6 +120,13 @@ internal static class InstallerSelfTest
             InstallReceipt receipt = engine.Install(target);
             if (!engine.VerifyInstalled()) return 2;
             if (!File.ReadAllText(Path.Combine(resources, "app", "index.js")).Contains("betterdiscord.asar", StringComparison.OrdinalIgnoreCase)) return 4;
+            string currentReceipt = Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "current.json");
+            string currentReceiptText = File.ReadAllText(currentReceipt);
+            File.WriteAllText(currentReceipt, new string('x', 65 * 1024));
+            stage = "oversized-receipt-refusal";
+            try {engine.Install(target, repair: true); return 8;}
+            catch (InvalidDataException) {/* existing unsafe receipts must fail closed */}
+            File.WriteAllText(currentReceipt, currentReceiptText);
             string rogue = Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "backups", "zzzz-unbound-newest");
             Directory.CreateDirectory(rogue);
             File.WriteAllText(Path.Combine(rogue, "backup-state.json"), "{}");
@@ -131,10 +138,20 @@ internal static class InstallerSelfTest
             try {engine.RollBack(target); return 7;}
             catch (InvalidDataException) {/* expected hash-bound refusal */}
             File.WriteAllText(injectorIndex, originalInjector);
+            File.Copy(currentReceipt, Path.Combine(roaming, "BetterDiscord", "soulcord-installer", "pending.json"), overwrite: false);
+            bool interrupted = false;
+            var interruptingEngine = new InstallerEngine(bundle, local, roaming, _ => 0, point =>
+            {
+                if (!interrupted && point == "rollback-after-injector") {interrupted = true; throw new IOException("fixture interruption");}
+            });
+            stage = "partial-rollback";
+            try {interruptingEngine.RollBack(target); return 9;}
+            catch (IOException) {/* retry must finish from the mixed restored state */}
             stage = "rollback";
             engine.RollBack(target);
             if (File.ReadAllText(Path.Combine(data, "betterdiscord.asar")) != "previous-core") return 3;
             if (File.ReadAllText(Path.Combine(priorApp, "index.js")) != priorIndex || File.ReadAllText(Path.Combine(priorApp, "package.json")) != priorPackage) return 5;
+            if (File.Exists(currentReceipt)) return 10;
             return 0;
         }
         catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}"); return 1;}
