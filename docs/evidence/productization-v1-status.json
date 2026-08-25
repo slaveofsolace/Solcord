@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "kind": "soulcord-productization-v1-source-status",
+  "product": "SoulCord",
+  "version": "1.0.0",
+  "branch": "fork/scaffold-baseline",
+  "baselineCommit": "e1b40dff9a5a7396872e3a717010a6dc5b17be2b",
+  "implementationCommits": {
+    "controlCenter": "64c132e265becaa2c1326a08495068db97b875ff",
+    "securityRemediation": "4289835d49fb6fb014fe451b5feb47b95b4320ff",
+    "finalSecurityRemediation": "60f340ad88f53038bdbc8e64bbd1d956bd0ea296",
+    "humanEyeAppearanceRepair": "4630a7b48fa9d9b382014218516d374cdf948cda"
+  },
+  "source": {
+    "status": "GREEN_AT_RECORDED_REPAIR_COMMIT_FINAL_HEAD_RECORDED_EXTERNALLY",
+    "tests": {"passed": 564, "failed": 0, "assertions": 3195, "files": 52},
+    "typecheck": "PASS",
+    "eslint": {"errors": 0, "inheritedWarnings": 3},
+    "soulcordCssLint": "PASS",
+    "legacyRepositoryCss": "INHERITED_NON_GREEN",
+    "typeGeneration": "PASS_WITH_EXPECTED_NODE_HTTPS_EXTERNAL_NOTICE",
+    "productionAudit": {"packages": 92, "vulnerabilities": 0},
+    "circularAnalysis": {"inheritedCycles": 11},
+    "diffCheck": "PASS"
+  },
+  "provisionalArtifactAtAppearanceRepair": {
+    "status": "SUPERSEDED_AFTER_THIS_EVIDENCE_COMMIT",
+    "asarSha256": "b7e00468073a0b53b4d56fdd49885d3f9c25b5abffd0374f346df4abff88a0be",
+    "installerSha256": "641f23ffe6cdb0315c3ce19e7984d22797dcf8cff14b2c3e3d6b567dca4f8259",
+    "determinism": "PASS_NINE_OF_NINE_FILES_BYTE_IDENTICAL",
+    "installerSelfTest": "PASS_TWICE"
+  },
+  "security": {
+    "latestFullProductizationScanId": "fe6e2869-4ae4-4ca3-becc-8b4ab3e1e51d",
+    "range": "e1b40dff9a5a7396872e3a717010a6dc5b17be2b..60f340ad88f53038bdbc8e64bbd1d956bd0ea296",
+    "changedProductionSurfaces": 22,
+    "findings": 0,
+    "appearanceRepairRescan": "REQUIRED_AFTER_EVIDENCE_COMMIT_AND_RECORDED_EXTERNALLY"
+  },
+  "disposableRuntime": {
+    "discordChannel": "stable",
+    "discordVersion": "1.0.9253",
+    "filesystemProfileIsolated": true,
+    "windowsAccountIsolated": false,
+    "startup": "PASS",
+    "settingsLabel": "PASS",
+    "controlCenterDark": "PASS",
+    "soulLight": "PASS_AFTER_REPAIR",
+    "workspaceReview": ["Home", "Appearance", "Safety", "People", "Tools"],
+    "keyboardFocus": "PASS_FORWARD_AND_REVERSE",
+    "linkLensLocalInspection": "PASS",
+    "ownerDiscordProcessesTouched": false,
+    "isolatedProcessesCleaned": true
+  },
+  "openOwnerGates": [
+    "Live-profile replacement and rollback acceptance.",
+    "Final owner taste acceptance.",
+    "Native external-link modal and DM navigation acceptance if Link Lens is enabled later.",
+    "Exact Windows 100 and 125 percent DPI review.",
+    "Authenticode signing, SmartScreen expectations, merge, and public release."
+  ],
+  "nonclaims": [
+    "No community catalog candidate is claimed installable without exact runtime evidence.",
+    "No DM was opened and no message was sent during productization acceptance.",
+    "No Activity was launched in this pass; the owner separately reported Activities working.",
+    "No upload, file open, notification-read action, recording, voice join, stream, OAuth, or account mutation was performed.",
+    "The live Discord profile still runs the pre-productization generation."
+  ],
+  "finalArtifactManifest": "EXTERNAL_AFTER_EVIDENCE_COMMIT_TO_AVOID_SELF_REFERENCE"
+}

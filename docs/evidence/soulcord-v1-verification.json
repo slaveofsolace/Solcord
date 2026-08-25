@@ -1,5 +1,7 @@
 {
   "schemaVersion": 1,
+  "recordStatus": "SUPERSEDED_BY_PRODUCTIZATION_V1_STATUS",
+  "supersededBy": "productization-v1-status.json",
   "product": "SoulCord",
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
