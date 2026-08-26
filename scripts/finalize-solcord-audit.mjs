@@ -9,6 +9,14 @@ function replaceRequired(file, before, after, label) {
     writeFileSync(file, source.replace(before, after), "utf8");
 }
 
+function replaceRegexRequired(file, pattern, replacement, expectedCount, label) {
+    const source = readFileSync(file, "utf8");
+    const matches = [...source.matchAll(pattern)];
+    if (matches.length !== expectedCount) throw new Error(`${label} expected ${expectedCount} matches in ${file}, found ${matches.length}.`);
+    pattern.lastIndex = 0;
+    writeFileSync(file, source.replace(pattern, replacement), "utf8");
+}
+
 function replaceAllText(oldValue, newValue) {
     const files = execFileSync("git", ["ls-files", "-z"], {encoding: "utf8"}).split("\0").filter(Boolean);
     for (const file of files) {
@@ -36,17 +44,12 @@ replaceRequired(
     "appearance normalization"
 );
 
-replaceRequired(
+replaceRegexRequired(
     "src/betterdiscord/modules/patcher.ts",
-    `                        // Why eslint? It is \`this\` why care if its duplicated\n                        // eslint-disable-next-line no-shadow\n                        return function (this: any, ...innerArgs: any[]) {`,
-    `                        return function (this: any, ...innerArgs: any[]) {`,
-    "terminal instead patch"
-);
-replaceRequired(
-    "src/betterdiscord/modules/patcher.ts",
-    `                    // Why eslint? It is \`this\` why care if its duplicated\n                    // eslint-disable-next-line no-shadow\n                    return function (this: any, ...innerArgs: any[]) {`,
-    `                    return function (this: any, ...innerArgs: any[]) {`,
-    "nested instead patch"
+    /^[ \t]*\/\/ Why eslint\? It is `this` why care if its duplicated\r?\n[ \t]*\/\/ eslint-disable-next-line no-shadow\r?\n/gm,
+    "",
+    2,
+    "obsolete no-shadow directives"
 );
 
 replaceRequired(
