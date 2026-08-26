@@ -30,26 +30,11 @@ jobs:
       - name: Rename product paths and text
         run: bun scripts/rename-soulcord-to-solcord.mjs
 
+      - name: Rebuild exact runtime catalog
+        run: node scripts/build-solcord-runtime-catalog.cjs
+
       - name: Remove one-time migration machinery
         run: rm -f scripts/rename-soulcord-to-solcord.mjs .github/workflows/solcord-identity-migration.yml
-
-      - name: Install frozen dependencies
-        run: bun install --frozen-lockfile
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
-
-      - name: Verify source
-        run: |
-          bun run test
-          bun run lint
-          bun run lint-css:solcord
-          bun run typecheck
-          bun run generate-types
-          bun run circulars
-          bun run dist
-        env:
-          BRANCH_NAME: ${{github.head_ref || github.ref_name}}
-          COMMIT_HASH: ${{github.sha}}
 
       - name: Enforce complete identity migration
         shell: bash
@@ -66,10 +51,32 @@ jobs:
           fi
           git diff --cached --check
 
-      - name: Commit verified migration
+      - name: Create unpushed clean migration commit
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "refactor(identity): rename Soulcord to Solcord"
-          git push origin HEAD:audit/solcord-foundation
+          echo "MIGRATION_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+      - name: Verify source
+        run: |
+          bun run test
+          bun run lint
+          bun run lint-css:solcord
+          bun run typecheck
+          bun run generate-types
+          bun run circulars
+          bun run dist
+        env:
+          BRANCH_NAME: audit/solcord-foundation
+          COMMIT_HASH: ${{env.MIGRATION_SHA}}
+
+      - name: Push verified migration
+        shell: bash
+        run: git push origin HEAD:audit/solcord-foundation
