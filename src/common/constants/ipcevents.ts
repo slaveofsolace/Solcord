@@ -27,7 +27,7 @@ export const SET_ALLOW_PRELOAD_OVERRIDE = "bd-set-allow-preload-override";
 export const GET_ALLOW_PRELOAD_OVERRIDE = "bd-get-allow-preload-override";
 export const RUN_RENDERER               = "bd-run-renderer";
 
-// SoulCord-internal compatibility bridge. Existing BetterDiscord IPC names stay unchanged.
+// Solcord-internal compatibility bridge. Existing BetterDiscord IPC names stay unchanged.
 export const GET_ACTIVITY_COMPATIBILITY = "sc-get-activity-compatibility";
 export const TIMELINE_BOOTSTRAP          = "sc-timeline-bootstrap";
 export const TIMELINE_BIND               = "sc-timeline-bind";

@@ -1,5 +1,5 @@
 import React from "react";
-import soulCordMark from "@assets/branding/soulcord-mark.svg";
+import solcordMark from "@assets/branding/solcord-mark.svg";
 import {lucideToDiscordIcon} from "@utils/icon";
 import clsx from "clsx";
 import {Icon, type LucideProps} from "lucide-react";
@@ -12,13 +12,13 @@ const IconRenderer: React.FC<React.ComponentProps<typeof Icon>> = typeof (Icon a
     : Icon;
 
 
-const SoulCordLogo = ((props: Props) => {
+const SolcordLogo = ((props: Props) => {
     const element = IconRenderer(
         {
             ...props,
-            className: clsx("lucide-soulcord", props.className),
+            className: clsx("lucide-solcord", props.className),
             iconNode: [
-                ["image", {href: soulCordMark, x: "0", y: "0", width: "64", height: "64", preserveAspectRatio: "xMidYMid meet"}]
+                ["image", {href: solcordMark, x: "0", y: "0", width: "64", height: "64", preserveAspectRatio: "xMidYMid meet"}]
             ]
         },
         // @ts-expect-error Ignore cause react 19
@@ -32,7 +32,7 @@ const SoulCordLogo = ((props: Props) => {
     });
 }) as PsuedoLucideIcon;
 
-export const Logo = Object.assign(SoulCordLogo, {
-    Discord: lucideToDiscordIcon(SoulCordLogo),
-    DiscordAccented: lucideToDiscordIcon(SoulCordLogo, (m) => ({...m, accent: true}))
+export const Logo = Object.assign(SolcordLogo, {
+    Discord: lucideToDiscordIcon(SolcordLogo),
+    DiscordAccented: lucideToDiscordIcon(SolcordLogo, (m) => ({...m, accent: true}))
 });

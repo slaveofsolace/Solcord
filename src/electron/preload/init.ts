@@ -9,11 +9,11 @@ import {ORIGINAL_PRELOAD_REQUEST, runOriginalPreloadOnce} from "./original-prelo
 const originalPreloadState = {attempted: false};
 
 export interface PreloadInitializationOptions {
-    enableSoulCordEarlyRenderer: boolean;
+    enableSolcordEarlyRenderer: boolean;
 }
 
-export default function ({enableSoulCordEarlyRenderer}: PreloadInitializationOptions) {
-    if (enableSoulCordEarlyRenderer) {
+export default function ({enableSolcordEarlyRenderer}: PreloadInitializationOptions) {
+    if (enableSolcordEarlyRenderer) {
         webFrame.top?.executeJavaScript(`(() => {${fs.readFileSync(path.join(__dirname, "earlyRenderer.js"), "utf8")}})()`).catch(() => {});
     }
 
@@ -28,6 +28,6 @@ export default function ({enableSoulCordEarlyRenderer}: PreloadInitializationOpt
     if (result.state === "failed") {
         // The error class is useful; the absolute preload path and error message are not.
         // eslint-disable-next-line no-console
-        console.error(`[SoulCord] Discord preload failed (${result.errorName ?? "unknown-error"}).`);
+        console.error(`[Solcord] Discord preload failed (${result.errorName ?? "unknown-error"}).`);
     }
 }

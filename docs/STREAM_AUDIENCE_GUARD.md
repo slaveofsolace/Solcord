@@ -4,13 +4,13 @@ Stream Audience Guard is a disabled-by-default, per-call safety adapter for the 
 
 ## Guarantee and nonclaims
 
-When enabled, configured, and explicitly armed for a call, SoulCord promises:
+When enabled, configured, and explicitly armed for a call, Solcord promises:
 
 > Your stream will not start or continue while a denied user is detected in the current call or viewer list.
 
 This is not a per-viewer media permission. Prevent Start and Stop on Join use the current voice-state store. Stop on Watch uses Discord's current viewer list and may react only after brief frames have already been delivered. The feature never patches the displayed viewer list as a security mechanism.
 
-Only native channel access restrictions are server-enforced. SoulCord does not create channels, move members, or edit permission overwrites through a user account.
+Only native channel access restrictions are server-enforced. Solcord does not create channels, move members, or edit permission overwrites through a user account.
 
 ## Invariants
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "kind": "soulcord-productization-v1-source-status",
-  "product": "SoulCord",
+  "kind": "solcord-productization-v1-source-status",
+  "product": "Solcord",
   "version": "1.0.0",
   "branch": "fork/scaffold-baseline",
   "baselineCommit": "e1b40dff9a5a7396872e3a717010a6dc5b17be2b",
@@ -16,7 +16,7 @@
     "tests": {"passed": 599, "failed": 0, "assertions": 3500, "files": 53},
     "typecheck": "PASS",
     "eslint": {"errors": 0, "inheritedWarnings": 3},
-    "soulcordCssLint": "PASS",
+    "solcordCssLint": "PASS",
     "legacyRepositoryCss": "INHERITED_NON_GREEN",
     "typeGeneration": "PASS_WITH_EXPECTED_NODE_HTTPS_EXTERNAL_NOTICE",
     "productionAudit": {"packages": 92, "vulnerabilities": 0},

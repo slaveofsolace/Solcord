@@ -1,0 +1,141 @@
+/**
+ * @name Solcord — Quiet Read
+ * @author slaveofsolace
+ * @version 2.0.0
+ * @description An accessible light theme with generous reading measure, durable contrast, and still interactions.
+ * @source https://github.com/slaveofsolace/Solcord
+ * @license Apache-2.0
+ */
+
+/* SPDX-License-Identifier: Apache-2.0 */
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */
+
+:root {
+    --scq-canvas: #DDE4E6;
+    --scq-sidebar: #E9EEF0;
+    --scq-paper: #F8F6F0;
+    --scq-raised: #FFFFFF;
+    --scq-line: #A8B4B8;
+    --scq-text: #20282C;
+    --scq-muted: #4E5C62;
+    --scq-blue: #176875;
+    --scq-blue-strong: #0E5260;
+    --scq-amber: #87550B;
+    --scq-red: #963E35;
+    --scq-focus: #075B68;
+    --scq-on-accent: #FFFFFF;
+    --solcord-graphite: var(--scq-text);
+    --solcord-cream: var(--scq-paper);
+    --solcord-sea: var(--scq-blue);
+    --solcord-coral: var(--scq-red);
+    --solcord-focus: var(--scq-focus);
+    --solcord-on-accent: var(--scq-on-accent);
+    --solcord-accent-text: var(--scq-blue-strong);
+    --solcord-warning-text: var(--scq-amber);
+    --solcord-danger-text: var(--scq-red);
+    --solcord-callout-text: var(--scq-muted);
+    --custom-message-spacing-vertical-container-cozy: 0.62rem;
+    --custom-message-spacing-vertical-container-compact: 0.3rem;
+}
+
+.theme-light,
+.theme-dark,
+.theme-darker,
+.theme-midnight {
+    color-scheme: light;
+    --background-primary: var(--scq-paper);
+    --background-secondary: var(--scq-sidebar);
+    --background-secondary-alt: #DDE4E6;
+    --background-tertiary: var(--scq-canvas);
+    --background-floating: var(--scq-raised);
+    --background-base-low: var(--scq-paper);
+    --background-base-lower: var(--scq-sidebar);
+    --background-base-lowest: var(--scq-canvas);
+    --background-surface-high: #F2F2ED;
+    --background-surface-higher: var(--scq-raised);
+    --background-surface-highest: #FFFFFF;
+    --background-modifier-hover: rgb(23 104 117 / 8%);
+    --background-modifier-active: rgb(23 104 117 / 13%);
+    --background-modifier-selected: rgb(23 104 117 / 16%);
+    --background-modifier-accent: var(--scq-line);
+    --background-mod-subtle: rgb(23 104 117 / 7%);
+    --background-mod-normal: rgb(23 104 117 / 11%);
+    --background-mod-strong: rgb(23 104 117 / 16%);
+    --bg-surface-overlay-tmp: var(--scq-raised);
+    --bg-surface-raised: var(--scq-raised);
+    --text-normal: var(--scq-text);
+    --text-default: var(--scq-text);
+    --text-muted: var(--scq-muted);
+    --text-link: var(--scq-blue-strong);
+    --text-warning: var(--scq-amber);
+    --text-danger: var(--scq-red);
+    --header-primary: #151C20;
+    --header-secondary: #3F4B50;
+    --interactive-normal: #46545A;
+    --interactive-hover: #152025;
+    --interactive-active: var(--scq-blue-strong);
+    --interactive-muted: #68757A;
+    --interactive-text-default: var(--interactive-normal);
+    --interactive-text-hover: var(--interactive-hover);
+    --interactive-text-active: var(--interactive-active);
+    --brand-500: var(--scq-blue);
+    --brand-560: var(--scq-blue-strong);
+    --brand-600: #0A4651;
+    --button-filled-brand-background: var(--scq-blue);
+    --button-filled-brand-background-hover: var(--scq-blue-strong);
+    --button-filled-brand-text: var(--scq-on-accent);
+    --border-subtle: #C2CCCF;
+    --border-muted: #B5C0C4;
+    --border-normal: var(--scq-line);
+    --border-strong: #7C8D93;
+    --channeltextarea-background: #FFFFFF;
+    --chat-background-default: var(--scq-paper);
+    --input-background: #FFFFFF;
+    --card-background-default: var(--scq-paper);
+    --modal-background: var(--scq-raised);
+    --modal-footer-background: var(--scq-sidebar);
+    --status-warning: var(--scq-amber);
+    --status-danger: var(--scq-red);
+    --scrollbar-thin-thumb: #819096;
+    --scrollbar-auto-thumb: #819096;
+    --scrollbar-auto-track: #E4EAEC;
+}
+
+body { background: var(--scq-canvas) !important; color: var(--scq-text); font-family: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif; font-size: 16px; }
+#app-mount { background: var(--scq-canvas) !important; }
+::selection { color: #FFFFFF; background: var(--scq-blue); }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scq-focus) !important; outline-offset: 3px; }
+
+/* Signature: calm reading columns, larger targets, and stable non-animated state changes. */
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="chatContent_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"]) { border-color: var(--scq-line); background: var(--background-primary) !important; }
+#app-mount [class*="guilds_"] { background: var(--scq-canvas) !important; }
+#app-mount [class*="sidebarList_"] { background: var(--scq-sidebar) !important; border-right: 1px solid var(--scq-line); }
+#app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { background: var(--scq-sidebar) !important; border-left: 1px solid var(--scq-line); }
+#app-mount [class*="subtitleContainer_"] { border-bottom: 1px solid var(--scq-line); background: var(--scq-paper) !important; }
+
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) { min-height: 40px; border: 1px solid transparent; border-radius: 8px !important; }
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover { border-color: var(--scq-line); background: rgb(23 104 117 / 7%) !important; }
+#app-mount [class*="selected_"] > [class*="link_"] { border-color: var(--scq-blue) !important; background: rgb(23 104 117 / 12%) !important; box-shadow: inset 4px 0 0 var(--scq-blue); }
+
+#app-mount li[id^="chat-messages-"] { margin-inline: auto; max-width: 78ch; border-left: 4px solid transparent; border-radius: 6px; line-height: 1.55; }
+#app-mount li[id^="chat-messages-"]:hover { border-left-color: var(--scq-blue); background: rgb(23 104 117 / 5%) !important; }
+#app-mount [class*="mentioned_"] { border-left-color: var(--scq-red) !important; background: rgb(150 62 53 / 9%) !important; }
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"]) { min-height: 48px; border: 1px solid var(--scq-line); border-radius: 9px !important; background: var(--scq-paper) !important; }
+
+#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) { min-height: 44px; border: 2px solid var(--scq-line) !important; border-radius: 9px !important; background: #FFFFFF !important; box-shadow: none !important; color: var(--scq-text) !important; }
+#app-mount :is([class*="menu_"], [class*="modal_"], [role="dialog"], [class*="popout_"]) { border: 1px solid #7C8D93; border-radius: 10px !important; background: #FFFFFF !important; box-shadow: 0 10px 24px rgb(32 40 44 / 18%); color: var(--scq-text) !important; }
+#app-mount [class*="standardSidebarView_"] [class*="sidebarRegion_"] { background: var(--scq-sidebar) !important; border-right: 1px solid var(--scq-line); }
+#app-mount [class*="standardSidebarView_"] [class*="contentRegion_"] { background: var(--scq-paper) !important; color: var(--scq-text) !important; }
+#app-mount [class*="embedFull_"] { border: 1px solid var(--scq-line) !important; border-left: 5px solid var(--scq-blue) !important; border-radius: 7px !important; background: #FFFFFF !important; }
+#app-mount [class*="newMessagesBar_"] { color: #FFFFFF !important; background: var(--scq-blue) !important; border-radius: 7px !important; }
+
+/* Quiet Read stays still even when the system allows motion. */
+#app-mount *, #app-mount *::before, #app-mount *::after { transition-duration: 0s !important; }
+
+@media (max-width: 900px) {
+    #app-mount li[id^="chat-messages-"] { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}

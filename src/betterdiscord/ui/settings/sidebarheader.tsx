@@ -11,7 +11,7 @@ import {HistoryIcon} from "lucide-react";
 
 export default function SettingsTitle() {
     return <div className="bd-sidebar-header">
-        <h2 className="bd-sidebar-header-label">SoulCord</h2>
+        <h2 className="bd-sidebar-header-label">Solcord</h2>
         <DiscordModules.Tooltip color="primary" position="top" aria-label={t("Modals.changelog")} text={t("Modals.changelog")}>
             {props =>
                 <Button {...props} aria-label={t("Modals.changelog")} className="bd-changelog-button" look={Button.Looks.BLANK} color={Button.Colors.TRANSPARENT} size={Button.Sizes.NONE} onClick={() => Modals.showChangelogModal(Changelog)}>

@@ -1,6 +1,6 @@
-# Contributing to SoulCord
+# Contributing to Solcord
 
-SoulCord is a focused reliability, privacy, and productivity fork of BetterDiscord. Preserve upstream history and compatibility contracts; do not re-scaffold the project or rebrand stable APIs just because their names contain `BetterDiscord` or `bd`.
+Solcord is a focused reliability, privacy, and productivity fork of BetterDiscord. Preserve upstream history and compatibility contracts; do not re-scaffold the project or rebrand stable APIs just because their names contain `BetterDiscord` or `bd`.
 
 ## Before changing code
 
@@ -12,7 +12,7 @@ SoulCord is a focused reliability, privacy, and productivity fork of BetterDisco
 
 ## Product boundaries
 
-SoulCord rejects token access, self-bot behavior, hidden-channel access, hidden telemetry, automated sending/joining/uploading, premium/entitlement mutation, and covert microphone traffic. Private local history observes only events already seen by the running client after opt-in. Account-risk or external-service experiments require a separate default-off boundary and explicit consent.
+Solcord rejects token access, self-bot behavior, hidden-channel access, hidden telemetry, automated sending/joining/uploading, premium/entitlement mutation, and covert microphone traffic. Private local history observes only events already seen by the running client after opt-in. Account-risk or external-service experiments require a separate default-off boundary and explicit consent.
 
 ## Build and verification
 
@@ -22,7 +22,7 @@ Use the pinned Bun version:
 bun install --frozen-lockfile
 bun run test
 bun run lint
-bun run lint-css:soulcord
+bun run lint-css:solcord
 bun run typecheck
 bun run generate-types
 bun run circulars
@@ -38,4 +38,4 @@ Explain the observed failure, causal model, smallest change, cleanup behavior, t
 
 ## Upstream
 
-SoulCord is based on [`BetterDiscord/BetterDiscord`](https://github.com/BetterDiscord/BetterDiscord), licensed under Apache-2.0. Preserve upstream authorship, contribution history, `LICENSE`, and factual attribution. Contributions to upstream BetterDiscord should follow its own current contribution guide.
+Solcord is based on [`BetterDiscord/BetterDiscord`](https://github.com/BetterDiscord/BetterDiscord), licensed under Apache-2.0. Preserve upstream authorship, contribution history, `LICENSE`, and factual attribution. Contributions to upstream BetterDiscord should follow its own current contribution guide.

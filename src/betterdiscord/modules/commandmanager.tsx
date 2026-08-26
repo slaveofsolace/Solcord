@@ -1,6 +1,6 @@
 import Patcher from "@modules/patcher";
 import React from "react";
-import soulCordMark from "@assets/branding/soulcord-mark.svg";
+import solcordMark from "@assets/branding/solcord-mark.svg";
 import pluginmanager from "./pluginmanager";
 import Logger from "@common/logger";
 import {Filters, getByKeys, getByStrings, getModule, getStore, getWithKey, modules} from "@webpack";
@@ -112,7 +112,7 @@ const isValidImageUrl = (url: string) => {
     }
 };
 
-const SOULCORD_COMMAND_ICON = soulCordMark;
+const SOLCORD_COMMAND_ICON = solcordMark;
 
 class CommandManager {
     static #commands = new Map<string, Map<string, Command>>();
@@ -137,10 +137,10 @@ class CommandManager {
 
     static #patchCommandSystem() {
         this.localBDBot = new this.User({
-            avatar: "soulcord",
+            avatar: "solcord",
             id: "676620914632294467",
             bot: true,
-            username: "SoulCord",
+            username: "Solcord",
             system: true,
         });
 
@@ -150,7 +150,7 @@ class CommandManager {
         this.#patchIndexStore();
         this.#patchAuthorizer();
 
-        this.IconsModule.BOT_AVATARS.soulcord = SOULCORD_COMMAND_ICON;
+        this.IconsModule.BOT_AVATARS.solcord = SOLCORD_COMMAND_ICON;
     }
 
     static #patchSidebarModule() {
@@ -356,7 +356,7 @@ class CommandManager {
 
         return {
             integrationType: 0,
-            integrationTitle: caller === "BetterDiscord" ? "SoulCord" : caller,
+            integrationTitle: caller === "BetterDiscord" ? "Solcord" : caller,
             inputType: InputTypes.BUILT_IN,
             get id() {return commandId;},
             get __registerId() {return commandId;},
@@ -408,10 +408,10 @@ class CommandManager {
         if (!this.#sections.has(caller)) {
             this.#sections.set(caller, {
                 id: caller,
-                name: caller === "BetterDiscord" ? "SoulCord" : caller,
+                name: caller === "BetterDiscord" ? "Solcord" : caller,
                 type: 1,
                 key: "1",
-                icon: caller === "BetterDiscord" ? SOULCORD_COMMAND_ICON : null,
+                icon: caller === "BetterDiscord" ? SOLCORD_COMMAND_ICON : null,
                 isBD: true
             });
         }

@@ -1,6 +1,6 @@
-# SoulCord V2 theme system
+# Solcord V2 theme system
 
-The six V2 themes extend SoulCord's accepted V1 direction without treating a palette swap as a new design. Each theme changes at least three of geometry, density, type treatment, spatial grouping, motion, and interaction feedback. All sources are original Apache-2.0 CSS implementations.
+The six V2 themes extend Solcord's accepted V1 direction without treating a palette swap as a new design. Each theme changes at least three of geometry, density, type treatment, spatial grouping, motion, and interaction feedback. All sources are original Apache-2.0 CSS implementations.
 
 | Theme | Structural character | Signature behavior |
 | --- | --- | --- |

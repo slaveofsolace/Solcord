@@ -3,7 +3,7 @@ import type {ChangelogProps} from "@ui/modals/changelog";
 
 // fixed, improved, added, progress
 export default {
-    title: "SoulCord",
+    title: "Solcord",
     subtitle: `v${config.get("version")}`,
     // https://youtu.be/BZq1eb9d0HI?si=67V2eArlF4atnGnz
     // video: "https://www.youtube.com/embed/BZq1eb9d0HI?si=67V2eArlF4atnGnz&vq=hd720p&hd=1&rel=0&showinfo=0&mute=0&loop=1&autohide=1",
@@ -34,7 +34,7 @@ export default {
             items: [
                 "Adds six distinct full-shell themes with reduced-motion and readable-focus treatment",
                 "Extends Plugin Doctor, migration rollback, and hash-bound provider verification",
-                "Retains SoulCord's restricted Activity preload policy and bounded compatibility ledger"
+                "Retains Solcord's restricted Activity preload policy and bounded compatibility ledger"
             ]
         }
     ]

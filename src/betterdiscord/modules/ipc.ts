@@ -4,7 +4,7 @@ import * as IPCEvents from "@common/constants/ipcevents";
 
 import Events from "./emitter";
 import type {DialogOptions} from "@common/types/ipc";
-import {claimSoulCordTimelineBootstrap} from "../polyfill/remote";
+import {claimSolcordTimelineBootstrap} from "../polyfill/remote";
 
 // Capture the private invoke primitive before community plugins can patch the
 // exported Electron shim. Capability-bearing calls must never perform a
@@ -84,8 +84,8 @@ export default new class IPCRenderer {
         return ipc.invoke(IPCEvents.GET_ACTIVITY_COMPATIBILITY);
     }
 
-    claimSoulCordTimelineBootstrap() {
-        return claimSoulCordTimelineBootstrap();
+    claimSolcordTimelineBootstrap() {
+        return claimSolcordTimelineBootstrap();
     }
 
     bootstrapTimeline(bootstrapCapability: string) {
@@ -148,81 +148,81 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.AUDIENCE_GUARD_CLEAR, this.#timelineRequest(capability, request));
     }
 
-    applySoulCordSetup(capability: string, request: unknown) {
+    applySolcordSetup(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.SETUP_APPLY, this.#privateRequest(capability, request));
     }
 
-    acknowledgeSoulCordSetup(capability: string, transactionId: string) {
+    acknowledgeSolcordSetup(capability: string, transactionId: string) {
         return invokePrivate(IPCEvents.SETUP_ACKNOWLEDGE, {capability, transactionId});
     }
 
-    reconcileSoulCordSetup(capability: string, transactionIds: string[]) {
+    reconcileSolcordSetup(capability: string, transactionIds: string[]) {
         return invokePrivate(IPCEvents.SETUP_RECONCILE, {capability, transactionIds});
     }
 
-    rollbackSoulCordSetup(capability: string, transactionId: string) {
+    rollbackSolcordSetup(capability: string, transactionId: string) {
         return invokePrivate(IPCEvents.SETUP_ROLLBACK, {capability, transactionId});
     }
 
-    auditSoulCordSetup(capability: string) {
+    auditSolcordSetup(capability: string) {
         return invokePrivate(IPCEvents.SETUP_AUDIT, {capability});
     }
 
-    previewSoulCordProviderArchive(capability: string, request: unknown) {
+    previewSolcordProviderArchive(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, this.#privateRequest(capability, request));
     }
 
-    applySoulCordProviderArchive(capability: string, previewId: string) {
+    applySolcordProviderArchive(capability: string, previewId: string) {
         return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_APPLY, {capability, previewId});
     }
 
-    rollbackSoulCordProviderArchive(capability: string, transactionId: string) {
+    rollbackSolcordProviderArchive(capability: string, transactionId: string) {
         return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, {capability, transactionId});
     }
 
-    readSoulCordTranslationCredential(capability: string, request: unknown) {
+    readSolcordTranslationCredential(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_READ, this.#timelineRequest(capability, request));
     }
 
-    writeSoulCordTranslationCredential(capability: string, request: unknown) {
+    writeSolcordTranslationCredential(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_WRITE, this.#timelineRequest(capability, request));
     }
 
-    clearSoulCordTranslationCredential(capability: string, request: unknown) {
+    clearSolcordTranslationCredential(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_CLEAR, this.#timelineRequest(capability, request));
     }
 
-    getSoulCordLocalIdentityNotesStatus(capability: string) {
+    getSolcordLocalIdentityNotesStatus(capability: string) {
         return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_STATUS, {capability});
     }
 
-    readSoulCordLocalIdentityNotes(capability: string) {
+    readSolcordLocalIdentityNotes(capability: string) {
         return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_READ, {capability});
     }
 
-    writeSoulCordLocalIdentityNote(capability: string, request: unknown) {
+    writeSolcordLocalIdentityNote(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_WRITE, this.#timelineRequest(capability, request));
     }
 
-    removeSoulCordLocalIdentityNote(capability: string, subjectId: string) {
+    removeSolcordLocalIdentityNote(capability: string, subjectId: string) {
         return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_REMOVE, {capability, subjectId});
     }
 
-    clearSoulCordLocalIdentityNotes(capability: string) {
+    clearSolcordLocalIdentityNotes(capability: string) {
         return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_CLEAR, {capability});
     }
 
     #timelineRequest(capability: string, request: unknown): Record<string, unknown> {
-        if (!request || typeof request !== "object" || Array.isArray(request)) throw new TypeError("Invalid SoulCord timeline request.");
+        if (!request || typeof request !== "object" || Array.isArray(request)) throw new TypeError("Invalid Solcord timeline request.");
         const payload = request as Record<string, unknown>;
         if (Object.hasOwn(payload, "capability") || Object.hasOwn(payload, "accountId") || Object.hasOwn(payload, "accountScope")) throw new TypeError("Timeline payload cannot select its authority.");
         return {...payload, capability};
     }
 
     #privateRequest(capability: string, request: unknown): Record<string, unknown> {
-        if (!request || typeof request !== "object" || Array.isArray(request)) throw new TypeError("Invalid SoulCord private request.");
+        if (!request || typeof request !== "object" || Array.isArray(request)) throw new TypeError("Invalid Solcord private request.");
         const payload = request as Record<string, unknown>;
-        if (Object.hasOwn(payload, "capability")) throw new TypeError("SoulCord private payload cannot select its authority.");
+        if (Object.hasOwn(payload, "capability")) throw new TypeError("Solcord private payload cannot select its authority.");
         return {...payload, capability};
     }
 };

@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "A frissítés sikertelen!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Frissítés sikeres!",
-        "updateAvailable": "Új frissítés erélhető a SoulCordhoz: (v{{version}})",
+        "updateAvailable": "Új frissítés erélhető a Solcordhoz: (v{{version}})",
         "addonUpdated": "A {{name}} frissült {{version}} verzióra!",
         "checking": "Frissítések keresése!",
         "finishedChecking": "Frissítések ellenőrzése sikeres!",

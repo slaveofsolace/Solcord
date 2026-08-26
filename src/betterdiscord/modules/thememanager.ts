@@ -5,7 +5,7 @@ import AddonManager from "./addonmanager";
 import {type Addon} from "@typed/addon";
 import DOMManager from "./dommanager";
 import {t} from "@common/i18n";
-import {checkReviewedExecution} from "./soulcord/integrity";
+import {checkReviewedExecution} from "./solcord/integrity";
 
 
 export interface Theme extends Addon {

@@ -36,7 +36,7 @@ function maybeHasOtherClientMod() {
 }
 
 class BrowserWindow extends electron.BrowserWindow {
-    public __soulcordWindowToken?: number;
+    public __solcordWindowToken?: number;
 
     constructor(options: BrowserWindowConstructorOptions) {
         // @ts-expect-error super's type returns undefined for some reason
@@ -46,8 +46,8 @@ class BrowserWindow extends electron.BrowserWindow {
             // Not i18n but the i18n system doesn't exist here
             electron.dialog.showMessageBox({
                 type: "warning",
-                title: "SoulCord Compatibility Warning",
-                message: "SoulCord detected another desktop client modification. Running both may change window or preload behavior. Review the other modification before continuing.",
+                title: "Solcord Compatibility Warning",
+                message: "Solcord detected another desktop client modification. Running both may change window or preload behavior. Review the other modification before continuing.",
                 checkboxLabel: "Don't show this again",
                 buttons: ["OK"],
                 defaultId: 0
@@ -110,7 +110,7 @@ class BrowserWindow extends electron.BrowserWindow {
         if (removeMinimumSize) {
             this.setMinimumSize = () => {};
         }
-        Object.defineProperty(this, "__soulcordWindowToken", {
+        Object.defineProperty(this, "__solcordWindowToken", {
             configurable: false,
             enumerable: false,
             value: windowToken,

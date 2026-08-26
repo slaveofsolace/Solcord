@@ -9,9 +9,9 @@ export default function (dist: string) {
     const pkgFile = path.join(dist, "package.json");
     if (fs.existsSync(pkgFile)) {
         const currentPkg = JSON.parse(fs.readFileSync(pkgFile).toString());
-        if (currentPkg.name === "soulcord" && currentPkg.main === "main.js") return console.log("    ✅ Existing package.json is valid");
+        if (currentPkg.name === "solcord" && currentPkg.main === "main.js") return console.log("    ✅ Existing package.json is valid");
         console.log("    ⚠️ Existing package.json is invalid");
     }
-    fs.writeFileSync(pkgFile, JSON.stringify({name: "soulcord", main: "main.js"}));
+    fs.writeFileSync(pkgFile, JSON.stringify({name: "solcord", main: "main.js"}));
     console.log("    ✅ Created new package.json");
 };

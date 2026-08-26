@@ -8,7 +8,7 @@ export default function (dist: string) {
     const files = [
         path.join(dist, "main.js"),
         path.join(dist, "preload.js"),
-        path.join(dist, "soulcord.js"),
+        path.join(dist, "solcord.js"),
         path.join(dist, "editor", "preload.js"),
         path.join(dist, "editor", "script.js"),
         path.join(dist, "editor", "index.html"),

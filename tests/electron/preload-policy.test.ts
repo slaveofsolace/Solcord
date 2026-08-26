@@ -113,7 +113,7 @@ describe("Discord-owned preload policy", () => {
 });
 
 describe("PreloadAssignmentGuard", () => {
-    test("keeps SoulCord injected, accepts exactly one Discord assignment, and rejects the next", () => {
+    test("keeps Solcord injected, accepts exactly one Discord assignment, and rejects the next", () => {
         const injected = "C:\\Users\\Sam\\AppData\\Roaming\\BetterDiscord\\data\\betterdiscord.asar\\preload.js";
         const guard = new PreloadAssignmentGuard(original, injected, {discordTrustRoot: discordVersionRoot});
         expect(guard.value).toBe(injected);
@@ -131,7 +131,7 @@ describe("PreloadAssignmentGuard", () => {
     });
 
     test("retains the explicit legacy override without enabling it by default", () => {
-        const injected = "C:\\SoulCord\\preload.js";
+        const injected = "C:\\Solcord\\preload.js";
         const guard = new PreloadAssignmentGuard(original, injected, {discordTrustRoot: discordVersionRoot});
         expect(guard.assign("C:\\Temp\\external.js", false).action).toBe("rejected");
         expect(guard.assign("C:\\Temp\\external.js", true).action).toBe("accepted-unrestricted");
@@ -145,13 +145,13 @@ describe("BrowserWindow preload property integration", () => {
         installPreloadAssignmentPolicy(
             target,
             original,
-            "C:\\SoulCord\\preload.js",
+            "C:\\Solcord\\preload.js",
             {discordTrustRoot: discordVersionRoot},
             () => false,
             result => decisions.push(`${result.action}:${result.reason}`)
         );
 
-        expect(target.preload).toBe("C:\\SoulCord\\preload.js");
+        expect(target.preload).toBe("C:\\Solcord\\preload.js");
         target.preload = `${discordCoreRoot}\\core.asar\\activityPreload.js`;
         expect(target.preload).toEndWith("activityPreload.js");
         target.preload = "C:\\Temp\\external.js";

@@ -48,8 +48,8 @@ export default function VersionInfo() {
         if (clicks > 0 && clicks < (CLICKS_REQUIRED / 2)) return "Copied";
         if (clicks >= (CLICKS_REQUIRED / 2) && clicks < CLICKS_REQUIRED) return `${CLICKS_REQUIRED - clicks} clicks to go`;
         if (clicks >= CLICKS_REQUIRED) {
-            if (isCanary) return "Switched to SoulCord canary";
-            return "Switched to SoulCord stable";
+            if (isCanary) return "Switched to Solcord canary";
+            return "Switched to Solcord stable";
         }
     }, [clicks, isCanary]);
 
@@ -64,7 +64,7 @@ export default function VersionInfo() {
         {(props: any) => <div {...props} className="bd-version-info" onClick={onClick} onMouseLeave={e => {props.onMouseLeave(e); onMouseLeave();}}>
             {discordInfo}
             <Text color={Text.Colors.MUTED} size={Text.Sizes.SIZE_12}>
-                SoulCord {getCoreInfo()}
+                Solcord {getCoreInfo()}
             </Text>
             <Text color={Text.Colors.MUTED} size={Text.Sizes.SIZE_12}>
                 {t("Panels.plugins")} {pluginCount.total} ({pluginCount.enabled} {t("Addons.isEnabled")})

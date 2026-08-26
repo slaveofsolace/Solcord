@@ -1,6 +1,6 @@
 # V2 built-in suite and community compatibility
 
-SoulCord V2 has three distinct layers. Core reliability/privacy modules ship with the fork. Native Suite behavior is grouped into SoulCord-owned adapters. Ordinary BetterDiscord-compatible plugins remain separate local programs until the owner deliberately migrates a matching provider.
+Solcord V2 has three distinct layers. Core reliability/privacy modules ship with the fork. Native Suite behavior is grouped into Solcord-owned adapters. Ordinary BetterDiscord-compatible plugins remain separate local programs until the owner deliberately migrates a matching provider.
 
 ## Native Suite
 
@@ -17,17 +17,17 @@ SoulCord V2 has three distinct layers. Core reliability/privacy modules ship wit
 | Notification Review | ReadAllNotificationsButton | Previews scope and count before one explicit mark-read action |
 | Motion Studio | BetterAnimations, DiscordEffects | Bounded local transitions; suppressed when reduced motion is active |
 
-Permission Lens and Voice Health are additional SoulCord V2 tools. Local Identity Notes remains unavailable until its private storage adapter validates. Message Timeline is an independent opt-in private module and never imports MessageLoggerV2 data. Fake Deafen remains default-off Power Lab work rather than a daily default.
+Permission Lens and Voice Health are additional Solcord V2 tools. Local Identity Notes remains unavailable until its private storage adapter validates. Message Timeline is an independent opt-in private module and never imports MessageLoggerV2 data. Fake Deafen remains default-off Power Lab work rather than a daily default.
 
 The setup draft maps 21 community-facing choices to these built-ins without staging the community files. A built-in can still report `unavailable` when its Discord lookup or required browser API does not validate. A settings card is not evidence that the adapter is live.
 
 ## Provider migration
 
-An enabled community provider keeps control until the owner selects SoulCord and the replacement reports ready. The migration then:
+An enabled community provider keeps control until the owner selects Solcord and the replacement reports ready. The migration then:
 
 1. previews the exact filename, hash, enabled state, dependency state, replacement, and archive destination;
 2. rechecks the source bytes and built-in health immediately before apply;
-3. moves only the unchanged `.plugin.js` into `soulcord-provider-archive-v2`, outside the scanned plugin directory;
+3. moves only the unchanged `.plugin.js` into `solcord-provider-archive-v2`, outside the scanned plugin directory;
 4. records a bounded transaction receipt for rollback;
 5. retires BDFDB only after every known and owner-declared consumer has left the active plugin directory.
 
@@ -42,4 +42,4 @@ The 2026-08-26 snapshot contains 209 plugin and 114 theme metadata records. The 
 - plugins: `914d1255580e9d834593cbfe6ca9ec07af8c56151ec388d44ad5cae24832e1ad`
 - themes: `d0205afb84af6f32949e6cbde6e32fc54433a0fe49879fc7b4b3c2c66b7cc433`
 
-Metadata describes demand; it does not grant copying rights or prove security, teardown, performance, or compatibility. The 36 requested community candidates remain non-installable until their individual runtime and action gates pass. VoiceMessages is GPL-3.0, not AGPL; SoulCord Voice Note Studio remains independently written Apache-2.0 code.
+Metadata describes demand; it does not grant copying rights or prove security, teardown, performance, or compatibility. The 36 requested community candidates remain non-installable until their individual runtime and action gates pass. VoiceMessages is GPL-3.0, not AGPL; Solcord Voice Note Studio remains independently written Apache-2.0 code.

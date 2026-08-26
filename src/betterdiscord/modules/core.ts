@@ -27,8 +27,8 @@ import CommandManager from "./commandmanager";
 import InstallCSS from "@ui/customcss/mdinstallcss";
 import {allModulesLoaded, getStore, Stores} from "@webpack";
 import Patcher from "./patcher";
-import SoulCordRuntime from "./soulcord/runtime";
-import SoulCordPanel from "@ui/soulcord/panel";
+import SolcordRuntime from "./solcord/runtime";
+import SolcordPanel from "@ui/solcord/panel";
 import {ShieldCheckIcon} from "lucide-react";
 
 export default new class Core {
@@ -53,13 +53,13 @@ export default new class Core {
 
         Logger.log("Startup", "Initializing Settings");
         Settings.initialize();
-        SoulCordRuntime.initialize();
-        Settings.registerPanel("soulcord", "SoulCord Suite", {
+        SolcordRuntime.initialize();
+        Settings.registerPanel("solcord", "Solcord Suite", {
             order: 0,
             icon: ShieldCheckIcon,
-            element: SoulCordPanel,
+            element: SolcordPanel,
             translateLabel: false,
-            searchable: () => ["SoulCord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
+            searchable: () => ["Solcord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
         });
         SettingsRenderer.initialize();
 
@@ -81,8 +81,8 @@ export default new class Core {
         Logger.log("Startup", "Initializing Toasts");
         Toasts.initialize();
 
-        Logger.log("Startup", "Starting SoulCord safety modules");
-        await SoulCordRuntime.start();
+        Logger.log("Startup", "Starting Solcord safety modules");
+        await SolcordRuntime.start();
 
         Logger.log("Startup", "Initializing Builtins");
         for (const module in Builtins) {
@@ -91,12 +91,12 @@ export default new class Core {
 
         Logger.log("Startup", "Loading Plugins");
         PluginManager.initialize();
-        await SoulCordRuntime.enforceAddonIntegrityBeforeStart();
+        await SolcordRuntime.enforceAddonIntegrityBeforeStart();
         PluginManager.startAddons("connection");
 
         Logger.log("Startup", "Loading Themes");
         ThemeManager.initialize();
-        await SoulCordRuntime.enforceAddonIntegrityBeforeStart();
+        await SolcordRuntime.enforceAddonIntegrityBeforeStart();
         ThemeManager.startAddons();
 
         Logger.log("Startup", "Initializing Updater");

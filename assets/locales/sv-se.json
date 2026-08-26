@@ -166,7 +166,7 @@
     },
     "Updater": {
         "updateFailed": "Uppdateringen misslyckades!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Uppdateringen lyckades!",
         "checking": "Söker efter uppdateringar!",
         "finishedChecking": "Sökningen efter uppdateringar är slutförd!",

@@ -10,11 +10,11 @@ import copyFiles from "./helpers/copy";
 import {stageReleaseArtifact} from "./helpers/install";
 import {comparator} from "../src/common/semver";
 
-const useSoulCordRelease = args[2] && args[2].toLowerCase() === "release";
-const releaseInput = useSoulCordRelease ? args[3] && args[3].toLowerCase() : args[2] && args[2].toLowerCase();
+const useSolcordRelease = args[2] && args[2].toLowerCase() === "release";
+const releaseInput = useSolcordRelease ? args[3] && args[3].toLowerCase() : args[2] && args[2].toLowerCase();
 const release = releaseInput === "canary" ? "Discord Canary" : releaseInput === "ptb" ? "Discord PTB" : "Discord";
-const soulCordPath = useSoulCordRelease ? path.resolve(__dirname, "..", "dist", "soulcord.asar") : path.resolve(__dirname, "..", "dist");
-let installedSoulCordPath = soulCordPath;
+const solcordPath = useSolcordRelease ? path.resolve(__dirname, "..", "dist", "solcord.asar") : path.resolve(__dirname, "..", "dist");
+let installedSolcordPath = solcordPath;
 
 const resources = await (async function () {
     let basedir = "";
@@ -53,21 +53,21 @@ const resources = await (async function () {
     return path.join(basedir, `app-${latest}`, "resources");
 })();
 
-if (useSoulCordRelease) {
-    if (!fs.existsSync(soulCordPath) || !fs.statSync(soulCordPath).isFile() || fs.statSync(soulCordPath).size === 0) {
-        throw new Error(`SoulCord release artifact is missing or empty: ${soulCordPath}`);
+if (useSolcordRelease) {
+    if (!fs.existsSync(solcordPath) || !fs.statSync(solcordPath).isFile() || fs.statSync(solcordPath).size === 0) {
+        throw new Error(`Solcord release artifact is missing or empty: ${solcordPath}`);
     }
     if (process.platform === "win32") {
         const appData = process.env.APPDATA;
         if (!appData || !path.isAbsolute(appData)) throw new Error("APPDATA did not resolve to an absolute Windows path.");
-        installedSoulCordPath = path.join(appData, "BetterDiscord", "data", "betterdiscord.asar");
-        const sha256 = stageReleaseArtifact(soulCordPath, installedSoulCordPath);
-        console.log(`    ✅ Staged SoulCord ${sha256.slice(0, 12)}… at the compatibility target`);
+        installedSolcordPath = path.join(appData, "BetterDiscord", "data", "betterdiscord.asar");
+        const sha256 = stageReleaseArtifact(solcordPath, installedSolcordPath);
+        console.log(`    ✅ Staged Solcord ${sha256.slice(0, 12)}… at the compatibility target`);
     }
 }
 else {
-    doSanityChecks(soulCordPath);
-    buildPackage(soulCordPath);
+    doSanityChecks(solcordPath);
+    buildPackage(solcordPath);
 }
 console.log("");
 
@@ -101,18 +101,18 @@ const indexJs = path.join(asarDir, "index.js");
 
 let requirePath: string;
 if (process.env.WSL_DISTRO_NAME) {
-    if (useSoulCordRelease) {
-        const target = path.join(asarDir, "..", "..", "soulcord.asar");
-        fs.copyFileSync(soulCordPath, target);
-        requirePath = "../../soulcord.asar";
+    if (useSolcordRelease) {
+        const target = path.join(asarDir, "..", "..", "solcord.asar");
+        fs.copyFileSync(solcordPath, target);
+        requirePath = "../../solcord.asar";
     }
     else {
-        copyFiles(soulCordPath, path.join(asarDir, "..", "..", "betterdiscord"));
+        copyFiles(solcordPath, path.join(asarDir, "..", "..", "betterdiscord"));
         requirePath = "../../betterdiscord";
     }
 }
 else {
-    requirePath = installedSoulCordPath;
+    requirePath = installedSolcordPath;
 }
 
 
@@ -134,4 +134,4 @@ if (!fs.existsSync(path.join(asarDir, "package.json"))) {
 
 console.log("");
 
-console.log(`SoulCord injection successful. Restart ${release} when you are ready to test.`);
+console.log(`Solcord injection successful. Restart ${release} when you are ready to test.`);

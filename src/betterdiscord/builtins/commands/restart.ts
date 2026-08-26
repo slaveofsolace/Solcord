@@ -5,12 +5,12 @@ import ipc from "@modules/ipc";
 export default {
     id: "restart",
     name: "restart",
-    description: "Restart Discord with or without SoulCord",
+    description: "Restart Discord with or without Solcord",
     options: [
         {
             type: OptionTypes.BOOLEAN,
             name: "vanilla",
-            description: "Should Discord be relaunched without SoulCord?",
+            description: "Should Discord be relaunched without Solcord?",
             required: true,
         },
     ],

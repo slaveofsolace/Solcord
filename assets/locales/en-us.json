@@ -4,7 +4,7 @@
         "themes": "Themes",
         "customcss": "Custom CSS",
         "updates": "Updates",
-        "soulcord": "SoulCord Suite"
+        "solcord": "Solcord Suite"
     },
     "Collections": {
         "settings": {
@@ -399,9 +399,9 @@
     },
     "Updater": {
         "updateFailed": "Update Failed!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Update Successful!",
-        "updateAvailable": "SoulCord has a verified update (v{{version}})",
+        "updateAvailable": "Solcord has a verified update (v{{version}})",
         "viewUpdates": "View Updates",
         "addonUpdaterNotificationTitle": "Addon Updater",
         "addonUpdatesAvailable": {

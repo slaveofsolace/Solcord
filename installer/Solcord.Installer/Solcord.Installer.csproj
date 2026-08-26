@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SolcordInstaller</AssemblyName>
+    <RootNamespace>Solcord.Installer</RootNamespace>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(SolcordEmbeddedArtifact)" LogicalName="Solcord.Installer.Resources.solcord.asar" Condition="'$(SolcordEmbeddedArtifact)' != ''" />
+    <EmbeddedResource Include="$(SolcordEmbeddedBuildManifest)" LogicalName="Solcord.Installer.Resources.solcord-build-manifest.json" Condition="'$(SolcordEmbeddedBuildManifest)' != ''" />
+    <EmbeddedResource Include="$(SolcordEmbeddedInstallerManifest)" LogicalName="Solcord.Installer.Resources.solcord-installer-manifest.json" Condition="'$(SolcordEmbeddedInstallerManifest)' != ''" />
+  </ItemGroup>
+
+  <Target Name="RequireEmbeddedInstallerBundle" BeforeTargets="PrepareForBuild" Condition="'$(SolcordRequireEmbeddedBundle)' == 'true'">
+    <Error Condition="'$(SolcordEmbeddedArtifact)' == '' Or !Exists('$(SolcordEmbeddedArtifact)')" Text="The manifest-bound Solcord ASAR resource is missing." />
+    <Error Condition="'$(SolcordEmbeddedBuildManifest)' == '' Or !Exists('$(SolcordEmbeddedBuildManifest)')" Text="The authoritative Solcord build manifest resource is missing." />
+    <Error Condition="'$(SolcordEmbeddedInstallerManifest)' == '' Or !Exists('$(SolcordEmbeddedInstallerManifest)')" Text="The Solcord installer manifest resource is missing." />
+  </Target>
+</Project>

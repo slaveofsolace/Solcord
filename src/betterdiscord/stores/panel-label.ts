@@ -5,7 +5,7 @@ const PANEL_FALLBACKS: Record<string, string> = {
     customcss: "Custom CSS",
     plugins: "Plugins",
     settings: "Settings",
-    soulcord: "SoulCord Suite",
+    solcord: "Solcord Suite",
     themes: "Themes",
     updates: "Updates"
 };

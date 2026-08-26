@@ -215,9 +215,9 @@
     },
     "Updater": {
         "updateFailed": "Päivitys epäonnistui",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Päivittäminen onnistui!",
-        "updateAvailable": "SoulCordilla on uusi päivitys",
+        "updateAvailable": "Solcordilla on uusi päivitys",
         "addonUpdated": "{{name}} on päivitetty versioon {{version}}!",
         "checking": "Tarkistetaan päivityksiä!",
         "finishedChecking": "Päivitysten tarkistaminen on valmis!",

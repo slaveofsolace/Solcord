@@ -20,7 +20,7 @@ export class RendererDocumentInjectionGuard<TOwner extends object> {
     #documents = new WeakMap<TOwner, RendererDocumentState>();
 
     beginDocument(owner: TOwner): void {
-        this.#documents.set(owner, {token: Symbol("soulcord-renderer-document"), status: "ready"});
+        this.#documents.set(owner, {token: Symbol("solcord-renderer-document"), status: "ready"});
     }
 
     claim(owner: TOwner): RendererDocumentClaim {

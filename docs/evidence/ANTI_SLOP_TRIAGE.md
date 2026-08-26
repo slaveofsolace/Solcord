@@ -1,6 +1,6 @@
 # Authored-interface triage
 
-The productization wave was scanned with the local `anti-ai-slop-triage` detector against the README, visual contract, checkpoint, SoulCord settings UI, styles, and installer. Six lexical/design candidates were reviewed manually.
+The productization wave was scanned with the local `anti-ai-slop-triage` detector against the README, visual contract, checkpoint, Solcord settings UI, styles, and installer. Six lexical/design candidates were reviewed manually.
 
 | Candidate | Disposition | Reason |
 | --- | --- | --- |

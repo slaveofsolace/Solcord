@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" role="img" aria-labelledby="title description">
+  <title id="title">Solcord</title>
+  <desc id="description">Solcord cord-cut S mark and wordmark on a transparent background.</desc>
+  <g transform="translate(16 16) scale(2)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 12C43 5 26 6 17 14C8 22 13 30 28 32" stroke="#171a1c" stroke-width="11"/>
+    <path d="M52 12C43 5 26 6 17 14C8 22 13 30 28 32" stroke="#4b9d96" stroke-width="6.5"/>
+    <path d="M36 32C51 34 56 42 47 50C38 58 21 59 12 52" stroke="#171a1c" stroke-width="11"/>
+    <path d="M36 32C51 34 56 42 47 50C38 58 21 59 12 52" stroke="#f0e5d5" stroke-width="6.5"/>
+    <path d="M27.6 32L24.8 31.2" stroke="#df6b52" stroke-width="4"/>
+  </g>
+  <text x="176" y="105" fill="#171a1c" font-family="Segoe UI, Arial, sans-serif" font-size="72" font-weight="700" letter-spacing="-3">Solcord</text>
+  <path d="M180 122H405" stroke="#4b9d96" stroke-width="4"/>
+  <path d="M405 122H443" stroke="#df6b52" stroke-width="4"/>
+</svg>

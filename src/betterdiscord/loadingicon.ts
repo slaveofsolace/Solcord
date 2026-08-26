@@ -1,6 +1,6 @@
 /**
  * Discord's updater and bootstrap window already provide the familiar spinning
- * Discord mark. SoulCord deliberately adds no second splash over that surface.
+ * Discord mark. Solcord deliberately adds no second splash over that surface.
  * Keeping this adapter preserves BetterDiscord's startup contract without
  * duplicating branding, motion, or focus behavior in the renderer.
  */

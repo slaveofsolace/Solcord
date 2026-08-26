@@ -1,8 +1,8 @@
-# SoulCord product visual contract
+# Solcord product visual contract
 
 ## Information architecture
 
-SoulCord owns five Control Center workspaces and no duplicate top-level destinations:
+Solcord owns five Control Center workspaces and no duplicate top-level destinations:
 
 | Workspace | Canonical owner |
 | --- | --- |
@@ -22,10 +22,10 @@ The Control Center inherits Discord typography and native form behavior. It avoi
 
 ## Launch identity
 
-SoulCord does not draw a second product splash. Discord's updater and bootstrap window retain full ownership of the familiar spinning Discord mark, background, motion preferences, startup text, and handoff into the client. SoulCord's loading adapter is an intentional no-op kept only to preserve the inherited startup call contract. It bundles no Discord mark, creates no renderer overlay, adds no timer, and cannot cover a recovery or authentication surface.
+Solcord does not draw a second product splash. Discord's updater and bootstrap window retain full ownership of the familiar spinning Discord mark, background, motion preferences, startup text, and handoff into the client. Solcord's loading adapter is an intentional no-op kept only to preserve the inherited startup call contract. It bundles no Discord mark, creates no renderer overlay, adds no timer, and cannot cover a recovery or authentication surface.
 
 ## Human Eye matrix
 
-Source-frozen review must confirm that Discord's native spinner is unobstructed and that no SoulCord launch overlay survives into the client. Home, Appearance, Safety, People, Tools, setup, recovery, and error/empty states remain required at 1280×720, 1142×1440, 1920×1080, ultrawide, and a narrow settings column. Required checks are clipping, focus order, keyboard operation, 100/125/150/200% scaling, dark/light/OLED contrast, high contrast, and reduced motion.
+Source-frozen review must confirm that Discord's native spinner is unobstructed and that no Solcord launch overlay survives into the client. Home, Appearance, Safety, People, Tools, setup, recovery, and error/empty states remain required at 1280×720, 1142×1440, 1920×1080, ultrawide, and a narrow settings column. Required checks are clipping, focus order, keyboard operation, 100/125/150/200% scaling, dark/light/OLED contrast, high contrast, and reduced motion.
 
 Technical render success is not Human Eye acceptance. Each surface receives `ACCEPT`, `REVISE`, `REJECT`, or `BLOCKED` with an observed reason. Real-profile appearance changes remain an owner gate.

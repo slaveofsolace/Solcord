@@ -24,7 +24,7 @@ const AnchorClasses: {anchor: string; anchorUnderlineOnHover: string;} = getByKe
 }) || {anchor: "anchor-3Z-8Bb", anchorUnderlineOnHover: "anchorUnderlineOnHover-2ESHQB"};
 
 const defaultFooter = <Text>
-    <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} href="https://github.com/slaveofsolace/Solcord/issues" rel="noopener noreferrer" target="_blank">SoulCord issues</a>
+    <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} href="https://github.com/slaveofsolace/Solcord/issues" rel="noopener noreferrer" target="_blank">Solcord issues</a>
     {" · "}
     <a className={`${AnchorClasses.anchor} ${AnchorClasses.anchorUnderlineOnHover}`} href="https://github.com/BetterDiscord/BetterDiscord" rel="noopener noreferrer" target="_blank">Based on BetterDiscord</a>
 </Text>;
@@ -121,6 +121,6 @@ export default function ChangelogModal({transitionState, footer, title, subtitle
     return <Root className="bd-changelog-modal" transitionState={transitionState} size={Root.Sizes.MEDIUM} style={Root.Styles.STANDARD}>
         {ChangelogHeader}
         <Content>{changelogItems}</Content>
-        {(footer || title === "SoulCord") && ChangelogFooter}
+        {(footer || title === "Solcord") && ChangelogFooter}
     </Root>;
 }

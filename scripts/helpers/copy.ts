@@ -17,7 +17,7 @@ export default function (dist: string, target: string) {
         path.join(dist, "main.js"),
         path.join(dist, "preload.js"),
         path.join(dist, "earlyRenderer.js"),
-        path.join(dist, "soulcord.js"),
+        path.join(dist, "solcord.js"),
         path.join(dist, "package.json"),
         path.join(dist, "editor", "preload.js"),
         path.join(dist, "editor", "script.js"),

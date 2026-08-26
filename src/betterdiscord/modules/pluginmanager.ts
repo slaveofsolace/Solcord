@@ -7,8 +7,8 @@ import AddonManager from "./addonmanager";
 import {type Addon} from "@typed/addon";
 import {t} from "@common/i18n";
 import Events from "./emitter";
-import PluginDoctor, {type AddonFailure} from "./soulcord/doctor";
-import {checkReviewedExecution} from "./soulcord/integrity";
+import PluginDoctor, {type AddonFailure} from "./solcord/doctor";
+import {checkReviewedExecution} from "./solcord/integrity";
 
 type PluginLoadPoint = "connection" | "idle";
 
@@ -77,7 +77,7 @@ class PluginManager extends AddonManager<Plugin> {
         const executionCheck = checkReviewedExecution("plugin", plugin.filename, plugin.name, plugin.fileContent ?? "");
         if (executionCheck.reviewed && !executionCheck.matches) {
             const name = executionCheck.name ?? plugin.filename;
-            const reason = "Installed bytes changed after SoulCord review; execution was stopped before the plugin was evaluated.";
+            const reason = "Installed bytes changed after Solcord review; execution was stopped before the plugin was evaluated.";
             this.state[plugin.id] = false;
             this.saveState();
             PluginDoctor.quarantine(name, reason);
@@ -188,7 +188,7 @@ class PluginManager extends AddonManager<Plugin> {
         if (PluginDoctor.isQuarantined(plugin.id)) {
             this.state[plugin.id] = false;
             this.saveState();
-            Toasts.warning(`${plugin.name} is quarantined by SoulCord. Retry it manually from SoulCord Suite.`);
+            Toasts.warning(`${plugin.name} is quarantined by Solcord. Retry it manually from Solcord Suite.`);
             return false;
         }
 

@@ -219,9 +219,9 @@
     },
     "Updater": {
         "updateFailed": "Aggiornamento non riuscito!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Aggiornamento riuscito!",
-        "updateAvailable": "SoulCord ha un nuovo aggiornamento (v{{version}})",
+        "updateAvailable": "Solcord ha un nuovo aggiornamento (v{{version}})",
         "addonUpdated": "{{name}} è stato aggiornato alla versione {{version}}!",
         "checking": "Controlla aggiornamenti!",
         "finishedChecking": "Controllo degli aggiornamenti finito!",

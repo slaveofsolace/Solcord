@@ -1,8 +1,0 @@
-{
-  "schemaVersion": 1,
-  "packStatus": "PENDING",
-  "evidencePolicy": "Exact source, dependency, SoulCord artifact, Discord runtime, cleanup, and human-acceptance evidence is required. Hash or version drift fails closed.",
-  "suite": null,
-  "candidates": {},
-  "dependencies": {}
-}

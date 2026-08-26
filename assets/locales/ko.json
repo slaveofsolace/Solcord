@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "업데이트가 실패했습니다!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "업데이트가 성공적으로 완료되었습니다!",
-        "updateAvailable": "SoulCord에 새로운 업데이트가 있습니다 (v{{version}})",
+        "updateAvailable": "Solcord에 새로운 업데이트가 있습니다 (v{{version}})",
         "addonUpdated": "{{name}} 이 버전 {{version}} 으로 업데이트 되었습니다!",
         "checking": "업데이트를 확인하고 있습니다!",
         "finishedChecking": "업데이트 확인을 마쳤습니다!",

@@ -6,13 +6,13 @@ import pkg from "../package.json";
 import styleLoader from "bun-style-loader";
 import * as esbuild from "esbuild";
 
-import {assertSoulCordBuildAllowed, captureSoulCordBuildProvenance, type SoulCordBuildMode, writeSoulCordBuildProvenance} from "./helpers/build-provenance";
+import {assertSolcordBuildAllowed, captureSolcordBuildProvenance, type SolcordBuildMode, writeSolcordBuildProvenance} from "./helpers/build-provenance";
 
 
 const fileURL = Bun.fileURLToPath(import.meta.url);
 const rootDir = path.join(path.dirname(fileURL), "..");
 const isProduction = process.argv.includes("--minify") || process.argv.includes("--production") || process.argv.includes("--release");
-const buildMode: SoulCordBuildMode = process.argv.includes("--release")
+const buildMode: SolcordBuildMode = process.argv.includes("--release")
     ? "release"
     : process.argv.includes("--production")
         ? "production"
@@ -28,7 +28,7 @@ interface EntryPoint {
 }
 
 const moduleConfigs: Record<string, EntryPoint> = {
-    soulcord: {"in": "src/betterdiscord/index.ts", "out": "soulcord"},
+    solcord: {"in": "src/betterdiscord/index.ts", "out": "solcord"},
     main: {"in": "src/electron/main/index.ts", "out": "main"},
     preload: {"in": "src/electron/preload/index.ts", "out": "preload"},
     earlyRenderer: {"in": "src/electron/preload/early/index.ts", "out": "earlyRenderer"},
@@ -41,12 +41,12 @@ let modulesRequested = process.argv.filter(a => a.startsWith("--module=")).map(a
 if (!modulesRequested.length) modulesRequested = Object.keys(moduleConfigs);
 
 const entryPoints = modulesRequested.map(m => moduleConfigs[m]);
-const provenance = captureSoulCordBuildProvenance(rootDir, {
+const provenance = captureSolcordBuildProvenance(rootDir, {
     version: pkg.version,
     mode: buildMode,
     modules: modulesRequested
 });
-assertSoulCordBuildAllowed(provenance);
+assertSolcordBuildAllowed(provenance);
 const BRANCH_NAME = provenance.source.branch;
 const COMMIT_HASH = provenance.source.commit;
 const DEVELOPMENT = provenance.buildLabel;
@@ -99,7 +99,7 @@ async function runBuild() {
     }
     else {
         await esbuild.build(buildOptions());
-        writeSoulCordBuildProvenance(path.join(rootDir, "dist", "build-provenance.json"), provenance);
+        writeSolcordBuildProvenance(path.join(rootDir, "dist", "build-provenance.json"), provenance);
     }
 
     const after = performance.now();

@@ -5,9 +5,9 @@ import {spawn} from "child_process";
 
 import ReactDevTools from "./reactdevtools";
 import * as IPCEvents from "@common/constants/ipcevents";
-import {isSoulCordAcceptanceMode} from "@common/soulcord/acceptance-mode";
+import {isSolcordAcceptanceMode} from "@common/solcord/acceptance-mode";
 import ActivityCompatibility from "./activity-compatibility";
-import {resolveSoulCordBetterDiscordRoot} from "./soulcord-data-root";
+import {resolveSolcordBetterDiscordRoot} from "./solcord-data-root";
 import {RendererDocumentInjectionGuard} from "./renderer-document-guard";
 
 // Build info file only exists for non-linux (for current injection)
@@ -17,7 +17,7 @@ const buildInfoFile = path.resolve(appPath, "..", "build_info.json");
 
 // Locate data path to find transparency settings
 export let bdFolder = "";
-if (process.platform === "win32" || process.platform === "darwin") bdFolder = resolveSoulCordBetterDiscordRoot(electron.app.getPath("userData"));
+if (process.platform === "win32" || process.platform === "darwin") bdFolder = resolveSolcordBetterDiscordRoot(electron.app.getPath("userData"));
 else bdFolder = process.env.XDG_CONFIG_HOME ? process.env.XDG_CONFIG_HOME : path.join(process.env.HOME!, ".config"); // This will help with snap packages eventually
 if (process.platform !== "win32" && process.platform !== "darwin") bdFolder = path.join(bdFolder, "BetterDiscord");
 bdFolder += "/";
@@ -119,7 +119,7 @@ export default class BetterDiscord {
         const claim = this.rendererDocuments.claim(webContents);
         if (claim.status !== "claimed") {
             if (claim.status === "duplicate") return;
-            throw new Error("SoulCord renderer document boundary is unavailable.");
+            throw new Error("Solcord renderer document boundary is unavailable.");
         }
         const documentToken = claim.token;
 
@@ -129,15 +129,15 @@ export default class BetterDiscord {
                 || frame.processId !== current.processId
                 || frame.routingId !== current.routingId) {
                 this.rendererDocuments.fail(webContents, documentToken);
-                throw new Error("SoulCord renderer frame changed before injection.");
+                throw new Error("Solcord renderer frame changed before injection.");
             }
         }
         catch {
             this.rendererDocuments.fail(webContents, documentToken);
-            throw new Error("SoulCord renderer frame could not be validated.");
+            throw new Error("Solcord renderer frame could not be validated.");
         }
 
-        const location = path.join(__dirname, "soulcord.js");
+        const location = path.join(__dirname, "solcord.js");
         if (!fs.existsSync(location)) {
             this.rendererDocuments.fail(webContents, documentToken);
             return; // TODO: cut a fatal log
@@ -155,12 +155,12 @@ export default class BetterDiscord {
                         return false;
                     }
                 })();
-                //# sourceURL=soulcord/soulcord.js
+                //# sourceURL=solcord/solcord.js
             `) === true;
         }
         catch {
             this.rendererDocuments.fail(webContents, documentToken);
-            throw new Error("SoulCord renderer injection failed.");
+            throw new Error("Solcord renderer injection failed.");
         }
 
         if (!success) {
@@ -168,8 +168,8 @@ export default class BetterDiscord {
             return; // TODO: cut a fatal log
         }
         if (!this.rendererDocuments.complete(webContents, documentToken)) return;
-        // @ts-expect-error SoulCord adds an internal non-enumerable window token.
-        ActivityCompatibility.injection(browserWindow.__soulcordWindowToken);
+        // @ts-expect-error Solcord adds an internal non-enumerable window token.
+        ActivityCompatibility.injection(browserWindow.__solcordWindowToken);
     }
 
     private static getAccentColor() {
@@ -239,10 +239,10 @@ export default class BetterDiscord {
 
             // If a previous crash was detected, show a message explaining why BD isn't there
             electron.dialog.showMessageBox({
-                title: "SoulCord startup recovery",
+                title: "Solcord startup recovery",
                 type: "warning",
-                message: "SoulCord detected an interrupted Discord renderer",
-                detail: "SoulCord stopped renderer injection after an interrupted startup. Restart Discord or use the recovery action below.\n\nA third-party plugin may be responsible. Plugin Doctor can quarantine repeated failures without deleting your plugin files.",
+                message: "Solcord detected an interrupted Discord renderer",
+                detail: "Solcord stopped renderer injection after an interrupted startup. Restart Discord or use the recovery action below.\n\nA third-party plugin may be responsible. Plugin Doctor can quarantine repeated failures without deleting your plugin files.",
                 buttons: ["Try Again", "Open Plugins Folder", "Cancel"],
             }).then((result) => {
                 if (result.response === 0) {
@@ -267,7 +267,7 @@ export default class BetterDiscord {
         });
 
         // Seems to be windows exclusive. MacOS requires a build plist change
-        if (!isSoulCordAcceptanceMode() && !this.protocolListenersRegistered && electron.app.setAsDefaultProtocolClient("betterdiscord")) {
+        if (!isSolcordAcceptanceMode() && !this.protocolListenersRegistered && electron.app.setAsDefaultProtocolClient("betterdiscord")) {
             this.protocolListenersRegistered = true;
             // If application was opened via protocol, set process.env.BETTERDISCORD_PROTOCOL
             const protocol = process.argv.find((arg) => arg.startsWith("betterdiscord://"));

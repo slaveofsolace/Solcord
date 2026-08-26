@@ -6,19 +6,19 @@ import path from "node:path";
 
 import {stageReleaseArtifact} from "../../scripts/helpers/install";
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "soulcord-install-test-"));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "solcord-install-test-"));
 
 afterAll(() => {
     const resolved = fs.realpathSync(root);
-    if (!resolved.startsWith(fs.realpathSync(os.tmpdir()) + path.sep) || !path.basename(resolved).startsWith("soulcord-install-test-")) throw new Error("Refusing to remove an unexpected test path.");
+    if (!resolved.startsWith(fs.realpathSync(os.tmpdir()) + path.sep) || !path.basename(resolved).startsWith("solcord-install-test-")) throw new Error("Refusing to remove an unexpected test path.");
     fs.rmSync(resolved, {recursive: true});
 });
 
-describe("SoulCord release staging", () => {
+describe("Solcord release staging", () => {
     test("atomically replaces the compatibility target and preserves the source", () => {
-        const source = path.join(root, "soulcord.asar");
+        const source = path.join(root, "solcord.asar");
         const target = path.join(root, "compatibility", "betterdiscord.asar");
-        const content = Buffer.from("reviewed-soulcord-artifact");
+        const content = Buffer.from("reviewed-solcord-artifact");
         fs.writeFileSync(source, content);
         fs.mkdirSync(path.dirname(target), {recursive: true});
         fs.writeFileSync(target, "previous-build");

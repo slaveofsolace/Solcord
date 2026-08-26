@@ -1,0 +1,195 @@
+/**
+ * @name Solcord — Obsidian Thread
+ * @author slaveofsolace
+ * @version 1.2.0
+ * @description Solcord's dense graphite, warm-bone, oxidized-teal, and ember theme.
+ * @source https://github.com/slaveofsolace/Solcord
+ * @license Apache-2.0
+ */
+
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
+:root {
+    --solcord-graphite: #171A1C;
+    --solcord-panel: #1D2224;
+    --solcord-raised: #242A2D;
+    --solcord-bone: #F0E5D5;
+    --solcord-muted: #AAB1B3;
+    --solcord-teal: #4B9D96;
+    --solcord-ember: #DF6B52;
+    --solcord-seam: #343B3E;
+    --solcord-focus: #78C4BD;
+    --solcord-canvas: #0D1011;
+    --solcord-surface-0: #131718;
+    --solcord-surface-1: #191E20;
+    --solcord-surface-2: #22282A;
+    --solcord-accent: var(--solcord-teal);
+    --solcord-accent-strong: #397D77;
+    --solcord-on-accent: #07110F;
+    --solcord-panel-shadow: 0 14px 30px rgb(0 0 0 / 30%);
+    --solcord-panel-filter: none;
+    --solcord-message-hover: rgb(75 157 150 / 8%);
+    --solcord-gap: 10px;
+    --solcord-radius: 4px;
+    --solcord-radius-small: 2px;
+    --solcord-avatar-radius: 8px;
+    --solcord-cream: var(--solcord-bone);
+    --solcord-sea: var(--solcord-teal);
+    --solcord-coral: var(--solcord-ember);
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
+}
+
+.theme-dark,
+.theme-darker,
+.theme-midnight,
+.theme-light {
+    color-scheme: dark;
+
+    --background-primary: var(--solcord-graphite);
+    --background-secondary: var(--solcord-panel);
+    --background-secondary-alt: #191D1F;
+    --background-tertiary: #121516;
+    --background-floating: var(--solcord-raised);
+    --background-modifier-hover: rgb(75 157 150 / 12%);
+    --background-modifier-active: rgb(75 157 150 / 18%);
+    --background-modifier-selected: rgb(75 157 150 / 22%);
+    --background-modifier-accent: var(--solcord-seam);
+    --text-normal: #DEDBD5;
+    --text-muted: var(--solcord-muted);
+    --text-link: #70B9B2;
+    --header-primary: var(--solcord-bone);
+    --header-secondary: #BDC2C3;
+    --interactive-normal: #B9BEC0;
+    --interactive-hover: #F0ECE5;
+    --interactive-active: var(--solcord-bone);
+    --interactive-muted: #8B9496;
+    --brand-experiment: var(--solcord-teal);
+    --brand-experiment-560: #438D87;
+    --brand-500: var(--solcord-accent-strong);
+    --brand-560: #397A75;
+    --brand-600: #306863;
+    --button-filled-brand-background: var(--solcord-accent-strong);
+    --button-filled-brand-background-hover: var(--brand-560);
+    --button-filled-brand-text: var(--solcord-on-accent);
+    --text-default: var(--text-normal);
+    --interactive-text-default: var(--interactive-normal);
+    --interactive-text-hover: var(--interactive-hover);
+    --interactive-text-active: var(--interactive-active);
+    --status-danger: var(--solcord-ember);
+    --channel-text-area-placeholder: #929A9C;
+    --scrollbar-thin-thumb: #515B5E;
+    --scrollbar-auto-thumb: #515B5E;
+    --scrollbar-auto-track: #131617;
+    --app-frame-background: var(--solcord-canvas);
+    --app-frame-border: var(--solcord-seam);
+    --background-base-low: var(--solcord-surface-1);
+    --background-base-lower: var(--solcord-surface-0);
+    --background-base-lowest: var(--solcord-canvas);
+    --background-surface-high: var(--solcord-surface-1);
+    --background-surface-higher: var(--solcord-surface-2);
+    --background-surface-highest: var(--solcord-raised);
+    --background-mod-subtle: rgb(75 157 150 / 8%);
+    --background-mod-normal: rgb(75 157 150 / 13%);
+    --background-mod-strong: rgb(75 157 150 / 20%);
+    --bg-surface-overlay-tmp: var(--solcord-raised);
+    --bg-surface-raised: var(--solcord-raised);
+    --border-muted: rgb(52 59 62 / 72%);
+    --border-normal: var(--solcord-seam);
+    --border-strong: #4D585B;
+    --border-subtle: rgb(52 59 62 / 78%);
+    --card-background-default: var(--solcord-surface-1);
+    --channeltextarea-background: var(--solcord-surface-2);
+    --chat-background-default: var(--solcord-surface-1);
+    --input-background: var(--solcord-surface-0);
+}
+
+::selection { color: #111415; background: #91D4CE; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--solcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
+#app-mount :is([class*="sidebarList_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"], [class*="contentRegion_"]) { border-color: var(--solcord-seam) !important; }
+#app-mount [class*="mentioned_"] { background: rgb(223 107 82 / 9%) !important; border-left: 2px solid var(--solcord-ember); }
+#app-mount [class*="newMessagesBar_"] { background: var(--solcord-teal) !important; color: #101314 !important; }
+
+body {
+    background: var(--solcord-canvas) !important;
+    font-family: "Segoe UI Variable", "gg sans", sans-serif;
+}
+
+#app-mount { background: var(--solcord-canvas) !important; }
+
+#app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
+    gap: var(--solcord-gap);
+    margin: 0 var(--solcord-gap) var(--solcord-gap);
+    background: transparent !important;
+}
+
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="panels_"], [class*="subtitleContainer_"], [class*="chatContent_"], [class*="peopleColumn_"], [class*="nowPlayingColumn_"], [class*="membersWrap_"]) {
+    box-sizing: border-box;
+    border: 1px solid var(--solcord-seam);
+    border-radius: var(--solcord-radius);
+    background: var(--solcord-surface-1) !important;
+    box-shadow: var(--solcord-panel-shadow);
+    backdrop-filter: var(--solcord-panel-filter);
+}
+
+#app-mount [class*="guilds_"] {
+    margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--solcord-gap));
+}
+
+#app-mount [class*="sidebarList_"] { margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--solcord-gap)); }
+#app-mount [class*="panels_"] { border-top: 2px solid var(--solcord-accent); }
+#app-mount [class*="subtitleContainer_"] { margin-bottom: var(--solcord-gap); }
+#app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin-left: var(--solcord-gap); }
+
+#app-mount [class*="page_"] > :is([class*="chat_"], [class*="peopleColumn_"]) {
+    padding-right: var(--solcord-gap);
+    padding-bottom: var(--solcord-gap);
+    background: transparent !important;
+}
+
+#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) {
+    border: 1px solid var(--solcord-seam) !important;
+    border-radius: var(--solcord-radius-small) !important;
+    background: var(--solcord-surface-2) !important;
+    box-shadow: inset 0 -2px 0 var(--solcord-accent-strong) !important;
+}
+
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) {
+    border: 1px solid transparent;
+    border-radius: var(--solcord-radius-small) !important;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover {
+    border-color: var(--solcord-seam);
+    background: var(--solcord-surface-2) !important;
+}
+
+#app-mount [class*="peopleListItem_"] { border-width: 0 0 1px; border-bottom-color: var(--solcord-seam); border-radius: 0 !important; }
+#app-mount [class*="itemCard_"] { background: transparent !important; border-left-color: var(--solcord-accent); box-shadow: none; }
+#app-mount li[id^="chat-messages-"] { margin-inline: 4px; border-left: 2px solid transparent; border-radius: 0; }
+#app-mount li[id^="chat-messages-"]:hover { border-left-color: var(--solcord-accent); background: var(--solcord-message-hover) !important; }
+#app-mount [class*="embedFull_"] { border: 1px solid var(--solcord-seam) !important; border-left: 3px solid var(--solcord-accent) !important; border-radius: 0 !important; }
+#app-mount [class*="guilds_"] [class*="icon_"] { border-radius: var(--solcord-avatar-radius) !important; }
+#app-mount [class*="topPill_"] [class*="item_"][aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--solcord-accent); }
+
+::-webkit-scrollbar-thumb {
+    border: 3px solid transparent !important;
+    border-radius: 999px !important;
+    background: var(--solcord-seam) !important;
+    background-clip: padding-box !important;
+}
+
+@media (max-width: 900px) {
+    :root { --solcord-gap: 4px; }
+    #app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin-left: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}

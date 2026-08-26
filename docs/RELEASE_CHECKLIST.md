@@ -1,4 +1,4 @@
-# SoulCord V2 RC release checklist
+# Solcord V2 RC release checklist
 
 This document does not authorize a merge, tag, GitHub release, live-profile installation, or default-branch change.
 
@@ -13,11 +13,11 @@ This document does not authorize a merge, tag, GitHub release, live-profile inst
 
 ## Build and security
 
-- [ ] Frozen install, full tests, ESLint, focused SoulCord CSS/theme lint, typecheck, type generation, circular-dependency measurement, production build, package, audit, and `git diff --check` pass.
+- [ ] Frozen install, full tests, ESLint, focused Solcord CSS/theme lint, typecheck, type generation, circular-dependency measurement, production build, package, audit, and `git diff --check` pass.
 - [ ] A security-diff review covers BrowserWindow/preload, IPC, updater, installer, translation credentials, provider archive/rollback, addon execution, diagnostics, and network calls.
 - [ ] No token, private content, account identifier, denied-user ID, credential, message body, absolute owner path, or secret appears in Git, artifacts, screenshots, logs, or release copy.
 - [ ] Two clean builds produce byte-identical ASARs, or any difference is explained and the release is held.
-- [ ] `SoulCordInstaller.exe --self-test` passes for the exact self-contained executable included in the RC directory.
+- [ ] `SolcordInstaller.exe --self-test` passes for the exact self-contained executable included in the RC directory.
 
 ## Disposable runtime
 
@@ -31,7 +31,7 @@ This document does not authorize a merge, tag, GitHub release, live-profile inst
 
 ## Installer and human acceptance
 
-- [ ] The RC directory contains one self-contained `SoulCordInstaller.exe`, `soulcord.asar`, both manifests, and `SHA256SUMS.txt`; every hash matches.
+- [ ] The RC directory contains one self-contained `SolcordInstaller.exe`, `solcord.asar`, both manifests, and `SHA256SUMS.txt`; every hash matches.
 - [ ] The executable is labeled unsigned and Windows unknown-publisher behavior is stated without advising users to disable security.
 - [ ] Six privacy-clean screenshots come from this exact RC: download/hash, Discord closed, target review, installed/verified, first setup, and rollback/recovery.
 - [ ] The quick guide says “about one minute on a typical Windows PC after download,” not a guarantee.
@@ -41,7 +41,7 @@ This document does not authorize a merge, tag, GitHub release, live-profile inst
 
 ## Release decision
 
-- [ ] The core updater still fails closed without SoulCord-owned integrity metadata.
+- [ ] The core updater still fails closed without Solcord-owned integrity metadata.
 - [ ] Exact commit, ASAR hash, installer hash, test summary, runtime nonclaims, backup location, and rollback route are in the external release manifest.
 - [ ] Separate owner authority exists for pushing the RC tag and GitHub prerelease.
 - [ ] Stable publication remains blocked until authentic signing or an independently authenticated distribution mechanism and a fresh stable decision exist.

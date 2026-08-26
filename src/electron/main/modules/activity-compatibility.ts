@@ -29,7 +29,7 @@ export interface ActivityCompatibilityEvent {
 }
 
 export interface ActivityCompatibilityHealth {
-    product: "SoulCord";
+    product: "Solcord";
     policyVersion: 2;
     mode: "verified-discord-preload-once";
     unrestrictedOverride: boolean;
@@ -240,7 +240,7 @@ class ActivityCompatibilityLedger {
                 ? "healthy"
                 : "idle";
         return {
-            product: "SoulCord",
+            product: "Solcord",
             policyVersion: 2,
             mode: "verified-discord-preload-once",
             unrestrictedOverride: this.#unrestrictedOverride,

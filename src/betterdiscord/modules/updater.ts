@@ -26,19 +26,19 @@ import {RefreshCcwIcon} from "lucide-react";
 import type {AddonType} from "@typed/addon";
 import {fetch} from "./net";
 import AddonStore from "./addonstore";
-import {SOULCORD_RUNTIME_ADDONS, SOULCORD_RUNTIME_DEPENDENCIES, SOULCORD_RUNTIME_THEMES} from "@common/soulcord/addon-catalog.generated";
-import {isSoulCordTransactionOwnedAcceptedArtifact} from "./soulcord/updater-ownership";
-import {isSoulCordAcceptanceMode} from "@common/soulcord/acceptance-mode";
+import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
+import {isSolcordTransactionOwnedAcceptedArtifact} from "./solcord/updater-ownership";
+import {isSolcordAcceptanceMode} from "@common/solcord/acceptance-mode";
 
-const ACCEPTANCE_UPDATE_HOLD = "SoulCord update checks and addon writes are disabled in disposable acceptance mode.";
+const ACCEPTANCE_UPDATE_HOLD = "Solcord update checks and addon writes are disabled in disposable acceptance mode.";
 
-function acceptedSoulCordArtifact(type: AddonType, fileName: string): {fileName: string; reviewedSha256: string;} | undefined {
+function acceptedSolcordArtifact(type: AddonType, fileName: string): {fileName: string; reviewedSha256: string;} | undefined {
     if (type === "theme") {
-        const theme = SOULCORD_RUNTIME_THEMES.find(candidate => candidate.fileName === fileName);
+        const theme = SOLCORD_RUNTIME_THEMES.find(candidate => candidate.fileName === fileName);
         return theme && {fileName: theme.fileName, reviewedSha256: theme.sourceSha256};
     }
 
-    const candidate = SOULCORD_RUNTIME_ADDONS.find(addon => addon.fileName === fileName) ?? SOULCORD_RUNTIME_DEPENDENCIES.find(dependency => dependency.fileName === fileName);
+    const candidate = SOLCORD_RUNTIME_ADDONS.find(addon => addon.fileName === fileName) ?? SOLCORD_RUNTIME_DEPENDENCIES.find(dependency => dependency.fileName === fileName);
     if (!candidate || (candidate as {installable?: boolean;}).installable !== true) return;
     return {fileName: candidate.fileName, reviewedSha256: candidate.sourceSha256};
 }
@@ -60,8 +60,8 @@ export default class Updater {
             }
         });
 
-        if (isSoulCordAcceptanceMode()) {
-            Logger.info("SoulCord Acceptance", ACCEPTANCE_UPDATE_HOLD);
+        if (isSolcordAcceptanceMode()) {
+            Logger.info("Solcord Acceptance", ACCEPTANCE_UPDATE_HOLD);
             return;
         }
 
@@ -85,7 +85,7 @@ export default class Updater {
             this.updateCheckInterval = null;
         }
 
-        if (isSoulCordAcceptanceMode() || !SettingsStore.get("addons", "checkForUpdates")) return;
+        if (isSolcordAcceptanceMode() || !SettingsStore.get("addons", "checkForUpdates")) return;
 
         const hours = SettingsStore.get<number>("addons", "updateInterval");
         this.updateCheckInterval = setInterval(async () => {
@@ -100,7 +100,7 @@ export class CoreUpdater {
     static hasUpdate = false;
     static apiData: Release;
     static remoteVersion = "";
-    static readonly disabledReason = "SoulCord core updates are paused until an owner-controlled release feed provides signed integrity metadata.";
+    static readonly disabledReason = "Solcord core updates are paused until an owner-controlled release feed provides signed integrity metadata.";
 
     static async initialize() {
         if (!SettingsStore.get("addons", "checkForUpdates")) return;
@@ -123,13 +123,13 @@ export class CoreUpdater {
         void showNotice;
         this.hasUpdate = false;
         this.remoteVersion = "";
-        Logger.warn("SoulCord Updater", this.disabledReason);
+        Logger.warn("Solcord Updater", this.disabledReason);
     }
 
     static async update() {
         this.hasUpdate = false;
-        Logger.warn("SoulCord Updater", this.disabledReason);
-        Modals.showConfirmationModal("SoulCord core updates are paused", this.disabledReason, {cancelText: null});
+        Logger.warn("Solcord Updater", this.disabledReason);
+        Modals.showConfirmationModal("Solcord core updates are paused", this.disabledReason, {cancelText: null});
     }
 }
 
@@ -145,7 +145,7 @@ export class AddonUpdater {
     }
 
     async initialize() {
-        if (isSoulCordAcceptanceMode()) return;
+        if (isSolcordAcceptanceMode()) return;
         AddonStore.getAddons();
         if (SettingsStore.get("addons", "checkForUpdates")) this.checkAll();
 
@@ -162,7 +162,7 @@ export class AddonUpdater {
 
     async checkAll(showNotice = true) {
         this.pending.length = 0;
-        if (isSoulCordAcceptanceMode()) return;
+        if (isSolcordAcceptanceMode()) return;
 
         await AddonStore.updaterRequestAddons();
 
@@ -188,14 +188,14 @@ export class AddonUpdater {
     }
 
     async updateAddon(filename: string) {
-        if (isSoulCordAcceptanceMode()) {
-            Logger.warn("SoulCord Acceptance", ACCEPTANCE_UPDATE_HOLD);
+        if (isSolcordAcceptanceMode()) {
+            Logger.warn("Solcord Acceptance", ACCEPTANCE_UPDATE_HOLD);
             Toasts.error(ACCEPTANCE_UPDATE_HOLD);
             return;
         }
         const basename = path.basename(filename);
-        const reviewed = acceptedSoulCordArtifact(this.type, basename);
-        const transactionOwned = reviewed && isSoulCordTransactionOwnedAcceptedArtifact({
+        const reviewed = acceptedSolcordArtifact(this.type, basename);
+        const transactionOwned = reviewed && isSolcordTransactionOwnedAcceptedArtifact({
             accepted: true,
             addonFolder: this.manager.addonFolder,
             fileName: reviewed.fileName,
@@ -203,8 +203,8 @@ export class AddonUpdater {
             reviewedSha256: reviewed.reviewedSha256
         });
         if (transactionOwned) {
-            const reason = "This exact file was installed by SoulCord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated.";
-            Logger.warn("SoulCord Addon Integrity", `${basename} update paused for re-review.`);
+            const reason = "This exact file was installed by Solcord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated.";
+            Logger.warn("Solcord Addon Integrity", `${basename} update paused for re-review.`);
             Toasts.error(reason);
             return;
         }

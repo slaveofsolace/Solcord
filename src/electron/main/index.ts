@@ -23,7 +23,7 @@ if (process.argv.find(x => x.startsWith("--inspect"))) {
 
 if (!process.argv.includes("--vanilla")) {
     // eslint-disable-next-line no-console
-    console.log(`Welcome to SoulCord v${process.env.__VERSION__}`);
+    console.log(`Welcome to Solcord v${process.env.__VERSION__}`);
 
     process.env.NODE_OPTIONS = "--no-force-async-hooks-checks";
     app.commandLine.appendSwitch("no-force-async-hooks-checks");

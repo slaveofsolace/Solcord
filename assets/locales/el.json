@@ -217,9 +217,9 @@
     },
     "Updater": {
         "updateFailed": "Η ενημέρωση Απέτυχε!",
-        "updateFailedMessage": "SoulCord core updates are paused until owner-controlled signed integrity metadata exists.",
+        "updateFailedMessage": "Solcord core updates are paused until owner-controlled signed integrity metadata exists.",
         "updateSuccessful": "Η Ενημέρωση ήταν Επιτυχής!",
-        "updateAvailable": "Το SoulCord έχει μια νέα ενημερωση (v{{version}})",
+        "updateAvailable": "Το Solcord έχει μια νέα ενημερωση (v{{version}})",
         "addonUpdated": "Το {{name}} έχει ενημερωθεί στην έκδοση {{version}}!",
         "checking": "Έλεγχος για ενημερώσεις!",
         "finishedChecking": "Ολοκλήρωση ελέγχου για ενημερώσεις!",

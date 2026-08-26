@@ -1,4 +1,4 @@
-name: SoulCord feature request
+name: Solcord feature request
 description: Propose a focused addition or improvement with a clear user benefit.
 title: "[Feature]"
 labels: [enhancement]
@@ -12,7 +12,7 @@ body:
       required: true
 - type: textarea
   attributes:
-    label: What problem should SoulCord solve?
+    label: What problem should Solcord solve?
     description: Describe the current friction, who experiences it, and the result you want.
   validations:
     required: true

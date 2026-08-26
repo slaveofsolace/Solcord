@@ -1,7 +1,7 @@
 const {
-    __claimSoulCordTimelineBootstrap: claimSoulCordTimelineBootstrap,
+    __claimSolcordTimelineBootstrap: claimSolcordTimelineBootstrap,
     ...RemoteAPI
 } = window.BetterDiscordPreload();
 
-export {claimSoulCordTimelineBootstrap};
+export {claimSolcordTimelineBootstrap};
 export default RemoteAPI;

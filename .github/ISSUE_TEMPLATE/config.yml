@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 contact_links:
-  - name: SoulCord security and privacy
+  - name: Solcord security and privacy
     url: https://github.com/slaveofsolace/Solcord/blob/development/SECURITY.md
     about: Review the private-data boundary before sharing diagnostics.
   - name: Upstream BetterDiscord troubleshooting

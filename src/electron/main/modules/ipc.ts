@@ -5,14 +5,14 @@ import * as IPCEvents from "@common/constants/ipcevents";
 import Editor from "./editor";
 import BetterDiscord from "./betterdiscord";
 import ActivityCompatibility from "./activity-compatibility";
-import SoulCordTimeline from "./soulcord-timeline";
-import SoulCordFriendWatch from "./soulcord-friend-watch";
-import SoulCordAudienceGuard from "./soulcord-audience-guard";
-import SoulCordSetup from "./soulcord-setup";
-import SoulCordProviderArchive from "./soulcord-provider-archive";
-import SoulCordTranslationCredentials from "./soulcord-translation-credentials";
-import SoulCordLocalIdentityNotes from "./soulcord-local-identity-notes";
-import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
+import SolcordTimeline from "./solcord-timeline";
+import SolcordFriendWatch from "./solcord-friend-watch";
+import SolcordAudienceGuard from "./solcord-audience-guard";
+import SolcordSetup from "./solcord-setup";
+import SolcordProviderArchive from "./solcord-provider-archive";
+import SolcordTranslationCredentials from "./solcord-translation-credentials";
+import SolcordLocalIdentityNotes from "./solcord-local-identity-notes";
+import {isTrustedSolcordIpcUrl, SolcordTimelineIpcAuthority} from "./solcord-ipc-authority";
 import type {DialogOptions} from "@common/types/ipc";
 
 const getPath = (event: IpcMainEvent, pathReq: string) => {
@@ -206,18 +206,18 @@ const setAllowPreloadOverride = (_: IpcMainInvokeEvent, value: boolean) => {
 
 const getActivityCompatibility = () => ActivityCompatibility.snapshot();
 
-const requireTrustedSoulCordSender = (event: IpcMainInvokeEvent): void => {
-    if (event.sender.isDestroyed()) throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+const requireTrustedSolcordSender = (event: IpcMainInvokeEvent): void => {
+    if (event.sender.isDestroyed()) throw new Error("Solcord private IPC rejected an untrusted renderer.");
     const senderFrame = event.senderFrame;
-    if (!senderFrame) throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+    if (!senderFrame) throw new Error("Solcord private IPC rejected an untrusted renderer.");
     const mainFrame = event.sender.mainFrame;
     const isMainFrame = senderFrame.processId === mainFrame.processId && senderFrame.routingId === mainFrame.routingId;
-    if (!isMainFrame || !isTrustedSoulCordIpcUrl(event.sender.getURL()) || !isTrustedSoulCordIpcUrl(senderFrame.url)) {
-        throw new Error("SoulCord private IPC rejected an untrusted renderer.");
+    if (!isMainFrame || !isTrustedSolcordIpcUrl(event.sender.getURL()) || !isTrustedSolcordIpcUrl(senderFrame.url)) {
+        throw new Error("Solcord private IPC rejected an untrusted renderer.");
     }
 };
 
-const timelineAuthority = new SoulCordTimelineIpcAuthority();
+const timelineAuthority = new SolcordTimelineIpcAuthority();
 const timelineReleaseHooks = new WeakSet<Electron.WebContents>();
 
 const ensureTimelineReleaseHook = (sender: Electron.WebContents): void => {
@@ -239,157 +239,157 @@ const withCurrentAccountBinding = async <T>(event: IpcMainInvokeEvent, request: 
     return result;
 };
 const bootstrapTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     return timelineAuthority.activate(event.sender.id, request);
 };
 const bindTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     return timelineAuthority.bind(event.sender.id, request);
 };
 const releaseTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     return timelineAuthority.releaseAccount(event.sender.id, request);
 };
 const getTimelineStatus = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordTimeline.status();
+    return SolcordTimeline.status();
 };
 const appendTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordTimeline.append(authorized.accountScope, authorized.request);
+    return SolcordTimeline.append(authorized.accountScope, authorized.request);
 };
 const readTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordTimeline.read(authorized.accountScope, authorized.request);
+    return SolcordTimeline.read(authorized.accountScope, authorized.request);
 };
 const clearTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordTimeline.clear(authorized.accountScope, authorized.request);
+    return SolcordTimeline.clear(authorized.accountScope, authorized.request);
 };
 const getFriendWatchStatus = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordFriendWatch.status();
+    return SolcordFriendWatch.status();
 };
 const appendFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordFriendWatch.append(authorized.accountScope, authorized.request);
+    return SolcordFriendWatch.append(authorized.accountScope, authorized.request);
 };
 const readFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordFriendWatch.read(authorized.accountScope, authorized.request);
+    return SolcordFriendWatch.read(authorized.accountScope, authorized.request);
 };
 const clearFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordFriendWatch.clear(authorized.accountScope, authorized.request);
+    return SolcordFriendWatch.clear(authorized.accountScope, authorized.request);
 };
 const getAudienceGuardStatus = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordAudienceGuard.status();
+    return SolcordAudienceGuard.status();
 };
 const readAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.read(accountScope, payload));
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordAudienceGuard.read(accountScope, payload));
 };
 const writeAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.write(accountScope, payload));
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordAudienceGuard.write(accountScope, payload));
 };
 const clearAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.clear(accountScope, payload));
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordAudienceGuard.clear(accountScope, payload));
 };
-const applySoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const applySolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordSetup.apply(authorized.request);
+    return SolcordSetup.apply(authorized.request);
 };
-const acknowledgeSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const acknowledgeSolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordSetup.acknowledge(authorized.request.transactionId);
+    return SolcordSetup.acknowledge(authorized.request.transactionId);
 };
-const reconcileSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const reconcileSolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordSetup.reconcile(authorized.request.transactionIds);
+    return SolcordSetup.reconcile(authorized.request.transactionIds);
 };
-const rollbackSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const rollbackSolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordSetup.rollback(authorized.request.transactionId);
+    return SolcordSetup.rollback(authorized.request.transactionId);
 };
-const auditSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const auditSolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordSetup.auditIntegrity();
+    return SolcordSetup.auditIntegrity();
 };
-const previewSoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const previewSolcordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordProviderArchive.preview(authorized.request);
+    return SolcordProviderArchive.preview(authorized.request);
 };
-const applySoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const applySolcordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordProviderArchive.apply(authorized.request.previewId);
+    return SolcordProviderArchive.apply(authorized.request.previewId);
 };
-const rollbackSoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const rollbackSolcordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordProviderArchive.rollback(authorized.request.transactionId);
+    return SolcordProviderArchive.rollback(authorized.request.transactionId);
 };
-const readSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.read(accountScope, payload));
+const readSolcordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTranslationCredentials.read(accountScope, payload));
 };
-const writeSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.write(accountScope, payload));
+const writeSolcordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTranslationCredentials.write(accountScope, payload));
 };
-const clearSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
-    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.clear(accountScope, payload));
+const clearSolcordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTranslationCredentials.clear(accountScope, payload));
 };
-const getSoulCordLocalIdentityNotesStatus = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const getSolcordLocalIdentityNotesStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
-    return SoulCordLocalIdentityNotes.status();
+    return SolcordLocalIdentityNotes.status();
 };
-const readSoulCordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const readSolcordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordLocalIdentityNotes.read(authorized.accountScope, authorized.request);
+    return SolcordLocalIdentityNotes.read(authorized.accountScope, authorized.request);
 };
-const writeSoulCordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const writeSolcordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordLocalIdentityNotes.write(authorized.accountScope, authorized.request);
+    return SolcordLocalIdentityNotes.write(authorized.accountScope, authorized.request);
 };
-const removeSoulCordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const removeSolcordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordLocalIdentityNotes.remove(authorized.accountScope, authorized.request);
+    return SolcordLocalIdentityNotes.remove(authorized.accountScope, authorized.request);
 };
-const clearSoulCordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
-    requireTrustedSoulCordSender(event);
+const clearSolcordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SoulCordLocalIdentityNotes.clear(authorized.accountScope, authorized.request);
+    return SolcordLocalIdentityNotes.clear(authorized.accountScope, authorized.request);
 };
 
 const runRenderer = (event: IpcMainInvokeEvent) => {
-    requireTrustedSoulCordSender(event);
+    requireTrustedSolcordSender(event);
     const senderFrame = event.senderFrame;
     const browserWindow = BrowserWindow.fromWebContents(event.sender);
-    if (!senderFrame || !browserWindow) throw new Error("SoulCord renderer frame is unavailable.");
+    if (!senderFrame || !browserWindow) throw new Error("Solcord renderer frame is unavailable.");
     ensureTimelineReleaseHook(event.sender);
     const bootstrap = timelineAuthority.bootstrap(event.sender.id);
     void BetterDiscord.injectRenderer(browserWindow, senderFrame).catch(() => {
@@ -438,22 +438,22 @@ export default class IPCMain {
             ipc.handle(IPCEvents.AUDIENCE_GUARD_READ, readAudienceGuard);
             ipc.handle(IPCEvents.AUDIENCE_GUARD_WRITE, writeAudienceGuard);
             ipc.handle(IPCEvents.AUDIENCE_GUARD_CLEAR, clearAudienceGuard);
-            ipc.handle(IPCEvents.SETUP_APPLY, applySoulCordSetup);
-            ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSoulCordSetup);
-            ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSoulCordSetup);
-            ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSoulCordSetup);
-            ipc.handle(IPCEvents.SETUP_AUDIT, auditSoulCordSetup);
-            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, previewSoulCordProviderArchive);
-            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_APPLY, applySoulCordProviderArchive);
-            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, rollbackSoulCordProviderArchive);
-            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_READ, readSoulCordTranslationCredential);
-            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_WRITE, writeSoulCordTranslationCredential);
-            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_CLEAR, clearSoulCordTranslationCredential);
-            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_STATUS, getSoulCordLocalIdentityNotesStatus);
-            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_READ, readSoulCordLocalIdentityNotes);
-            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_WRITE, writeSoulCordLocalIdentityNote);
-            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_REMOVE, removeSoulCordLocalIdentityNote);
-            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_CLEAR, clearSoulCordLocalIdentityNotes);
+            ipc.handle(IPCEvents.SETUP_APPLY, applySolcordSetup);
+            ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSolcordSetup);
+            ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSolcordSetup);
+            ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSolcordSetup);
+            ipc.handle(IPCEvents.SETUP_AUDIT, auditSolcordSetup);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, previewSolcordProviderArchive);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_APPLY, applySolcordProviderArchive);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, rollbackSolcordProviderArchive);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_READ, readSolcordTranslationCredential);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_WRITE, writeSolcordTranslationCredential);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_CLEAR, clearSolcordTranslationCredential);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_STATUS, getSolcordLocalIdentityNotesStatus);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_READ, readSolcordLocalIdentityNotes);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_WRITE, writeSolcordLocalIdentityNote);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_REMOVE, removeSolcordLocalIdentityNote);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_CLEAR, clearSolcordLocalIdentityNotes);
         }
         catch (err) {
             // eslint-disable-next-line no-console

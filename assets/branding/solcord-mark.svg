@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title description">
+  <title id="title">Solcord cord-cut S mark</title>
+  <desc id="description">Two asymmetrical signal cords form an S with a deliberate break at its center.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 12C43 5 26 6 17 14C8 22 13 30 28 32" stroke="#171a1c" stroke-width="11"/>
+    <path d="M52 12C43 5 26 6 17 14C8 22 13 30 28 32" stroke="#4b9d96" stroke-width="6.5"/>
+    <path d="M36 32C51 34 56 42 47 50C38 58 21 59 12 52" stroke="#171a1c" stroke-width="11"/>
+    <path d="M36 32C51 34 56 42 47 50C38 58 21 59 12 52" stroke="#f0e5d5" stroke-width="6.5"/>
+    <path d="M27.6 32L24.8 31.2" stroke="#df6b52" stroke-width="4"/>
+  </g>
+</svg>

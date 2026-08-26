@@ -29,4 +29,4 @@ This is research, not shipped V1 functionality. Names and concepts are original 
 
 ## Research boundary
 
-The current BetterDiscord catalog demonstrates demand for call timers, volume controls, message splitting, image tools, permission viewers, activity toggles, and privacy utilities. SoulCord should integrate related workflows coherently rather than clone catalog plugins. No candidate advances without a controlling license, pinned revision, exact file list, cleanup review, runtime budget, and privacy/account-risk decision.
+The current BetterDiscord catalog demonstrates demand for call timers, volume controls, message splitting, image tools, permission viewers, activity toggles, and privacy utilities. Solcord should integrate related workflows coherently rather than clone catalog plugins. No candidate advances without a controlling license, pinned revision, exact file list, cleanup review, runtime budget, and privacy/account-risk decision.
