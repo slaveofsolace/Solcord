@@ -5,12 +5,21 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "../..");
-const builder = fs.readFileSync(path.join(root, "scripts/build-solcord-v2-installer.mjs"), "utf8");
+const builderPath = path.join(root, "scripts", "build-solcord-v2-installer.mjs");
+const obsoleteBuilderPath = path.join(root, "scripts", "build-solcord-installer.cjs");
+const builder = fs.readFileSync(builderPath, "utf8");
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const engine = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerEngine.cs"), "utf8");
 const embeddedBundle = fs.readFileSync(path.join(root, "installer/Solcord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
 const selfTest = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Program.cs"), "utf8");
 
 describe("Solcord installer security contracts", () => {
+    test("routes candidate builds through the tested embedded-resource builder", () => {
+        expect(packageJson.scripts["installer:candidate"]).toBe("bun scripts/build-solcord-v2-installer.mjs");
+        expect(fs.existsSync(builderPath)).toBeTrue();
+        expect(fs.existsSync(obsoleteBuilderPath)).toBeFalse();
+    });
+
     test("rebuilds ignored dist output from the exact clean commit before packaging", () => {
         const remove = builder.indexOf("fs.rmSync(dist, {recursive: true})");
         const rebuild = builder.indexOf("spawnSync(process.execPath, [\"run\", \"dist\"]");
