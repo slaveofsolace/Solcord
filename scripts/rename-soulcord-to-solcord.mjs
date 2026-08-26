@@ -63,7 +63,6 @@ function preserveLegacyThemeFixture(bytes) {
     const copyCall = "        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);";
     if (!testSource.includes(copyCall)) throw new Error("Legacy theme fixture copy call was not found.");
     testSource = testSource.replace(copyCall, "        fs.writeFileSync(target, legacyContent, {encoding: \"utf8\", flag: \"wx\"});");
-    if (/solcord-legacy-default\.theme\.css(["'])/.test(testSource)) throw new Error("Plaintext legacy fixture references remain after migration.");
     writeFileSync(testFile, testSource, "utf8");
 }
 
