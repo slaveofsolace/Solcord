@@ -53,7 +53,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("--chat-background-default: var(--sc-app-surface-0)");
         expect(WIZARD_CSS).toContain("--modal-background: var(--sc-app-surface-1)");
         expect(WIZARD_CSS).toContain("background: var(--sc-app-surface-0) !important");
-        for (const mode of ["soul-dark", "soul-light", "oled"]) {
+        for (const mode of ["solcord-dark", "solcord-light", "oled"]) {
             const block = WIZARD_CSS.match(new RegExp(`html\\[data-solcord-mode="${mode}"\\] \\{([^}]+)}`, "s"))?.[1];
             expect(block).toBeDefined();
             expect(block).toContain("--sc-app-surface-0:");
@@ -62,7 +62,7 @@ describe("Solcord beginner-first setup UI", () => {
             expect(block).toContain("--sc-app-text:");
             expect(block).toContain("--sc-app-muted:");
             expect(block).toContain("--sc-app-border:");
-            expect(block).toContain(`color-scheme: ${mode === "soul-light" ? "light" : "dark"}`);
+            expect(block).toContain(`color-scheme: ${mode === "solcord-light" ? "light" : "dark"}`);
         }
         expect(WIZARD_CSS).toContain("html:not([data-solcord-accent=\"system\"])[data-solcord-accent] :is(#app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light)");
         expect(WIZARD_CSS).toContain("html[data-solcord-density=\"compact\"] #app-mount");
@@ -140,7 +140,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toMatch(/solcord-mode-\$\{appearance\.mode\}/);
         expect(WIZARD_SOURCE).toMatch(/solcord-preview-shape-\$\{appearance\.messageShape\}/);
         expect(WIZARD_SOURCE).toContain("This preview updates immediately.");
-        expect(WIZARD_CSS).toContain(".solcord-live-preview.solcord-mode-soul-light");
+        expect(WIZARD_CSS).toContain(".solcord-live-preview.solcord-mode-solcord-light");
         expect(WIZARD_CSS).toContain(".solcord-live-preview.solcord-preview-shape-seamed");
     });
 

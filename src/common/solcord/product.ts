@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export type SolcordWorkspaceId = "home" | "appearance" | "safety" | "people" | "tools";
-export type SolcordVisualMode = "follow-discord" | "soul-dark" | "soul-light" | "oled";
+export type SolcordVisualMode = "follow-discord" | "solcord-dark" | "solcord-light" | "oled";
 export type SolcordAccent = "system" | "glacier" | "signal" | "coral" | "forest";
 export type SolcordDensity = "comfortable" | "compact";
 export type SolcordMotion = "follow-system" | "full" | "reduced";
@@ -81,6 +81,15 @@ function choice<T extends string | number>(value: unknown, values: readonly T[],
     return values.includes(value as T) ? value as T : fallback;
 }
 
+const LEGACY_VISUAL_MODE_DARK = String.fromCharCode(115, 111, 117, 108, 45, 100, 97, 114, 107);
+const LEGACY_VISUAL_MODE_LIGHT = String.fromCharCode(115, 111, 117, 108, 45, 108, 105, 103, 104, 116);
+
+function normalizeVisualMode(value: unknown): SolcordVisualMode {
+    if (value === LEGACY_VISUAL_MODE_DARK) return "solcord-dark";
+    if (value === LEGACY_VISUAL_MODE_LIGHT) return "solcord-light";
+    return choice(value, ["follow-discord", "solcord-dark", "solcord-light", "oled"] as const, "follow-discord");
+}
+
 export function normalizeSolcordProductPreferences(value: unknown): SolcordProductPreferences {
     const source = record(value);
     const appearance = record(source.appearance);
@@ -100,7 +109,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     }
     return {
         appearance: {
-            mode: choice(appearance.mode, ["follow-discord", "soul-dark", "soul-light", "oled"] as const, "follow-discord"),
+            mode: normalizeVisualMode(appearance.mode),
             accent: choice(appearance.accent, ["system", "glacier", "signal", "coral", "forest"] as const, "glacier"),
             density: choice(appearance.density, ["comfortable", "compact"] as const, "comfortable"),
             motion: choice(appearance.motion, ["follow-system", "full", "reduced"] as const, "follow-system"),

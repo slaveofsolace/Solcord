@@ -164,7 +164,7 @@ const SettingsRenderer = new class SettingsRenderer {
                     layouts.push(sidebar);
                 };
 
-                const makeSettingsPanelProvider = (children: React.ReactNode) => {
+                const makeSettingsPanelProvider = (panelContent: React.ReactNode) => {
                     const listeners = new Set<() => void>();
                     let items = {
                         text: null as React.ReactNode,
@@ -173,13 +173,13 @@ const SettingsRenderer = new class SettingsRenderer {
 
                     function PanelHeader() {
                         const [node, setNode] = React.useState<HTMLElement | undefined>();
-                        const {text, children} = items;
+                        const {text, children: headerChildren} = items;
 
                         const [, forceUpdate] = useForceUpdate();
 
                         React.useLayoutEffect(() => {
                             listeners.add(forceUpdate);
-                            return listeners.delete.bind(listeners, forceUpdate) as unknown as ReturnType<React.EffectCallback>;
+                            return () => {listeners.delete(forceUpdate);};
                         }, [forceUpdate]);
 
                         return (
@@ -209,7 +209,7 @@ const SettingsRenderer = new class SettingsRenderer {
 
                                 {node && (
                                     ReactDOM.createPortal(
-                                        <div className="bd-settings-page-title-children">{children}</div>,
+                                        <div className="bd-settings-page-title-children">{headerChildren}</div>,
                                         node
                                     )
                                 )}
@@ -232,7 +232,7 @@ const SettingsRenderer = new class SettingsRenderer {
                                     return null;
                                 }}
                             >
-                                {children}
+                                {panelContent}
                             </SettingsTitleContext>
                         )
                     };

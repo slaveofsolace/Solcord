@@ -151,7 +151,7 @@ describe("Solcord theme presentation", () => {
     });
 
     test("keeps every application-wide appearance mode readable outside the Solcord panel", () => {
-        for (const mode of ["soul-dark", "soul-light", "oled"] as const) {
+        for (const mode of ["solcord-dark", "solcord-light", "oled"] as const) {
             const selector = `html[data-solcord-mode="${mode}"]`;
             const surfaces = [
                 ruleProperty(SOLCORD_UI_CSS, selector, "--sc-app-surface-0"),
