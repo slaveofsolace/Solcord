@@ -53,16 +53,20 @@ function preserveLegacyThemeFixture(bytes) {
     testSource = testSource.replace(helperAnchor, `${helperAnchor}\nconst LEGACY_DEFAULT_THEME_FIXTURE = path.resolve(process.cwd(), "tests", "fixtures", "solcord-legacy-default.theme.css.b64");\n\nfunction readLegacyDefaultThemeFixture(): string {\n    const encoded = fs.readFileSync(LEGACY_DEFAULT_THEME_FIXTURE, "utf8").trim();\n    const decoded = Buffer.from(encoded, "base64").toString("utf8");\n    if (!decoded) throw new Error("Legacy theme compatibility fixture is empty.");\n    return decoded;\n}\n`);
 
     let declarationCount = 0;
-    const declaration = /(^[ \t]*)const legacyFixture = path\.resolve\(process\.cwd\(\), "tests", "fixtures", "solcord-legacy-default\.theme\.css"\);\n\1const legacyContent = fs\.readFileSync\(legacyFixture, "utf8"\);/gm;
+    const declaration = /(^[ \t]*)const legacyFixture = path\.resolve\(process\.cwd\(\), "tests", "fixtures", "solcord-legacy-default\.theme\.css"\);\n/gm;
     testSource = testSource.replace(declaration, (_match, indent) => {
         declarationCount++;
-        return `${indent}const legacyContent = readLegacyDefaultThemeFixture();`;
+        return `${indent}const legacyContent = readLegacyDefaultThemeFixture();\n`;
     });
     if (declarationCount === 0) throw new Error("Legacy theme fixture declarations were not migrated.");
 
-    const copyCall = "        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);";
-    if (!testSource.includes(copyCall)) throw new Error("Legacy theme fixture copy call was not found.");
-    testSource = testSource.replace(copyCall, "        fs.writeFileSync(target, legacyContent, {encoding: \"utf8\", flag: \"wx\"});");
+    testSource = testSource.replace(/^[ \t]*const legacyContent = fs\.readFileSync\(legacyFixture, "utf8"\);\n/gm, "");
+    testSource = testSource.replaceAll("fs.readFileSync(legacyFixture, \"utf8\")", "legacyContent");
+    testSource = testSource.replace(
+        /(^[ \t]*)fs\.copyFileSync\(legacyFixture, target, fs\.constants\.COPYFILE_EXCL\);/gm,
+        (_match, indent) => `${indent}fs.writeFileSync(target, legacyContent, {encoding: "utf8", flag: "wx"});`
+    );
+    if (/\blegacyFixture\b/.test(testSource)) throw new Error("A legacy fixture identifier remains after migration.");
     writeFileSync(testFile, testSource, "utf8");
 }
 
