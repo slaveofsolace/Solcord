@@ -64,8 +64,10 @@ describe("SoulCord private IPC capability authority", () => {
         const authorized = authority.authorize(7, {capability: bound.capability, policy: {retention: "7-days"}});
         expect(authorized.accountScope).toBe(ACCOUNT_A);
         expect(authorized.request).toEqual({policy: {retention: "7-days"}});
+        expect(() => authority.assertCurrent(7, authorized)).not.toThrow();
 
         const released = authority.releaseAccount(7, {capability: bound.capability});
+        expect(() => authority.assertCurrent(7, authorized)).toThrow("binding changed");
         expect(released.capability).not.toBe(bound.capability);
         expect(() => authority.authorize(7, {capability: bound.capability}, false)).toThrow("rejected");
         expect(() => authority.authorize(7, {capability: released.capability})).toThrow("not bound");

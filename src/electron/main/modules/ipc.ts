@@ -7,7 +7,11 @@ import BetterDiscord from "./betterdiscord";
 import ActivityCompatibility from "./activity-compatibility";
 import SoulCordTimeline from "./soulcord-timeline";
 import SoulCordFriendWatch from "./soulcord-friend-watch";
+import SoulCordAudienceGuard from "./soulcord-audience-guard";
 import SoulCordSetup from "./soulcord-setup";
+import SoulCordProviderArchive from "./soulcord-provider-archive";
+import SoulCordTranslationCredentials from "./soulcord-translation-credentials";
+import SoulCordLocalIdentityNotes from "./soulcord-local-identity-notes";
 import {isTrustedSoulCordIpcUrl, SoulCordTimelineIpcAuthority} from "./soulcord-ipc-authority";
 import type {DialogOptions} from "@common/types/ipc";
 
@@ -228,6 +232,12 @@ const ensureTimelineReleaseHook = (sender: Electron.WebContents): void => {
         sender.once("destroyed", release);
     }
 };
+const withCurrentAccountBinding = async <T>(event: IpcMainInvokeEvent, request: unknown, operation: (accountScope: string, payload: Record<string, unknown>) => Promise<T>): Promise<T> => {
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    const result = await operation(authorized.accountScope, authorized.request);
+    timelineAuthority.assertCurrent(event.sender.id, authorized);
+    return result;
+};
 const bootstrapTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSoulCordSender(event);
     return timelineAuthority.activate(event.sender.id, request);
@@ -280,6 +290,23 @@ const clearFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
     const authorized = timelineAuthority.authorize(event.sender.id, request);
     return SoulCordFriendWatch.clear(authorized.accountScope, authorized.request);
 };
+const getAudienceGuardStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordAudienceGuard.status();
+};
+const readAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.read(accountScope, payload));
+};
+const writeAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.write(accountScope, payload));
+};
+const clearAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordAudienceGuard.clear(accountScope, payload));
+};
 const applySoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSoulCordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
@@ -304,6 +331,58 @@ const auditSoulCordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSoulCordSender(event);
     timelineAuthority.authorize(event.sender.id, request, false);
     return SoulCordSetup.auditIntegrity();
+};
+const previewSoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordProviderArchive.preview(authorized.request);
+};
+const applySoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordProviderArchive.apply(authorized.request.previewId);
+};
+const rollbackSoulCordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordProviderArchive.rollback(authorized.request.transactionId);
+};
+const readSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.read(accountScope, payload));
+};
+const writeSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.write(accountScope, payload));
+};
+const clearSoulCordTranslationCredential = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SoulCordTranslationCredentials.clear(accountScope, payload));
+};
+const getSoulCordLocalIdentityNotesStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SoulCordLocalIdentityNotes.status();
+};
+const readSoulCordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordLocalIdentityNotes.read(authorized.accountScope, authorized.request);
+};
+const writeSoulCordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordLocalIdentityNotes.write(authorized.accountScope, authorized.request);
+};
+const removeSoulCordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordLocalIdentityNotes.remove(authorized.accountScope, authorized.request);
+};
+const clearSoulCordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSoulCordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request);
+    return SoulCordLocalIdentityNotes.clear(authorized.accountScope, authorized.request);
 };
 
 const runRenderer = (event: IpcMainInvokeEvent) => {
@@ -355,11 +434,26 @@ export default class IPCMain {
             ipc.handle(IPCEvents.FRIEND_WATCH_APPEND, appendFriendWatch);
             ipc.handle(IPCEvents.FRIEND_WATCH_READ, readFriendWatch);
             ipc.handle(IPCEvents.FRIEND_WATCH_CLEAR, clearFriendWatch);
+            ipc.handle(IPCEvents.AUDIENCE_GUARD_STATUS, getAudienceGuardStatus);
+            ipc.handle(IPCEvents.AUDIENCE_GUARD_READ, readAudienceGuard);
+            ipc.handle(IPCEvents.AUDIENCE_GUARD_WRITE, writeAudienceGuard);
+            ipc.handle(IPCEvents.AUDIENCE_GUARD_CLEAR, clearAudienceGuard);
             ipc.handle(IPCEvents.SETUP_APPLY, applySoulCordSetup);
             ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSoulCordSetup);
             ipc.handle(IPCEvents.SETUP_AUDIT, auditSoulCordSetup);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, previewSoulCordProviderArchive);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_APPLY, applySoulCordProviderArchive);
+            ipc.handle(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, rollbackSoulCordProviderArchive);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_READ, readSoulCordTranslationCredential);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_WRITE, writeSoulCordTranslationCredential);
+            ipc.handle(IPCEvents.TRANSLATION_CREDENTIAL_CLEAR, clearSoulCordTranslationCredential);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_STATUS, getSoulCordLocalIdentityNotesStatus);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_READ, readSoulCordLocalIdentityNotes);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_WRITE, writeSoulCordLocalIdentityNote);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_REMOVE, removeSoulCordLocalIdentityNote);
+            ipc.handle(IPCEvents.LOCAL_IDENTITY_NOTES_CLEAR, clearSoulCordLocalIdentityNotes);
         }
         catch (err) {
             // eslint-disable-next-line no-console

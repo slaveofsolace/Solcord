@@ -132,6 +132,22 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.FRIEND_WATCH_CLEAR, this.#timelineRequest(capability, request));
     }
 
+    getAudienceGuardStatus(capability: string) {
+        return invokePrivate(IPCEvents.AUDIENCE_GUARD_STATUS, {capability});
+    }
+
+    readAudienceGuard(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.AUDIENCE_GUARD_READ, this.#timelineRequest(capability, request));
+    }
+
+    writeAudienceGuard(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.AUDIENCE_GUARD_WRITE, this.#timelineRequest(capability, request));
+    }
+
+    clearAudienceGuard(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.AUDIENCE_GUARD_CLEAR, this.#timelineRequest(capability, request));
+    }
+
     applySoulCordSetup(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.SETUP_APPLY, this.#privateRequest(capability, request));
     }
@@ -152,10 +168,54 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.SETUP_AUDIT, {capability});
     }
 
+    previewSoulCordProviderArchive(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, this.#privateRequest(capability, request));
+    }
+
+    applySoulCordProviderArchive(capability: string, previewId: string) {
+        return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_APPLY, {capability, previewId});
+    }
+
+    rollbackSoulCordProviderArchive(capability: string, transactionId: string) {
+        return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, {capability, transactionId});
+    }
+
+    readSoulCordTranslationCredential(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_READ, this.#timelineRequest(capability, request));
+    }
+
+    writeSoulCordTranslationCredential(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_WRITE, this.#timelineRequest(capability, request));
+    }
+
+    clearSoulCordTranslationCredential(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.TRANSLATION_CREDENTIAL_CLEAR, this.#timelineRequest(capability, request));
+    }
+
+    getSoulCordLocalIdentityNotesStatus(capability: string) {
+        return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_STATUS, {capability});
+    }
+
+    readSoulCordLocalIdentityNotes(capability: string) {
+        return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_READ, {capability});
+    }
+
+    writeSoulCordLocalIdentityNote(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_WRITE, this.#timelineRequest(capability, request));
+    }
+
+    removeSoulCordLocalIdentityNote(capability: string, subjectId: string) {
+        return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_REMOVE, {capability, subjectId});
+    }
+
+    clearSoulCordLocalIdentityNotes(capability: string) {
+        return invokePrivate(IPCEvents.LOCAL_IDENTITY_NOTES_CLEAR, {capability});
+    }
+
     #timelineRequest(capability: string, request: unknown): Record<string, unknown> {
         if (!request || typeof request !== "object" || Array.isArray(request)) throw new TypeError("Invalid SoulCord timeline request.");
         const payload = request as Record<string, unknown>;
-        if (Object.hasOwn(payload, "capability") || Object.hasOwn(payload, "accountId")) throw new TypeError("Timeline payload cannot select its authority.");
+        if (Object.hasOwn(payload, "capability") || Object.hasOwn(payload, "accountId") || Object.hasOwn(payload, "accountScope")) throw new TypeError("Timeline payload cannot select its authority.");
         return {...payload, capability};
     }
 

@@ -1,6 +1,17 @@
 export type SoulCordRisk = "standard" | "experimental" | "account-risk" | "external-service";
 export type SoulCordMaturity = "ready" | "preview" | "unavailable";
-export type SoulCordThemeId = "soulcord-default" | "obsidian-thread" | "carbon-ember" | "midnight-glass" | "paper-signal";
+export type SoulCordThemeId =
+    | "soulcord-default"
+    | "obsidian-thread"
+    | "carbon-ember"
+    | "midnight-glass"
+    | "paper-signal"
+    | "threadline"
+    | "signal-block"
+    | "relay-classic"
+    | "workshop"
+    | "quiet-read"
+    | "night-transit";
 export type SoulCordAddonMode = "default" | "guarded" | "native";
 export type SoulCordAddonProvider = "prefer-community" | "prefer-soulcord";
 export type SoulCordOnboardingStatus = "pending" | "complete" | "skipped";
@@ -26,6 +37,7 @@ export type SoulCordModuleId =
     | "command-deck"
     | "link-lens"
     | "stream-shield"
+    | "stream-audience-guard"
     | "settings-time-machine"
     | "accessibility-toolkit"
     | "friend-watch"
@@ -79,6 +91,7 @@ export interface SoulCordSetupTransactionRecord {
     snapshotId: string;
     priorAddonStates: Record<string, boolean>;
     priorThemeStates: Record<string, boolean>;
+    providerArchiveTransactionId?: string;
 }
 
 export interface SoulCordModuleSettings {
@@ -119,7 +132,7 @@ export interface SoulCordUpdateEntry {
 }
 
 export interface SoulCordSettingsDocument {
-    schemaVersion: 5;
+    schemaVersion: 6;
     consentVersion: 3;
     onboarding: SoulCordOnboardingState;
     selectedTheme: SoulCordThemeId;

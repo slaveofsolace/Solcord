@@ -35,6 +35,13 @@ export interface SoulCordProductPreferences {
     safety: SoulCordSafetyPreferences;
     friendWatch: SoulCordFriendWatchPolicy;
     returnLaterRetentionDays: 7 | 30 | 90;
+    nativeSuite: {
+        pinnedDmIds: string[];
+        hiddenGuildIds: string[];
+        guildAliases: Record<string, string>;
+        focusChannelIds: string[];
+        translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string;};
+    };
 }
 
 export const SOULCORD_WORKSPACES = Object.freeze([
@@ -61,7 +68,8 @@ export function defaultSoulCordProductPreferences(): SoulCordProductPreferences 
         appearance: {mode: "follow-discord", accent: "glacier", density: "comfortable", motion: "follow-system", messageShape: "discord"},
         safety: {linkLens: true, domainMemory: "warn-only", attachmentGuard: true, privacyModeReady: true},
         friendWatch: {enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"},
-        returnLaterRetentionDays: 30
+        returnLaterRetentionDays: 30,
+        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], translation: {provider: "off", endpoint: ""}}
     };
 }
 
@@ -78,6 +86,18 @@ export function normalizeSoulCordProductPreferences(value: unknown): SoulCordPro
     const appearance = record(source.appearance);
     const safety = record(source.safety);
     const friendWatch = record(source.friendWatch);
+    const nativeSuite = record(source.nativeSuite);
+    const translation = record(nativeSuite.translation);
+    const snowflakes = (candidate: unknown, maximum: number) => Array.isArray(candidate) ? [...new Set(candidate.filter((item): item is string => typeof item === "string" && /^\d{1,32}$/.test(item)))].slice(0, maximum) : [];
+    const aliases = Object.fromEntries(Object.entries(record(nativeSuite.guildAliases)).flatMap(([id, alias]) => /^\d{1,32}$/.test(id) && typeof alias === "string" && alias.length <= 48 ? [[id, alias] as const] : []).slice(0, 200));
+    let endpoint = "";
+    if (typeof translation.endpoint === "string" && translation.endpoint.length <= 500) {
+        try {
+            const url = new URL(translation.endpoint);
+            if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash) endpoint = url.toString();
+        }
+        catch {/* invalid endpoint stays empty */}
+    }
     return {
         appearance: {
             mode: choice(appearance.mode, ["follow-discord", "soul-dark", "soul-light", "oled"] as const, "follow-discord"),
@@ -98,7 +118,14 @@ export function normalizeSoulCordProductPreferences(value: unknown): SoulCordPro
             includeDisplaySnapshot: friendWatch.includeDisplaySnapshot !== false,
             digest: choice(friendWatch.digest, ["off", "daily", "per-event"] as const, "daily")
         },
-        returnLaterRetentionDays: choice(source.returnLaterRetentionDays, [7, 30, 90] as const, 30)
+        returnLaterRetentionDays: choice(source.returnLaterRetentionDays, [7, 30, 90] as const, 30),
+        nativeSuite: {
+            pinnedDmIds: snowflakes(nativeSuite.pinnedDmIds, 100),
+            hiddenGuildIds: snowflakes(nativeSuite.hiddenGuildIds, 200),
+            guildAliases: aliases,
+            focusChannelIds: snowflakes(nativeSuite.focusChannelIds, 500),
+            translation: {provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"), endpoint}
+        }
     };
 }
 

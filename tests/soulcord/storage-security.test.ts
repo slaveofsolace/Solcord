@@ -28,6 +28,10 @@ mock.module("electron", () => ({
 const {SoulCordSetupTransactions, isReviewedLegacySoulCordTheme, validatePinnedSourceUrl} = await import("../../src/electron/main/modules/soulcord-setup");
 const {SoulCordTimelineStorage} = await import("../../src/electron/main/modules/soulcord-timeline");
 const {SoulCordFriendWatchStorage} = await import("../../src/electron/main/modules/soulcord-friend-watch");
+const {SoulCordAudienceGuardStorage} = await import("../../src/electron/main/modules/soulcord-audience-guard");
+const {SoulCordTranslationCredentialStorage} = await import("../../src/electron/main/modules/soulcord-translation-credentials");
+const {SoulCordLocalIdentityNotesStorage} = await import("../../src/electron/main/modules/soulcord-local-identity-notes");
+const {SoulCordProviderArchive, hasCompiledSoulCordV2Replacement} = await import("../../src/electron/main/modules/soulcord-provider-archive");
 
 const temporaryRoots: string[] = [];
 
@@ -154,6 +158,253 @@ beforeEach(() => {
     oversizedWrappedKey = false;
 });
 
+describe("SoulCord Audience Guard storage security", () => {
+    test("uses safeStorage for an account-isolated denylist without identifiers in paths", async () => {
+        const storage = new SoulCordAudienceGuardStorage();
+        const written = await storage.write("111222333", {policy: {version: 1, entries: [{userId: "999888777", label: "Private label"}]}});
+        const root = path.join(appDataPath, "BetterDiscord", "soulcord-audience-guard-v1");
+        const files = fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String);
+
+        expect(written).toEqual(expect.objectContaining({persistent: true, complete: true}));
+        expect(files.join("\n")).not.toContain("111222333");
+        expect(files.join("\n")).not.toContain("999888777");
+        for (const relative of files) {
+            const file = path.join(root, relative);
+            if (!fs.lstatSync(file).isFile()) continue;
+            expect(fs.readFileSync(file, "utf8")).toStartWith("soulcord-test:");
+        }
+
+        const loaded = await storage.read("111222333", {});
+        expect(loaded.policy.entries).toEqual([{userId: "999888777", label: "Private label"}]);
+        const cleared = await storage.clear("111222333", {});
+        expect(cleared.complete).toBeTrue();
+        expect((await storage.read("111222333", {})).policy.entries).toEqual([]);
+    });
+
+    test("uses an account-isolated memory fallback and rejects renderer-selected authority", async () => {
+        encryptionAvailable = false;
+        const storage = new SoulCordAudienceGuardStorage();
+
+        expect((await storage.write("111222333", {policy: {entries: [{userId: "999888777"}]}})).persistent).toBeFalse();
+        expect((await storage.read("111222333", {})).policy.entries).toEqual([{userId: "999888777"}]);
+        expect((await storage.read("444555666", {})).policy.entries).toEqual([]);
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "soulcord-audience-guard-v1"))).toBeFalse();
+        expect(() => storage.write("111222333", {accountId: "444555666", policy: {entries: []}})).toThrow();
+        expect(() => storage.read("111222333", {accountScope: "444555666"})).toThrow();
+    });
+});
+
+describe("SoulCord translation credential security", () => {
+    test("binds encrypted credentials to account, provider, and exact endpoint", async () => {
+        const storage = new SoulCordTranslationCredentialStorage();
+        const endpoint = "https://translate.example/translate";
+        expect(await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "private-api-key"})).toEqual({persistent: true, complete: true});
+        expect((await storage.read("111222333", {provider: "libretranslate", endpoint})).credential).toBe("private-api-key");
+        expect((await storage.read("444555666", {provider: "libretranslate", endpoint})).credential).toBe("");
+        expect((await storage.read("111222333", {provider: "libretranslate", endpoint: "https://other.example/translate"})).credential).toBe("");
+        const root = path.join(appDataPath, "BetterDiscord", "soulcord-translation-credentials-v1");
+        const names = fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).join("\n");
+        expect(names).not.toContain("111222333");
+        expect(names).not.toContain("private-api-key");
+        expect(fs.readFileSync(path.join(root, "identity.sc-key"), "utf8")).toStartWith("soulcord-test:");
+    });
+
+    test("keeps credentials memory-only when safeStorage is unavailable", async () => {
+        encryptionAvailable = false;
+        const storage = new SoulCordTranslationCredentialStorage();
+        const endpoint = "https://api-free.deepl.com/v2/translate";
+        expect(await storage.write("111222333", {provider: "deepl", endpoint, credential: "memory-key"})).toEqual({persistent: false, complete: true});
+        expect((await storage.read("111222333", {provider: "deepl", endpoint})).credential).toBe("memory-key");
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "soulcord-translation-credentials-v1"))).toBeFalse();
+    });
+});
+
+describe("SoulCord Local Identity Notes storage security", () => {
+    test("encrypts account-isolated notes without identifiers or plaintext in paths", async () => {
+        const storage = new SoulCordLocalIdentityNotesStorage();
+        const saved = await storage.write("111222333", {subjectId: "999888777", note: "Private note sentinel 8e47f8", tags: ["friend", "local"], storage: "secure-only"});
+        const root = path.join(appDataPath, "BetterDiscord", "soulcord-local-identity-notes-v1");
+        const files = fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String);
+
+        expect(saved).toEqual(expect.objectContaining({persistent: true, complete: true, note: expect.objectContaining({subjectId: "999888777"})}));
+        expect(files.join("\n")).not.toContain("111222333");
+        expect(files.join("\n")).not.toContain("999888777");
+        expect(files.join("\n")).not.toContain("Private note sentinel");
+        for (const relative of files) {
+            const file = path.join(root, relative);
+            if (!fs.lstatSync(file).isFile()) continue;
+            expect(fs.readFileSync(file, "utf8")).toStartWith("soulcord-test:");
+        }
+
+        expect((await storage.read("111222333", {})).notes).toEqual([saved.note]);
+        expect((await storage.read("444555666", {})).notes).toEqual([]);
+        expect(await storage.remove("111222333", {subjectId: "999888777"})).toEqual({removed: true, persistent: true, complete: true});
+        expect((await storage.read("111222333", {})).notes).toEqual([]);
+    });
+
+    test("uses a bounded account-isolated session fallback and rejects renderer-selected authority", async () => {
+        encryptionAvailable = false;
+        const storage = new SoulCordLocalIdentityNotesStorage();
+
+        expect(storage.status()).toEqual(expect.objectContaining({persistent: false, sessionOnly: true}));
+        expect((await storage.write("111222333", {subjectId: "999888777", note: "Session-only", tags: [], storage: "secure-only"})).persistent).toBeFalse();
+        expect((await storage.read("111222333", {})).notes).toHaveLength(1);
+        expect((await storage.read("444555666", {})).notes).toEqual([]);
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "soulcord-local-identity-notes-v1"))).toBeFalse();
+        expect(() => storage.write("111222333", {accountId: "444555666", subjectId: "999888777", note: "blocked", tags: [], storage: "secure-only"})).toThrow();
+        expect(() => storage.read("111222333", {accountScope: "444555666"})).toThrow();
+        expect(() => storage.write("111222333", {subjectId: "999888777", note: "x".repeat(281), tags: [], storage: "secure-only"})).toThrow();
+        expect(() => storage.write("111222333", {subjectId: "999888777", note: "blocked", tags: [], storage: "ordinary-local"})).toThrow();
+        expect((await storage.clear("111222333", {})).cleared).toBe(1);
+        expect((await storage.read("111222333", {})).notes).toEqual([]);
+    });
+});
+
+describe("SoulCord V2 provider archive", () => {
+    const attestedArchive = (options: ConstructorParameters<typeof SoulCordProviderArchive>[0] = {}) => new SoulCordProviderArchive({
+        attestReplacementHealth: () => true,
+        ...options
+    });
+
+    test("fails closed when main has no independent replacement-health attestor", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const file = path.join(pluginRoot, "DoNotTrack.plugin.js");
+        fs.writeFileSync(file, "// owner provider\n", "utf8");
+
+        const archive = new SoulCordProviderArchive();
+        const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]});
+
+        expect(preview.records).toEqual([]);
+        expect(preview.plan.blockers).toContainEqual(expect.objectContaining({fileName: "DoNotTrack.plugin.js", reason: "replacement-not-ready"}));
+        await expect(archive.apply(preview.previewId)).rejects.toThrow("preview expired");
+        expect(fs.readFileSync(file, "utf8")).toContain("owner provider");
+    });
+
+    test("the production attestor accepts only replacement contracts compiled into this build", () => {
+        expect(hasCompiledSoulCordV2Replacement("DoNotTrack.plugin.js")).toBeTrue();
+        expect(hasCompiledSoulCordV2Replacement("MessageLoggerV2.plugin.js")).toBeTrue();
+        expect(hasCompiledSoulCordV2Replacement("0BDFDB.plugin.js")).toBeTrue();
+        expect(hasCompiledSoulCordV2Replacement("../DoNotTrack.plugin.js")).toBeFalse();
+        expect(hasCompiledSoulCordV2Replacement("OwnerTool.plugin.js")).toBeFalse();
+    });
+
+    test("moves only replacement-ready exact files outside the scanned plugin directory and restores them", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        fs.writeFileSync(path.join(pluginRoot, "DoNotTrack.plugin.js"), "// exact owner provider\n", "utf8");
+        fs.writeFileSync(path.join(pluginRoot, "Translator.plugin.js"), "// leave until replacement ready\n", "utf8");
+        const archive = attestedArchive();
+        const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"], retainedBdfdbConsumers: ["OwnerTool.plugin.js"]});
+        expect(preview.records.map(record => record.fileName)).toEqual(["DoNotTrack.plugin.js"]);
+        expect(preview.plan.blockers).toContainEqual(expect.objectContaining({fileName: "Translator.plugin.js", reason: "replacement-not-ready"}));
+        const applied = await archive.apply(preview.previewId);
+        expect(fs.existsSync(path.join(pluginRoot, "DoNotTrack.plugin.js"))).toBeFalse();
+        expect(fs.readFileSync(path.join(pluginRoot, "Translator.plugin.js"), "utf8")).toContain("leave until");
+        expect(fs.readFileSync(path.join(applied.archiveDirectory, "DoNotTrack.plugin.js"), "utf8")).toContain("exact owner");
+        const restored = await archive.rollback(applied.transactionId);
+        expect(restored.complete).toBeTrue();
+        expect(fs.readFileSync(path.join(pluginRoot, "DoNotTrack.plugin.js"), "utf8")).toContain("exact owner");
+    });
+
+    test("rejects a provider that changes after preview without moving it", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const file = path.join(pluginRoot, "InvisibleTyping.plugin.js");
+        fs.writeFileSync(file, "// reviewed A\n", "utf8");
+        const archive = attestedArchive();
+        const preview = await archive.preview({replacementReadyFiles: ["InvisibleTyping.plugin.js"]});
+        fs.writeFileSync(file, "// owner changed B\n", "utf8");
+        await expect(archive.apply(preview.previewId)).rejects.toThrow("changed after review");
+        expect(fs.readFileSync(file, "utf8")).toContain("owner changed B");
+    });
+
+    test("re-attests replacement health immediately before apply", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const file = path.join(pluginRoot, "DoNotTrack.plugin.js");
+        fs.writeFileSync(file, "// reviewed provider\n", "utf8");
+        let healthy = true;
+        const archive = new SoulCordProviderArchive({attestReplacementHealth: () => healthy});
+        const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]});
+
+        healthy = false;
+        await expect(archive.apply(preview.previewId)).rejects.toThrow("replacement health changed after review");
+        expect(fs.readFileSync(file, "utf8")).toContain("reviewed provider");
+    });
+
+    test("rejects an oversized readiness array before mapping it", async () => {
+        let firstElementRead = false;
+        const replacementReadyFiles = new Array(257);
+        Object.defineProperty(replacementReadyFiles, 0, {
+            configurable: true,
+            get: () => {firstElementRead = true; return "DoNotTrack.plugin.js";}
+        });
+        const archive = attestedArchive();
+
+        await expect(archive.preview({replacementReadyFiles})).rejects.toThrow("exceeds its limit");
+        expect(firstElementRead).toBeFalse();
+    });
+
+    test("caps outstanding attested previews", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        fs.writeFileSync(path.join(pluginRoot, "DoNotTrack.plugin.js"), "// preview pressure fixture\n", "utf8");
+        const archive = attestedArchive();
+
+        for (let index = 0; index < 16; index++) {
+            const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]});
+            expect(preview.records).toHaveLength(1);
+        }
+        await expect(archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]})).rejects.toThrow("Too many outstanding");
+    });
+
+    test("detects an apply identity swap and restores the raced owner file", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const file = path.join(pluginRoot, "DoNotTrack.plugin.js");
+        const displaced = `${file}.displaced`;
+        fs.writeFileSync(file, "// reviewed identity\n", "utf8");
+        let raced = false;
+        const archive = attestedArchive({
+            moveCheckpoint: (checkpoint: string, paths: {source: string;}) => {
+                if (checkpoint !== "apply-after-source-check" || raced) return;
+                raced = true;
+                fs.renameSync(paths.source, displaced);
+                fs.writeFileSync(paths.source, "// owner raced identity\n", "utf8");
+            }
+        });
+        const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]});
+
+        await expect(archive.apply(preview.previewId)).rejects.toThrow("changed during apply");
+        expect(fs.readFileSync(file, "utf8")).toContain("owner raced identity");
+        expect(fs.readFileSync(displaced, "utf8")).toContain("reviewed identity");
+    });
+
+    test("rollback never overwrites a destination created after its absence check", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const file = path.join(pluginRoot, "DoNotTrack.plugin.js");
+        fs.writeFileSync(file, "// reviewed provider\n", "utf8");
+        let raceRollback = false;
+        const archive = attestedArchive({
+            moveCheckpoint: (checkpoint: string, paths: {destination: string;}) => {
+                if (checkpoint !== "rollback-after-staged-rename" || raceRollback) return;
+                raceRollback = true;
+                fs.writeFileSync(paths.destination, "// owner destination\n", {encoding: "utf8", flag: "wx"});
+            }
+        });
+        const preview = await archive.preview({replacementReadyFiles: ["DoNotTrack.plugin.js"]});
+        const applied = await archive.apply(preview.previewId);
+
+        const restored = await archive.rollback(applied.transactionId);
+        expect(restored.complete).toBeFalse();
+        expect(restored.blocked).toEqual(["DoNotTrack.plugin.js"]);
+        expect(fs.readFileSync(file, "utf8")).toContain("owner destination");
+        expect(fs.readFileSync(path.join(applied.archiveDirectory, "DoNotTrack.plugin.js"), "utf8")).toContain("reviewed provider");
+    });
+});
+
 afterEach(() => {
     for (const root of temporaryRoots.splice(0)) {
         const resolved = path.resolve(root);
@@ -183,10 +434,10 @@ describe("SoulCord setup transaction security", () => {
     test("installs embedded themes transactionally and preserves a changed file on rollback", async () => {
         const setup = new SoulCordSetupTransactions();
         const result = await setup.apply({selectedAddons: [], selectedTheme: "obsidian-thread"});
-        expect(result.added).toHaveLength(5);
+        expect(result.added).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
 
         const before = await setup.auditIntegrity();
-        expect(before.filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
+        expect(before.filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
         expect(JSON.stringify(before)).not.toContain(appDataPath);
 
         const changed = path.join(appDataPath, "BetterDiscord", "themes", "SoulCord-ObsidianThread.theme.css");
@@ -194,13 +445,13 @@ describe("SoulCord setup transaction security", () => {
         fs.appendFileSync(changed, "\n/* owner change */\n", "utf8");
         const rollback = await setup.rollback(result.transactionId);
         expect(rollback.complete).toBeFalse();
-        expect(rollback.removed).toHaveLength(4);
+        expect(rollback.removed).toHaveLength(SOULCORD_RUNTIME_THEMES.length - 1);
         expect(rollback.preserved).toHaveLength(1);
         expect(fs.readFileSync(changed, "utf8")).toContain("owner change");
 
         const after = await setup.auditIntegrity();
         expect(after.find(record => record.kind === "theme" && record.name === "Obsidian Thread")?.status).toBe("mismatch");
-        expect(after.filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(4);
+        expect(after.filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(SOULCORD_RUNTIME_THEMES.length - 1);
 
         fs.writeFileSync(changed, reviewedContent, "utf8");
         const retry = await setup.rollback(result.transactionId);
@@ -230,7 +481,7 @@ describe("SoulCord setup transaction security", () => {
         expect(rollback.complete).toBeTrue();
         expect(fs.readFileSync(target, "utf8")).toBe(legacyContent);
         expect(fs.readdirSync(journalRoot).filter(file => file.endsWith(".legacy-theme-backup"))).toHaveLength(0);
-        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(4);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(SOULCORD_RUNTIME_THEMES.length - 1);
     });
 
     test("recognizes every exact owner-installed v1.1 theme hash without widening filename or hash policy", () => {
@@ -438,7 +689,7 @@ describe("SoulCord setup transaction security", () => {
         expect(recovered).toEqual({committed: [prepared.transactionId], rolledBack: []});
         expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.prepared`))).toBeFalse();
         expect(fs.existsSync(path.join(journalRoot, `${prepared.transactionId}.complete`))).toBeTrue();
-        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
     });
 
     test("rolls back a prepared transaction that renderer settings never recorded", async () => {
@@ -447,7 +698,7 @@ describe("SoulCord setup transaction security", () => {
         const recovered = await new SoulCordSetupTransactions().reconcile([]);
 
         expect(recovered).toEqual({committed: [], rolledBack: [prepared.transactionId]});
-        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(5);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
     });
 
     test("rejects a theme directory junction instead of writing through it", async () => {
@@ -480,7 +731,7 @@ describe("SoulCord setup transaction security", () => {
         const retry = await setup.apply({selectedAddons: [], selectedTheme: "obsidian-thread"});
         expect(retry.transactionId).not.toBe(original.transactionId);
         expect(fs.existsSync(path.join(journalRoot, `${original.transactionId}.rolledback`))).toBeTrue();
-        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(5);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "match")).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
     });
 });
 

@@ -8,6 +8,7 @@ import PluginManager from "@modules/pluginmanager";
 import ThemeManager from "@modules/thememanager";
 import SettingsRenderer from "@ui/settings";
 import Modals from "@ui/modals";
+import DiscordModules from "@modules/discordmodules";
 import {getByKeys, getLazyByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
 
 import type {SoulCordCuratedAddonState, SoulCordMaturity, SoulCordModuleHealth, SoulCordModuleId, SoulCordPowerExperimentId} from "./contracts";
@@ -32,6 +33,10 @@ import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, reconcile
 import {inspectSoulCordDomain, SoulCordDomainMemory, type SoulCordDomainDecision, type SoulCordDomainMemoryRecord, type SoulCordDomainRisk} from "@common/soulcord/domain-memory";
 import {inspectSoulCordAttachment, type SoulCordAttachmentInspection} from "@common/soulcord/attachment-guard";
 import {normalizeSoulCordReturnRoute, SoulCordReturnLaterJournal, type SoulCordReturnLaterItem} from "@common/soulcord/return-later";
+import {audienceGuardIdsFromVoiceStates, normalizeAudienceGuardEntries, normalizeAudienceGuardIds, normalizeAudienceGuardPrivatePolicy, SoulCordStreamAudienceGuard, type SoulCordAudienceGuardPrivatePolicy, type SoulCordAudienceGuardStatus} from "./stream-audience-guard";
+import {SoulCordNativeSuiteController, type SoulCordNativeSuiteAdapter, type SoulCordNativeSuiteStatus} from "./native-suite";
+import {createCachedVoiceHealthReader} from "./voice-health";
+import {SOULCORD_V2_REPLACEMENT_MANIFEST} from "@common/soulcord/v2-replacement-manifest";
 
 interface ActivityCompatibilityHealth {
     status: "idle" | "healthy" | "attention";
@@ -97,6 +102,7 @@ const FEATURE_META: Record<SoulCordModuleId, {name: string; risk: SoulCordModule
     "command-deck": {name: "Command Deck", risk: "standard", maturity: "ready", detail: "Local command palette; no message actions."},
     "link-lens": {name: "Link Lens + Invite Inspector", risk: "standard", maturity: "preview", detail: "Inspecting links and invite codes locally before suspicious navigation; invite metadata is not fetched in V1."},
     "stream-shield": {name: "Stream Shield + Screenshot Scrubber", risk: "standard", maturity: "preview", detail: "Manual shield is ready; Go Live detection is validated at runtime."},
+    "stream-audience-guard": {name: "Stream Audience Guard", risk: "experimental", maturity: "preview", detail: "Disabled and unarmed by default. Volatile stream, voice, and action adapters must all validate before this feature becomes available."},
     "settings-time-machine": {name: "Settings Time Machine + Update Ledger", risk: "standard", maturity: "ready", detail: "Bounded snapshots and migration records are active."},
     "accessibility-toolkit": {name: "Accessibility Toolkit", risk: "standard", maturity: "preview", detail: "Local reversible presentation controls."},
     "friend-watch": {name: "Friend Watch", risk: "experimental", maturity: "preview", detail: "Disabled until separate consent. Uses only the already-loaded relationship store and never polls Discord."},
@@ -215,11 +221,26 @@ const TIMELINE_IPC = Object.freeze({
     friendAppend: IPC.appendFriendWatch.bind(IPC),
     friendRead: IPC.readFriendWatch.bind(IPC),
     friendClear: IPC.clearFriendWatch.bind(IPC),
+    audienceStatus: IPC.getAudienceGuardStatus.bind(IPC),
+    audienceRead: IPC.readAudienceGuard.bind(IPC),
+    audienceWrite: IPC.writeAudienceGuard.bind(IPC),
+    audienceClear: IPC.clearAudienceGuard.bind(IPC),
     applySetup: IPC.applySoulCordSetup.bind(IPC),
     acknowledgeSetup: IPC.acknowledgeSoulCordSetup.bind(IPC),
     reconcileSetup: IPC.reconcileSoulCordSetup.bind(IPC),
     rollbackSetup: IPC.rollbackSoulCordSetup.bind(IPC),
-    auditSetup: IPC.auditSoulCordSetup.bind(IPC)
+    auditSetup: IPC.auditSoulCordSetup.bind(IPC),
+    previewProviderArchive: IPC.previewSoulCordProviderArchive.bind(IPC),
+    applyProviderArchive: IPC.applySoulCordProviderArchive.bind(IPC),
+    rollbackProviderArchive: IPC.rollbackSoulCordProviderArchive.bind(IPC),
+    readTranslationCredential: IPC.readSoulCordTranslationCredential.bind(IPC),
+    writeTranslationCredential: IPC.writeSoulCordTranslationCredential.bind(IPC),
+    clearTranslationCredential: IPC.clearSoulCordTranslationCredential.bind(IPC),
+    notesStatus: IPC.getSoulCordLocalIdentityNotesStatus.bind(IPC),
+    notesRead: IPC.readSoulCordLocalIdentityNotes.bind(IPC),
+    notesWrite: IPC.writeSoulCordLocalIdentityNote.bind(IPC),
+    notesRemove: IPC.removeSoulCordLocalIdentityNote.bind(IPC),
+    notesClear: IPC.clearSoulCordLocalIdentityNotes.bind(IPC)
 });
 
 class SoulCordRuntimeStore extends Store {
@@ -244,6 +265,7 @@ class SoulCordRuntimeStore extends Store {
     #curatedScope = new SoulCordDisposalScope();
     #curatedCommunitySignature = "";
     #curatedAdapterResults: Record<string, CuratedAdapterResult> = {};
+    #nativeSuite?: SoulCordNativeSuiteController;
     #splitReviewOpen = false;
     #integrityQueue = Promise.resolve();
     #privateCapability?: string;
@@ -258,6 +280,12 @@ class SoulCordRuntimeStore extends Store {
     #fakeDeafen?: SoulCordFakeDeafenController;
     #fakeDeafenScope = new SoulCordDisposalScope();
     #fakeDeafenStatus: SoulCordFakeDeafenStatus = {phase: "off", detail: "Power Lab experiment is off.", connected: false, capturedVoiceState: false, armed: false};
+    #audienceGuard?: SoulCordStreamAudienceGuard;
+    #audienceGuardStatus: SoulCordAudienceGuardStatus = {phase: "off", detail: "Audience Guard is off.", available: false, armed: false, accountBound: false, channelBound: false, denylistCount: 0, detectedCount: 0, activeModes: {preventStart: false, stopOnJoin: false, stopOnWatch: false}};
+    #audiencePolicy: SoulCordAudienceGuardPrivatePolicy = {version: 1, entries: []};
+    #audiencePolicyAccountId?: string;
+    #audiencePersistent = false;
+    #audienceLoadGeneration = 0;
 
     initialize(): void {
         if (this.#initialized) return;
@@ -534,6 +562,136 @@ class SoulCordRuntimeStore extends Store {
         return structuredClone(this.#fakeDeafenStatus);
     }
 
+    audienceGuardStatus(): SoulCordAudienceGuardStatus {
+        return structuredClone(this.#audienceGuardStatus);
+    }
+
+    nativeSuiteStatus(): SoulCordNativeSuiteStatus[] {
+        return this.#nativeSuite?.statuses() ?? [];
+    }
+
+    nativeSuiteController(): SoulCordNativeSuiteController | undefined {
+        return this.#nativeSuite;
+    }
+
+    async readTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string): Promise<{credential: string; persistent: boolean; complete: boolean;}> {
+        const identity = this.#captureTimelineIdentity();
+        if (!identity.accountId) return {credential: "", persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.readTranslationCredential(capability, {provider, endpoint}), () => this.#timelineIdentityIsCurrent(identity)) as {credential: string; persistent: boolean; complete: boolean;};}
+        catch {return {credential: "", persistent: false, complete: false};}
+    }
+
+    async writeTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string, credential: string): Promise<{persistent: boolean; complete: boolean;}> {
+        const identity = this.#captureTimelineIdentity();
+        if (!identity.accountId) return {persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.writeTranslationCredential(capability, {provider, endpoint, credential}), () => this.#timelineIdentityIsCurrent(identity)) as {persistent: boolean; complete: boolean;};}
+        catch {return {persistent: false, complete: false};}
+    }
+
+    async clearTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string): Promise<{persistent: boolean; complete: boolean;}> {
+        const identity = this.#captureTimelineIdentity();
+        if (!identity.accountId) return {persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.clearTranslationCredential(capability, {provider, endpoint}), () => this.#timelineIdentityIsCurrent(identity)) as {persistent: boolean; complete: boolean;};}
+        catch {return {persistent: false, complete: false};}
+    }
+
+    async localIdentityNotesStatus(): Promise<{persistent: boolean; sessionOnly: boolean; reason?: string;}> {
+        try {return await this.#withPrivateCapability(capability => TIMELINE_IPC.notesStatus(capability)) as {persistent: boolean; sessionOnly: boolean; reason?: string;};}
+        catch {return {persistent: false, sessionOnly: true, reason: "Private note storage is unavailable."};}
+    }
+
+    async readLocalIdentityNotes(): Promise<{notes: Array<{subjectId: string; text: string; tags: string[]; updatedAt: number;}>; persistent: boolean; complete: boolean;}> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return {notes: [], persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.notesRead(capability), () => accountId === this.#currentTimelineAccountId()) as {notes: Array<{subjectId: string; text: string; tags: string[]; updatedAt: number;}>; persistent: boolean; complete: boolean;};}
+        catch {return {notes: [], persistent: false, complete: false};}
+    }
+
+    async writeLocalIdentityNote(payload: {subjectId: string; note: string; tags: readonly string[]; storage: "secure-only";}): Promise<{persistent: boolean; complete: boolean;}> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return {persistent: false, complete: false};
+        try {
+            const result = await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.notesWrite(capability, {subjectId: payload.subjectId, note: payload.note, tags: [...payload.tags], storage: payload.storage}), () => accountId === this.#currentTimelineAccountId()) as {persistent: boolean; complete: boolean;};
+            return {persistent: result.persistent === true, complete: result.complete === true};
+        }
+        catch {return {persistent: false, complete: false};}
+    }
+
+    async removeLocalIdentityNote(subjectId: string): Promise<{removed: boolean; persistent: boolean; complete: boolean;}> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return {removed: false, persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.notesRemove(capability, subjectId), () => accountId === this.#currentTimelineAccountId()) as {removed: boolean; persistent: boolean; complete: boolean;};}
+        catch {return {removed: false, persistent: false, complete: false};}
+    }
+
+    async clearLocalIdentityNotes(): Promise<{cleared: number; persistent: boolean; complete: boolean;}> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return {cleared: 0, persistent: false, complete: false};
+        try {return await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.notesClear(capability), () => accountId === this.#currentTimelineAccountId()) as {cleared: number; persistent: boolean; complete: boolean;};}
+        catch {return {cleared: 0, persistent: false, complete: false};}
+    }
+
+    audienceGuardPrivatePolicy(): {policy: SoulCordAudienceGuardPrivatePolicy; persistent: boolean;} {
+        return {policy: structuredClone(this.#audiencePolicy), persistent: this.#audiencePersistent};
+    }
+
+    async setAudienceGuardEntries(value: unknown): Promise<boolean> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return false;
+        const policy: SoulCordAudienceGuardPrivatePolicy = {version: 1, entries: normalizeAudienceGuardEntries(value)};
+        this.#audienceGuard?.disarm("Audience Guard disarmed because its private denylist changed.");
+        const generation = ++this.#audienceLoadGeneration;
+        try {
+            const result = await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.audienceWrite(capability, {policy}), () => generation === this.#audienceLoadGeneration && accountId === this.#currentTimelineAccountId()) as {policy?: unknown; persistent?: boolean; complete?: boolean;};
+            if (generation !== this.#audienceLoadGeneration || accountId !== this.#currentTimelineAccountId()) return false;
+            this.#audiencePolicy = normalizeAudienceGuardPrivatePolicy(result.policy);
+            this.#audiencePolicyAccountId = accountId;
+            this.#audiencePersistent = result.persistent === true && result.complete === true;
+            this.emitChange();
+            return result.complete === true;
+        }
+        catch {
+            if (generation === this.#audienceLoadGeneration) {
+                this.#audiencePolicy = policy;
+                this.#audiencePolicyAccountId = accountId;
+                this.#audiencePersistent = false;
+                this.emitChange();
+            }
+            return false;
+        }
+    }
+
+    async clearAudienceGuardEntries(): Promise<boolean> {
+        const accountId = this.#currentTimelineAccountId();
+        if (!accountId) return false;
+        this.#audienceGuard?.disarm("Audience Guard disarmed because its private denylist was cleared.");
+        const generation = ++this.#audienceLoadGeneration;
+        try {
+            const result = await this.#withTimelineAccount(accountId, capability => TIMELINE_IPC.audienceClear(capability, {}), () => generation === this.#audienceLoadGeneration && accountId === this.#currentTimelineAccountId()) as {complete?: boolean; persistent?: boolean;};
+            if (generation !== this.#audienceLoadGeneration || accountId !== this.#currentTimelineAccountId()) return false;
+            this.#audiencePolicy = {version: 1, entries: []};
+            this.#audiencePolicyAccountId = accountId;
+            this.#audiencePersistent = result.persistent === true && result.complete === true;
+            this.emitChange();
+            return result.complete === true;
+        }
+        catch {return false;}
+    }
+
+    armAudienceGuard(): boolean {
+        const settings = SoulCordSettings.module("stream-audience-guard");
+        if (!settings.enabled || this.#audiencePolicyAccountId !== this.#currentTimelineAccountId()) return false;
+        return this.#audienceGuard?.arm(this.#audiencePolicy.entries, {
+            preventStart: settings.values.preventStart === true,
+            stopOnJoin: settings.values.stopOnJoin === true,
+            stopOnWatch: settings.values.stopOnWatch === true
+        }) === true;
+    }
+
+    disarmAudienceGuard(): boolean {
+        return this.#audienceGuard?.disarm() ?? false;
+    }
+
     async setPowerExperiment(id: SoulCordPowerExperimentId, enabled: boolean, acknowledged = false): Promise<boolean> {
         if (enabled && id !== "fake-deafen") return false;
         if (id === "fake-deafen") {
@@ -724,6 +882,7 @@ class SoulCordRuntimeStore extends Store {
         const quarantined: Array<{name: string; reason: string;}> = [];
         const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
         let settingsRecorded = false;
+        let providerArchiveTransactionId: string | undefined;
 
         try {
             const integrity = await this.#refreshAddonIntegrity("post-setup");
@@ -811,7 +970,27 @@ class SoulCordRuntimeStore extends Store {
                 quarantined.push({name, reason});
             }
 
-            SoulCordSettings.completeSetup(draft, results, {id: transaction.transactionId, priorAddonStates, priorThemeStates});
+            const replacementFiles = new Set(SOULCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName));
+            const replacementReadyFiles = providerMigrations
+                .filter(migration => adapterResults[migration.name]?.enabled === true && adapterResults[migration.name]?.provider === "soulcord" && replacementFiles.has(migration.fileName))
+                .map(migration => migration.fileName);
+            if (replacementReadyFiles.length) {
+                const retainedBdfdbConsumers = PluginManager.addonList
+                    .filter(addon => PluginManager.isEnabled(addon.filename) && !replacementFiles.has(addon.filename))
+                    .map(addon => addon.filename)
+                    .filter(fileName => fileName.length <= 120)
+                    .slice(0, 128);
+                const preview = await this.#withPrivateCapability(capability => TIMELINE_IPC.previewProviderArchive(capability, {replacementReadyFiles, retainedBdfdbConsumers})) as {previewId?: unknown; records?: unknown[];};
+                if (typeof preview.previewId !== "string" || !Array.isArray(preview.records)) throw new Error("ProviderArchivePreviewInvalid");
+                if (preview.records.length) {
+                    const previewId = preview.previewId;
+                    const archived = await this.#withPrivateCapability(capability => TIMELINE_IPC.applyProviderArchive(capability, previewId)) as {transactionId?: unknown;};
+                    if (typeof archived.transactionId !== "string") throw new Error("ProviderArchiveApplyInvalid");
+                    providerArchiveTransactionId = archived.transactionId;
+                }
+            }
+
+            SoulCordSettings.completeSetup(draft, results, {id: transaction.transactionId, priorAddonStates, priorThemeStates, providerArchiveTransactionId});
             settingsRecorded = true;
             await this.#withPrivateCapability(capability => TIMELINE_IPC.acknowledgeSetup(capability, transaction.transactionId));
             this.#refreshReviewedExecutionOwnership();
@@ -821,10 +1000,18 @@ class SoulCordRuntimeStore extends Store {
         catch (error) {
             const settingsRestored = !settingsRecorded || SoulCordSettings.abortSetupCompletion(transaction.transactionId);
             this.#refreshReviewedExecutionOwnership();
+            let providerArchiveRestored = true;
+            if (providerArchiveTransactionId) {
+                try {
+                    const restored = await this.#withPrivateCapability(capability => TIMELINE_IPC.rollbackProviderArchive(capability, providerArchiveTransactionId!)) as {complete?: boolean;};
+                    providerArchiveRestored = restored.complete === true;
+                }
+                catch {providerArchiveRestored = false;}
+            }
             const statesRestored = await this.#restoreAddonStates(priorAddonStates, priorThemeStates);
             this.#synchronizeCuratedAdapters();
             const rollback = await this.#withPrivateCapability(capability => TIMELINE_IPC.rollbackSetup(capability, transaction.transactionId));
-            if (normalizeSetupRollbackOutcome(rollback, statesRestored && settingsRestored).status !== "complete") throw new Error("SetupFailedRollbackIncomplete");
+            if (normalizeSetupRollbackOutcome(rollback, statesRestored && settingsRestored && providerArchiveRestored).status !== "complete") throw new Error("SetupFailedRollbackIncomplete");
             throw error;
         }
     }
@@ -833,11 +1020,19 @@ class SoulCordRuntimeStore extends Store {
         await this.#refreshAddonIntegrity("pre-rollback");
         const transaction = SoulCordSettings.latestSetupTransaction();
         if (!transaction) return {status: "unavailable", removed: 0, preserved: 0};
+        let providerArchiveRestored = true;
+        if (transaction.providerArchiveTransactionId) {
+            try {
+                const restored = await this.#withPrivateCapability(capability => TIMELINE_IPC.rollbackProviderArchive(capability, transaction.providerArchiveTransactionId!)) as {complete?: boolean;};
+                providerArchiveRestored = restored.complete === true;
+            }
+            catch {providerArchiveRestored = false;}
+        }
         const statesRestored = await this.#restoreAddonStates(transaction.priorAddonStates, transaction.priorThemeStates);
         let rollback: unknown;
         try {rollback = await this.#withPrivateCapability(capability => TIMELINE_IPC.rollbackSetup(capability, transaction.id));}
         catch {return {status: "failed", removed: 0, preserved: 0};}
-        const outcome = normalizeSetupRollbackOutcome(rollback, statesRestored);
+        const outcome = normalizeSetupRollbackOutcome(rollback, statesRestored && providerArchiveRestored);
         if (outcome.status === "failed") return outcome;
         if (!SoulCordSettings.abortSetupCompletion(transaction.id)) return {...outcome, status: "failed"};
         this.#refreshReviewedExecutionOwnership();
@@ -1471,6 +1666,14 @@ class SoulCordRuntimeStore extends Store {
                 : {enabled: true, provider: "community"};
         };
         this.#curatedCommunitySignature = this.#communityAddonSignature();
+        const nativeEnabled = Object.fromEntries(Object.entries(curated).map(([name, state]) => [name, state.enabled === true && isSoulCordBuiltInAddon(name, state.mode) && !this.#communityAddonEnabled(name)]));
+        const nativeSuite = new SoulCordNativeSuiteController(scope, nativeEnabled, this.#nativeSuiteAdapter());
+        nativeSuite.start();
+        this.#nativeSuite = nativeSuite;
+        scope.own(() => {
+            nativeSuite.dispose();
+            if (this.#nativeSuite === nativeSuite) this.#nativeSuite = undefined;
+        }, "other");
         const split = curated.SplitLargeMessages;
         if (!split?.enabled || split.mode !== "guarded" || !this.#setupAcceptsAddon("SplitLargeMessages", split.mode)) {
             results.SplitLargeMessages = {enabled: false, provider: "off"};
@@ -1568,6 +1771,25 @@ class SoulCordRuntimeStore extends Store {
                 PluginDoctor.recordFailure("DoubleClickToReply", "start", new Error("DoubleClickReplyAdapterUnavailable"));
             }
         }
+        for (const [name, state] of Object.entries(curated)) {
+            if (Object.hasOwn(results, name) || !isSoulCordBuiltInAddon(name, state.mode)) continue;
+            if (!state.enabled || !this.#setupAcceptsAddon(name, state.mode)) {
+                results[name] = {enabled: false, provider: "off"};
+                continue;
+            }
+            if (this.#communityAddonEnabled(name)) {
+                results[name] = communityResult(name);
+                continue;
+            }
+            if (nativeSuite.providerReady(name)) {
+                results[name] = {enabled: true, provider: "soulcord"};
+                PluginDoctor.recordSuccessfulStart(name);
+                continue;
+            }
+            const reason = `${name}'s native adapter did not validate on this Discord build and stayed off.`;
+            results[name] = {enabled: false, provider: "off", reason};
+            PluginDoctor.recordFailure(name, "start", new Error("NativeSuiteAdapterUnavailable"));
+        }
         if (!curatedOverride) {
             for (const [name, result] of Object.entries(results)) {
                 const state = curated[name];
@@ -1578,6 +1800,129 @@ class SoulCordRuntimeStore extends Store {
         this.#curatedAdapterResults = structuredClone(results);
         if (!curatedOverride) this.emitChange();
         return results;
+    }
+
+    #nativeSuiteAdapter(): SoulCordNativeSuiteAdapter {
+        type FluxStore = {addChangeListener?(listener: () => void): void; removeChangeListener?(listener: () => void): void;};
+        type Message = {id?: string; timestamp?: {valueOf?(): number;} | number; content?: string; author?: {username?: string; globalName?: string;};};
+        type Channel = {id?: string;};
+        type GuildChannelBucket = {channel?: Channel;};
+        const selectedChannelStore = getStore("SelectedChannelStore") as FluxStore & {getVoiceChannelId?(): string | undefined;} | undefined;
+        const selectedGuildStore = getStore("SelectedGuildStore") as {getGuildId?(): string | undefined;} | undefined;
+        const voiceStateStore = getStore("VoiceStateStore") as FluxStore & {getVoiceStatesForChannel?(channelId: string): unknown;} | undefined;
+        const speakingStore = getStore("SpeakingStore") as FluxStore & {getSpeakingUsers?(): unknown;} | undefined;
+        const streamingStore = getStore("ApplicationStreamingStore") as FluxStore & {getCurrentUserActiveStream?(): unknown; getViewerIds?(stream?: unknown): unknown;} | undefined;
+        const messageStore = getStore("MessageStore") as {getMessages?(channelId: string): {toArray?(): Message[];} | Message[] | undefined;} | undefined;
+        const channelStore = getStore("ChannelStore") as {getChannel?(channelId: string): unknown; getSortedPrivateChannels?(): Channel[];} | undefined;
+        const guildStore = getStore("GuildStore") as {getGuilds?(): Record<string, unknown>;} | undefined;
+        const guildChannelStore = getStore("GuildChannelStore") as {getChannels?(guildId: string): Record<string, GuildChannelBucket[]>;} | undefined;
+        const readStateStore = getStore("ReadStateStore") as {hasUnread?(channelId: string): boolean; getMentionCount?(channelId: string): number; lastMessageId?(channelId: string): string | null;} | undefined;
+        const volumeActions = getByKeys<{setLocalVolume?(userId: string, volume: number): void;}>(["setLocalVolume"]);
+        const voiceHealthSample = createCachedVoiceHealthReader([
+            getStore("RTCConnectionStore"),
+            getStore("VoiceConnectionStore"),
+            getStore("MediaEngineStore")
+        ]);
+        let connectedChannelId: string | undefined;
+        let connectedAt = Date.now();
+        const values = (raw: unknown): unknown[] => raw instanceof Map ? [...raw.values()] : Array.isArray(raw) ? raw : raw && typeof raw === "object" ? Object.values(raw) : [];
+        const currentCall = () => {
+            const channelId = selectedChannelStore?.getVoiceChannelId?.();
+            if (!channelId) {connectedChannelId = undefined; return;}
+            if (connectedChannelId !== channelId) {connectedChannelId = channelId; connectedAt = Date.now();}
+            const voiceStates = values(voiceStateStore?.getVoiceStatesForChannel?.(channelId));
+            const speaking = values(speakingStore?.getSpeakingUsers?.());
+            const stream = streamingStore?.getCurrentUserActiveStream?.();
+            const viewers = stream ? normalizeAudienceGuardIds(streamingStore?.getViewerIds?.(stream)) : [];
+            return {channelId, connectedAt, participantCount: Math.min(500, voiceStates.length), speakerCount: Math.min(voiceStates.length, speaking.length), viewerCount: Math.min(voiceStates.length, viewers.length)};
+        };
+        const cachedGuildChannelIds = (guildIds: readonly string[]): string[] => {
+            if (typeof guildChannelStore?.getChannels !== "function") return [];
+            const result: string[] = [];
+            for (const guildId of guildIds) {
+                const groups = guildChannelStore.getChannels(guildId);
+                if (!groups || typeof groups !== "object") continue;
+                for (const bucket of Object.values(groups)) {
+                    if (!Array.isArray(bucket)) continue;
+                    for (const entry of bucket) {
+                        const id = normalizeTimelineAccountId(entry?.channel?.id);
+                        if (id) result.push(id);
+                        if (result.length >= 500) return [...new Set(result)];
+                    }
+                }
+            }
+            return [...new Set(result)];
+        };
+        const notificationIds = (scope: "guild" | "mentions" | "all"): string[] => {
+            if (typeof readStateStore?.hasUnread !== "function" || typeof readStateStore.getMentionCount !== "function" || typeof readStateStore.lastMessageId !== "function") return [];
+            const selectedGuildId = normalizeTimelineAccountId(selectedGuildStore?.getGuildId?.());
+            const knownGuildIds = scope === "guild"
+                ? (selectedGuildId ? [selectedGuildId] : [])
+                : Object.keys(guildStore?.getGuilds?.() ?? {}).map(normalizeTimelineAccountId).filter((id): id is string => Boolean(id));
+            const ids = cachedGuildChannelIds(knownGuildIds);
+            if (scope !== "guild" && typeof channelStore?.getSortedPrivateChannels === "function") {
+                for (const channel of channelStore.getSortedPrivateChannels()) {
+                    const id = normalizeTimelineAccountId(channel?.id);
+                    if (id) ids.push(id);
+                    if (ids.length >= 500) break;
+                }
+            }
+            return [...new Set(ids)].filter(id => scope === "mentions" ? readStateStore.getMentionCount!(id) > 0 : readStateStore.hasUnread!(id) || readStateStore.getMentionCount!(id) > 0).slice(0, 500);
+        };
+        const markNotificationsRead = (_scope: "guild" | "mentions" | "all", reviewedIds: readonly string[]): void => {
+            if (typeof readStateStore?.lastMessageId !== "function" || typeof DiscordModules.Dispatcher?.dispatch !== "function") throw new Error("Discord's reviewed notification action is unavailable.");
+            const channels = reviewedIds.slice(0, 500).map(channelId => {
+                const id = normalizeTimelineAccountId(channelId);
+                const messageId = id ? normalizeTimelineAccountId(readStateStore.lastMessageId!(id)) : undefined;
+                return id && messageId ? {channelId: id, messageId, readStateType: 0} : undefined;
+            }).filter((entry): entry is {channelId: string; messageId: string; readStateType: number;} => Boolean(entry));
+            if (!channels.length) return;
+            DiscordModules.Dispatcher.dispatch({type: "BULK_ACK", context: "APP", channels});
+        };
+        const notificationAdapterAvailable = typeof guildChannelStore?.getChannels === "function"
+            && typeof readStateStore?.hasUnread === "function"
+            && typeof readStateStore.getMentionCount === "function"
+            && typeof readStateStore.lastMessageId === "function"
+            && typeof DiscordModules.Dispatcher?.dispatch === "function";
+        return {
+            currentCall,
+            subscribeCall: listener => {
+                const stores = [selectedChannelStore, voiceStateStore, speakingStore, streamingStore].filter((store): store is Required<FluxStore> => typeof store?.addChangeListener === "function" && typeof store.removeChangeListener === "function");
+                for (const store of stores) store.addChangeListener(listener);
+                return () => {for (const store of stores) store.removeChangeListener(listener);};
+            },
+            setLocalVolume: typeof volumeActions?.setLocalVolume === "function" ? (userId, percent) => volumeActions.setLocalVolume!(userId, percent) : undefined,
+            loadedChannelMessages: typeof messageStore?.getMessages === "function" ? channelId => {
+                const collection = messageStore.getMessages!(channelId);
+                const messages = Array.isArray(collection) ? collection : collection?.toArray?.();
+                if (!Array.isArray(messages)) return;
+                return messages.slice(-5).map(message => ({
+                    id: normalizeTimelineAccountId(message.id) ?? "0",
+                    authorLabel: (message.author?.globalName || message.author?.username || "Unknown").slice(0, 80),
+                    text: (message.content || "").slice(0, 2_000),
+                    timestamp: typeof message.timestamp === "number" ? message.timestamp : message.timestamp?.valueOf?.() ?? Date.now()
+                }));
+            } : undefined,
+            notificationIds: notificationAdapterAvailable ? notificationIds : undefined,
+            markNotificationsRead: notificationAdapterAvailable ? markNotificationsRead : undefined,
+            voiceHealthSample,
+            prepareVoiceNoteUpload: typeof DiscordModules.promptToUpload === "function" && typeof channelStore?.getChannel === "function" ? (channelId, file) => {
+                const channel = channelStore.getChannel!(channelId);
+                if (!channel) throw new Error("The selected channel is unavailable.");
+                DiscordModules.promptToUpload?.([file], channel as never, 0);
+            } : undefined,
+            peopleState: SoulCordSettings.snapshot().productPreferences.nativeSuite,
+            savePeopleState: state => {
+                const preferences = SoulCordSettings.snapshot().productPreferences;
+                SoulCordSettings.setProductPreferences({...preferences, nativeSuite: {...preferences.nativeSuite, pinnedDmIds: [...state.pinnedDmIds], hiddenGuildIds: [...state.hiddenGuildIds], guildAliases: {...state.guildAliases}}});
+            },
+            focusChannelIds: SoulCordSettings.snapshot().productPreferences.nativeSuite.focusChannelIds,
+            saveFocusChannelIds: ids => {
+                const preferences = SoulCordSettings.snapshot().productPreferences;
+                SoulCordSettings.setProductPreferences({...preferences, nativeSuite: {...preferences.nativeSuite, focusChannelIds: [...ids]}});
+            },
+            identityNotesAvailable: Boolean(this.#privateCapability)
+        };
     }
 
     #doubleClickReplyAdapter(): DoubleClickReplyAdapter {
@@ -1811,6 +2156,7 @@ class SoulCordRuntimeStore extends Store {
                 case "command-deck": this.#startCommandDeck(scope); break;
                 case "link-lens": await this.#startLinkLens(scope); break;
                 case "stream-shield": this.#startStreamShield(scope); break;
+                case "stream-audience-guard": await this.#startStreamAudienceGuard(scope); break;
                 case "settings-time-machine": this.#setHealth(id, {detail: `${SoulCordSettings.snapshot().snapshots.length} bounded local snapshot(s); exports contain no secrets.`}); break;
                 case "accessibility-toolkit": this.#startAccessibilityToolkit(scope); break;
                 case "friend-watch": await this.#startFriendWatch(scope); break;
@@ -2063,6 +2409,133 @@ class SoulCordRuntimeStore extends Store {
             void this.setValue("stream-shield", "manualActive", settings.manualActive !== true);
         }, true);
         sync();
+    }
+
+    async #startStreamAudienceGuard(scope: SoulCordDisposalScope): Promise<void> {
+        type FluxStore = {addChangeListener?: (listener: () => void) => void; removeChangeListener?: (listener: () => void) => void;};
+        type StreamingStore = FluxStore & {
+            getCurrentUserActiveStream?: () => unknown;
+            getStreamerActiveStreamMetadata?: () => unknown;
+            getViewerIds?: (stream?: unknown) => unknown;
+        };
+        type VoiceStateStore = FluxStore & {getVoiceStatesForChannel?: (channelId: string) => unknown;};
+        type SelectedChannelStore = FluxStore & {getVoiceChannelId?: () => string | undefined;};
+        type UserStore = FluxStore & {getCurrentUser?: () => {id?: string;} | undefined;};
+        type StreamingActions = {startStream: (...args: unknown[]) => unknown; stopStream: (...args: unknown[]) => unknown;};
+
+        const streamingStore = getStore("ApplicationStreamingStore") as StreamingStore | undefined;
+        const voiceStateStore = getStore("VoiceStateStore") as VoiceStateStore | undefined;
+        const selectedChannelStore = getStore("SelectedChannelStore") as SelectedChannelStore | undefined;
+        const userStore = getStore("UserStore") as UserStore | undefined;
+        const streamingActions = getByKeys<StreamingActions>(["startStream", "stopStream"]);
+        const currentStream = () => typeof streamingStore?.getCurrentUserActiveStream === "function"
+            ? streamingStore.getCurrentUserActiveStream()
+            : streamingStore?.getStreamerActiveStreamMetadata?.();
+        const stores = [streamingStore, voiceStateStore, selectedChannelStore, userStore];
+        const storesObservable = stores.every(store => typeof store?.addChangeListener === "function" && typeof store?.removeChangeListener === "function");
+        const structurallyValid = Boolean(
+            (typeof streamingStore?.getCurrentUserActiveStream === "function" || typeof streamingStore?.getStreamerActiveStreamMetadata === "function")
+            && typeof streamingStore?.getViewerIds === "function"
+            && typeof voiceStateStore?.getVoiceStatesForChannel === "function"
+            && typeof selectedChannelStore?.getVoiceChannelId === "function"
+            && typeof userStore?.getCurrentUser === "function"
+            && typeof streamingActions?.startStream === "function"
+            && typeof streamingActions?.stopStream === "function"
+            && storesObservable
+        );
+
+        if (!structurallyValid || !streamingStore || !voiceStateStore || !selectedChannelStore || !userStore || !streamingActions?.startStream || !streamingActions.stopStream) {
+            this.#audienceGuardStatus = {phase: "unavailable", detail: "Audience Guard stayed unavailable because one or more Discord stream, viewer, voice-state, account, or action adapters failed structural validation.", available: false, armed: false, accountBound: false, channelBound: false, denylistCount: 0, detectedCount: 0, activeModes: {preventStart: false, stopOnJoin: false, stopOnWatch: false}};
+            this.#setHealth("stream-audience-guard", {maturity: "unavailable", detail: this.#audienceGuardStatus.detail});
+            this.emitChange();
+            return;
+        }
+
+        const observeAccount = () => {
+            const accountId = normalizeTimelineAccountId(userStore.getCurrentUser?.()?.id);
+            if (accountId === this.#audiencePolicyAccountId) return;
+            this.#audienceLoadGeneration++;
+            this.#audienceGuard?.disarm("Audience Guard disarmed because the Discord account changed.");
+            this.#audiencePolicy = {version: 1, entries: []};
+            this.#audiencePolicyAccountId = undefined;
+            this.#audiencePersistent = false;
+            this.emitChange();
+            if (accountId) void this.#loadAudienceGuardPolicy(accountId);
+        };
+
+        const controller = new SoulCordStreamAudienceGuard({
+            currentAccountId: () => normalizeTimelineAccountId(userStore.getCurrentUser?.()?.id),
+            currentVoiceChannelId: () => normalizeTimelineAccountId(selectedChannelStore.getVoiceChannelId?.()),
+            currentStream,
+            voiceMemberIds: channelId => audienceGuardIdsFromVoiceStates(voiceStateStore.getVoiceStatesForChannel?.(channelId)),
+            viewerIds: stream => {
+                try {return normalizeAudienceGuardIds(streamingStore.getViewerIds?.(stream));}
+                catch {return [];}
+            },
+            stopOwnStream: () => {
+                const result = streamingActions.stopStream.length > 0 ? streamingActions.stopStream(currentStream()) : streamingActions.stopStream();
+                return result instanceof Promise ? result.then(() => undefined) : undefined;
+            },
+            interceptStreamStart: decide => Patcher.instead("SoulCord~StreamAudienceGuard", streamingActions, "startStream", (thisObject, args, original) => {
+                if (decide()) return original.apply(thisObject, args);
+                Toasts.show("Go Live was not started because Stream Audience Guard detected a denied user in this call.", {type: "error"});
+                return undefined;
+            }, {forcePatch: false}) ?? undefined,
+            subscribe: listener => {
+                const sync = () => {observeAccount(); listener();};
+                for (const store of stores as Array<Required<FluxStore>>) store.addChangeListener(sync);
+                return () => {for (const store of stores as Array<Required<FluxStore>>) store.removeChangeListener(sync);};
+            },
+            setTimer: (callback, delay) => globalThis.setTimeout(callback, delay),
+            clearTimer: handle => globalThis.clearTimeout(handle as ReturnType<typeof setTimeout>)
+        }, status => {
+            this.#audienceGuardStatus = status;
+            this.#setHealth("stream-audience-guard", {
+                maturity: status.available ? "preview" : "unavailable",
+                detail: `${status.detail} ${this.#audiencePersistent ? "The private denylist is encrypted at rest." : "The private denylist is session-only on this system."}`
+            });
+            this.emitChange();
+        });
+        this.#audienceGuard = controller;
+        scope.own(() => {
+            controller.stop();
+            this.#audienceGuard = undefined;
+            this.#audiencePolicy = {version: 1, entries: []};
+            this.#audiencePolicyAccountId = undefined;
+            this.#audiencePersistent = false;
+            this.#audienceLoadGeneration++;
+        }, "patch");
+        if (!controller.start()) throw new Error("StreamAudienceGuardAdapterUnavailable");
+        const accountId = normalizeTimelineAccountId(userStore.getCurrentUser?.()?.id);
+        if (accountId) await this.#loadAudienceGuardPolicy(accountId);
+        this.#setHealth("stream-audience-guard", {maturity: "preview", detail: "Audience Guard is ready but unarmed. Live start and stop behavior still requires owner acceptance in a designated call."});
+    }
+
+    async #loadAudienceGuardPolicy(accountId: string): Promise<boolean> {
+        const generation = ++this.#audienceLoadGeneration;
+        this.#audiencePolicy = {version: 1, entries: []};
+        this.#audiencePolicyAccountId = undefined;
+        this.#audiencePersistent = false;
+        try {
+            const opened = await this.#withTimelineAccount(accountId, async capability => ({
+                status: await TIMELINE_IPC.audienceStatus(capability) as {persistent?: boolean;},
+                read: await TIMELINE_IPC.audienceRead(capability, {}) as {policy?: unknown; persistent?: boolean; complete?: boolean;}
+            }), () => accountId === this.#currentTimelineAccountId());
+            if (generation !== this.#audienceLoadGeneration || accountId !== this.#currentTimelineAccountId()) return false;
+            this.#audiencePolicy = normalizeAudienceGuardPrivatePolicy(opened.read.policy);
+            this.#audiencePolicyAccountId = accountId;
+            this.#audiencePersistent = opened.status.persistent === true && opened.read.persistent === true && opened.read.complete === true;
+            this.emitChange();
+            return opened.read.complete === true;
+        }
+        catch {
+            if (generation !== this.#audienceLoadGeneration || accountId !== this.#currentTimelineAccountId()) return false;
+            this.#audiencePolicy = {version: 1, entries: []};
+            this.#audiencePolicyAccountId = accountId;
+            this.#audiencePersistent = false;
+            this.emitChange();
+            return false;
+        }
     }
 
     #startAccessibilityToolkit(scope: SoulCordDisposalScope): void {

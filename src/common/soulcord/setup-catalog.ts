@@ -51,7 +51,6 @@ function reviewFlags(candidate: (typeof SOULCORD_RUNTIME_ADDONS)[number]): strin
 
 function decisionFor(candidate: (typeof SOULCORD_RUNTIME_ADDONS)[number], selected: boolean, mode: string | undefined): SoulCordSetupCandidateDecision {
     const builtIn = isSoulCordBuiltInAddon(candidate.name, mode);
-    const guardedSplitterPreview = candidate.name === "SplitLargeMessages" && mode === "guarded";
     const heldDependencies = candidate.dependencies.filter(name => {
         const dependency = SOULCORD_RUNTIME_DEPENDENCIES.find(entry => entry.name === name) as {installable?: boolean;} | undefined;
         return dependency?.installable !== true;
@@ -60,12 +59,7 @@ function decisionFor(candidate: (typeof SOULCORD_RUNTIME_ADDONS)[number], select
     let statusLabel: string;
     let reason: string;
 
-    if (guardedSplitterPreview) {
-        availability = "runtime-pending";
-        statusLabel = "preview · SoulCord built-in";
-        reason = "The guarded modal/clipboard adapter is implemented without a community file, but disposable Discord acceptance is still pending. Apply and verify will not enable it.";
-    }
-    else if (builtIn) {
+    if (builtIn) {
         availability = "built-in";
         statusLabel = "ready · SoulCord built-in";
         reason = "Included in SoulCord; no community file or external dependency is installed.";

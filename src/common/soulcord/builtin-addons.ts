@@ -1,10 +1,68 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export const SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS = Object.freeze([
+    "BetterAnimations",
+    "BetterFriendList",
+    "BetterVolume",
+    "CallTimeCounter",
+    "CharCounter",
+    "CompleteTimestamps",
+    "DiscordEffects",
     "DoNotTrack",
     "DoubleClickToReply",
-    "InvisibleTyping"
+    "EditServers",
+    "InvisibleTyping",
+    "MessagePeek",
+    "PinDMs",
+    "ReadAllNotificationsButton",
+    "ServerDetails",
+    "ServerHider",
+    "ShowSpectators",
+    "SplitLargeMessages",
+    "Translator",
+    "VoiceActivity",
+    "VoiceMessages"
 ] as const);
+
+export type SoulCordNativeSuiteFeature =
+    | "privacy-controls"
+    | "composer-toolkit"
+    | "call-context"
+    | "audio-console"
+    | "voice-note-studio"
+    | "translation-desk"
+    | "people-and-spaces"
+    | "channel-glance"
+    | "notification-review"
+    | "motion-studio";
+
+const NATIVE_SUITE_PROVIDER: Readonly<Record<(typeof SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS)[number], SoulCordNativeSuiteFeature>> = Object.freeze({
+    BetterAnimations: "motion-studio",
+    BetterFriendList: "people-and-spaces",
+    BetterVolume: "audio-console",
+    CallTimeCounter: "call-context",
+    CharCounter: "composer-toolkit",
+    CompleteTimestamps: "composer-toolkit",
+    DiscordEffects: "motion-studio",
+    DoNotTrack: "privacy-controls",
+    DoubleClickToReply: "composer-toolkit",
+    EditServers: "people-and-spaces",
+    InvisibleTyping: "privacy-controls",
+    MessagePeek: "channel-glance",
+    PinDMs: "people-and-spaces",
+    ReadAllNotificationsButton: "notification-review",
+    ServerDetails: "people-and-spaces",
+    ServerHider: "people-and-spaces",
+    ShowSpectators: "call-context",
+    SplitLargeMessages: "composer-toolkit",
+    Translator: "translation-desk",
+    VoiceActivity: "call-context",
+    VoiceMessages: "voice-note-studio"
+});
+
+export function soulCordNativeSuiteFeatureForAddon(name: string): SoulCordNativeSuiteFeature | undefined {
+    return NATIVE_SUITE_PROVIDER[name as keyof typeof NATIVE_SUITE_PROVIDER];
+}
 
 export interface SoulCordAddonLookup {
     addonList?: ReadonlyArray<{filename: string;}>;
@@ -127,6 +185,6 @@ export function captureExactAddonStates(manager: SoulCordAddonLookup): Record<st
 }
 
 export function isSoulCordBuiltInAddon(name: string, mode: string | undefined): boolean {
-    if (name === "SplitLargeMessages") return mode === "guarded";
+    if (name === "SplitLargeMessages") return mode !== "native";
     return (SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS as readonly string[]).includes(name);
 }

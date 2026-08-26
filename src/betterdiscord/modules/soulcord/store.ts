@@ -27,7 +27,7 @@ import type {
 } from "./contracts";
 
 
-export const SOULCORD_SCHEMA_VERSION = 5;
+export const SOULCORD_SCHEMA_VERSION = 6;
 export const SOULCORD_CONSENT_VERSION = 3;
 export const SOULCORD_ONBOARDING_VERSION = 3;
 const MAX_SNAPSHOTS = 20;
@@ -41,7 +41,13 @@ export const SOULCORD_THEMES: Array<{id: SoulCordThemeId; name: string; fileName
     {id: "obsidian-thread", name: "Obsidian Thread", fileName: "SoulCord-ObsidianThread.theme.css"},
     {id: "carbon-ember", name: "Carbon Ember", fileName: "SoulCord-CarbonEmber.theme.css"},
     {id: "midnight-glass", name: "Midnight Glass", fileName: "SoulCord-MidnightGlass.theme.css"},
-    {id: "paper-signal", name: "Paper Signal", fileName: "SoulCord-PaperSignal.theme.css"}
+    {id: "paper-signal", name: "Paper Signal", fileName: "SoulCord-PaperSignal.theme.css"},
+    {id: "threadline", name: "Threadline", fileName: "SoulCord-Threadline.theme.css"},
+    {id: "signal-block", name: "Signal Block", fileName: "SoulCord-SignalBlock.theme.css"},
+    {id: "relay-classic", name: "Relay Classic", fileName: "SoulCord-RelayClassic.theme.css"},
+    {id: "workshop", name: "Workshop", fileName: "SoulCord-Workshop.theme.css"},
+    {id: "quiet-read", name: "Quiet Read", fileName: "SoulCord-QuietRead.theme.css"},
+    {id: "night-transit", name: "Night Transit", fileName: "SoulCord-NightTransit.theme.css"}
 ];
 
 export const SOULCORD_PRESET_ADDONS = [
@@ -63,6 +69,7 @@ export const MODULE_DEFAULTS: Record<SoulCordModuleId, SoulCordModuleSettings> =
     "command-deck": {enabled: true, values: {shortcut: "Ctrl+Alt+K"}},
     "link-lens": {enabled: false, values: {confirmAllExternal: false, removeTrackers: true}},
     "stream-shield": {enabled: false, values: {manualActive: false, previewActive: false, redactGuilds: true, redactChannels: true, redactDMs: true, redactNotifications: true, redactNotes: true, redactAccount: true}},
+    "stream-audience-guard": {enabled: false, values: {preventStart: true, stopOnJoin: true, stopOnWatch: false}},
     "settings-time-machine": {enabled: true, values: {}},
     "accessibility-toolkit": {enabled: false, values: {reducedMotion: true, roleContrast: true, readingRuler: false, readingWidth: 0}},
     "friend-watch": {enabled: false, values: {retentionDays: 30, digest: "daily"}},
@@ -380,7 +387,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
             at: Date.now(),
             fromSchema: rawSchemaVersion,
             toSchema: SOULCORD_SCHEMA_VERSION,
-            detail: "Added durable setup drafts and built-in provider defaults; expired older Power Lab acknowledgements for the scoped Fake Deafen adapter."
+            detail: "Added Stream Audience Guard settings while keeping its account-bound denylist outside portable settings and exports."
         });
         migrationProvenance.splice(0, Math.max(0, migrationProvenance.length - MAX_MIGRATION_ENTRIES));
     }
@@ -390,7 +397,8 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
             if (typeof entry.id !== "string" || !/^[a-z0-9]+-[0-9a-f]{16}$/.test(entry.id) || typeof entry.snapshotId !== "string") return [];
             const priorAddonStates = normalizeAddonStateRecord(entry.priorAddonStates, "plugin");
             const priorThemeStates = normalizeAddonStateRecord(entry.priorThemeStates, "theme");
-            return [{id: entry.id, at: boundedNumber(entry.at, Date.now(), 0, Number.MAX_SAFE_INTEGER), snapshotId: entry.snapshotId.slice(0, 96), priorAddonStates, priorThemeStates} satisfies SoulCordSetupTransactionRecord];
+            const providerArchiveTransactionId = typeof entry.providerArchiveTransactionId === "string" && /^[a-z0-9]+-[0-9a-f]{16}$/.test(entry.providerArchiveTransactionId) ? entry.providerArchiveTransactionId : undefined;
+            return [{id: entry.id, at: boundedNumber(entry.at, Date.now(), 0, Number.MAX_SAFE_INTEGER), snapshotId: entry.snapshotId.slice(0, 96), priorAddonStates, priorThemeStates, ...(providerArchiveTransactionId ? {providerArchiveTransactionId} : {})} satisfies SoulCordSetupTransactionRecord];
         }).slice(-MAX_SETUP_TRANSACTIONS)
         : [];
 
@@ -407,7 +415,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
     reconcileModulePreferenceBindings(modules, productPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
 
     return {
-        schemaVersion: 5,
+        schemaVersion: 6,
         consentVersion: SOULCORD_CONSENT_VERSION,
         onboarding: normalizeOnboarding(record.onboarding),
         selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
@@ -445,6 +453,16 @@ function portableCuratedAddons(document: SoulCordSettingsDocument): Record<strin
     }])) as Record<string, SoulCordCuratedAddonState>;
 }
 
+function portableProductPreferences(document: SoulCordSettingsDocument): SoulCordSettingsDocument["productPreferences"] {
+    const preferences = clone(document.productPreferences);
+    preferences.nativeSuite.pinnedDmIds = [];
+    preferences.nativeSuite.hiddenGuildIds = [];
+    preferences.nativeSuite.guildAliases = {};
+    preferences.nativeSuite.focusChannelIds = [];
+    preferences.nativeSuite.translation = {...preferences.nativeSuite.translation, endpoint: ""};
+    return preferences;
+}
+
 export function serializeSoulCordSettingsExport(document: SoulCordSettingsDocument): string {
     const modules = clone(document.modules);
     modules["message-timeline"].values.scope = "dm-only";
@@ -461,7 +479,7 @@ export function serializeSoulCordSettingsExport(document: SoulCordSettingsDocume
             scope: "dm-only",
             serverChannelIds: []
         },
-        productPreferences: document.productPreferences,
+        productPreferences: portableProductPreferences(document),
         modules,
         profiles: document.profiles,
         updateLedger: document.updateLedger,
@@ -656,7 +674,7 @@ class SoulCordStore extends Store {
         }
         this.#document = normalizeSoulCordDocument(raw);
         if (!isRecord(raw) || raw.schemaVersion !== SOULCORD_SCHEMA_VERSION) {
-            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 5.");
+            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 6.");
         }
         this.#save();
     }
@@ -896,7 +914,7 @@ class SoulCordStore extends Store {
         return previewSetupChanges(this.#document, draft);
     }
 
-    completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>;}): SoulCordSetupTransactionRecord {
+    completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>; providerArchiveTransactionId?: string;}): SoulCordSetupTransactionRecord {
         const draft = normalizeSetupDraft(rawDraft);
         const snapshot = this.capture("Before completing SoulCord setup");
         const beforeCompletion = clone(this.#document);
@@ -917,7 +935,7 @@ class SoulCordStore extends Store {
             };
         }
         this.#document.onboarding = {version: 3, status: "complete", lastStep: 7, completedAt: Date.now()};
-        const record: SoulCordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates};
+        const record: SoulCordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates, ...(transaction.providerArchiveTransactionId ? {providerArchiveTransactionId: transaction.providerArchiveTransactionId} : {})};
         this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
         this.#appendLedger("schema", "Completed SoulCord setup transaction version 1.");

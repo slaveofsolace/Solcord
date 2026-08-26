@@ -16,10 +16,12 @@ interface TimelineBinding {
     bootstrapCapability?: Buffer;
     capability?: Buffer;
     accountScope?: string;
+    generation: number;
 }
 
 export interface TimelineAuthorizedRequest {
     accountScope: string;
+    generation: number;
     request: Record<string, unknown>;
 }
 
@@ -60,7 +62,7 @@ export class SoulCordTimelineIpcAuthority {
         const id = senderId(rawSenderId);
         if (this.#bindings.has(id)) throw new Error("SoulCord timeline bootstrap already exists.");
         const bootstrapCapability = crypto.randomBytes(32);
-        this.#bindings.set(id, {bootstrapCapability});
+        this.#bindings.set(id, {bootstrapCapability, generation: 0});
         return {bootstrapCapability: bootstrapCapability.toString("base64url")};
     }
 
@@ -88,6 +90,7 @@ export class SoulCordTimelineIpcAuthority {
         const scope = accountScope(request.accountId);
         const capability = this.#rotate(binding);
         binding.accountScope = scope;
+        binding.generation++;
         return {capability};
     }
 
@@ -98,6 +101,7 @@ export class SoulCordTimelineIpcAuthority {
         const binding = this.#activeBinding(id);
         this.#assertCapability(binding, request.capability);
         binding.accountScope = undefined;
+        binding.generation++;
         return {capability: this.#rotate(binding)};
     }
 
@@ -107,10 +111,17 @@ export class SoulCordTimelineIpcAuthority {
         if (!rawRequest || typeof rawRequest !== "object" || Array.isArray(rawRequest)) throw new TypeError("Invalid SoulCord timeline request.");
         const request = rawRequest as Record<string, unknown>;
         this.#assertCapability(binding, request.capability);
-        if (Object.hasOwn(request, "accountId")) throw new TypeError("Timeline operations cannot select an account.");
+        if (Object.hasOwn(request, "accountId") || Object.hasOwn(request, "accountScope")) throw new TypeError("Timeline operations cannot select an account.");
         if (requireAccount && !binding.accountScope) throw new Error("SoulCord timeline account is not bound.");
         const {capability: _, ...payload} = request;
-        return {accountScope: binding.accountScope ?? "", request: payload};
+        return {accountScope: binding.accountScope ?? "", generation: binding.generation, request: payload};
+    }
+
+    assertCurrent(rawSenderId: unknown, authorized: TimelineAuthorizedRequest): void {
+        const binding = this.#activeBinding(senderId(rawSenderId));
+        if (binding.generation !== authorized.generation || (binding.accountScope ?? "") !== authorized.accountScope) {
+            throw new Error("SoulCord account binding changed during the private operation.");
+        }
     }
 
     release(rawSenderId: unknown): void {

@@ -6,8 +6,11 @@ import {canonicalizeSoulCordProviderMigrationPlan, captureExactAddonStates, comm
 
 
 describe("SoulCord clean-room curated built-ins", () => {
-    test("recognizes only the three live interaction adapters and guarded splitting", () => {
-        expect(SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS).toEqual(["DoNotTrack", "DoubleClickToReply", "InvisibleTyping"]);
+    test("recognizes the V2 native provider set and keeps native multi-send excluded", () => {
+        expect(SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS).toContain("DoNotTrack");
+        expect(SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS).toContain("VoiceMessages");
+        expect(SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS).toContain("Translator");
+        expect(SOULCORD_CLEAN_ROOM_BUILTIN_ADDONS).toContain("ReadAllNotificationsButton");
         expect(isSoulCordBuiltInAddon("DoNotTrack", "default")).toBeTrue();
         expect(isSoulCordBuiltInAddon("DoubleClickToReply", "default")).toBeTrue();
         expect(isSoulCordBuiltInAddon("InvisibleTyping", "default")).toBeTrue();

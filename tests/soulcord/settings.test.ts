@@ -17,6 +17,7 @@ import {
     SOULCORD_PRESET_ADDONS,
     verifySoulCordImportAtApply
 } from "../../src/betterdiscord/modules/soulcord/store";
+import {recommendedSoulCordSetupAddons} from "../../src/common/soulcord/setup-catalog";
 
 
 describe("SoulCord settings schema", () => {
@@ -220,6 +221,13 @@ describe("SoulCord settings schema", () => {
             reviewedSha256: "a".repeat(64),
             quarantineReason: "machine-local hold"
         };
+        document.productPreferences.nativeSuite = {
+            pinnedDmIds: ["123456789012345670"],
+            hiddenGuildIds: ["123456789012345671"],
+            guildAliases: {"123456789012345671": "Private workshop"},
+            focusChannelIds: ["123456789012345672"],
+            translation: {provider: "libretranslate", endpoint: "https://private.example/translate"}
+        };
 
         const exported = serializeSoulCordSettingsExport(document);
         const imported = parseSoulCordImport(exported);
@@ -231,6 +239,11 @@ describe("SoulCord settings schema", () => {
         expect(imported?.curatedAddons.DoNotTrack).toEqual({selected: true, enabled: false, mode: "default", provider: "prefer-soulcord"});
         expect(exported).not.toContain("machine-local hold");
         expect(exported).not.toContain("a".repeat(64));
+        expect(exported).not.toContain("123456789012345670");
+        expect(exported).not.toContain("123456789012345671");
+        expect(exported).not.toContain("123456789012345672");
+        expect(exported).not.toContain("Private workshop");
+        expect(exported).not.toContain("private.example");
         expect(document.timelinePolicy.serverChannelIds).toEqual(["123456789012345678"]);
     });
 
@@ -346,19 +359,19 @@ describe("SoulCord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v5 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v6 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSoulCordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(5);
+        expect(document.schemaVersion).toBe(6);
         expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 5}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 6}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -382,7 +395,7 @@ describe("SoulCord settings schema", () => {
             powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
         });
 
-        expect(document.schemaVersion).toBe(5);
+        expect(document.schemaVersion).toBe(6);
         expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-soulcord");
         expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
     });
@@ -436,22 +449,22 @@ describe("SoulCord settings schema", () => {
             mediaBudgetBytes: 1_073_741_824
         }));
 
-        const recommended = ["DoNotTrack", "DoubleClickToReply", "InvisibleTyping"] as const;
-        expect(normalizeSetupDraft(undefined).selectedAddons).toEqual([...recommended]);
+        const recommended = recommendedSoulCordSetupAddons();
+        expect(normalizeSetupDraft(undefined).selectedAddons).toEqual(recommended);
         expect(normalizeSetupDraft(undefined).selectedTheme).toBe("soulcord-default");
         expect(normalizeSetupDraft(undefined).addonProviders.DoNotTrack).toBe("prefer-soulcord");
         expect(normalizeSetupDraft(undefined).addonProviders.InvisibleTyping).toBe("prefer-soulcord");
         expect(normalizeSetupDraft(undefined).addonProviders.DoubleClickToReply).toBe("prefer-soulcord");
-        expect(normalizeSetupDraft(undefined).addonProviders.PinDMs).toBe("prefer-community");
+        expect(normalizeSetupDraft(undefined).addonProviders.PinDMs).toBe("prefer-soulcord");
 
         const defaults = normalizeSoulCordDocument({});
         expect(defaults.selectedTheme).toBe("soulcord-default");
-        expect(SOULCORD_PRESET_ADDONS.filter(name => defaults.curatedAddons[name].selected).sort()).toEqual([...recommended].sort());
+        expect(SOULCORD_PRESET_ADDONS.filter(name => defaults.curatedAddons[name].selected).map(String).sort()).toEqual([...recommended].sort());
 
         const stalePreview = normalizeSoulCordDocument({
             curatedAddons: {SplitLargeMessages: {selected: true, enabled: true, mode: "guarded", provider: "prefer-soulcord"}}
         });
-        expect(stalePreview.curatedAddons.SplitLargeMessages).toEqual(expect.objectContaining({selected: true, enabled: false, mode: "guarded"}));
+        expect(stalePreview.curatedAddons.SplitLargeMessages).toEqual(expect.objectContaining({selected: true, enabled: true, mode: "guarded"}));
     });
 
     test("previews staged setup intent while preserving skipped onboarding and current state", () => {
@@ -468,18 +481,19 @@ describe("SoulCord settings schema", () => {
 
         expect(document.onboarding).toEqual({version: 3, status: "skipped", lastStep: 0, completedAt: 10});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
-        expect(enablePreview).toHaveLength(3);
+        const recommended = recommendedSoulCordSetupAddons();
+        expect(enablePreview).toHaveLength(recommended.length);
         expect(enablePreview.filter(change => change.endsWith(": stage, verify, and enable individually"))).toHaveLength(0);
-        for (const name of ["DoNotTrack", "DoubleClickToReply", "InvisibleTyping"]) {
+        for (const name of recommended) {
             expect(enablePreview).toContain(`${name}: enable SoulCord clean-room adapter (no community file)`);
         }
         expect(document).toEqual(before);
 
         const allSelectedPreview = previewSetupChanges(document, {...noChangeDraft, selectedAddons: [...SOULCORD_PRESET_ADDONS]});
-        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(33);
-        expect(allSelectedPreview).toContain("SplitLargeMessages: skip this run — preview · SoulCord built-in");
-        expect(allSelectedPreview).toContain("Translator: skip this run — unavailable · rejected");
-        expect(allSelectedPreview).toContain("PinDMs: skip this run — optional · dependency held");
+        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(SOULCORD_PRESET_ADDONS.length - recommended.length);
+        expect(allSelectedPreview).toContain("BlurNSFW: skip this run — optional · held for review");
+        expect(allSelectedPreview).toContain("BetterSearchPage: skip this run — optional · dependency held");
+        expect(allSelectedPreview).toContain("PermissionsViewer: skip this run — optional · runtime pending");
 
         expect(previewSetupChanges(document, {...noChangeDraft, selectedTheme: "paper-signal", selectedAddons: []})).toContain("theme: soulcord-default → paper-signal");
         expect(previewSetupChanges(document, {...noChangeDraft, addonProviders: {...noChangeDraft.addonProviders, DoNotTrack: "prefer-community"}})).toContain("DoNotTrack.provider: prefer-soulcord → prefer-community");
@@ -489,18 +503,18 @@ describe("SoulCord settings schema", () => {
     test("previews a held request without falsely claiming an active owner addon will be stopped", () => {
         const document = normalizeSoulCordDocument({
             schemaVersion: 3,
-            curatedAddons: {PinDMs: {selected: true, enabled: true, mode: "default"}}
+            curatedAddons: {BlurNSFW: {selected: true, enabled: true, mode: "default"}}
         });
-        const draft = normalizeSetupDraft({selectedAddons: ["PinDMs"]});
+        const draft = normalizeSetupDraft({selectedAddons: ["BlurNSFW"]});
         const preview = previewSetupChanges(document, draft);
 
-        expect(preview).toContain("PinDMs: skip this run — optional · dependency held");
-        expect(preview.some(change => change.startsWith("PinDMs: ") && change.includes("disable"))).toBeFalse();
-        expect(preview.some(change => change.startsWith("PinDMs: ") && change.includes("deselect"))).toBeFalse();
+        expect(preview).toContain("BlurNSFW: skip this run — optional · held for review");
+        expect(preview.some(change => change.startsWith("BlurNSFW: ") && change.includes("disable"))).toBeFalse();
+        expect(preview.some(change => change.startsWith("BlurNSFW: ") && change.includes("deselect"))).toBeFalse();
 
         const deselected = previewSetupChanges(document, {...draft, selectedAddons: []});
-        expect(deselected).toContain("PinDMs: remove from SoulCord selection; existing owner file remains unchanged");
-        expect(deselected.some(change => change.startsWith("PinDMs: ") && change.includes("disable"))).toBeFalse();
+        expect(deselected).toContain("BlurNSFW: remove from SoulCord selection; existing owner file remains unchanged");
+        expect(deselected.some(change => change.startsWith("BlurNSFW: ") && change.includes("disable"))).toBeFalse();
     });
 
     test("preserves exact safe addon filenames in rollback journals and drops aliases or paths", () => {
