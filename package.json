@@ -25,7 +25,7 @@
         "audit:repo:check": "node scripts/audit-solcord-repository.mjs --check",
         "verify": "bun run test && bun run lint && bun run lint-css:solcord && bun run typecheck && bun run generate-types && bun run circulars && bun run audit:repo:check",
         "dist": "bun run build:production && bun scripts/pack.ts",
-        "installer:candidate": "bun scripts/build-solcord-installer.cjs",
+        "installer:candidate": "bun scripts/build-solcord-v2-installer.mjs",
         "api": "bun run --bun jsdoc -X -r src/betterdiscord/api/ > dist/jsdoc-ast.json",
         "translations": "bun -r dotenv/config scripts/translations.ts",
         "circulars": "bun run --bun dpdm -T --no-warning --no-tree src/betterdiscord/index.ts",
