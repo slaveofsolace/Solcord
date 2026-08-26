@@ -26,32 +26,48 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).not.toContain("function PowerLabStep");
         expect(WIZARD_SOURCE).not.toContain("SOULCORD_POWER_LAB");
         expect(WIZARD_SOURCE).not.toContain("Request all 36");
-        expect(WIZARD_CSS).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
+        expect(WIZARD_SOURCE).toContain("SoulCordSettings.setSetupDraft(draft)");
+        expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
+        expect(WIZARD_SOURCE).toContain("SoulCord could not save this setup step");
+        expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
+        expect(WIZARD_CSS).toContain(".soulcord-wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))");
+        expect(WIZARD_CSS).not.toContain(".soulcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
     });
 
     test("keys responsive layout to the actual settings content container", () => {
         expect(WIZARD_CSS).toContain("container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
+        expect(WIZARD_CSS).toContain("padding: 0 clamp(18px, 2.4vw, 28px) 48px");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 900px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container soulcord-panel (max-width: 520px)");
-        expect(WIZARD_CSS).not.toContain("@media (max-width:");
+        expect(WIZARD_CSS).toContain(".soulcord-panel { padding-right: 14px; padding-left: 14px; }");
+        expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
+        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.soulcord-panel) > aside[class*=\"sidebar_\"] { display: none; }");
+        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.soulcord-panel) > [class*=\"content_\"] { width: 100%; min-width: 0; }");
     });
 
-    test("keeps explicit appearance modes self-contained instead of inheriting contradictory Discord colors", () => {
-        expect(WIZARD_CSS).toContain("background: var(--sc-surface-0)");
+    test("applies explicit appearance modes to Discord instead of only recoloring the SoulCord panel", () => {
+        expect(WIZARD_CSS).toContain("html:not([data-soulcord-mode=\"follow-discord\"])[data-soulcord-mode] :is(body, #app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light)");
+        expect(WIZARD_CSS).toContain("--background-base-lowest: var(--sc-app-surface-0)");
+        expect(WIZARD_CSS).toContain("--chat-background-default: var(--sc-app-surface-0)");
+        expect(WIZARD_CSS).toContain("--modal-background: var(--sc-app-surface-1)");
+        expect(WIZARD_CSS).toContain("background: var(--sc-app-surface-0) !important");
         for (const mode of ["soul-dark", "soul-light", "oled"]) {
-            const block = WIZARD_CSS.match(new RegExp(`html\\[data-soulcord-mode="${mode}"\\] \\.soulcord-panel \\{([^}]+)}`, "s"))?.[1];
+            const block = WIZARD_CSS.match(new RegExp(`html\\[data-soulcord-mode="${mode}"\\] \\{([^}]+)}`, "s"))?.[1];
             expect(block).toBeDefined();
-            expect(block).toContain("--background-primary: var(--sc-surface-0)");
-            expect(block).toContain("--background-secondary: var(--sc-surface-1)");
-            expect(block).toContain("--background-tertiary: var(--sc-surface-2)");
-            expect(block).toContain("--input-background: var(--sc-surface-2)");
-            expect(block).toContain("--text-normal: var(--sc-text)");
-            expect(block).toContain("--text-muted: var(--sc-muted)");
-            expect(block).toContain("--header-primary: var(--sc-text)");
-            expect(block).toContain("--border-subtle: var(--sc-border)");
+            expect(block).toContain("--sc-app-surface-0:");
+            expect(block).toContain("--sc-app-surface-1:");
+            expect(block).toContain("--sc-app-surface-2:");
+            expect(block).toContain("--sc-app-text:");
+            expect(block).toContain("--sc-app-muted:");
+            expect(block).toContain("--sc-app-border:");
             expect(block).toContain(`color-scheme: ${mode === "soul-light" ? "light" : "dark"}`);
         }
+        expect(WIZARD_CSS).toContain("html:not([data-soulcord-accent=\"system\"])[data-soulcord-accent] :is(#app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light)");
+        expect(WIZARD_CSS).toContain("html[data-soulcord-density=\"compact\"] #app-mount");
+        expect(WIZARD_CSS).toContain("html[data-soulcord-message-shape=\"seamed\"] #app-mount");
+        expect(WIZARD_CSS).toContain("html[data-soulcord-motion=\"reduced\"] #app-mount *");
     });
 
     test("renders only accepted ready tools and directs pending work to the catalog", () => {
@@ -60,10 +76,16 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Review pending tools separately");
         expect(WIZARD_SOURCE).toContain("Review pending");
         expect(WIZARD_SOURCE).toContain("Apply and verify");
-        expect(WIZARD_SOURCE).toContain(".soulcord-catalog-table");
+        expect(WIZARD_SOURCE).toContain("onReviewPending={onReviewPending}");
+        expect(PANEL_SOURCE).toContain("setWorkspaceFocus(\"catalog\")");
+        expect(PANEL_SOURCE).toContain(".soulcord-catalog-table");
+        expect(PANEL_SOURCE).toContain("<SetupWizard onReviewPending={openCatalog} />");
         expect(WIZARD_SOURCE).toContain("leaves pending catalog choices uninstalled");
         expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is preview-only.");
         expect(WIZARD_SOURCE).toContain("Apply and verify will not enable it until a disposable Discord acceptance receipt exists.");
+        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
+        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
         expect(WIZARD_SOURCE).toContain("You may opt in during the Private history step; skipping setup leaves its policy unchanged.");
@@ -102,5 +124,23 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("It does not intercept clicks, open files, or claim automatic protection.");
         expect(WIZARD_SOURCE).not.toContain("Require a local review before opening high-risk file types.");
         expect(PANEL_SOURCE).toContain("productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />");
+    });
+
+    test("uses honest optional-file language and exposes only the scoped Fake Deafen Power Lab adapter", () => {
+        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
+        expect(PANEL_SOURCE).toContain("SoulCordRuntime.armFakeDeafen()");
+        expect(PANEL_SOURCE).toContain("Disarm and resync");
+        expect(PANEL_SOURCE).toContain("account risk · preview");
+        expect(CATALOG_SOURCE).toContain("Voice Anchor / Anti-AFK");
+        expect(CATALOG_SOURCE).toContain("Unavailable in V1 acceptance.");
+    });
+
+    test("makes appearance choices visible before setup is applied", () => {
+        expect(WIZARD_SOURCE).toMatch(/soulcord-mode-\$\{appearance\.mode\}/);
+        expect(WIZARD_SOURCE).toMatch(/soulcord-preview-shape-\$\{appearance\.messageShape\}/);
+        expect(WIZARD_SOURCE).toContain("This preview updates immediately.");
+        expect(WIZARD_CSS).toContain(".soulcord-live-preview.soulcord-mode-soul-light");
+        expect(WIZARD_CSS).toContain(".soulcord-live-preview.soulcord-preview-shape-seamed");
     });
 });

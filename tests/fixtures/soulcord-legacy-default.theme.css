@@ -1,0 +1,72 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/**
+ * @name SoulCord — Default
+ * @author slaveofsolace
+ * @version 1.0.0
+ * @description SoulCord's graphite theme with warm text, teal interaction, and ember reserved for warnings.
+ * @source https://github.com/slaveofsolace/Solcord
+ */
+
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
+
+:root {
+    --soulcord-graphite: #1B1D20;
+    --soulcord-panel: #22252A;
+    --soulcord-raised: #2A2E33;
+    --soulcord-cream: #ECE7DF;
+    --soulcord-muted: #B6AFA7;
+    --soulcord-sea: #5AA9A0;
+    --soulcord-coral: #D96C57;
+    --soulcord-seam: #3B3F45;
+    --soulcord-focus: #7CC8BF;
+    --custom-message-spacing-vertical-container-cozy: 0.34rem;
+    --custom-message-spacing-vertical-container-compact: 0.1rem;
+}
+
+.theme-dark,
+.theme-darker,
+.theme-midnight {
+    color-scheme: dark;
+
+    --background-primary: var(--soulcord-graphite);
+    --background-secondary: var(--soulcord-panel);
+    --background-secondary-alt: #1E2125;
+    --background-tertiary: #17191C;
+    --background-floating: var(--soulcord-raised);
+    --background-modifier-hover: rgb(90 169 160 / 11%);
+    --background-modifier-active: rgb(90 169 160 / 17%);
+    --background-modifier-selected: rgb(90 169 160 / 22%);
+    --background-modifier-accent: var(--soulcord-seam);
+    --text-normal: #E5DFD7;
+    --text-muted: var(--soulcord-muted);
+    --text-link: #78C7BE;
+    --header-primary: var(--soulcord-cream);
+    --header-secondary: #C4BDB5;
+    --interactive-normal: #C0BAB3;
+    --interactive-hover: #F5EFE7;
+    --interactive-active: var(--soulcord-cream);
+    --interactive-muted: #92908D;
+    --brand-experiment: var(--soulcord-sea);
+    --brand-experiment-560: #4E978F;
+    --status-danger: var(--soulcord-coral);
+    --channel-text-area-placeholder: #96938F;
+    --scrollbar-thin-thumb: #565B60;
+    --scrollbar-auto-thumb: #565B60;
+    --scrollbar-auto-track: #17191C;
+}
+
+::selection { color: #151719; background: #9BD8D1; }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
+:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
+:where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
+:where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
+:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid var(--soulcord-seam); box-shadow: none !important; }
+:where([class*="mentioned"]) { background: rgb(90 169 160 / 10%) !important; border-left: 2px solid var(--soulcord-sea); }
+:where([class*="newMessagesBar"]) { color: #151719 !important; background: var(--soulcord-sea) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}

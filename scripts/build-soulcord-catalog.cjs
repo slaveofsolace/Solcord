@@ -11,6 +11,7 @@ const quarantine = path.resolve(root, "..", "quarantine-soulcord-v1", "catalog")
 const pluginSnapshot = process.argv[2] || path.join(quarantine, "plugins.json");
 const themeSnapshot = process.argv[3] || path.join(quarantine, "themes.json");
 const output = process.argv[4] || path.join(root, "assets", "catalog", "soulcord-catalog.json");
+const reviewDate = process.argv[5] || new Date().toISOString().slice(0, 10);
 
 const requestedPreset = [
     "DoNotTrack", "InvisibleTyping", "DoubleClickToReply", "PinDMs", "MessagePeek", "FileNameRandomization", "BlurNSFW",
@@ -89,7 +90,7 @@ function candidate(record, kind) {
         accountActions: "CODE_REVIEW_REQUIRED",
         conflicts: conflicts.get(normalize(record.name)) || [],
         cleanupBehavior: "RUNTIME_REVIEW_REQUIRED",
-        reviewDate: "2026-08-22",
+        reviewDate,
         verification: {
             metadata: sourceUrl && immutableRevision(sourceUrl) ? "REVIEWED" : "HOLD",
             provenance: "PENDING",
@@ -121,7 +122,7 @@ function main() {
     const manifest = {
         schemaVersion: 1,
         snapshot: {
-            reviewedAt: "2026-08-22",
+            reviewedAt: reviewDate,
             pluginCount: pluginCandidates.length,
             pluginSha256: digest(plugins.raw),
             themeCount: themeCandidates.length,

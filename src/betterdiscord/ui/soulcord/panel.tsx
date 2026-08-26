@@ -13,8 +13,9 @@ import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOULCORD_POWER_LAB} from "./catalog";
 import {prioritizeSoulCordPulse, SOULCORD_WORKSPACES, type SoulCordAppearancePreferences, type SoulCordProductPreferences, type SoulCordWorkspaceId} from "@common/soulcord/product";
+import {isSoulCordBuiltInAddon} from "@common/soulcord/builtin-addons";
 
-const {useRef, useState} = React;
+const {useEffect, useRef, useState} = React;
 
 function timestamp(value?: number | string): string {
     if (!value) return "never";
@@ -93,11 +94,12 @@ function ActivityBridge() {
 }
 
 function PluginRecovery() {
-    const state = useStateFromStores([PluginDoctor, SoulCordRuntime], () => ({records: PluginDoctor.snapshot(), integrity: SoulCordRuntime.integrityStatus()}));
+    const state = useStateFromStores([PluginDoctor, SoulCordRuntime, SoulCordSettings], () => ({records: PluginDoctor.snapshot(), integrity: SoulCordRuntime.integrityStatus(), curated: SoulCordSettings.snapshot().curatedAddons}));
     const [retrying, setRetrying] = useState<string>();
     const [retryStatus, setRetryStatus] = useState("");
     const quarantined = state.records.filter(record => record.quarantinedAt);
-    const visibleIntegrity = state.integrity.records.filter(record => record.status !== "match").slice(0, 12);
+    const visibleIntegrity = state.integrity.records.filter(record => record.status !== "match" && record.status !== "missing").slice(0, 12);
+    const requestedUnavailable = state.integrity.records.filter(record => record.kind === "addon" && record.status === "missing" && state.curated[record.name]?.selected && !isSoulCordBuiltInAddon(record.name, state.curated[record.name]?.mode));
     const retry = async (id: string) => {
         setRetrying(id);
         const succeeded = await SoulCordRuntime.retryQuarantinedAddon(id);
@@ -105,7 +107,8 @@ function PluginRecovery() {
         setRetrying(undefined);
     };
     return <Section title="Plugin Doctor" summary="Failures are recorded as time, phase, and error class only. Three failures in ten minutes quarantine the addon until you explicitly retry it.">
-        <dl className="soulcord-facts"><div><dt>Hash verified</dt><dd>{state.integrity.summary.match}</dd></div><div><dt>Not staged</dt><dd>{state.integrity.summary.missing}</dd></div><div><dt>Integrity attention</dt><dd>{state.integrity.summary.attention}</dd></div><div><dt>Audit unavailable</dt><dd>{state.integrity.summary.unavailable}</dd></div></dl>
+        <dl className="soulcord-facts"><div><dt>Hash verified</dt><dd>{state.integrity.summary.match}</dd></div><div><dt>Optional catalog files absent</dt><dd>{state.integrity.summary.missing}</dd></div><div><dt>Integrity attention</dt><dd>{state.integrity.summary.attention}</dd></div><div><dt>Audit unavailable</dt><dd>{state.integrity.summary.unavailable}</dd></div></dl>
+        {requestedUnavailable.length > 0 && <p className="soulcord-callout"><strong>{requestedUnavailable.length} saved catalog request(s) are not installed.</strong> They remain optional and off because their review or dependency gate is incomplete. SoulCord built-ins do not require community plugin files.</p>}
         {quarantined.length ? <div className="soulcord-recovery-list">
             {quarantined.map(record => <div className="soulcord-recovery-row" key={record.addonId}>
                 <div><strong>{record.addonId}</strong><p>{record.quarantineReason}</p><small>Quarantined {timestamp(record.quarantinedAt)}</small></div>
@@ -114,8 +117,8 @@ function PluginRecovery() {
         </div> : <p className="soulcord-empty">No addon is quarantined.</p>}
         {retryStatus && <p role="status" className="soulcord-import-status">{retryStatus}</p>}
         {visibleIntegrity.length ? <div className="soulcord-ledger" aria-label="Curated addon integrity status">
-            {visibleIntegrity.map(record => <div className="soulcord-ledger-row" key={`${record.kind}-${record.name}`}><strong>{record.name}</strong><span>{record.kind} · {record.status}{record.status === "missing" ? " (not staged; not quarantined as tampering)" : ""}</span><code>{record.reviewedSha256.slice(0, 12)}…{record.installedSha256 ? ` / ${record.installedSha256.slice(0, 12)}…` : ""}</code></div>)}
-            {state.integrity.records.filter(record => record.status !== "match").length > visibleIntegrity.length && <p className="soulcord-empty">Showing the first {visibleIntegrity.length} path-free records. Sanitized diagnostics contain the complete bounded status list.</p>}
+            {visibleIntegrity.map(record => <div className="soulcord-ledger-row" key={`${record.kind}-${record.name}`}><strong>{record.name}</strong><span>{record.kind} · {record.status}</span><code>{record.reviewedSha256.slice(0, 12)}…{record.installedSha256 ? ` / ${record.installedSha256.slice(0, 12)}…` : ""}</code></div>)}
+            {state.integrity.records.filter(record => record.status !== "match" && record.status !== "missing").length > visibleIntegrity.length && <p className="soulcord-empty">Showing the first {visibleIntegrity.length} path-free attention records. Sanitized diagnostics contain the complete bounded status list.</p>}
         </div> : <p className="soulcord-empty">Every reviewed installed file matches its pinned hash.</p>}
     </Section>;
 }
@@ -628,8 +631,27 @@ function SetupManagement() {
 }
 
 function PowerLabStatus() {
-    return <Section title="Power Lab" summary="Private experiments remain isolated from the daily set. V1 exposes their status honestly; none can be enabled until provenance, teardown, drift, and consent gates pass.">
-        <div className="soulcord-power-list">{SOULCORD_POWER_LAB.map(experiment => <div key={experiment.id} className="soulcord-curated-row soulcord-unavailable"><div><div className="soulcord-module-name"><strong>{experiment.name}</strong><span className="soulcord-maturity">unavailable</span></div><p>{experiment.summary}</p></div><label className="soulcord-toggle"><input type="checkbox" checked={false} disabled /><span>Off</span></label></div>)}</div>
+    const state = useStateFromStores([SoulCordSettings, SoulCordRuntime], () => ({consent: SoulCordSettings.snapshot().powerLab["fake-deafen"], status: SoulCordRuntime.fakeDeafenStatus()}));
+    const [actionStatus, setActionStatus] = useState("");
+    const toggleFakeDeafen = (enabled: boolean) => {
+        if (enabled && !window.confirm("Enable the Fake Deafen experiment? It intentionally makes your server-visible voice state differ from your local audio state. Discord can change this behavior at any time. The adapter stays unarmed until you separately arm it in a voice channel.")) return;
+        void SoulCordRuntime.setPowerExperiment("fake-deafen", enabled, enabled).then(succeeded => {
+            const status = SoulCordRuntime.fakeDeafenStatus();
+            setActionStatus(status.phase === "attention"
+                ? status.detail
+                : succeeded
+                    ? (enabled ? "Adapter enabled but not armed." : "Adapter disabled and its scoped patch removed.")
+                    : "The adapter failed closed.");
+        });
+    };
+    const arm = () => {
+        if (!window.confirm("Arm Fake Deafen for the current voice connection? First use Discord's normal Deafen control once. Arming restores local audio while keeping server-visible self-deafen on until you disarm, change channels, disconnect, or the adapter detects drift.")) return;
+        setActionStatus(SoulCordRuntime.armFakeDeafen() ? "Fake Deafen is armed for this voice connection." : SoulCordRuntime.fakeDeafenStatus().detail);
+    };
+    const disarm = () => setActionStatus(SoulCordRuntime.disarmFakeDeafen() ? "Fake Deafen disarmed and server-visible state was resynchronized." : SoulCordRuntime.fakeDeafenStatus().detail);
+    return <Section title="Power Lab" summary="Private experiments stay outside the daily set. Every available experiment is off by default, separately consented, visible while active, and designed to fail closed when Discord changes.">
+        <div className="soulcord-power-list">{SOULCORD_POWER_LAB.map(experiment => experiment.id === "fake-deafen" ? <div key={experiment.id} className="soulcord-curated-row soulcord-power-available"><div><div className="soulcord-module-name"><strong>{experiment.name}</strong><span className="soulcord-maturity">account risk · preview</span><span className={`soulcord-status soulcord-status-${state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{state.status.phase}</span></div><p>{experiment.summary}</p><small>{state.status.detail}</small>{state.consent.enabled && <div className="soulcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm in current voice channel</ActionButton>}</div>}</div><label className="soulcord-toggle"><input type="checkbox" checked={state.consent.enabled} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{state.consent.enabled ? "On" : "Off"}</span></label></div> : <div key={experiment.id} className="soulcord-curated-row soulcord-unavailable"><div><div className="soulcord-module-name"><strong>{experiment.name}</strong><span className="soulcord-maturity">unavailable</span></div><p>{experiment.summary}</p></div><label className="soulcord-toggle"><input type="checkbox" checked={false} disabled /><span>Off</span></label></div>)}</div>
+        {actionStatus && <p role="status" className="soulcord-import-status">{actionStatus}</p>}
     </Section>;
 }
 
@@ -639,7 +661,23 @@ export default function SoulCordPanel() {
     const productPreferences = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().productPreferences);
     const appearance = productPreferences.appearance;
     const [workspace, setWorkspace] = useState<SoulCordWorkspaceId>("home");
+    const [workspaceFocus, setWorkspaceFocus] = useState<"catalog">();
     const selectedWorkspace = SOULCORD_WORKSPACES.find(item => item.id === workspace)!;
+    useEffect(() => {
+        if (workspace !== "tools" || workspaceFocus !== "catalog") return;
+        const frame = requestAnimationFrame(() => {
+            const table = document.querySelector<HTMLElement>(".soulcord-catalog-table");
+            const section = table?.closest<HTMLElement>(".soulcord-section");
+            section?.scrollIntoView({block: "start"});
+            section?.querySelector<HTMLElement>("input, select, button, [href]")?.focus({preventScroll: true});
+            setWorkspaceFocus(undefined);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [workspace, workspaceFocus]);
+    const openCatalog = () => {
+        setWorkspaceFocus("catalog");
+        setWorkspace("tools");
+    };
     return <main className={`soulcord-panel soulcord-density-${appearance.density} soulcord-motion-${appearance.motion}`}>
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
@@ -654,7 +692,7 @@ export default function SoulCordPanel() {
             <div className="soulcord-workspace" data-workspace={workspace}>
                 <header className="soulcord-workspace-heading"><p className="soulcord-eyebrow">Workspace</p><h2>{selectedWorkspace.label}</h2><p>{selectedWorkspace.summary}</p></header>
                 {workspace === "home" && <>
-                    {onboarding.status === "pending" && <SetupWizard />}
+                    {onboarding.status === "pending" && <SetupWizard onReviewPending={openCatalog} />}
                     <SessionPulse openWorkspace={setWorkspace} />
                     <ActivityBridge />
                 </>}

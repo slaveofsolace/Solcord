@@ -1,6 +1,8 @@
 import {describe, expect, test} from "bun:test";
 
 import {
+    applyModulePreferenceBindings,
+    applyProductPreferenceBindings,
     createSoulCordImportPreview,
     defaultProfiles,
     diffModules,
@@ -18,6 +20,72 @@ import {
 
 
 describe("SoulCord settings schema", () => {
+    test("binds Control Center preferences to the live module switches they govern", () => {
+        const document = normalizeSoulCordDocument({schemaVersion: 5});
+
+        applyProductPreferenceBindings(document, {
+            ...document.productPreferences,
+            safety: {...document.productPreferences.safety, linkLens: true},
+            friendWatch: {enabled: true, retentionDays: 30, digest: "daily"}
+        });
+
+        expect(document.modules["link-lens"].enabled).toBeTrue();
+        expect(document.modules["friend-watch"].enabled).toBeTrue();
+        expect(document.modules["friend-watch"].values).toEqual(expect.objectContaining({retentionDays: 30, digest: "daily"}));
+
+        applyProductPreferenceBindings(document, {
+            ...document.productPreferences,
+            safety: {...document.productPreferences.safety, linkLens: false},
+            friendWatch: {enabled: false, retentionDays: 7, digest: "off"}
+        });
+
+        expect(document.modules["link-lens"].enabled).toBeFalse();
+        expect(document.modules["friend-watch"].enabled).toBeFalse();
+    });
+
+    test("keeps explicit schema-v5 module disables authoritative during restart normalization", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 5,
+            productPreferences: {safety: {linkLens: true}, friendWatch: {enabled: false, retentionDays: 7, digest: "off"}},
+            modules: {
+                "link-lens": {enabled: false, values: {}},
+                "friend-watch": {enabled: true, values: {retentionDays: 90, digest: "per-event"}}
+            }
+        });
+
+        expect(document.modules["link-lens"].enabled).toBeFalse();
+        expect(document.modules["friend-watch"]).toEqual(expect.objectContaining({enabled: true, values: expect.objectContaining({retentionDays: 90, digest: "per-event"})}));
+        expect(document.productPreferences.safety.linkLens).toBeFalse();
+        expect(document.productPreferences.friendWatch).toEqual(expect.objectContaining({enabled: true, retentionDays: 90, digest: "per-event"}));
+    });
+
+    test("migrates pre-v5 product preferences into their module bindings once", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 4,
+            productPreferences: {safety: {linkLens: true}, friendWatch: {enabled: true, retentionDays: 7, digest: "daily"}},
+            modules: {
+                "link-lens": {enabled: false, values: {}},
+                "friend-watch": {enabled: false, values: {retentionDays: 90, digest: "per-event"}}
+            }
+        });
+
+        expect(document.modules["link-lens"].enabled).toBeTrue();
+        expect(document.modules["friend-watch"]).toEqual(expect.objectContaining({enabled: true, values: expect.objectContaining({retentionDays: 7, digest: "daily"})}));
+    });
+
+    test("keeps generic module and profile controls synchronized with product preferences", () => {
+        const document = normalizeSoulCordDocument({schemaVersion: 5});
+        document.productPreferences.safety.linkLens = true;
+        document.productPreferences.friendWatch = {enabled: true, retentionDays: 30, digest: "daily", includeDisplaySnapshot: true};
+        document.modules["link-lens"].enabled = false;
+        document.modules["friend-watch"] = {enabled: false, values: {retentionDays: 7, digest: "off"}};
+
+        applyModulePreferenceBindings(document);
+
+        expect(document.productPreferences.safety.linkLens).toBeFalse();
+        expect(document.productPreferences.friendWatch).toEqual(expect.objectContaining({enabled: false, retentionDays: 7, digest: "off"}));
+    });
+
     test("bounds numeric fields and strips unknown values from imports", () => {
         const document = normalizeSoulCordDocument({
             modules: {
@@ -67,6 +135,68 @@ describe("SoulCord settings schema", () => {
         restored!.modules["stream-shield"].enabled = false;
         expect(document.snapshots[0].modules["stream-shield"].enabled).toBeTrue();
         expect(restoreSnapshotState(document, "missing")).toBeUndefined();
+    });
+
+    test("canonicalizes legacy snapshot preference drift before rollback can restore it", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 5,
+            snapshots: [{
+                id: "legacy-drift",
+                reason: "pre-fix snapshot",
+                createdAt: 1,
+                modules: {
+                    "link-lens": {enabled: false, values: {}},
+                    "friend-watch": {enabled: false, values: {retentionDays: 7, digest: "off"}}
+                },
+                profiles: [],
+                selectedTheme: "soulcord-default",
+                curatedAddons: {},
+                timelinePolicy: {},
+                productPreferences: {
+                    safety: {linkLens: true},
+                    friendWatch: {enabled: true, retentionDays: 90, digest: "per-event", includeDisplaySnapshot: true}
+                }
+            }]
+        });
+
+        const restored = restoreSnapshotState(document, "legacy-drift")!;
+        expect(restored.modules["link-lens"].enabled).toBeFalse();
+        expect(restored.modules["friend-watch"]).toEqual(expect.objectContaining({
+            enabled: false,
+            values: expect.objectContaining({retentionDays: 7, digest: "off"})
+        }));
+        expect(restored.productPreferences.safety.linkLens).toBeFalse();
+        expect(restored.productPreferences.friendWatch).toEqual(expect.objectContaining({enabled: false, retentionDays: 7, digest: "off"}));
+    });
+
+    test("migrates pre-v5 snapshot preferences into module bindings exactly once", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 4,
+            snapshots: [{
+                id: "pre-v5",
+                reason: "migration",
+                createdAt: 1,
+                modules: {
+                    "link-lens": {enabled: false, values: {}},
+                    "friend-watch": {enabled: false, values: {retentionDays: 7, digest: "off"}}
+                },
+                profiles: [],
+                selectedTheme: "soulcord-default",
+                curatedAddons: {},
+                timelinePolicy: {},
+                productPreferences: {
+                    safety: {linkLens: true},
+                    friendWatch: {enabled: true, retentionDays: 30, digest: "daily", includeDisplaySnapshot: false}
+                }
+            }]
+        });
+
+        const restored = restoreSnapshotState(document, "pre-v5")!;
+        expect(restored.modules["link-lens"].enabled).toBeTrue();
+        expect(restored.modules["friend-watch"]).toEqual(expect.objectContaining({
+            enabled: true,
+            values: expect.objectContaining({retentionDays: 30, digest: "daily"})
+        }));
     });
 
     test("rejects malformed or foreign settings imports", () => {
@@ -129,7 +259,7 @@ describe("SoulCord settings schema", () => {
     test("previews every imported theme, addon, Timeline, and Power Lab mutation without exposing channel identifiers", () => {
         const current = normalizeSoulCordDocument({
             schemaVersion: 4,
-            powerLab: {decor: {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 5}},
+            powerLab: {decor: {enabled: true, acknowledgementVersion: 3, acknowledgedAt: 5}},
             timelinePolicy: {enabled: false, scope: "dm-only", serverChannelIds: [], retention: "7-days", content: "text-only"}
         });
         const candidate = normalizeSoulCordDocument({
@@ -216,19 +346,19 @@ describe("SoulCord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v4 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v5 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSoulCordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(4);
-        expect(document.consentVersion).toBe(2);
+        expect(document.schemaVersion).toBe(5);
+        expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 4}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 5}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -236,13 +366,42 @@ describe("SoulCord settings schema", () => {
             schemaVersion: 4,
             powerLab: {
                 "voice-anchor": {enabled: true, acknowledgementVersion: 1, acknowledgedAt: 1},
-                "decor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 2}
+                "decor": {enabled: true, acknowledgementVersion: 3, acknowledgedAt: 2}
             }
         });
 
         expect(document.powerLab["voice-anchor"]).toEqual({enabled: false, acknowledgementVersion: 1, acknowledgedAt: 1});
-        expect(document.powerLab.decor).toEqual({enabled: true, acknowledgementVersion: 2, acknowledgedAt: 2});
+        expect(document.powerLab.decor).toEqual({enabled: true, acknowledgementVersion: 3, acknowledgedAt: 2});
         expect(document.powerLab["fake-mute"]).toEqual({enabled: false, acknowledgementVersion: 0});
+    });
+
+    test("migrates schema-v4 built-ins to the SoulCord provider and expires old Power Lab consent", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 4,
+            curatedAddons: {DoNotTrack: {selected: true, enabled: false, mode: "default", provider: "prefer-community"}},
+            powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
+        });
+
+        expect(document.schemaVersion).toBe(5);
+        expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-soulcord");
+        expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
+    });
+
+    test("normalizes and retains a resumable setup draft only as onboarding state", () => {
+        const document = normalizeSoulCordDocument({
+            schemaVersion: 5,
+            onboarding: {
+                status: "pending",
+                lastStep: 4,
+                draft: {selectedTheme: "paper-signal", selectedAddons: ["DoNotTrack", "forged"], addonProviders: {DoNotTrack: "prefer-soulcord"}}
+            }
+        });
+
+        expect(document.onboarding.version).toBe(3);
+        expect(document.onboarding.lastStep).toBe(4);
+        expect(document.onboarding.draft?.selectedTheme).toBe("paper-signal");
+        expect(document.onboarding.draft?.selectedAddons).toEqual(["DoNotTrack"]);
+        expect(document.onboarding.draft?.addonProviders.DoNotTrack).toBe("prefer-soulcord");
     });
 
     test("normalizes a setup draft to the 36 known addons and safe defaults", () => {
@@ -269,7 +428,7 @@ describe("SoulCord settings schema", () => {
         expect(draft.addonModes.DoNotTrack).toBe("default");
         expect(Object.keys(draft.addonProviders)).toHaveLength(36);
         expect(draft.addonProviders.DoNotTrack).toBe("prefer-soulcord");
-        expect(draft.addonProviders.InvisibleTyping).toBe("prefer-community");
+        expect(draft.addonProviders.InvisibleTyping).toBe("prefer-soulcord");
         expect(draft.timelinePolicy).toEqual(expect.objectContaining({
             enabled: true,
             serverChannelIds: ["123"],
@@ -280,7 +439,10 @@ describe("SoulCord settings schema", () => {
         const recommended = ["DoNotTrack", "DoubleClickToReply", "InvisibleTyping"] as const;
         expect(normalizeSetupDraft(undefined).selectedAddons).toEqual([...recommended]);
         expect(normalizeSetupDraft(undefined).selectedTheme).toBe("soulcord-default");
-        expect(Object.values(normalizeSetupDraft(undefined).addonProviders).every(provider => provider === "prefer-community")).toBeTrue();
+        expect(normalizeSetupDraft(undefined).addonProviders.DoNotTrack).toBe("prefer-soulcord");
+        expect(normalizeSetupDraft(undefined).addonProviders.InvisibleTyping).toBe("prefer-soulcord");
+        expect(normalizeSetupDraft(undefined).addonProviders.DoubleClickToReply).toBe("prefer-soulcord");
+        expect(normalizeSetupDraft(undefined).addonProviders.PinDMs).toBe("prefer-community");
 
         const defaults = normalizeSoulCordDocument({});
         expect(defaults.selectedTheme).toBe("soulcord-default");
@@ -300,10 +462,11 @@ describe("SoulCord settings schema", () => {
             selectedAddons: Object.entries(document.curatedAddons).filter(([, state]) => state.selected).map(([name]) => name),
             addonModes: Object.fromEntries(Object.entries(document.curatedAddons).map(([name, state]) => [name, state.mode])),
             addonProviders: Object.fromEntries(Object.entries(document.curatedAddons).map(([name, state]) => [name, state.provider])),
-            timelinePolicy: document.timelinePolicy
+            timelinePolicy: document.timelinePolicy,
+            productPreferences: document.productPreferences
         };
 
-        expect(document.onboarding).toEqual({version: 2, status: "skipped", lastStep: 0, completedAt: 10});
+        expect(document.onboarding).toEqual({version: 3, status: "skipped", lastStep: 0, completedAt: 10});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
         expect(enablePreview).toHaveLength(3);
         expect(enablePreview.filter(change => change.endsWith(": stage, verify, and enable individually"))).toHaveLength(0);
@@ -319,7 +482,7 @@ describe("SoulCord settings schema", () => {
         expect(allSelectedPreview).toContain("PinDMs: skip this run — optional · dependency held");
 
         expect(previewSetupChanges(document, {...noChangeDraft, selectedTheme: "paper-signal", selectedAddons: []})).toContain("theme: soulcord-default → paper-signal");
-        expect(previewSetupChanges(document, {...noChangeDraft, addonProviders: {...noChangeDraft.addonProviders, DoNotTrack: "prefer-soulcord"}})).toContain("DoNotTrack.provider: prefer-community → prefer-soulcord");
+        expect(previewSetupChanges(document, {...noChangeDraft, addonProviders: {...noChangeDraft.addonProviders, DoNotTrack: "prefer-community"}})).toContain("DoNotTrack.provider: prefer-soulcord → prefer-community");
         expect(document).toEqual(before);
     });
 

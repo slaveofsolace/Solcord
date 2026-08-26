@@ -26,79 +26,249 @@
     --sc-danger: var(--soulcord-coral);
 }
 
-.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 0 48px; color: var(--sc-text); background: var(--sc-surface-0); overflow-x: clip; }
+.soulcord-panel { box-sizing: border-box; container: soulcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 clamp(18px, 2.4vw, 28px) 48px; color: var(--sc-text); background: var(--sc-surface-0); overflow-x: clip; }
 .soulcord-panel.soulcord-density-compact { --sc-space-3: 9px; --sc-space-4: 12px; --sc-space-5: 18px; }
-html[data-soulcord-accent="system"] .soulcord-panel { --sc-accent: var(--brand-500, var(--soulcord-sea)); }
-html[data-soulcord-accent="signal"] .soulcord-panel { --sc-accent: #E8AA45; }
-html[data-soulcord-accent="coral"] .soulcord-panel { --sc-accent: #E77362; }
-html[data-soulcord-accent="forest"] .soulcord-panel { --sc-accent: #65AD82; }
-html[data-soulcord-mode="soul-dark"] .soulcord-panel {
+
+/* Product appearance is applied to the whole Discord renderer. The data
+ * attributes are owned by SoulCordRuntime; Follow Discord deliberately has no
+ * application-wide overrides so disabling a mode restores Discord immediately. */
+html[data-soulcord-mode="soul-dark"] {
     color-scheme: dark;
 
-    --sc-surface-0: #171A1C;
-    --sc-surface-1: #202528;
-    --sc-surface-2: #292F33;
-    --sc-text: #F2EADF;
-    --sc-muted: #B9B4AD;
-    --sc-border: #3B4348;
-    --background-primary: var(--sc-surface-0);
-    --background-secondary: var(--sc-surface-1);
-    --background-tertiary: var(--sc-surface-2);
-    --input-background: var(--sc-surface-2);
-    --text-normal: var(--sc-text);
-    --text-muted: var(--sc-muted);
-    --header-primary: var(--sc-text);
-    --header-secondary: var(--sc-muted);
-    --border-subtle: var(--sc-border);
-    --interactive-normal: var(--sc-muted);
-    --interactive-hover: var(--sc-text);
-    --interactive-active: var(--sc-text);
+    --sc-app-surface-0: #171A1C;
+    --sc-app-surface-1: #202528;
+    --sc-app-surface-2: #292F33;
+    --sc-app-surface-3: #333A3F;
+    --sc-app-text: #F2EADF;
+    --sc-app-muted: #B9B4AD;
+    --sc-app-link: #7AD7CF;
+    --sc-app-positive: #7CCF9A;
+    --sc-app-warning: #F4C16F;
+    --sc-app-danger: #FF8C7A;
+    --sc-app-border: #3B4348;
+    --sc-app-border-strong: #59636A;
+    --sc-app-hover: rgb(78 205 196 / 10%);
+    --sc-app-active: rgb(78 205 196 / 17%);
+    --sc-app-selected: rgb(78 205 196 / 23%);
 }
-html[data-soulcord-mode="soul-light"] .soulcord-panel {
+
+html[data-soulcord-mode="soul-light"] {
     color-scheme: light;
 
-    --sc-surface-0: #F4EDE1;
-    --sc-surface-1: #EBE2D5;
-    --sc-surface-2: #DED4C7;
-    --sc-text: #24211F;
-    --sc-muted: #625D57;
-    --sc-border: #C9BEB0;
-    --background-primary: var(--sc-surface-0);
-    --background-secondary: var(--sc-surface-1);
-    --background-tertiary: var(--sc-surface-2);
-    --input-background: var(--sc-surface-2);
-    --text-normal: var(--sc-text);
-    --text-muted: var(--sc-muted);
-    --header-primary: var(--sc-text);
-    --header-secondary: var(--sc-muted);
-    --border-subtle: var(--sc-border);
-    --interactive-normal: var(--sc-muted);
-    --interactive-hover: var(--sc-text);
-    --interactive-active: var(--sc-text);
+    --sc-app-surface-0: #F4EDE1;
+    --sc-app-surface-1: #EBE2D5;
+    --sc-app-surface-2: #DED4C7;
+    --sc-app-surface-3: #D2C6B7;
+    --sc-app-text: #24211F;
+    --sc-app-muted: #595550;
+    --sc-app-link: #0F6268;
+    --sc-app-positive: #24633E;
+    --sc-app-warning: #704B00;
+    --sc-app-danger: #923229;
+    --sc-app-border: #C1B4A4;
+    --sc-app-border-strong: #8F8172;
+    --sc-app-hover: rgb(44 137 132 / 10%);
+    --sc-app-active: rgb(44 137 132 / 16%);
+    --sc-app-selected: rgb(44 137 132 / 22%);
 }
-html[data-soulcord-mode="oled"] .soulcord-panel {
+
+html[data-soulcord-mode="oled"] {
     color-scheme: dark;
 
-    --sc-surface-0: #000000;
-    --sc-surface-1: #090B0C;
-    --sc-surface-2: #121517;
-    --sc-text: #F5F7F8;
-    --sc-muted: #AEB6BD;
-    --sc-border: #30363A;
-    --background-primary: var(--sc-surface-0);
-    --background-secondary: var(--sc-surface-1);
-    --background-tertiary: var(--sc-surface-2);
-    --input-background: var(--sc-surface-2);
-    --text-normal: var(--sc-text);
-    --text-muted: var(--sc-muted);
-    --header-primary: var(--sc-text);
-    --header-secondary: var(--sc-muted);
-    --border-subtle: var(--sc-border);
-    --interactive-normal: var(--sc-muted);
-    --interactive-hover: var(--sc-text);
-    --interactive-active: var(--sc-text);
+    --sc-app-surface-0: #000000;
+    --sc-app-surface-1: #090B0C;
+    --sc-app-surface-2: #121517;
+    --sc-app-surface-3: #1B2023;
+    --sc-app-text: #F5F7F8;
+    --sc-app-muted: #AEB6BD;
+    --sc-app-link: #79D9D1;
+    --sc-app-positive: #82D9A1;
+    --sc-app-warning: #F5C776;
+    --sc-app-danger: #FF9180;
+    --sc-app-border: #30363A;
+    --sc-app-border-strong: #515A60;
+    --sc-app-hover: rgb(78 205 196 / 10%);
+    --sc-app-active: rgb(78 205 196 / 17%);
+    --sc-app-selected: rgb(78 205 196 / 24%);
 }
-html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bottom: 1px solid color-mix(in srgb, var(--border-subtle, currentcolor) 52%, transparent); }
+
+html:not([data-soulcord-mode="follow-discord"])[data-soulcord-mode] {
+    --soulcord-canvas: var(--sc-app-surface-0);
+    --soulcord-graphite: var(--sc-app-surface-0);
+    --soulcord-paper: var(--sc-app-surface-0);
+    --soulcord-panel: var(--sc-app-surface-1);
+    --soulcord-surface-0: var(--sc-app-surface-0);
+    --soulcord-surface-1: var(--sc-app-surface-1);
+    --soulcord-surface-2: var(--sc-app-surface-2);
+    --soulcord-raised: var(--sc-app-surface-3);
+    --soulcord-ink: var(--sc-app-text);
+    --soulcord-cream: var(--sc-app-text);
+    --soulcord-muted: var(--sc-app-muted);
+    --soulcord-seam: var(--sc-app-border);
+    --soulcord-accent-text: var(--sc-app-link);
+    --soulcord-warning-text: var(--sc-app-warning);
+    --soulcord-danger-text: var(--sc-app-danger);
+    --soulcord-callout-text: var(--sc-app-muted);
+}
+
+html:not([data-soulcord-mode="follow-discord"])[data-soulcord-mode] :is(body, #app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    color-scheme: inherit;
+
+    --background-primary: var(--sc-app-surface-0);
+    --background-secondary: var(--sc-app-surface-1);
+    --background-secondary-alt: var(--sc-app-surface-2);
+    --background-tertiary: var(--sc-app-surface-2);
+    --background-floating: var(--sc-app-surface-3);
+    --background-modifier-hover: var(--sc-app-hover);
+    --background-modifier-active: var(--sc-app-active);
+    --background-modifier-selected: var(--sc-app-selected);
+    --background-modifier-accent: var(--sc-app-border);
+    --text-normal: var(--sc-app-text);
+    --text-default: var(--sc-app-text);
+    --text-primary: var(--sc-app-text);
+    --text-strong: var(--sc-app-text);
+    --text-secondary: var(--sc-app-muted);
+    --text-tertiary: var(--sc-app-muted);
+    --text-muted: var(--sc-app-muted);
+    --text-link: var(--sc-app-link);
+    --text-brand: var(--sc-app-link);
+    --text-positive: var(--sc-app-positive);
+    --text-warning: var(--sc-app-warning);
+    --text-danger: var(--sc-app-danger);
+    --text-feedback-positive: var(--sc-app-positive);
+    --text-feedback-warning: var(--sc-app-warning);
+    --text-feedback-critical: var(--sc-app-danger);
+    --header-primary: var(--sc-app-text);
+    --header-secondary: var(--sc-app-muted);
+    --channels-default: var(--sc-app-muted);
+    --channel-icon: var(--sc-app-muted);
+    --icon-primary: var(--sc-app-text);
+    --icon-secondary: var(--sc-app-muted);
+    --icon-tertiary: var(--sc-app-muted);
+    --icon-muted: var(--sc-app-muted);
+    --interactive-normal: var(--sc-app-muted);
+    --interactive-hover: var(--sc-app-text);
+    --interactive-active: var(--sc-app-text);
+    --interactive-muted: var(--sc-app-muted);
+    --interactive-text-default: var(--sc-app-muted);
+    --interactive-text-hover: var(--sc-app-text);
+    --interactive-text-active: var(--sc-app-text);
+    --interactive-text-muted: var(--sc-app-muted);
+    --interactive-background-default: transparent;
+    --interactive-background-hover: var(--sc-app-hover);
+    --interactive-background-active: var(--sc-app-active);
+    --interactive-background-selected: var(--sc-app-selected);
+    --input-background: var(--sc-app-surface-2);
+    --input-background-default: var(--sc-app-surface-2);
+    --input-text-default: var(--sc-app-text);
+    --input-placeholder-text: var(--sc-app-muted);
+    --input-border-default: var(--sc-app-border);
+    --input-border-hover: var(--sc-app-border-strong);
+    --input-border-focus: var(--sc-app-link);
+    --channel-text-area-placeholder: var(--sc-app-muted);
+    --channeltextarea-background: var(--sc-app-surface-2);
+    --chat-background-default: var(--sc-app-surface-0);
+    --card-background-default: var(--sc-app-surface-1);
+    --modal-background: var(--sc-app-surface-1);
+    --modal-footer-background: var(--sc-app-surface-2);
+    --background-mobile-primary: var(--sc-app-surface-0);
+    --background-mobile-secondary: var(--sc-app-surface-1);
+    --deprecated-card-bg: var(--sc-app-surface-1);
+    --deprecated-card-editable-bg: var(--sc-app-surface-2);
+    --app-frame-background: var(--sc-app-surface-0);
+    --app-frame-border: var(--sc-app-border);
+    --background-base-lowest: var(--sc-app-surface-0);
+    --background-base-lower: var(--sc-app-surface-1);
+    --background-base-low: var(--sc-app-surface-1);
+    --background-surface-high: var(--sc-app-surface-1);
+    --background-surface-higher: var(--sc-app-surface-2);
+    --background-surface-highest: var(--sc-app-surface-3);
+    --background-mod-subtle: var(--sc-app-hover);
+    --background-mod-normal: var(--sc-app-active);
+    --background-mod-strong: var(--sc-app-selected);
+    --bg-surface-overlay-tmp: var(--sc-app-surface-3);
+    --bg-surface-raised: var(--sc-app-surface-3);
+    --border-muted: color-mix(in srgb, var(--sc-app-border) 72%, transparent);
+    --border-normal: var(--sc-app-border);
+    --border-subtle: var(--sc-app-border);
+    --border-strong: var(--sc-app-border-strong);
+    --scrollbar-thin-thumb: var(--sc-app-border-strong);
+    --scrollbar-auto-thumb: var(--sc-app-border-strong);
+    --scrollbar-auto-track: var(--sc-app-surface-1);
+    --control-secondary-text-default: var(--sc-app-muted);
+    --control-secondary-text-hover: var(--sc-app-text);
+    --control-secondary-text-active: var(--sc-app-text);
+    --control-secondary-background-default: var(--sc-app-surface-1);
+    --control-secondary-background-hover: var(--sc-app-surface-2);
+    --control-secondary-background-active: var(--sc-app-surface-3);
+    --control-secondary-border-default: var(--sc-app-border);
+    --control-secondary-border-hover: var(--sc-app-border-strong);
+    --control-secondary-border-active: var(--sc-app-link);
+}
+
+html:not([data-soulcord-mode="follow-discord"])[data-soulcord-mode] :is(body, #app-mount) {
+    color: var(--sc-app-text);
+    background: var(--sc-app-surface-0) !important;
+}
+
+html:not([data-soulcord-mode="follow-discord"])[data-soulcord-mode] .soulcord-panel {
+    --sc-surface-0: var(--sc-app-surface-0);
+    --sc-surface-1: var(--sc-app-surface-1);
+    --sc-surface-2: var(--sc-app-surface-2);
+    --sc-text: var(--sc-app-text);
+    --sc-muted: var(--sc-app-muted);
+    --sc-border: var(--sc-app-border);
+}
+
+html[data-soulcord-accent="system"] .soulcord-panel { --sc-accent: var(--brand-500, var(--soulcord-sea)); }
+html[data-soulcord-accent="glacier"] { --sc-runtime-accent: #1F7772; --sc-runtime-accent-hover: #195F5B; --sc-runtime-on-accent: #FFFFFF; }
+html[data-soulcord-accent="signal"] { --sc-runtime-accent: #855B12; --sc-runtime-accent-hover: #6B490E; --sc-runtime-on-accent: #FFFFFF; }
+html[data-soulcord-accent="coral"] { --sc-runtime-accent: #974236; --sc-runtime-accent-hover: #79352B; --sc-runtime-on-accent: #FFFFFF; }
+html[data-soulcord-accent="forest"] { --sc-runtime-accent: #2F6C46; --sc-runtime-accent-hover: #255638; --sc-runtime-on-accent: #FFFFFF; }
+html:is([data-soulcord-mode="soul-dark"], [data-soulcord-mode="oled"])[data-soulcord-accent="glacier"] { --sc-runtime-accent: #4ECDC4; --sc-runtime-accent-hover: #3CB7AF; --sc-runtime-on-accent: #071210; }
+html:is([data-soulcord-mode="soul-dark"], [data-soulcord-mode="oled"])[data-soulcord-accent="signal"] { --sc-runtime-accent: #F4B860; --sc-runtime-accent-hover: #DCA142; --sc-runtime-on-accent: #1C1406; }
+html:is([data-soulcord-mode="soul-dark"], [data-soulcord-mode="oled"])[data-soulcord-accent="coral"] { --sc-runtime-accent: #E77362; --sc-runtime-accent-hover: #CC5C4D; --sc-runtime-on-accent: #1C0907; }
+html:is([data-soulcord-mode="soul-dark"], [data-soulcord-mode="oled"])[data-soulcord-accent="forest"] { --sc-runtime-accent: #65AD82; --sc-runtime-accent-hover: #50966D; --sc-runtime-on-accent: #07150D; }
+html:not([data-soulcord-accent="system"])[data-soulcord-accent] {
+    --soulcord-accent: var(--sc-runtime-accent);
+    --soulcord-accent-strong: var(--sc-runtime-accent-hover);
+    --soulcord-sea: var(--sc-runtime-accent);
+    --soulcord-teal: var(--sc-runtime-accent);
+    --soulcord-focus: var(--sc-runtime-accent);
+    --soulcord-on-accent: var(--sc-runtime-on-accent);
+}
+html:not([data-soulcord-accent="system"])[data-soulcord-accent] :is(#app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --brand-500: var(--sc-runtime-accent);
+    --brand-560: var(--sc-runtime-accent-hover);
+    --brand-experiment: var(--sc-runtime-accent);
+    --button-filled-brand-background: var(--sc-runtime-accent);
+    --button-filled-brand-background-hover: var(--sc-runtime-accent-hover);
+    --button-filled-brand-text: var(--sc-runtime-on-accent);
+}
+html:not([data-soulcord-accent="system"])[data-soulcord-accent] .soulcord-panel { --sc-accent: var(--sc-runtime-accent); }
+
+html[data-soulcord-density="compact"] {
+    --custom-message-spacing-vertical-container-cozy: 0.24rem;
+    --custom-message-spacing-vertical-container-compact: 0.06rem;
+}
+html[data-soulcord-density="compact"] #app-mount :is([class*="sidebarList_"], [class*="privateChannels_"], [class*="membersWrap_"]) [class*="link_"] { min-height: 30px; }
+html[data-soulcord-density="compact"] #app-mount li[id^="chat-messages-"] { margin-block: 0; }
+
+html[data-soulcord-message-shape="seamed"] #app-mount li[id^="chat-messages-"] {
+    border-bottom: 1px solid color-mix(in srgb, var(--border-subtle, currentcolor) 62%, transparent);
+    border-radius: 0;
+}
+
+html[data-soulcord-motion="reduced"] #app-mount *,
+html[data-soulcord-motion="reduced"] #app-mount *::before,
+html[data-soulcord-motion="reduced"] #app-mount *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+}
 .soulcord-panel *,
 .soulcord-panel *::before,
 .soulcord-panel *::after { box-sizing: border-box; }
@@ -123,16 +293,26 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 .soulcord-appearance-controls label { display: grid; gap: 5px; color: var(--sc-muted); font-size: 12px; }
 .soulcord-appearance-controls select,
 .soulcord-control-strip select { box-sizing: border-box; min-height: 36px; padding: 7px 9px; color: var(--sc-text); background: var(--input-background, var(--sc-surface-2)); border: 1px solid var(--sc-border); border-radius: 4px; }
-.soulcord-live-preview { display: grid; gap: 5px; margin-top: var(--sc-space-4); padding: 18px; color: var(--sc-text); background: var(--sc-surface-1); border: 1px solid var(--sc-border); border-left: 3px solid var(--sc-accent); border-radius: var(--sc-radius); }
+.soulcord-live-preview { display: grid; gap: 5px; margin-top: var(--sc-space-4); padding: 18px; color: var(--soulcord-preview-text, var(--sc-text)); background: var(--soulcord-preview-surface, var(--sc-surface-1)); border: 1px solid var(--soulcord-preview-border, var(--sc-border)); border-left: 3px solid var(--soulcord-preview-accent, var(--sc-accent)); border-radius: var(--sc-radius); transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
 .soulcord-live-preview span,
-.soulcord-live-preview small { color: var(--sc-muted); }
+.soulcord-live-preview small { color: var(--soulcord-preview-muted, var(--sc-muted)); }
+.soulcord-live-preview.soulcord-mode-soul-dark { --soulcord-preview-surface: #202528; --soulcord-preview-text: #F2EADF; --soulcord-preview-muted: #B9B4AD; --soulcord-preview-border: #3B4348; }
+.soulcord-live-preview.soulcord-mode-soul-light { --soulcord-preview-surface: #EBE2D5; --soulcord-preview-text: #24211F; --soulcord-preview-muted: #625D57; --soulcord-preview-border: #C9BEB0; }
+.soulcord-live-preview.soulcord-mode-oled { --soulcord-preview-surface: #090B0C; --soulcord-preview-text: #F5F7F8; --soulcord-preview-muted: #AEB6BD; --soulcord-preview-border: #30363A; }
+.soulcord-live-preview.soulcord-accent-system { --soulcord-preview-accent: var(--brand-500, #5865F2); }
+.soulcord-live-preview.soulcord-accent-glacier { --soulcord-preview-accent: #4ECDC4; }
+.soulcord-live-preview.soulcord-accent-signal { --soulcord-preview-accent: #E8AA45; }
+.soulcord-live-preview.soulcord-accent-coral { --soulcord-preview-accent: #E77362; }
+.soulcord-live-preview.soulcord-accent-forest { --soulcord-preview-accent: #65AD82; }
+.soulcord-live-preview.soulcord-preview-density-compact { gap: 2px; padding: 11px 14px; }
+.soulcord-live-preview.soulcord-preview-shape-seamed { border-radius: 0; box-shadow: inset 0 -1px var(--soulcord-preview-border, var(--sc-border)); }
 .soulcord-live-preview button { justify-self: start; margin-top: 6px; padding: 7px 10px; color: var(--sc-text); background: var(--sc-surface-2); border: 1px solid var(--sc-accent); border-radius: 4px; }
 .soulcord-live-preview button:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
 .soulcord-domain-memory { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--sc-border); }
 .soulcord-domain-memory p,
 .soulcord-domain-memory small { display: block; margin: 4px 0; }
 .soulcord-permission-card { display: block; margin: 7px 0; color: var(--sc-muted); }
-.soulcord-choice-stack { display: grid; border: 1px solid var(--sc-border); }
+.soulcord-choice-stack { display: grid; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: 8px; }
 .soulcord-choice-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px; background: var(--sc-surface-1); }
 .soulcord-choice-row + .soulcord-choice-row { border-top: 1px solid var(--sc-border); }
 .soulcord-choice-row > span { display: grid; gap: 3px; }
@@ -156,7 +336,7 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 .soulcord-catalog-row > * { min-width: 0; }
 .soulcord-header h1 { font-size: 30px; line-height: 1.1; margin: 2px 0 6px; letter-spacing: -0.035em; }
 .soulcord-header p { margin: 0; color: var(--text-muted); overflow-wrap: anywhere; }
-.soulcord-eyebrow { color: var(--soulcord-sea) !important; font: 700 11px/1.2 var(--font-primary); text-transform: uppercase; letter-spacing: 0.12em; }
+.soulcord-eyebrow { color: var(--soulcord-accent-text, var(--soulcord-sea)) !important; font: 700 11px/1.2 var(--font-primary); text-transform: uppercase; letter-spacing: 0.12em; }
 .soulcord-mark { display: grid; place-items: center; width: 58px; height: 58px; flex: 0 0 58px; padding: 3px; background: var(--background-secondary); border: 1px solid color-mix(in srgb, var(--soulcord-sea) 58%, var(--border-subtle)); border-radius: 8px; overflow: hidden; }
 .soulcord-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .soulcord-section { padding: 24px 0; border-bottom: 1px solid var(--border-subtle); }
@@ -183,10 +363,10 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 .soulcord-module-name { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 .soulcord-status,
 .soulcord-maturity { padding: 2px 6px; border-radius: 3px; font: 700 10px/1.4 var(--font-primary); text-transform: uppercase; letter-spacing: 0.06em; background: var(--background-tertiary); }
-.soulcord-status-active { color: var(--soulcord-sea); }
+.soulcord-status-active { color: var(--soulcord-accent-text, var(--soulcord-sea)); }
 .soulcord-status-failed,
-.soulcord-status-quarantined { color: var(--soulcord-coral); }
-.soulcord-status-starting { color: var(--soulcord-amber); }
+.soulcord-status-quarantined { color: var(--soulcord-danger-text, var(--soulcord-coral)); }
+.soulcord-status-starting { color: var(--soulcord-warning-text, var(--soulcord-amber)); }
 .soulcord-maturity { color: var(--text-muted); }
 .soulcord-toggle { display: grid; justify-items: center; gap: 4px; min-width: 44px; font-size: 11px; color: var(--text-muted); }
 .soulcord-toggle input { width: 18px; height: 18px; accent-color: var(--soulcord-sea); }
@@ -203,7 +383,9 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 .soulcord-theme-option:focus-within,
 .soulcord-addon-choice:focus-within,
 .soulcord-control-grid label:focus-within { outline: 3px solid var(--soulcord-focus, var(--soulcord-sea)); outline-offset: 2px; }
-.soulcord-action-accent { color: var(--soulcord-graphite); background: var(--soulcord-sea); border-color: var(--soulcord-sea); }
+.soulcord-action-accent { color: var(--soulcord-on-accent, var(--soulcord-graphite)); background: var(--soulcord-sea); border-color: var(--soulcord-sea); }
+.soulcord-wizard .soulcord-action-accent { color: var(--soulcord-on-accent, #FFFFFF); background: var(--brand-500, var(--button-filled-brand-background, #5865F2)); border-color: transparent; }
+.soulcord-wizard .soulcord-action-accent:hover { background: var(--brand-560, var(--button-filled-brand-background-hover, #4752C4)); border-color: transparent; }
 .soulcord-action-danger { border-color: color-mix(in srgb, var(--soulcord-coral) 65%, transparent); }
 .soulcord-recovery-banner { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 18px; padding: 14px; border-left: 3px solid var(--soulcord-coral); background: color-mix(in srgb, var(--soulcord-coral) 10%, var(--background-secondary)); }
 .soulcord-recovery-banner p { margin: 4px 0 0; color: var(--text-muted); }
@@ -214,38 +396,40 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 .soulcord-setup-management p { margin: 3px 0 0; }
 .soulcord-setup-management .soulcord-actions { margin: 0; flex: 0 0 auto; }
 .soulcord-setup-management > [role="status"] { flex-basis: 100%; margin: 0; }
-.soulcord-wizard { margin-top: 18px; border: 1px solid color-mix(in srgb, var(--soulcord-sea) 50%, var(--border-subtle)); border-top: 3px solid var(--soulcord-sea); background: var(--background-secondary); }
+.soulcord-wizard { margin-top: 18px; overflow: hidden; color: var(--text-normal); background: var(--background-primary); border: 1px solid var(--border-subtle); border-radius: 8px; box-shadow: var(--elevation-low, 0 1px 0 rgb(0 0 0 / 12%)); }
 .soulcord-wizard[aria-busy="true"] { cursor: progress; }
-.soulcord-wizard-title { display: flex; justify-content: space-between; gap: 24px; padding: 18px 20px 15px; border-bottom: 1px solid var(--border-subtle); }
-.soulcord-wizard-title h2 { margin: 2px 0 5px; font-size: 22px; }
+.soulcord-wizard-title { display: flex; justify-content: space-between; gap: 24px; padding: 20px 24px 16px; }
+.soulcord-wizard-title h2 { margin: 0 0 6px; font-size: 20px; line-height: 1.2; }
 .soulcord-wizard-title p { margin: 0; color: var(--text-muted); }
-.soulcord-wizard-title > span { align-self: start; padding: 4px 7px; color: var(--text-muted); background: var(--background-tertiary); border-radius: 3px; font: 700 11px/1.3 var(--font-code); white-space: nowrap; }
-.soulcord-wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--border-subtle); }
-.soulcord-wizard-steps li + li { border-left: 1px solid var(--border-subtle); }
-.soulcord-wizard-steps li:nth-child(5) { border-left: 0; }
-.soulcord-wizard-steps li:nth-child(n + 5) { border-top: 1px solid var(--border-subtle); }
-.soulcord-wizard-steps button { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 46px; padding: 8px 10px; color: var(--text-muted); background: transparent; border: 0; text-align: left; cursor: pointer; }
-.soulcord-wizard-steps button[aria-current="step"] { color: var(--text-normal); background: color-mix(in srgb, var(--soulcord-sea) 9%, transparent); box-shadow: inset 0 -2px var(--soulcord-sea); }
-.soulcord-wizard-steps button span { display: grid; place-items: center; width: 20px; height: 20px; flex: 0 0 20px; border: 1px solid currentcolor; border-radius: 50%; font: 700 10px/1 var(--font-code); }
-.soulcord-wizard-body { min-height: 330px; padding: 20px; }
+.soulcord-wizard-title > span { align-self: start; color: var(--text-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.soulcord-wizard-progress { height: 4px; margin: 0 24px; overflow: hidden; background: var(--background-modifier-accent, var(--background-tertiary)); border-radius: 999px; }
+.soulcord-wizard-progress > span { display: block; height: 100%; background: var(--brand-500, var(--button-filled-brand-background, #5865F2)); border-radius: inherit; transition: width 180ms ease; }
+.soulcord-wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin: 12px 16px 0; padding: 0 8px 10px; list-style: none; border-bottom: 1px solid var(--border-subtle); }
+.soulcord-wizard-steps li { min-width: 0; }
+.soulcord-wizard-steps button { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 34px; padding: 6px 9px; color: var(--interactive-normal, var(--text-muted)); background: transparent; border: 0; border-radius: 4px; font-weight: 500; cursor: pointer; }
+.soulcord-wizard-steps button:hover { color: var(--interactive-hover, var(--text-normal)); background: var(--background-modifier-hover); }
+.soulcord-wizard-steps button[aria-current="step"] { color: var(--interactive-active, var(--text-normal)); background: var(--background-modifier-selected); }
+.soulcord-wizard-steps button span:first-child { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; color: var(--text-muted); background: var(--background-tertiary); border-radius: 50%; font-size: 10px; font-weight: 700; }
+.soulcord-wizard-steps button[aria-current="step"] span:first-child { color: var(--white-500, #FFFFFF); background: var(--brand-500, var(--button-filled-brand-background, #5865F2)); }
+.soulcord-wizard-body { min-height: 330px; padding: 24px; }
 .soulcord-wizard-body > h3:first-child { margin-top: 0; }
-.soulcord-wizard-body > p { color: var(--text-muted); line-height: 1.45; }
-.soulcord-wizard-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 58px; padding: 10px 20px; border-top: 1px solid var(--border-subtle); }
+.soulcord-wizard-body > p:not(.soulcord-callout) { color: var(--text-muted); line-height: 1.45; }
+.soulcord-wizard-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 58px; padding: 12px 24px; background: var(--modal-footer-background, var(--background-secondary)); border-top: 1px solid var(--border-subtle); }
 .soulcord-wizard-footer .soulcord-actions { margin: 0; }
 .soulcord-setup-status { max-width: 48%; margin: 0; color: var(--text-muted); text-align: right; }
 .soulcord-wizard-inline-heading { display: flex; justify-content: space-between; align-items: start; gap: 18px; }
 .soulcord-wizard-inline-heading h3 { margin: 0 0 4px; }
 .soulcord-wizard-inline-heading p { margin: 0; color: var(--text-muted); }
 .soulcord-wizard-inline-heading .soulcord-actions { margin: 0; flex: 0 0 auto; }
-.soulcord-callout { margin: 14px 0 0; padding: 10px 12px; color: var(--text-muted); background: color-mix(in srgb, var(--soulcord-sea) 7%, var(--background-tertiary)); border-left: 2px solid var(--soulcord-sea); line-height: 1.45; }
+.soulcord-callout { margin: 14px 0 0; padding: 10px 12px; color: var(--soulcord-callout-text, var(--text-muted)); background: color-mix(in srgb, var(--soulcord-sea) 7%, var(--background-tertiary)); border-left: 2px solid var(--soulcord-sea); line-height: 1.45; }
 .soulcord-callout code { color: var(--text-normal); font-size: 0.92em; }
 .soulcord-callout-danger { color: var(--text-normal); background: color-mix(in srgb, var(--status-danger, var(--soulcord-coral)) 9%, var(--background-tertiary)); border-left-color: var(--status-danger, var(--soulcord-coral)); }
-.soulcord-callout-danger strong { color: var(--status-danger, var(--soulcord-coral)); }
-.soulcord-theme-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--border-subtle); }
+.soulcord-callout-danger strong { color: var(--soulcord-danger-text, var(--status-danger, var(--soulcord-coral))); }
+.soulcord-theme-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--border-subtle); border-radius: 8px; }
 .soulcord-theme-option { display: grid; grid-template-columns: auto 76px 1fr; align-items: center; gap: 12px; min-height: 78px; padding: 11px; cursor: pointer; }
 .soulcord-theme-option:nth-child(even) { border-left: 1px solid var(--border-subtle); }
 .soulcord-theme-option:nth-child(n + 3) { border-top: 1px solid var(--border-subtle); }
-.soulcord-theme-option:has(input:checked) { background: color-mix(in srgb, var(--soulcord-sea) 9%, transparent); box-shadow: inset 3px 0 var(--soulcord-sea); }
+.soulcord-theme-option:has(input:checked) { background: var(--background-modifier-selected); box-shadow: inset 3px 0 var(--brand-500, var(--button-filled-brand-background, #5865F2)); }
 .soulcord-theme-option input { accent-color: var(--soulcord-sea); }
 .soulcord-theme-option > span:last-child { display: grid; gap: 4px; }
 .soulcord-theme-option small { color: var(--text-muted); line-height: 1.35; }
@@ -402,9 +586,7 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
     .soulcord-workspace-nav small { display: none; }
     .soulcord-control-grid { grid-template-columns: 1fr 1fr; }
     .soulcord-daily-grid { grid-template-columns: 1fr; }
-    .soulcord-wizard-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .soulcord-wizard-steps li:nth-child(2n + 1) { border-left: 0; }
-    .soulcord-wizard-steps li:nth-child(n + 3) { border-top: 1px solid var(--border-subtle); }
+    .soulcord-wizard-steps { margin-right: 12px; margin-left: 12px; }
     .soulcord-addon-group { grid-template-columns: 1fr; }
     .soulcord-catalog-row { grid-template-columns: minmax(160px, 0.5fr) minmax(240px, 1fr); }
     .soulcord-catalog-row > div:last-child { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
@@ -436,6 +618,7 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
 }
 
 @container soulcord-panel (max-width: 520px) {
+    .soulcord-panel { padding-right: 14px; padding-left: 14px; }
     .soulcord-workspace-nav { grid-template-columns: 1fr; }
     .soulcord-workspace-nav button { border-right: 0; border-bottom: 1px solid var(--sc-border); }
     .soulcord-workspace-nav button:last-child { border-bottom: 0; }
@@ -448,10 +631,10 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
     .soulcord-wizard-body { min-height: 0; padding: 16px 14px; }
     .soulcord-wizard-title,
     .soulcord-wizard-footer { padding-right: 14px; padding-left: 14px; }
-    .soulcord-wizard-steps { grid-template-columns: 1fr; }
+    .soulcord-wizard-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-right: 8px; margin-left: 8px; }
     .soulcord-wizard-steps li + li,
-    .soulcord-wizard-steps li:nth-child(3) { border-left: 0; }
-    .soulcord-wizard-steps li:nth-child(n + 2) { border-top: 1px solid var(--border-subtle); }
+    .soulcord-wizard-steps li:nth-child(3),
+    .soulcord-wizard-steps li:nth-child(n + 2) { border: 0; }
     .soulcord-wizard-steps button { min-height: 42px; }
     .soulcord-theme-option { grid-template-columns: auto minmax(58px, 76px) minmax(0, 1fr); gap: 9px; }
     .soulcord-addon-choice { grid-template-columns: auto minmax(0, 1fr); }
@@ -473,6 +656,15 @@ html[data-soulcord-message-shape="seamed"] li[id^="chat-messages-"] { border-bot
     .soulcord-timeline-toolbar > label,
     .soulcord-timeline-toolbar > button { width: 100%; }
     .soulcord-timeline-toolbar select { width: 100%; }
+}
+
+/* Discord's settings rail otherwise consumes nearly the entire 320px viewport.
+ * Collapse it only while the SoulCord panel is active; other settings pages keep
+ * Discord's native responsive behavior. */
+@media (max-width: 640px) {
+    #app-mount [class*="container_"]:has(.soulcord-panel) > aside[class*="sidebar_"] { display: none; }
+    #app-mount [class*="container_"]:has(.soulcord-panel) > [class*="content_"] { width: 100%; min-width: 0; }
+    #app-mount [class*="content_"]:has(.soulcord-panel) [class*="contentBody_"] { width: 100%; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1076,12 +1076,24 @@ function configureCopiedNativeModules(acceptanceRoot, recordRuntimeStage) {
 
     const wrappers = fs.readdirSync(modulesRoot, {withFileTypes: true})
         .sort((left, right) => left.name.localeCompare(right.name));
+    const versionedWrapperNames = new Set(wrappers.flatMap(entry => {
+        const match = /^([a-z][a-z0-9_]*)-([0-9]+)$/.exec(entry.name);
+        return match ? [match[1]] : [];
+    }));
     const discovered = new Set();
     const wrapperPaths = [];
     for (const entry of wrappers) {
         const match = /^([a-z][a-z0-9_]*)-([0-9]+)$/.exec(entry.name);
         const wrapperPath = path.join(modulesRoot, entry.name);
         const wrapperStat = fs.lstatSync(wrapperPath);
+        const isRuntimeArtifact = entry.name === "crashlogs"
+            || (["discord_utils", "discord_voice"].includes(entry.name) && versionedWrapperNames.has(entry.name));
+        if (isRuntimeArtifact) {
+            if (!entry.isDirectory() || !wrapperStat.isDirectory() || wrapperStat.isSymbolicLink()) {
+                throw new Error("SoulCord acceptance found an invalid Discord runtime module artifact.");
+            }
+            continue;
+        }
         if (!match || !entry.isDirectory() || !wrapperStat.isDirectory() || wrapperStat.isSymbolicLink()) {
             throw new Error("SoulCord acceptance found an invalid copied Discord module wrapper.");
         }

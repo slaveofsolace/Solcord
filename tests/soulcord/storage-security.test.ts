@@ -25,7 +25,7 @@ mock.module("electron", () => ({
     }
 }));
 
-const {SoulCordSetupTransactions, validatePinnedSourceUrl} = await import("../../src/electron/main/modules/soulcord-setup");
+const {SoulCordSetupTransactions, isReviewedLegacySoulCordTheme, validatePinnedSourceUrl} = await import("../../src/electron/main/modules/soulcord-setup");
 const {SoulCordTimelineStorage} = await import("../../src/electron/main/modules/soulcord-timeline");
 const {SoulCordFriendWatchStorage} = await import("../../src/electron/main/modules/soulcord-friend-watch");
 
@@ -124,6 +124,7 @@ function createRecoveryFixture(suffix: string): RecoveryFixture {
         createdAt: Date.now(),
         planned: [file],
         reused: [],
+        legacyThemes: [],
         selectedAddons: [],
         selectedTheme: recoveryTheme.id
     }, null, 2)}\n`, {encoding: "utf8", flag: "wx"});
@@ -207,6 +208,223 @@ describe("SoulCord setup transaction security", () => {
         expect(retry.removed).toHaveLength(1);
         expect(retry.preserved).toHaveLength(0);
         expect(fs.existsSync(changed)).toBeFalse();
+    });
+
+    test("replaces only the exact malformed SoulCord v1 theme and restores it on rollback", async () => {
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        fs.mkdirSync(themesRoot, {recursive: true});
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const target = path.join(themesRoot, "SoulCord-Default.theme.css");
+        const legacyContent = fs.readFileSync(legacyFixture, "utf8");
+        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);
+
+        const setup = new SoulCordSetupTransactions();
+        const applied = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const reviewed = SOULCORD_RUNTIME_THEMES.find(theme => theme.fileName === "SoulCord-Default.theme.css")!;
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+
+        expect(fs.readFileSync(target, "utf8")).toBe(reviewed.content);
+        expect(fs.readdirSync(journalRoot).filter(file => file.endsWith(".legacy-theme-backup"))).toHaveLength(1);
+
+        const rollback = await setup.rollback(applied.transactionId);
+        expect(rollback.complete).toBeTrue();
+        expect(fs.readFileSync(target, "utf8")).toBe(legacyContent);
+        expect(fs.readdirSync(journalRoot).filter(file => file.endsWith(".legacy-theme-backup"))).toHaveLength(0);
+        expect((await setup.auditIntegrity()).filter(record => record.kind === "theme" && record.status === "missing")).toHaveLength(4);
+    });
+
+    test("recognizes every exact owner-installed v1.1 theme hash without widening filename or hash policy", () => {
+        const reviewed = {
+            "SoulCord-Default.theme.css": "0056bcf888af2f5c9e43ae14ae299fa63dfa6ef0f1f29ece9af6e42536ac0765",
+            "SoulCord-ObsidianThread.theme.css": "7cdb781861ec59bab0378b8b0e64dda97ba2eb43531b7fdcd2888e4350a2c128",
+            "SoulCord-CarbonEmber.theme.css": "ac8bcca42f1712538d840f669551ddb119b36d9490978bfb9fd07e1dbb826184",
+            "SoulCord-MidnightGlass.theme.css": "1d7ff58696b495a6a3cd67d0702ef95f8d3e90d77993e95ab2143e3992ccb483",
+            "SoulCord-PaperSignal.theme.css": "9c6fc63aa4299881ebf3b7f6a442a7e27aca376e751f7e5f0b82900c6e9c46b9"
+        } as const;
+        for (const [fileName, sha256] of Object.entries(reviewed)) {
+            expect(isReviewedLegacySoulCordTheme(fileName, sha256)).toBeTrue();
+            expect(isReviewedLegacySoulCordTheme(fileName, `${sha256.slice(0, -1)}0`)).toBeFalse();
+        }
+        expect(isReviewedLegacySoulCordTheme("Owner.theme.css", reviewed["SoulCord-Default.theme.css"])).toBeFalse();
+        expect(isReviewedLegacySoulCordTheme("../SoulCord-Default.theme.css", reviewed["SoulCord-Default.theme.css"])).toBeFalse();
+    });
+
+    test("accepts a completed transaction containing an exact reviewed historical theme after a catalog upgrade", async () => {
+        const setup = new SoulCordSetupTransactions();
+        const historical = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        await setup.acknowledge(historical.transactionId);
+
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const legacyContent = fs.readFileSync(legacyFixture, "utf8");
+        const legacySha256 = crypto.createHash("sha256").update(legacyContent).digest("hex");
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        const target = path.join(themesRoot, recoveryTheme.fileName);
+        fs.writeFileSync(target, legacyContent, "utf8");
+
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const journalFile = path.join(journalRoot, `${historical.transactionId}.json`);
+        const journal = JSON.parse(fs.readFileSync(journalFile, "utf8"));
+        const historicalFile = journal.added.find((file: RecoveryFixtureFile) => file.kind === "theme" && file.fileName === recoveryTheme.fileName);
+        if (!historicalFile) throw new Error("Expected the completed transaction to own the recovery theme.");
+        historicalFile.sha256 = legacySha256;
+        const serializedJournal = `${JSON.stringify(journal, null, 2)}\n`;
+        fs.writeFileSync(journalFile, serializedJournal, "utf8");
+
+        const receiptFile = fs.readdirSync(journalRoot).find(file => {
+            if (!file.startsWith(`${historical.transactionId}.`) || !file.endsWith(".receipt.json")) return false;
+            const receipt = JSON.parse(fs.readFileSync(path.join(journalRoot, file), "utf8"));
+            return receipt.file?.kind === "theme" && receipt.file?.fileName === recoveryTheme.fileName;
+        });
+        if (!receiptFile) throw new Error("Expected a durable ownership receipt for the recovery theme.");
+        const receiptPath = path.join(journalRoot, receiptFile);
+        const receipt = JSON.parse(fs.readFileSync(receiptPath, "utf8"));
+        receipt.file.sha256 = legacySha256;
+        fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+        fs.writeFileSync(
+            path.join(journalRoot, `${historical.transactionId}.complete`),
+            `${crypto.createHash("sha256").update(serializedJournal).digest("hex")}\n`,
+            "utf8"
+        );
+
+        const upgraded = await new SoulCordSetupTransactions().apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+
+        expect(upgraded.added.map(file => file.fileName)).toEqual([recoveryTheme.fileName]);
+        expect(upgraded.reused).toHaveLength(SOULCORD_RUNTIME_THEMES.length - 1);
+        expect(fs.readFileSync(target, "utf8")).toBe(recoveryTheme.content);
+    });
+
+    test("accepts two completed theme generations when the prior Paper Signal hash is reviewed", async () => {
+        const setup = new SoulCordSetupTransactions();
+        const first = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        await setup.acknowledge(first.transactionId);
+
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const secondTransactionId = "mt9b64lt-64f182d94c6ba9aa";
+        const priorPaperSignalSha256 = "8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d";
+        const secondJournal = {
+            version: 1,
+            transactionId: secondTransactionId,
+            createdAt: Date.now(),
+            added: SOULCORD_RUNTIME_THEMES.map(theme => ({
+                kind: "theme",
+                fileName: theme.fileName,
+                sha256: theme.fileName === "SoulCord-PaperSignal.theme.css" ? priorPaperSignalSha256 : theme.sourceSha256
+            })),
+            reused: [],
+            legacyThemes: [],
+            selectedAddons: [],
+            selectedTheme: "paper-signal"
+        };
+        const serializedJournal = `${JSON.stringify(secondJournal, null, 2)}\n`;
+        fs.writeFileSync(path.join(journalRoot, `${secondTransactionId}.json`), serializedJournal, {encoding: "utf8", flag: "wx"});
+        fs.writeFileSync(
+            path.join(journalRoot, `${secondTransactionId}.complete`),
+            `${crypto.createHash("sha256").update(serializedJournal).digest("hex")}\n`,
+            {encoding: "utf8", flag: "wx"}
+        );
+
+        const next = await new SoulCordSetupTransactions().apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+
+        expect(next.added).toHaveLength(0);
+        expect(next.reused).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
+    });
+
+    test("keeps completed transaction history fail-closed for an unreviewed historical theme hash", async () => {
+        const setup = new SoulCordSetupTransactions();
+        const historical = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        await setup.acknowledge(historical.transactionId);
+
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const journalFile = path.join(journalRoot, `${historical.transactionId}.json`);
+        const journal = JSON.parse(fs.readFileSync(journalFile, "utf8"));
+        const historicalFile = journal.added.find((file: RecoveryFixtureFile) => file.kind === "theme" && file.fileName === recoveryTheme.fileName);
+        if (!historicalFile) throw new Error("Expected the completed transaction to own the recovery theme.");
+        historicalFile.sha256 = "f".repeat(64);
+        const serializedJournal = `${JSON.stringify(journal, null, 2)}\n`;
+        fs.writeFileSync(journalFile, serializedJournal, "utf8");
+        fs.writeFileSync(
+            path.join(journalRoot, `${historical.transactionId}.complete`),
+            `${crypto.createHash("sha256").update(serializedJournal).digest("hex")}\n`,
+            "utf8"
+        );
+
+        await expect(new SoulCordSetupTransactions().apply({selectedAddons: [], selectedTheme: recoveryTheme.id})).rejects.toThrow("ambiguous transaction journal");
+    });
+
+    test("preserves the installed themes when an expected legacy backup is missing", async () => {
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        fs.mkdirSync(themesRoot, {recursive: true});
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const target = path.join(themesRoot, "SoulCord-Default.theme.css");
+        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);
+
+        const setup = new SoulCordSetupTransactions();
+        const applied = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const backup = fs.readdirSync(journalRoot).find(file => file.endsWith(".legacy-theme-backup"));
+        if (!backup) throw new Error("Expected a legacy theme backup.");
+        fs.unlinkSync(path.join(journalRoot, backup));
+
+        const rollback = await setup.rollback(applied.transactionId);
+        expect(rollback.complete).toBeFalse();
+        expect(rollback.removed).toHaveLength(0);
+        expect(rollback.preserved).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
+        expect(fs.readFileSync(target, "utf8")).toBe(recoveryTheme.content);
+    });
+
+    test("preserves the installed themes when an expected legacy backup is corrupt", async () => {
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        fs.mkdirSync(themesRoot, {recursive: true});
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const target = path.join(themesRoot, "SoulCord-Default.theme.css");
+        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);
+
+        const setup = new SoulCordSetupTransactions();
+        const applied = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const backup = fs.readdirSync(journalRoot).find(file => file.endsWith(".legacy-theme-backup"));
+        if (!backup) throw new Error("Expected a legacy theme backup.");
+        fs.writeFileSync(path.join(journalRoot, backup), "corrupt-backup", "utf8");
+
+        const rollback = await setup.rollback(applied.transactionId);
+        expect(rollback.complete).toBeFalse();
+        expect(rollback.removed).toHaveLength(0);
+        expect(rollback.preserved).toHaveLength(SOULCORD_RUNTIME_THEMES.length);
+        expect(fs.readFileSync(target, "utf8")).toBe(recoveryTheme.content);
+    });
+
+    test("completes a rollback retry when the exact legacy target was already restored", async () => {
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        fs.mkdirSync(themesRoot, {recursive: true});
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const target = path.join(themesRoot, "SoulCord-Default.theme.css");
+        const legacyContent = fs.readFileSync(legacyFixture, "utf8");
+        fs.copyFileSync(legacyFixture, target, fs.constants.COPYFILE_EXCL);
+
+        const setup = new SoulCordSetupTransactions();
+        const applied = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "soulcord-transactions-v1");
+        const backup = fs.readdirSync(journalRoot).find(file => file.endsWith(".legacy-theme-backup"));
+        if (!backup) throw new Error("Expected a legacy theme backup.");
+        fs.unlinkSync(target);
+        fs.renameSync(path.join(journalRoot, backup), target);
+
+        const rollback = await setup.rollback(applied.transactionId);
+        expect(rollback.complete).toBeTrue();
+        expect(rollback.preserved).toHaveLength(0);
+        expect(fs.readFileSync(target, "utf8")).toBe(legacyContent);
+    });
+
+    test("preserves a modified malformed SoulCord theme instead of treating it as a reviewed migration", async () => {
+        const themesRoot = path.join(appDataPath, "BetterDiscord", "themes");
+        fs.mkdirSync(themesRoot, {recursive: true});
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const target = path.join(themesRoot, "SoulCord-Default.theme.css");
+        const modified = `${fs.readFileSync(legacyFixture, "utf8")}\n/* owner change */\n`;
+        fs.writeFileSync(target, modified, {encoding: "utf8", flag: "wx"});
+
+        await expect(new SoulCordSetupTransactions().apply({selectedAddons: [], selectedTheme: recoveryTheme.id})).rejects.toThrow("different hash");
+        expect(fs.readFileSync(target, "utf8")).toBe(modified);
     });
 
     test("acknowledges a settings-known prepared transaction after a renderer crash", async () => {
@@ -299,6 +517,24 @@ describe("SoulCord setup transaction recovery ownership", () => {
         expect(fs.existsSync(fixture.target)).toBeFalse();
         expect(fs.existsSync(fixture.stage)).toBeFalse();
         expect(fs.existsSync(path.join(fixture.journalRoot, `${fixture.transactionId}.rolledback`))).toBeTrue();
+    });
+
+    test("treats an exact allowlisted legacy target as already restored after a crash before backup", async () => {
+        const fixture = createRecoveryFixture("2424242424242424");
+        const legacyFixture = path.resolve(process.cwd(), "tests", "fixtures", "soulcord-legacy-default.theme.css");
+        const legacyContent = fs.readFileSync(legacyFixture, "utf8");
+        const legacySha256 = crypto.createHash("sha256").update(legacyContent).digest("hex");
+        fs.writeFileSync(fixture.target, legacyContent, {encoding: "utf8", flag: "wx"});
+
+        const intentFile = path.join(fixture.journalRoot, `${fixture.transactionId}.intent.json`);
+        const intent = JSON.parse(fs.readFileSync(intentFile, "utf8"));
+        intent.legacyThemes = [{fileName: fixture.file.fileName, sha256: legacySha256}];
+        fs.writeFileSync(intentFile, `${JSON.stringify(intent, null, 2)}\n`, "utf8");
+
+        await expect(triggerRecovery()).rejects.toThrow("runtime installation review");
+        expect(fs.readFileSync(fixture.target, "utf8")).toBe(legacyContent);
+        expect(fs.existsSync(path.join(fixture.journalRoot, `${fixture.transactionId}.rolledback`))).toBeTrue();
+        expect(fs.existsSync(path.join(fixture.journalRoot, `${fixture.transactionId}.incomplete`))).toBeFalse();
     });
 
     test("preserves an owner replacement whose identity differs from the durable receipt", async () => {

@@ -8,15 +8,15 @@ const REPOSITORY_ROOT = resolve(import.meta.dir, "../..");
 const read = (path: string) => readFileSync(resolve(REPOSITORY_ROOT, path), "utf8");
 
 describe("SoulCord brand surfaces", () => {
-    test("uses the animated SoulCord wordmark at launch and production mark on command surfaces", () => {
+    test("leaves Discord's native launch spinner unobstructed and uses the production mark on command surfaces", () => {
         const loader = read("src/betterdiscord/loadingicon.ts");
         const commands = read("src/betterdiscord/modules/commandmanager.tsx");
 
-        expect(loader).toContain("<span>SO</span><span class=\"soulcord-launch-u\">U</span><span class=\"soulcord-launch-suffix\">Lcord</span>");
-        expect(loader).toContain("SoulCord is starting");
-        expect(loader).toContain("prefers-reduced-motion: reduce");
-        expect(loader).not.toContain("background-image");
-        expect(loader).not.toContain("PHN2ZyB2ZXJzaW9u");
+        expect(loader).toContain("SoulCord deliberately adds no second splash");
+        expect(loader).toContain("static show(): void {return;}");
+        expect(loader).toContain("static hide(): void {return;}");
+        expect(loader).not.toContain("soulcord-launch-");
+        expect(loader).not.toContain("document.createElement");
         expect(commands).toContain("import soulCordMark from \"@assets/branding/soulcord-mark.svg\"");
         expect(commands).toContain("const SOULCORD_COMMAND_ICON = soulCordMark;");
         expect(commands).not.toContain("%3Crect width='64'");
@@ -38,6 +38,6 @@ describe("SoulCord brand surfaces", () => {
         const styles = read("src/betterdiscord/styles/soulcord.css");
 
         expect(runtime).toMatch(/async #synchronizeFeatures\(\): Promise<void> \{\s*this\.#applyProductPresentation\(\);/);
-        expect(styles).toContain("html[data-soulcord-message-shape=\"seamed\"] li[id^=\"chat-messages-\"]");
+        expect(styles).toContain("html[data-soulcord-message-shape=\"seamed\"] #app-mount li[id^=\"chat-messages-\"]");
     });
 });

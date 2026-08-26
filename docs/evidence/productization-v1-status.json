@@ -12,8 +12,8 @@
     "humanEyeAppearanceRepair": "4630a7b48fa9d9b382014218516d374cdf948cda"
   },
   "source": {
-    "status": "GREEN_AT_RECORDED_REPAIR_COMMIT_FINAL_HEAD_RECORDED_EXTERNALLY",
-    "tests": {"passed": 564, "failed": 0, "assertions": 3195, "files": 52},
+    "status": "FINAL_DIRTY_SOURCE_GREEN_OWNER_COMMIT_REQUIRED",
+    "tests": {"passed": 599, "failed": 0, "assertions": 3500, "files": 53},
     "typecheck": "PASS",
     "eslint": {"errors": 0, "inheritedWarnings": 3},
     "soulcordCssLint": "PASS",
@@ -31,15 +31,15 @@
     "installerSelfTest": "PASS_TWICE"
   },
   "security": {
-    "latestFullProductizationScanId": "fe6e2869-4ae4-4ca3-becc-8b4ab3e1e51d",
-    "range": "e1b40dff9a5a7396872e3a717010a6dc5b17be2b..60f340ad88f53038bdbc8e64bbd1d956bd0ea296",
-    "changedProductionSurfaces": 22,
+    "latestFullProductizationScanId": "EXTERNAL_FINAL_CLOSEOUT_MANIFEST",
+    "range": "working-tree-at-e994096dff2a1992bf8b601087dcb394231581f1",
+    "changedProductionSurfaces": 20,
     "findings": 0,
-    "appearanceRepairRescan": "REQUIRED_AFTER_EVIDENCE_COMMIT_AND_RECORDED_EXTERNALLY"
+    "appearanceRepairRescan": "FINAL_POST_DOCUMENTATION_RESCAN_RECORDED_EXTERNALLY"
   },
   "disposableRuntime": {
     "discordChannel": "stable",
-    "discordVersion": "1.0.9253",
+    "discordVersion": "1.0.9255",
     "filesystemProfileIsolated": true,
     "windowsAccountIsolated": false,
     "startup": "PASS",
@@ -49,12 +49,12 @@
     "workspaceReview": ["Home", "Appearance", "Safety", "People", "Tools"],
     "keyboardFocus": "PASS_FORWARD_AND_REVERSE",
     "linkLensLocalInspection": "PASS",
+    "ownerVisualVerdict": "ACCEPTED_2026_08_26",
     "ownerDiscordProcessesTouched": false,
     "isolatedProcessesCleaned": true
   },
   "openOwnerGates": [
     "Live-profile replacement and rollback acceptance.",
-    "Final owner taste acceptance.",
     "Native external-link modal and DM navigation acceptance if Link Lens is enabled later.",
     "Exact Windows 100 and 125 percent DPI review.",
     "Authenticode signing, SmartScreen expectations, merge, and public release."
@@ -64,7 +64,7 @@
     "No DM was opened and no message was sent during productization acceptance.",
     "No Activity was launched in this pass; the owner separately reported Activities working.",
     "No upload, file open, notification-read action, recording, voice join, stream, OAuth, or account mutation was performed.",
-    "The live Discord profile still runs the pre-productization generation."
+    "The live Discord profile runs an earlier diagnostic productization generation, not the final dirty-source closeout delta."
   ],
   "finalArtifactManifest": "EXTERNAL_AFTER_EVIDENCE_COMMIT_TO_AVOID_SELF_REFERENCE"
 }

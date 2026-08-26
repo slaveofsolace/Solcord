@@ -13,7 +13,7 @@ import {SOULCORD_SETUP_STEPS, type SoulCordAppearancePreferences, type SoulCordS
 
 import {SOULCORD_ADDON_GROUPS} from "./catalog";
 
-const {useMemo, useState} = React;
+const {useEffect, useMemo, useState} = React;
 
 const WIZARD_STEPS = SOULCORD_SETUP_STEPS;
 
@@ -26,15 +26,34 @@ const THEME_NOTES: Record<SoulCordThemeId, string> = {
 };
 
 function draftFrom(document: SoulCordSettingsDocument): SoulCordSetupDraft {
+    if (document.onboarding.draft) return structuredClone(document.onboarding.draft);
     return {
         preset: "recommended",
         selectedTheme: document.selectedTheme,
         selectedAddons: SOULCORD_PRESET_ADDONS.filter(name => document.curatedAddons[name]?.selected),
         addonModes: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, document.curatedAddons[name]?.mode ?? (name === "SplitLargeMessages" ? "guarded" : "default")])),
-        addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, document.curatedAddons[name]?.provider ?? "prefer-community"])),
+        addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => {
+            const mode = document.curatedAddons[name]?.mode ?? (name === "SplitLargeMessages" ? "guarded" : "default");
+            const community = resolveCommunityAddon(PluginManager, name, SOULCORD_RUNTIME_ADDONS.find(addon => addon.name === name)?.fileName ?? "");
+            const provider = isSoulCordBuiltInAddon(name, mode) && !community
+                ? "prefer-soulcord"
+                : document.curatedAddons[name]?.provider ?? "prefer-community";
+            return [name, provider];
+        })),
         timelinePolicy: document.timelinePolicy,
         productPreferences: document.productPreferences
     };
+}
+
+function setupFailureMessage(error: unknown): string {
+    const message = error instanceof Error ? error.message : "UnknownSetupFailure";
+    if (message === "SetupProviderMigrationConfirmationChanged" || message === "SetupCommunityCounterpartChanged") return "Setup stopped because an active community provider changed after review. Review the exact provider choice again; no provider was silently disabled.";
+    if (message.includes("already exists with a different hash")) return `Setup found a local file with different contents and left it untouched. ${message.slice(0, 180)}`;
+    if (message.includes("Download failed") || message.includes("response did not contain a body")) return "Setup could not download a reviewed community file. Built-in features and owner files were left unchanged; check the connection and retry.";
+    if (message.includes("Hash verification") || message.includes("Integrity") || message.includes("ownership receipt") || message.includes("Staged verification")) return "Setup rejected a file because its reviewed hash or ownership receipt did not match. Nothing unverified was enabled.";
+    if (message === "SelectedThemeLoadTimeout" || message === "SelectedThemeStartFailed") return "The theme file was verified, but Discord did not load or enable it in time. The transaction was rolled back.";
+    if (message === "SetupFailedRollbackIncomplete") return "Setup stopped and automatic rollback needs attention. Open Recovery before trying setup again; owner files were not overwritten.";
+    return "Setup stopped safely before keeping the transaction. Open Plugin Doctor for the sanitized failure code and retry after the flagged item is resolved.";
 }
 
 function bytesLabel(bytes: number): string {
@@ -47,19 +66,11 @@ function isReadyDecision(decision: SoulCordSetupCandidateDecision | undefined): 
     return decision?.availability === "built-in" || decision?.availability === "accepted";
 }
 
-function revealCatalog(): void {
-    const table = document.querySelector<HTMLElement>(".soulcord-catalog-table");
-    const section = table?.closest<HTMLElement>(".soulcord-section");
-    if (!section) return;
-    section.scrollIntoView({block: "start"});
-    section.querySelector<HTMLElement>("input, select, button, [href]")?.focus({preventScroll: true});
-}
-
 function StepNavigation({step, setStep, disabled}: {step: number; setStep(step: number): void; disabled: boolean;}) {
     return <ol className="soulcord-wizard-steps" aria-label="SoulCord setup steps">
         {WIZARD_STEPS.map((label, index) => <li key={label}>
             <button type="button" aria-current={index === step ? "step" : undefined} disabled={disabled} onClick={() => setStep(index)}>
-                <span>{index + 1}</span>{label}
+                <span aria-hidden="true">{index + 1}</span><span>{label}</span>
             </button>
         </li>)}
     </ol>;
@@ -83,7 +94,7 @@ function CurrentStateStep() {
     }));
     return <div className="soulcord-wizard-body">
         <h3>Protected starting point</h3>
-        <p>Only your current setup step is saved while you move through setup. Apply records a rollback transaction, validates ready adapters, and stops without overwriting a different local file.</p>
+        <p>Your complete draft is saved while you move through setup. Apply records a rollback transaction, validates ready adapters, and stops without overwriting a different local file.</p>
         <dl className="soulcord-facts">
             <div><dt>Catalog files already present</dt><dd>{state.installed}</dd></div>
             <div><dt>Catalog features currently enabled</dt><dd>{state.enabled}</dd></div>
@@ -117,8 +128,9 @@ function ThemeStep({value, appearance, onChange, onAppearance}: {value: SoulCord
             <label>Accent<select value={appearance.accent} onChange={event => onAppearance({...appearance, accent: event.currentTarget.value as SoulCordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
             <label>Density<select value={appearance.density} onChange={event => onAppearance({...appearance, density: event.currentTarget.value as SoulCordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
             <label>Motion<select value={appearance.motion} onChange={event => onAppearance({...appearance, motion: event.currentTarget.value as SoulCordAppearancePreferences["motion"]})}><option value="follow-system">Follow Discord / Windows</option><option value="full">Full</option><option value="reduced">Reduced</option></select></label>
+            <label>Message shape<select value={appearance.messageShape} onChange={event => onAppearance({...appearance, messageShape: event.currentTarget.value as SoulCordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
         </div>
-        <div className={`soulcord-live-preview soulcord-mode-${appearance.mode} soulcord-accent-${appearance.accent}`} aria-label="SoulCord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>No remote font, image, or style import.</small></div>
+        <div className={`soulcord-live-preview soulcord-mode-${appearance.mode} soulcord-accent-${appearance.accent} soulcord-preview-density-${appearance.density} soulcord-preview-shape-${appearance.messageShape}`} aria-label="SoulCord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>This preview updates immediately. Apply saves the mode and installs the selected compatibility theme.</small></div>
         <details className="soulcord-legacy-themes"><summary>Compatibility theme package</summary>
         <div className="soulcord-theme-options">
             {SOULCORD_THEMES.map(theme => <label key={theme.id} className={`soulcord-theme-option soulcord-theme-${theme.id}`}>
@@ -167,7 +179,7 @@ function ApplyStep({draft}: {draft: SoulCordSetupDraft;}) {
     </div>;
 }
 
-function AddonStep({draft, toggle, selectRecommended, setProvider}: {draft: SoulCordSetupDraft; toggle(name: string, enabled: boolean): void; selectRecommended(): void; setProvider(name: string, provider: SoulCordAddonProvider): void;}) {
+function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPending}: {draft: SoulCordSetupDraft; toggle(name: string, enabled: boolean): void; selectRecommended(): void; setProvider(name: string, provider: SoulCordAddonProvider): void; onReviewPending(): void;}) {
     const selected = useMemo(() => new Set(draft.selectedAddons), [draft.selectedAddons]);
     const plan = useMemo(() => resolveSoulCordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
     const decisions = useMemo(() => new Map(plan.decisions.map(decision => [decision.name, decision])), [plan.decisions]);
@@ -209,7 +221,7 @@ function AddonStep({draft, toggle, selectRecommended, setProvider}: {draft: Soul
         </div>
         <div className="soulcord-catalog-handoff">
             <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOULCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is preview-only.</strong> Its modal/clipboard adapter remains implemented, but Apply and verify will not enable it until a disposable Discord acceptance receipt exists.</p></div>
-            <button type="button" className="soulcord-action" onClick={revealCatalog}>Review pending</button>
+            <button type="button" className="soulcord-action" onClick={onReviewPending}>Review pending</button>
         </div>
     </div>;
 }
@@ -270,20 +282,28 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SoulCordSetupDraft; 
     </div>;
 }
 
-export default function SetupWizard() {
+export default function SetupWizard({onReviewPending}: {onReviewPending(): void;}) {
     const document = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot());
     const [step, setStepState] = useState(document.onboarding.lastStep);
-    const [draft, setDraft] = useState<SoulCordSetupDraft>(() => draftFrom(document));
+    const [draft, setDraftState] = useState<SoulCordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState("");
     const plan = useMemo(() => resolveSoulCordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
     const providerMigrationPlan = useStateFromStores([PluginManager], () => SoulCordRuntime.prepareProviderMigrationPlan(draft), [draft]);
+    useEffect(() => {
+        try {SoulCordSettings.setSetupDraft(draft);}
+        catch {setStatus("Your setup choices could not be saved. The durable draft was left unchanged; check disk access and retry before applying.");}
+    }, [draft]);
+    const setDraft = (update: SoulCordSetupDraft | ((current: SoulCordSetupDraft) => SoulCordSetupDraft)) => setDraftState(current => typeof update === "function" ? update(current) : update);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setProvider = (name: string, provider: SoulCordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
     const setStep = (next: number) => {
         const bounded = Math.min(WIZARD_STEPS.length - 1, Math.max(0, next));
-        setStepState(bounded);
-        SoulCordSettings.setOnboardingStep(bounded);
+        try {
+            SoulCordSettings.setOnboardingStep(bounded);
+            setStepState(bounded);
+        }
+        catch {setStatus("SoulCord could not save this setup step. Your durable setup state was left unchanged; check disk access and retry.");}
     };
     const setPreset = (preset: SoulCordSetupPreset) => setDraft(current => ({
         ...current,
@@ -312,11 +332,7 @@ export default function SetupWizard() {
             const result = await SoulCordRuntime.finishSetup(draft, providerMigrationPlan);
             setStatus(`Finished transaction ${result.transactionId}. ${result.enabled.length} enabled; ${plan.skipped.length} skipped; ${result.quarantined.length} quarantined; ${result.providerConflicts.length} provider conflict(s).`);
         }
-        catch (error) {
-            setStatus(error instanceof Error && error.message === "SetupProviderMigrationConfirmationChanged"
-                ? "Setup stopped because the active community provider changed after review. The transaction was not kept and no provider addon was disabled; review the exact file list again."
-                : "Setup stopped safely. No differing local file was overwritten. Review the setup checks before trying again.");
-        }
+        catch (error) {setStatus(setupFailureMessage(error));}
         finally {
             setBusy(false);
         }
@@ -327,7 +343,8 @@ export default function SetupWizard() {
     };
 
     return <section className="soulcord-wizard" aria-labelledby="soulcord-setup-title" aria-busy={busy}>
-        <div className="soulcord-wizard-title"><div><p className="soulcord-eyebrow">Resumable setup · only your place is saved before Apply</p><h2 id="soulcord-setup-title">Set up SoulCord</h2><p>Eight short steps cover risk, rollback, appearance, safety, optional private history, and the exact transaction.</p></div><span>{step + 1} / {WIZARD_STEPS.length}</span></div>
+        <div className="soulcord-wizard-title"><div><h2 id="soulcord-setup-title">Set up SoulCord</h2><p>Your choices save as you go. Files and active features change only after the final review.</p></div><span>Step {step + 1} of {WIZARD_STEPS.length}</span></div>
+        <div className="soulcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
         {step === 0 && <WelcomeStep />}
         {step === 1 && <CurrentStateStep />}
@@ -335,7 +352,7 @@ export default function SetupWizard() {
         {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
         {step === 4 && <SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} />}
         {step === 5 && <PrivateHistoryStep draft={draft} onChange={setDraft} />}
-        {step === 6 && <><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} /><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /></>}
+        {step === 6 && <><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} onReviewPending={onReviewPending} /><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /></>}
         {step === 7 && <ApplyStep draft={draft} />}
         <div className="soulcord-wizard-footer">
             <div className="soulcord-actions"><button type="button" className="soulcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className="soulcord-action soulcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Verifying and applying…" : "Apply and verify"}</button>}<button type="button" className="soulcord-action" disabled={busy} onClick={skip}>Skip without changes</button></div>

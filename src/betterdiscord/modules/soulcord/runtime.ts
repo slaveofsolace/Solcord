@@ -8,9 +8,9 @@ import PluginManager from "@modules/pluginmanager";
 import ThemeManager from "@modules/thememanager";
 import SettingsRenderer from "@ui/settings";
 import Modals from "@ui/modals";
-import {getByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
+import {getByKeys, getLazyByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
 
-import type {SoulCordCuratedAddonState, SoulCordMaturity, SoulCordModuleHealth, SoulCordModuleId} from "./contracts";
+import type {SoulCordCuratedAddonState, SoulCordMaturity, SoulCordModuleHealth, SoulCordModuleId, SoulCordPowerExperimentId} from "./contracts";
 import {SoulCordDisposalScope} from "./disposal";
 import SoulCordSettings, {normalizeSetupDraft, SOULCORD_THEMES, type SoulCordImportPreview} from "./store";
 import PluginDoctor from "./doctor";
@@ -27,6 +27,7 @@ import {resolveSoulCordSetupPlan} from "@common/soulcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
 import {DoNotTrackAdapter, resolveDiscordAnalyticsTrack, validateDiscordAnalyticsTrack} from "./do-not-track";
+import {applySoulCordFakeDeafenConsentTransition, SoulCordFakeDeafenController, type SoulCordFakeDeafenStatus, type SoulCordGatewaySocket} from "./fake-deafen";
 import {normalizeDiscordRelationships, planSoulCordFriendWatchNotices, reconcileSoulCordRelationships, SoulCordFriendWatchAccountBarrier, SoulCordFriendWatchJournal, type SoulCordFriendWatchNoticeState, type SoulCordOwnerRelationshipAction, type SoulCordRelationshipEvent, type SoulCordRelationshipSnapshot} from "@common/soulcord/friend-watch";
 import {inspectSoulCordDomain, SoulCordDomainMemory, type SoulCordDomainDecision, type SoulCordDomainMemoryRecord, type SoulCordDomainRisk} from "@common/soulcord/domain-memory";
 import {inspectSoulCordAttachment, type SoulCordAttachmentInspection} from "@common/soulcord/attachment-guard";
@@ -254,6 +255,9 @@ class SoulCordRuntimeStore extends Store {
         records: unavailableIntegrityRecords(),
         summary: summarizeIntegrity(unavailableIntegrityRecords())
     };
+    #fakeDeafen?: SoulCordFakeDeafenController;
+    #fakeDeafenScope = new SoulCordDisposalScope();
+    #fakeDeafenStatus: SoulCordFakeDeafenStatus = {phase: "off", detail: "Power Lab experiment is off.", connected: false, capturedVoiceState: false, armed: false};
 
     initialize(): void {
         if (this.#initialized) return;
@@ -303,10 +307,11 @@ class SoulCordRuntimeStore extends Store {
             if (SoulCordSettings.module(id).enabled) await this.#startFeature(id);
         }
         this.#synchronizeCuratedAdapters();
+        await this.#synchronizePowerLab();
         const synchronizeCuratedAdapters = () => {
             const nextSignature = this.#communityAddonSignature();
-            if (nextSignature === this.#curatedCommunitySignature) return;
-            this.#synchronizeCuratedAdapters();
+            if (nextSignature !== this.#curatedCommunitySignature) this.#synchronizeCuratedAdapters();
+            void this.#synchronizePowerLab();
         };
         PluginManager.addChangeListener(synchronizeCuratedAdapters);
         this.#rootScope.own(() => PluginManager.removeChangeListener(synchronizeCuratedAdapters), "listener");
@@ -523,6 +528,54 @@ class SoulCordRuntimeStore extends Store {
         SoulCordSettings.setProductPreferences(value);
         this.#applyProductPresentation();
         await this.#synchronizeFeatures();
+    }
+
+    fakeDeafenStatus(): SoulCordFakeDeafenStatus {
+        return structuredClone(this.#fakeDeafenStatus);
+    }
+
+    async setPowerExperiment(id: SoulCordPowerExperimentId, enabled: boolean, acknowledged = false): Promise<boolean> {
+        if (enabled && id !== "fake-deafen") return false;
+        if (id === "fake-deafen") {
+            const accepted = await applySoulCordFakeDeafenConsentTransition({
+                persist: () => SoulCordSettings.setPowerExperiment(id, enabled, acknowledged),
+                synchronize: async () => {if (this.#started) await this.#synchronizePowerLab();},
+                failClosed: () => this.#stopFakeDeafen()
+            });
+            if (!accepted) {
+                this.#fakeDeafenStatus = {
+                    phase: "attention",
+                    detail: "The Power Lab setting could not be saved. Fake Deafen was stopped for this session; the previous durable consent may load again after restart.",
+                    connected: false,
+                    capturedVoiceState: false,
+                    armed: false
+                };
+                this.emitChange();
+                return false;
+            }
+        }
+        else {
+            SoulCordSettings.setPowerExperiment(id, enabled, acknowledged);
+            if (this.#started) await this.#synchronizePowerLab();
+        }
+        return SoulCordSettings.snapshot().powerLab[id].enabled === enabled
+            && (enabled || id !== "fake-deafen" || this.#fakeDeafenStatus.phase !== "attention");
+    }
+
+    armFakeDeafen(): boolean {
+        const consent = SoulCordSettings.snapshot().powerLab["fake-deafen"];
+        if (!consent.enabled || consent.acknowledgementVersion !== SoulCordSettings.snapshot().consentVersion) return false;
+        const armed = this.#fakeDeafen?.arm() === true;
+        this.#fakeDeafenStatus = this.#fakeDeafen?.snapshot() ?? this.#fakeDeafenStatus;
+        this.emitChange();
+        return armed;
+    }
+
+    disarmFakeDeafen(): boolean {
+        const disarmed = this.#fakeDeafen?.disarm() ?? true;
+        this.#fakeDeafenStatus = this.#fakeDeafen?.snapshot() ?? this.#fakeDeafenStatus;
+        this.emitChange();
+        return disarmed;
     }
 
     #applyProductPresentation(): void {
@@ -1675,6 +1728,71 @@ class SoulCordRuntimeStore extends Store {
                 this.#stopFeature(id);
             }
         }
+        await this.#synchronizePowerLab();
+    }
+
+    async #synchronizePowerLab(): Promise<void> {
+        const consent = SoulCordSettings.snapshot().powerLab["fake-deafen"];
+        if (this.#recoveryMode || !consent.enabled) {
+            this.#stopFakeDeafen();
+            return;
+        }
+        const communityAddon = PluginManager.resolveAddon("FakeDeafen") ?? PluginManager.resolveAddon("FakeDeafen.plugin.js");
+        if (communityAddon && PluginManager.isEnabled(communityAddon.filename)) {
+            this.#stopFakeDeafen();
+            this.#fakeDeafenStatus = {phase: "attention", detail: "The community FakeDeafen plugin is active. Disable it before loading SoulCord's scoped adapter; SoulCord will not stack both patches.", connected: false, capturedVoiceState: false, armed: false};
+            this.emitChange();
+            return;
+        }
+        if (this.#fakeDeafen) return;
+
+        this.#fakeDeafenScope.dispose();
+        this.#fakeDeafenScope = new SoulCordDisposalScope();
+        const scope = this.#fakeDeafenScope;
+        const gateway = await getLazyByKeys<{getSocket?(): SoulCordGatewaySocket | undefined;}>(["getSocket"]);
+        const mediaActions = await getLazyByKeys<{toggleSelfDeaf?(): void; toggleSelfMute?(): void;}>(["toggleSelfDeaf", "toggleSelfMute"]);
+        const selectedChannelStore = getStore("SelectedChannelStore") as {getVoiceChannelId?: () => string | undefined;} | undefined;
+        const mediaEngineStore = getStore("MediaEngineStore") as {isDeaf?: () => boolean; isSelfDeaf?: () => boolean;} | undefined;
+        const socket = gateway?.getSocket?.();
+        if (!socket || typeof socket.send !== "function" || typeof mediaActions?.toggleSelfDeaf !== "function" || typeof selectedChannelStore?.getVoiceChannelId !== "function" || (typeof mediaEngineStore?.isDeaf !== "function" && typeof mediaEngineStore?.isSelfDeaf !== "function")) {
+            this.#fakeDeafenStatus = {phase: "attention", detail: "Discord voice modules failed structural validation; Fake Deafen stayed off.", connected: false, capturedVoiceState: false, armed: false};
+            this.emitChange();
+            return;
+        }
+
+        const controller = new SoulCordFakeDeafenController({
+            getSocket: () => gateway?.getSocket?.(),
+            getVoiceChannelId: () => selectedChannelStore.getVoiceChannelId?.(),
+            isLocallyDeafened: () => Boolean(mediaEngineStore.isDeaf?.() ?? mediaEngineStore.isSelfDeaf?.()),
+            toggleLocalDeafen: () => mediaActions.toggleSelfDeaf!(),
+            patchSend: (target, observe) => Patcher.before("SoulCord~FakeDeafen", target, "send", (_thisObject, args) => observe(args as unknown[]), {forcePatch: false}),
+            onStatus: status => {
+                this.#fakeDeafenStatus = status;
+                this.emitChange();
+            }
+        });
+        if (!controller.start()) {
+            this.#fakeDeafenStatus = controller.snapshot();
+            return;
+        }
+        this.#fakeDeafen = controller;
+        scope.own(() => controller.stop(), "patch");
+        scope.interval(() => controller.validateOwnership(), 5_000);
+        this.#fakeDeafenStatus = controller.snapshot();
+        this.emitChange();
+    }
+
+    #stopFakeDeafen(): void {
+        const controller = this.#fakeDeafen;
+        try {this.#fakeDeafenScope.dispose();}
+        catch (error) {Logger.warn("SoulCord", `Fake Deafen cleanup reported ${errorName(error)}.`);}
+        const stoppedStatus = controller?.snapshot();
+        this.#fakeDeafenScope = new SoulCordDisposalScope();
+        this.#fakeDeafen = undefined;
+        this.#fakeDeafenStatus = stoppedStatus?.phase === "attention"
+            ? {...stoppedStatus, armed: false}
+            : {phase: "off", detail: "Power Lab experiment is off.", connected: false, capturedVoiceState: false, armed: false};
+        this.emitChange();
     }
 
     async #startFeature(id: SoulCordModuleId): Promise<void> {
@@ -1782,7 +1900,7 @@ class SoulCordRuntimeStore extends Store {
             const records = PluginDoctor.snapshot();
             const quarantined = records.filter(record => record.quarantinedAt).length;
             const integrity = this.#integrity.summary;
-            this.#setHealth("plugin-doctor", {detail: `${quarantined} quarantined addon(s); ${records.reduce((sum, record) => sum + record.failures.length, 0)} recent sanitized failure record(s). Integrity: ${integrity.match} verified, ${integrity.missing} not staged, ${integrity.attention + integrity.unavailable} held for review.`});
+            this.#setHealth("plugin-doctor", {detail: `${quarantined} quarantined addon(s); ${records.reduce((sum, record) => sum + record.failures.length, 0)} recent sanitized failure record(s). Integrity: ${integrity.match} verified, ${integrity.missing} optional catalog file(s) absent, ${integrity.attention + integrity.unavailable} held for review.`});
         };
         PluginDoctor.addChangeListener(update);
         scope.own(() => PluginDoctor.removeChangeListener(update), "listener");

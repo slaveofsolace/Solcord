@@ -59,9 +59,10 @@ export interface SoulCordPowerConsent {
 export type SoulCordPowerExperimentId = "voice-anchor" | "expression-relay" | "decor" | "fake-deafen" | "fake-mute" | "stream-rtc";
 
 export interface SoulCordOnboardingState {
-    version: 2;
+    version: 3;
     status: SoulCordOnboardingStatus;
     lastStep: number;
+    draft?: SoulCordSetupDraft;
     completedAt?: number;
 }
 
@@ -118,8 +119,8 @@ export interface SoulCordUpdateEntry {
 }
 
 export interface SoulCordSettingsDocument {
-    schemaVersion: 4;
-    consentVersion: 2;
+    schemaVersion: 5;
+    consentVersion: 3;
     onboarding: SoulCordOnboardingState;
     selectedTheme: SoulCordThemeId;
     curatedAddons: Record<string, SoulCordCuratedAddonState>;

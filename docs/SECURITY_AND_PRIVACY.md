@@ -46,7 +46,7 @@ The `sc-get-activity-compatibility` channel is read-only and returns the bounded
 
 ## Setup transaction
 
-- The request is normalized against the generated 36-addon manifest and five embedded SoulCord themes; unknown names are dropped and duplicate names collapse to one request.
+- The request is normalized against the generated 36-addon manifest and five embedded SoulCord themes; any unknown or duplicate name rejects the complete request before staging.
 - The Electron transaction checks the generated `installable` decision again; renderer UI state is not authorization. `HOLD`, `REJECT`, action-pending, dependency-pending, or runtime-pending records abort before staging.
 - Dependency closure is resolved before any target file changes.
 - Remote payloads must use HTTPS, `raw.githubusercontent.com`, and a 40-character immutable revision in the path. Redirects and payloads larger than 5 MiB are rejected.
@@ -118,11 +118,13 @@ Private IPC accepts only HTTPS, default-port, credential-free exact application 
 
 ## V1 prohibited capabilities
 
-No token extraction, self-bot action, hidden telemetry, hidden-channel or offline deleted-message recovery, automated send/join/upload, entitlement or SKU mutation, premium impersonation, bypass/evasion, or covert microphone traffic. The private Message Timeline is an explicit local logger of events the running client already observed, is outside BetterDiscord store compliance, and is never disguised as a store-safe feature. Anti-AFK audio, expression fallback, Decor/OAuth, fake mute/deafen, and stream overrides remain unavailable, off, and excluded from V1 install acceptance.
+No token extraction, self-bot action, hidden telemetry, hidden-channel or offline deleted-message recovery, automated send/join/upload, entitlement or SKU mutation, premium impersonation, bypass/evasion, or covert microphone traffic. The private Message Timeline is an explicit local logger of events the running client already observed, is outside BetterDiscord store compliance, and is never disguised as a store-safe feature. Anti-AFK audio, expression fallback, Decor/OAuth, Fake Mute, and stream overrides remain unavailable, off, and excluded from V1 install acceptance. Fake Deafen exists only as the separately acknowledged, separately armed, default-off Power Lab preview documented below; it remains outside the default setup and V1 live-install acceptance.
 
 Guarded large-message splitting previews parts and copies them after confirmation; it does not send and does not require the held community plugin. Native mode remains blocked with the community plugin and BDFDB. Voice Messages is held pending isolated record/preview/cancel/upload UI acceptance; SoulCord setup and acceptance do not record or upload on the owner’s behalf.
 
 Do Not Track is clean-room code that suppresses only Discord's exact `default.track` analytics method after the module is anchored by `AnalyticEventConfigs`; it never inspects analytics payloads and does not patch Sentry, fetch, XMLHttpRequest, IPC, process monitoring, game monitoring, or unrelated network traffic. Double Click to Reply accepts only an unmodified primary-button `dblclick` on a structurally resolved message, excludes links/controls/code/selection/SoulCord UI and the current user's messages, and invokes only Discord's validated pending-reply action. Invisible Typing patches only a structurally validated outgoing `startTyping` function, preserves ordinary Discord behavior when its adapter/settings drift, and never touches incoming typing state or message sending. All three own reversible cleanup and stand down when the matching owner plugin is already active.
+
+Fake Deafen is not part of the default product path. Its Power Lab adapter requires a current acknowledgement to load and a separate explicit action to arm. It rewrites only validated outgoing voice-state opcode 4 payloads on the structurally resolved active gateway socket, binds the arm state to one voice connection, restores server-visible state on disarm, and fails closed on malformed payloads, channel moves, disconnects, or socket replacement. SoulCord refuses to stack the adapter with an enabled community FakeDeafen plugin. It does not auto-arm, join voice, record audio, or send chat messages.
 
 ## Verification snapshot
 

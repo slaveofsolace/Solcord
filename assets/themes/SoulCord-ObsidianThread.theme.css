@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: Apache-2.0 */
-
 /**
  * @name SoulCord — Obsidian Thread
  * @author slaveofsolace
- * @version 1.0.1
+ * @version 1.2.0
  * @description SoulCord's dense graphite, warm-bone, oxidized-teal, and ember theme.
  * @source https://github.com/slaveofsolace/Solcord
+ * @license Apache-2.0
  */
+
+/* SPDX-License-Identifier: Apache-2.0 */
 
 /* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
 
@@ -20,6 +21,20 @@
     --soulcord-ember: #DF6B52;
     --soulcord-seam: #343B3E;
     --soulcord-focus: #78C4BD;
+    --soulcord-canvas: #0D1011;
+    --soulcord-surface-0: #131718;
+    --soulcord-surface-1: #191E20;
+    --soulcord-surface-2: #22282A;
+    --soulcord-accent: var(--soulcord-teal);
+    --soulcord-accent-strong: #397D77;
+    --soulcord-on-accent: #07110F;
+    --soulcord-panel-shadow: 0 14px 30px rgb(0 0 0 / 30%);
+    --soulcord-panel-filter: none;
+    --soulcord-message-hover: rgb(75 157 150 / 8%);
+    --soulcord-gap: 10px;
+    --soulcord-radius: 4px;
+    --soulcord-radius-small: 2px;
+    --soulcord-avatar-radius: 8px;
     --soulcord-cream: var(--soulcord-bone);
     --soulcord-sea: var(--soulcord-teal);
     --soulcord-coral: var(--soulcord-ember);
@@ -29,7 +44,8 @@
 
 .theme-dark,
 .theme-darker,
-.theme-midnight {
+.theme-midnight,
+.theme-light {
     color-scheme: dark;
 
     --background-primary: var(--soulcord-graphite);
@@ -52,22 +68,125 @@
     --interactive-muted: #8B9496;
     --brand-experiment: var(--soulcord-teal);
     --brand-experiment-560: #438D87;
+    --brand-500: var(--soulcord-accent-strong);
+    --brand-560: #397A75;
+    --brand-600: #306863;
+    --button-filled-brand-background: var(--soulcord-accent-strong);
+    --button-filled-brand-background-hover: var(--brand-560);
+    --button-filled-brand-text: var(--soulcord-on-accent);
+    --text-default: var(--text-normal);
+    --interactive-text-default: var(--interactive-normal);
+    --interactive-text-hover: var(--interactive-hover);
+    --interactive-text-active: var(--interactive-active);
     --status-danger: var(--soulcord-ember);
     --channel-text-area-placeholder: #929A9C;
     --scrollbar-thin-thumb: #515B5E;
     --scrollbar-auto-thumb: #515B5E;
     --scrollbar-auto-track: #131617;
+    --app-frame-background: var(--soulcord-canvas);
+    --app-frame-border: var(--soulcord-seam);
+    --background-base-low: var(--soulcord-surface-1);
+    --background-base-lower: var(--soulcord-surface-0);
+    --background-base-lowest: var(--soulcord-canvas);
+    --background-surface-high: var(--soulcord-surface-1);
+    --background-surface-higher: var(--soulcord-surface-2);
+    --background-surface-highest: var(--soulcord-raised);
+    --background-mod-subtle: rgb(75 157 150 / 8%);
+    --background-mod-normal: rgb(75 157 150 / 13%);
+    --background-mod-strong: rgb(75 157 150 / 20%);
+    --bg-surface-overlay-tmp: var(--soulcord-raised);
+    --bg-surface-raised: var(--soulcord-raised);
+    --border-muted: rgb(52 59 62 / 72%);
+    --border-normal: var(--soulcord-seam);
+    --border-strong: #4D585B;
+    --border-subtle: rgb(52 59 62 / 78%);
+    --card-background-default: var(--soulcord-surface-1);
+    --channeltextarea-background: var(--soulcord-surface-2);
+    --chat-background-default: var(--soulcord-surface-1);
+    --input-background: var(--soulcord-surface-0);
 }
 
 ::selection { color: #111415; background: #91D4CE; }
 :where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }
 :where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
-:where([class*="sidebar"], [class*="membersWrap"], [class*="nowPlayingColumn"], [class*="contentRegion"]) { border-color: var(--soulcord-seam) !important; }
-:where([class*="sidebar"]):not([class*="sidebarList"]) { border-right: 1px solid var(--soulcord-seam); }
-:where([class*="membersWrap"], [class*="nowPlayingColumn"]) { border-left: 1px solid var(--soulcord-seam); }
-:where([class*="channelTextArea"], [class*="searchBar"], [class*="inputWrapper"]) { border: 1px solid #30383B; box-shadow: none !important; }
-:where([class*="mentioned"]) { background: rgb(223 107 82 / 9%) !important; border-left: 2px solid var(--soulcord-ember); }
-:where([class*="newMessagesBar"]) { background: var(--soulcord-teal) !important; color: #101314 !important; }
+#app-mount :is([class*="sidebarList_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"], [class*="contentRegion_"]) { border-color: var(--soulcord-seam) !important; }
+#app-mount [class*="mentioned_"] { background: rgb(223 107 82 / 9%) !important; border-left: 2px solid var(--soulcord-ember); }
+#app-mount [class*="newMessagesBar_"] { background: var(--soulcord-teal) !important; color: #101314 !important; }
+
+body {
+    background: var(--soulcord-canvas) !important;
+    font-family: "Segoe UI Variable", "gg sans", sans-serif;
+}
+
+#app-mount { background: var(--soulcord-canvas) !important; }
+
+#app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
+    gap: var(--soulcord-gap);
+    margin: 0 var(--soulcord-gap) var(--soulcord-gap);
+    background: transparent !important;
+}
+
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="panels_"], [class*="subtitleContainer_"], [class*="chatContent_"], [class*="peopleColumn_"], [class*="nowPlayingColumn_"], [class*="membersWrap_"]) {
+    box-sizing: border-box;
+    border: 1px solid var(--soulcord-seam);
+    border-radius: var(--soulcord-radius);
+    background: var(--soulcord-surface-1) !important;
+    box-shadow: var(--soulcord-panel-shadow);
+    backdrop-filter: var(--soulcord-panel-filter);
+}
+
+#app-mount [class*="guilds_"] {
+    margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--soulcord-gap));
+}
+
+#app-mount [class*="sidebarList_"] { margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--soulcord-gap)); }
+#app-mount [class*="panels_"] { border-top: 2px solid var(--soulcord-accent); }
+#app-mount [class*="subtitleContainer_"] { margin-bottom: var(--soulcord-gap); }
+#app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin-left: var(--soulcord-gap); }
+
+#app-mount [class*="page_"] > :is([class*="chat_"], [class*="peopleColumn_"]) {
+    padding-right: var(--soulcord-gap);
+    padding-bottom: var(--soulcord-gap);
+    background: transparent !important;
+}
+
+#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) {
+    border: 1px solid var(--soulcord-seam) !important;
+    border-radius: var(--soulcord-radius-small) !important;
+    background: var(--soulcord-surface-2) !important;
+    box-shadow: inset 0 -2px 0 var(--soulcord-accent-strong) !important;
+}
+
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) {
+    border: 1px solid transparent;
+    border-radius: var(--soulcord-radius-small) !important;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover {
+    border-color: var(--soulcord-seam);
+    background: var(--soulcord-surface-2) !important;
+}
+
+#app-mount [class*="peopleListItem_"] { border-width: 0 0 1px; border-bottom-color: var(--soulcord-seam); border-radius: 0 !important; }
+#app-mount [class*="itemCard_"] { background: transparent !important; border-left-color: var(--soulcord-accent); box-shadow: none; }
+#app-mount li[id^="chat-messages-"] { margin-inline: 4px; border-left: 2px solid transparent; border-radius: 0; }
+#app-mount li[id^="chat-messages-"]:hover { border-left-color: var(--soulcord-accent); background: var(--soulcord-message-hover) !important; }
+#app-mount [class*="embedFull_"] { border: 1px solid var(--soulcord-seam) !important; border-left: 3px solid var(--soulcord-accent) !important; border-radius: 0 !important; }
+#app-mount [class*="guilds_"] [class*="icon_"] { border-radius: var(--soulcord-avatar-radius) !important; }
+#app-mount [class*="topPill_"] [class*="item_"][aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--soulcord-accent); }
+
+::-webkit-scrollbar-thumb {
+    border: 3px solid transparent !important;
+    border-radius: 999px !important;
+    background: var(--soulcord-seam) !important;
+    background-clip: padding-box !important;
+}
+
+@media (max-width: 900px) {
+    :root { --soulcord-gap: 4px; }
+    #app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin-left: 4px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
     *,

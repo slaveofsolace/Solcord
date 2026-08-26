@@ -48,17 +48,17 @@ Current production-source hashes:
 
 ## Theme family
 
-The recommended default and four alternatives share dense Discord-compatible spacing, explicit keyboard focus, written status labels, 1 px seams, and a `prefers-reduced-motion` fallback. Each is a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
+The recommended default and four alternatives share a visibly separated workstation layout: bounded server/channel/chat/member regions, compact gutters, distinct composer and search fields, active-row rails, explicit keyboard focus, current Discord visual-refresh tokens, and a `prefers-reduced-motion` fallback. Each remains a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
 
 | Theme | Character | SHA-256 |
 | --- | --- | --- |
-| SoulCord Default | Recommended graphite foundation, warm text, oxidized-teal interaction, and ember reserved for warnings. | `411c277ccfecd53c28a344f22f66c2ac28a6ea16533d4365ddd9a24e80e5f536` |
-| Obsidian Thread | Graphite, warm bone, oxidized teal, and restrained ember. | `da8058f1f0ad765654d11906cff1e2e71c13e1c60bf8d79f6a110435557b3ff8` |
-| Carbon Ember | Charcoal and ash with copper and burgundy signals. | `6b4bd267a172f2eaf2c5847d47305862e411e5b3b35a025169d796caf914de8d` |
-| Midnight Glass | Navy-black, silver, and ice cyan without remote assets or backdrop blur. | `2f29872d7e225e71e03810805f7033b43930f9d9e02840fe37d2014c4c835801` |
-| Paper Signal | Warm paper, ink, coral, and teal for Discord light mode. | `23ec183af6391d2dbc7ec73fd36b953ebe39735965203ce7d2b4b59df66c0cd4` |
+| SoulCord Default | Recommended graphite workstation, warm text, oxidized-teal interaction, and ember reserved for warnings. | `a7f47ae4b1a208f69545c9d6ef699e0a2cef831af63dadb4319597067d8329a9` |
+| Obsidian Thread | Wide black gutters, squared graphite panels, warm bone, oxidized teal, and restrained ember. | `da11e6c4070a400cad3d0beb5e2e9284b18d9e9c52f8e57a3a0c022ae0a09c54` |
+| Carbon Ember | Tight charcoal instrumentation with copper interaction rails and burgundy selection signals. | `ab2c74b1ce42720c99bf6d7a33f04befa47dd79d6c5537c8d974c0b555476f9c` |
+| Midnight Glass | Navy-black translucent panels, restrained separation, silver seams, and ice-cyan focus without fragile modal overrides. | `4b605006305b114112c48ce6a89204259343d10d960b2a13a0366655e15c1a00` |
+| Paper Signal | Warm paper, ink, coral, and teal with print-like square seams; it applies even when Discord was previously in dark mode. | `8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d` |
 
-All five are original. The MIT-licensed `midnight-discord` candidate was considered as a possible reference, but no file, selector block, asset, or code from it was used. The owner’s existing `midnight.theme.css` is a separate user file and is not inspected, modified, or replaced by this theme family.
+All five remain original implementations. The MIT-licensed `midnight-discord` source at pinned commit `0c6e4b5009df5f13fe33d9b279378378d5212330` was inspected as `REFERENCE ONLY` for general principles: cover current visual-refresh tokens, separate major work regions, expose bounded density tokens, and honor reduced motion. No selector block, hosted import, font, SVG, or asset was copied. The owner’s existing `midnight.theme.css` was read only to confirm its canonical metadata/configuration shape and was not modified, staged, or replaced.
 
 Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before **Apply and verify**; skipping the wizard changes no theme state.
 
@@ -74,7 +74,7 @@ Only one SoulCord theme is selected by the setup transaction. The preview report
 
 ## Acceptance status
 
-The 16 px and 256 px mark exports passed a technical silhouette inspection. That is implementation evidence, not owner acceptance. The mark, all five themes, onboarding, settings, Timeline tombstones, recovery, 100%/125% scaling, light/dark contrast, focus order, and reduced-motion behavior remain `REVISE` or `UNREVIEWED` until installed Human Eye captures receive an explicit owner verdict.
+The owner visually accepted the current SoulCord V1 direction on 2026-08-26, including the active mark, settings shell, and current theme treatment. The 16 px and 256 px exports also passed the earlier technical silhouette inspection. This acceptance does not claim exact 100%/125% DPI coverage, every Timeline/recovery state, or V2 theme acceptance; those remain separate runtime checks.
 
 ## Voice
 

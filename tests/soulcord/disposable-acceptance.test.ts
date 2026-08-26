@@ -502,6 +502,57 @@ windowsDescribe("SoulCord disposable Windows acceptance preparation", () => {
         expect(execution.loaded).toEqual([]);
     });
 
+    test("accepts bounded Discord runtime artifacts on a repeat isolated launch", () => {
+        prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        });
+        const modulesRoot = path.join(fixture.destination, "runtime", "modules");
+        fs.mkdirSync(path.join(modulesRoot, "crashlogs"));
+        fs.writeFileSync(path.join(modulesRoot, "crashlogs", "runtime.log"), "sanitized runtime fixture\n");
+        fs.mkdirSync(path.join(modulesRoot, "discord_utils"));
+
+        const execution = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Roaming"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(fixture.destination, "runtime", "resources", "app"));
+
+        expect(execution.error).toBeNull();
+        expect(execution.loaded).toEqual(["../soulcord.asar", "../betterdiscord.app.asar"]);
+        expect(execution.moduleGlobalPaths).toEqual([
+            path.join(modulesRoot, "discord_desktop_core-1"),
+            path.join(modulesRoot, "discord_utils-1")
+        ]);
+    });
+
+    test("rejects an unrecognized unversioned module directory on repeat launch", () => {
+        prepareSoulCordDisposableAcceptance({
+            sourceDiscordAppDir: fixture.sourceApp,
+            soulCordAsar: fixture.soulCordAsar,
+            destinationRoot: fixture.destination,
+            expectedSoulCordSha256: fixture.expectedHash,
+            expectedSoulCordSourceCommit: fixture.expectedSourceCommit
+        });
+        fs.mkdirSync(path.join(fixture.destination, "runtime", "modules", "discord_unknown"));
+
+        const execution = executeShim({
+            SOULCORD_ACCEPTANCE_ROOT: fixture.destination,
+            APPDATA: path.join(fixture.destination, "profile", "Roaming"),
+            LOCALAPPDATA: path.join(fixture.destination, "profile", "Local"),
+            DISCORD_USER_DATA_DIR: path.join(fixture.destination, "profile", "Roaming"),
+            SOULCORD_ACCEPTANCE_MODE: "1"
+        }, path.join(fixture.destination, "runtime", "resources", "app"));
+
+        expect(execution.error?.message).toContain("invalid copied Discord module wrapper");
+        expect(execution.loaded).toEqual([]);
+    });
+
     test("rejects conflicting copied native-module metadata before SoulCord loads", () => {
         prepareSoulCordDisposableAcceptance({
             sourceDiscordAppDir: fixture.sourceApp,

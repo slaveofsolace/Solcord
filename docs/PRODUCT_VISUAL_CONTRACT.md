@@ -22,17 +22,10 @@ The Control Center inherits Discord typography and native form behavior. It avoi
 
 ## Launch identity
 
-SoulCord adds a transparent, pointer-inert layer over Discord's standard startup surface. The source-frozen phase model is:
-
-1. **Initial:** `SOLcord` settles into place.
-2. **Insertion:** a `U` opens between `O` and `L`; `Lcord` shifts only far enough to make the insertion legible.
-3. **Resolved:** the stable wordmark reads `SOULcord` by 820 ms.
-4. **Handoff:** the layer crossfades for 190 ms when Discord is ready.
-
-Reduced Motion renders `SOULcord` immediately. The one accessibility label is “SoulCord is starting”; partial letters are hidden from assistive technology. The layer removes itself after a bounded 12-second default timeout, never suppresses Discord's native splash, and records only a sanitized recovery event on failure.
+SoulCord does not draw a second product splash. Discord's updater and bootstrap window retain full ownership of the familiar spinning Discord mark, background, motion preferences, startup text, and handoff into the client. SoulCord's loading adapter is an intentional no-op kept only to preserve the inherited startup call contract. It bundles no Discord mark, creates no renderer overlay, adds no timer, and cannot cover a recovery or authentication surface.
 
 ## Human Eye matrix
 
-Source-frozen review must capture initial, insertion, resolved, and handoff launch frames plus Home, Appearance, Safety, People, Tools, setup, recovery, and error/empty states at 1280×720, 1142×1440, 1920×1080, ultrawide, and a narrow settings column. Required checks are clipping, focus order, keyboard operation, 100/125/150/200% scaling, dark/light/OLED contrast, high contrast, and reduced motion.
+Source-frozen review must confirm that Discord's native spinner is unobstructed and that no SoulCord launch overlay survives into the client. Home, Appearance, Safety, People, Tools, setup, recovery, and error/empty states remain required at 1280×720, 1142×1440, 1920×1080, ultrawide, and a narrow settings column. Required checks are clipping, focus order, keyboard operation, 100/125/150/200% scaling, dark/light/OLED contrast, high contrast, and reduced motion.
 
 Technical render success is not Human Eye acceptance. Each surface receives `ACCEPT`, `REVISE`, `REJECT`, or `BLOCKED` with an observed reason. Real-profile appearance changes remain an owner gate.

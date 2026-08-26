@@ -27,9 +27,9 @@ import type {
 } from "./contracts";
 
 
-export const SOULCORD_SCHEMA_VERSION = 4;
-export const SOULCORD_CONSENT_VERSION = 2;
-export const SOULCORD_ONBOARDING_VERSION = 2;
+export const SOULCORD_SCHEMA_VERSION = 5;
+export const SOULCORD_CONSENT_VERSION = 3;
+export const SOULCORD_ONBOARDING_VERSION = 3;
 const MAX_SNAPSHOTS = 20;
 const MAX_LEDGER_ENTRIES = 100;
 const MAX_PROFILES = 50;
@@ -119,7 +119,7 @@ export function defaultCuratedAddons(): Record<string, SoulCordCuratedAddonState
         selected: recommended.has(name),
         enabled: false,
         mode: name === "SplitLargeMessages" ? "guarded" : "default",
-        provider: "prefer-community"
+        provider: isSoulCordBuiltInAddon(name, name === "SplitLargeMessages" ? "guarded" : "default") ? "prefer-soulcord" : "prefer-community"
     }])) as Record<string, SoulCordCuratedAddonState>;
 }
 
@@ -128,8 +128,9 @@ function normalizeAddonMode(value: unknown, name: string): SoulCordAddonMode {
     return stringChoice(value, ["default", "guarded", "native"] as const, fallback);
 }
 
-function normalizeAddonProvider(value: unknown): SoulCordAddonProvider {
-    return stringChoice(value, ["prefer-community", "prefer-soulcord"] as const, "prefer-community");
+function normalizeAddonProvider(value: unknown, name?: string, mode?: SoulCordAddonMode): SoulCordAddonProvider {
+    const fallback = name && isSoulCordBuiltInAddon(name, mode) ? "prefer-soulcord" : "prefer-community";
+    return stringChoice(value, ["prefer-community", "prefer-soulcord"] as const, fallback);
 }
 
 function normalizeCuratedAddons(value: unknown): Record<string, SoulCordCuratedAddonState> {
@@ -145,7 +146,7 @@ function normalizeCuratedAddons(value: unknown): Record<string, SoulCordCuratedA
             selected: typeof candidate.selected === "boolean" ? candidate.selected : normalized[name].selected,
             enabled: candidate.enabled === true && builtInCanExecute,
             mode,
-            provider: normalizeAddonProvider(candidate.provider),
+            provider: normalizeAddonProvider(candidate.provider, name, mode),
             ...(typeof candidate.reviewedSha256 === "string" && /^[0-9a-f]{64}$/i.test(candidate.reviewedSha256) ? {reviewedSha256: candidate.reviewedSha256.toLowerCase()} : {}),
             ...(typeof candidate.quarantineReason === "string" ? {quarantineReason: candidate.quarantineReason.slice(0, 160)} : {})
         };
@@ -175,9 +176,10 @@ function normalizePowerLab(value: unknown): Record<SoulCordPowerExperimentId, So
 function normalizeOnboarding(value: unknown): SoulCordOnboardingState {
     const record = isRecord(value) ? value : {};
     return {
-        version: 2,
+        version: 3,
         status: stringChoice(record.status, ["pending", "complete", "skipped"] as const, "pending"),
         lastStep: boundedNumber(record.lastStep, 0, 0, 7),
+        ...(isRecord(record.draft) ? {draft: normalizeSetupDraft(record.draft)} : {}),
         ...(typeof record.completedAt === "number" ? {completedAt: boundedNumber(record.completedAt, 0, 0, Number.MAX_SAFE_INTEGER)} : {})
     };
 }
@@ -291,24 +293,47 @@ export function defaultProfiles(): SoulCordProfile[] {
     ];
 }
 
+function reconcileModulePreferenceBindings(
+    modules: Record<SoulCordModuleId, SoulCordModuleSettings>,
+    productPreferences: SoulCordSettingsDocument["productPreferences"],
+    authority: "modules" | "preferences"
+): SoulCordSettingsDocument["productPreferences"] {
+    if (authority === "preferences") {
+        modules["link-lens"].enabled = productPreferences.safety.linkLens;
+        modules["friend-watch"].enabled = productPreferences.friendWatch.enabled;
+        modules["friend-watch"].values.retentionDays = productPreferences.friendWatch.retentionDays;
+        modules["friend-watch"].values.digest = productPreferences.friendWatch.digest;
+        return productPreferences;
+    }
+
+    productPreferences.safety.linkLens = modules["link-lens"].enabled;
+    productPreferences.friendWatch.enabled = modules["friend-watch"].enabled;
+    productPreferences.friendWatch.retentionDays = modules["friend-watch"].values.retentionDays as 7 | 30 | 90;
+    productPreferences.friendWatch.digest = modules["friend-watch"].values.digest as "off" | "daily" | "per-event";
+    return productPreferences;
+}
+
 export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocument {
     const record = isRecord(raw) ? raw : {};
     const rawSchemaVersion = boundedNumber(record.schemaVersion, 0, 0, 10_000);
     const rawModules = isRecord(record.modules) ? record.modules : {};
     const modules = {} as Record<SoulCordModuleId, SoulCordModuleSettings>;
     for (const id of Object.keys(MODULE_DEFAULTS) as SoulCordModuleId[]) modules[id] = normalizeModule(id, rawModules[id]);
-    if (rawSchemaVersion < SOULCORD_SCHEMA_VERSION) modules["link-lens"].enabled = false;
+    if (rawSchemaVersion < 4) modules["link-lens"].enabled = false;
 
     const profiles = normalizeProfiles(record.profiles);
     if (!profiles.length) profiles.push(...defaultProfiles());
-    if (rawSchemaVersion < SOULCORD_SCHEMA_VERSION) for (const profile of profiles) profile.modules["link-lens"].enabled = false;
+    if (rawSchemaVersion < 4) for (const profile of profiles) profile.modules["link-lens"].enabled = false;
 
     const snapshots = Array.isArray(record.snapshots)
         ? record.snapshots.filter(isRecord).flatMap(snapshot => {
             if (typeof snapshot.id !== "string" || typeof snapshot.reason !== "string" || !isRecord(snapshot.modules) || !Array.isArray(snapshot.profiles)) return [];
             const snapshotModules = {} as Record<SoulCordModuleId, SoulCordModuleSettings>;
             for (const id of Object.keys(MODULE_DEFAULTS) as SoulCordModuleId[]) snapshotModules[id] = normalizeModule(id, snapshot.modules[id]);
-            if (rawSchemaVersion < SOULCORD_SCHEMA_VERSION) snapshotModules["link-lens"].enabled = false;
+            if (rawSchemaVersion < 4) snapshotModules["link-lens"].enabled = false;
+            const snapshotProductPreferences = normalizeSoulCordProductPreferences(snapshot.productPreferences);
+            if (rawSchemaVersion < 4) snapshotProductPreferences.safety.linkLens = false;
+            reconcileModulePreferenceBindings(snapshotModules, snapshotProductPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
             return [{
                 id: snapshot.id,
                 reason: snapshot.reason.slice(0, 120),
@@ -318,7 +343,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
                 selectedTheme: stringChoice(snapshot.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
                 curatedAddons: normalizeCuratedAddons(snapshot.curatedAddons),
                 timelinePolicy: normalizeTimelinePolicy(snapshot.timelinePolicy),
-                productPreferences: normalizeSoulCordProductPreferences(snapshot.productPreferences),
+                productPreferences: snapshotProductPreferences,
                 activePlugins: normalizeAddonFileNames(snapshot.activePlugins, "plugin"),
                 activeThemes: normalizeAddonFileNames(snapshot.activeThemes, "theme")
             } satisfies SoulCordSnapshot];
@@ -355,7 +380,7 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
             at: Date.now(),
             fromSchema: rawSchemaVersion,
             toSchema: SOULCORD_SCHEMA_VERSION,
-            detail: "Added Control Center preferences and resumable eight-step setup state; privacy-sensitive capabilities remain off until consent or final Apply."
+            detail: "Added durable setup drafts and built-in provider defaults; expired older Power Lab acknowledgements for the scoped Fake Deafen adapter."
         });
         migrationProvenance.splice(0, Math.max(0, migrationProvenance.length - MAX_MIGRATION_ENTRIES));
     }
@@ -369,15 +394,27 @@ export function normalizeSoulCordDocument(raw: unknown): SoulCordSettingsDocumen
         }).slice(-MAX_SETUP_TRANSACTIONS)
         : [];
 
+    const curatedAddons = normalizeCuratedAddons(record.curatedAddons);
+    if (rawSchemaVersion < 5) {
+        for (const name of SOULCORD_PRESET_ADDONS) {
+            const state = curatedAddons[name];
+            if (isSoulCordBuiltInAddon(name, state.mode)) state.provider = "prefer-soulcord";
+        }
+    }
+
+    const productPreferences = normalizeSoulCordProductPreferences(record.productPreferences);
+    if (rawSchemaVersion < 4) productPreferences.safety.linkLens = false;
+    reconcileModulePreferenceBindings(modules, productPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
+
     return {
-        schemaVersion: 4,
-        consentVersion: 2,
+        schemaVersion: 5,
+        consentVersion: SOULCORD_CONSENT_VERSION,
         onboarding: normalizeOnboarding(record.onboarding),
         selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
-        curatedAddons: normalizeCuratedAddons(record.curatedAddons),
+        curatedAddons,
         timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy),
-        productPreferences: normalizeSoulCordProductPreferences(record.productPreferences),
-        powerLab: rawSchemaVersion < SOULCORD_SCHEMA_VERSION ? defaultPowerLab() : normalizePowerLab(record.powerLab),
+        productPreferences,
+        powerLab: rawSchemaVersion < 4 ? defaultPowerLab() : normalizePowerLab(record.powerLab),
         migrationProvenance,
         setupTransactions,
         modules,
@@ -555,7 +592,10 @@ export function normalizeSetupDraft(value: unknown): SoulCordSetupDraft {
         selectedTheme: stringChoice(record.selectedTheme, SOULCORD_THEMES.map(theme => theme.id), "soulcord-default"),
         selectedAddons: selected,
         addonModes: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonMode(rawModes[name], name)])),
-        addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => [name, normalizeAddonProvider(rawProviders[name])])),
+        addonProviders: Object.fromEntries(SOULCORD_PRESET_ADDONS.map(name => {
+            const mode = normalizeAddonMode(rawModes[name], name);
+            return [name, normalizeAddonProvider(rawProviders[name], name, mode)];
+        })),
         timelinePolicy: normalizeTimelinePolicy(record.timelinePolicy),
         productPreferences: normalizeSoulCordProductPreferences(record.productPreferences)
     };
@@ -593,6 +633,16 @@ export function previewSetupChanges(document: SoulCordSettingsDocument, rawDraft
     return changes;
 }
 
+export function applyProductPreferenceBindings(document: SoulCordSettingsDocument, rawPreferences: unknown): SoulCordSettingsDocument["productPreferences"] {
+    const preferences = normalizeSoulCordProductPreferences(rawPreferences);
+    document.productPreferences = preferences;
+    return reconcileModulePreferenceBindings(document.modules, preferences, "preferences");
+}
+
+export function applyModulePreferenceBindings(document: SoulCordSettingsDocument): SoulCordSettingsDocument["productPreferences"] {
+    return reconcileModulePreferenceBindings(document.modules, document.productPreferences, "modules");
+}
+
 class SoulCordStore extends Store {
     #document = normalizeSoulCordDocument(undefined);
 
@@ -606,7 +656,7 @@ class SoulCordStore extends Store {
         }
         this.#document = normalizeSoulCordDocument(raw);
         if (!isRecord(raw) || raw.schemaVersion !== SOULCORD_SCHEMA_VERSION) {
-            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 4.");
+            this.#appendLedger("schema", "Migrated SoulCord settings atomically to schema 5.");
         }
         this.#save();
     }
@@ -623,36 +673,89 @@ class SoulCordStore extends Store {
         if (id === "plugin-doctor" && !enabled) return;
         if (this.#document.modules[id].enabled === enabled) return;
         this.capture(`Before ${enabled ? "enabling" : "disabling"} ${id}`);
+        const beforeMutation = clone(this.#document);
         this.#document.modules[id].enabled = enabled;
+        if (id === "link-lens" || id === "friend-watch") applyModulePreferenceBindings(this.#document);
         this.#appendLedger("setting", `${id} ${enabled ? "enabled" : "disabled"}.`);
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
     }
 
     setValue(id: SoulCordModuleId, key: string, value: unknown): void {
         if (!/^[a-z][A-Za-z0-9]{0,63}$/.test(key)) throw new TypeError("Invalid SoulCord setting key.");
         if (!Object.hasOwn(MODULE_DEFAULTS[id].values, key)) throw new TypeError("Unknown SoulCord setting key.");
         this.capture(`Before changing ${id}.${key}`);
+        const beforeMutation = clone(this.#document);
         this.#document.modules[id].values[key] = value;
         this.#document.modules[id] = normalizeModule(id, this.#document.modules[id]);
+        if (id === "friend-watch") applyModulePreferenceBindings(this.#document);
         this.#appendLedger("setting", `${id}.${key} changed.`);
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
     }
 
     setProductPreferences(rawPreferences: unknown): void {
         const preferences = normalizeSoulCordProductPreferences(rawPreferences);
         if (JSON.stringify(preferences) === JSON.stringify(this.#document.productPreferences)) return;
         this.capture("Before changing Control Center preferences");
-        this.#document.productPreferences = preferences;
+        const beforeMutation = clone(this.#document);
+        applyProductPreferenceBindings(this.#document, preferences);
         this.#appendLedger("setting", "Control Center appearance, safety, or People preferences changed.");
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
+    }
+
+    setSetupDraft(rawDraft: unknown): void {
+        if (this.#document.onboarding.status !== "pending") return;
+        const draft = normalizeSetupDraft(rawDraft);
+        if (JSON.stringify(draft) === JSON.stringify(this.#document.onboarding.draft)) return;
+        const beforeMutation = clone(this.#document);
+        this.#document.onboarding.draft = draft;
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
+    }
+
+    setPowerExperiment(id: SoulCordPowerExperimentId, enabled: boolean, acknowledged: boolean): void {
+        if (!SOULCORD_POWER_EXPERIMENTS.includes(id)) throw new TypeError("Unknown Power Lab experiment.");
+        if (enabled && !acknowledged) throw new Error("PowerLabAcknowledgementRequired");
+        const next: SoulCordPowerConsent = enabled
+            ? {enabled: true, acknowledgementVersion: SOULCORD_CONSENT_VERSION, acknowledgedAt: Date.now()}
+            : {enabled: false, acknowledgementVersion: 0};
+        if (JSON.stringify(next) === JSON.stringify(this.#document.powerLab[id])) return;
+        this.capture(`Before ${enabled ? "enabling" : "disabling"} Power Lab ${id}`);
+        const beforeMutation = clone(this.#document);
+        this.#document.powerLab[id] = next;
+        this.#appendLedger("setting", `Power Lab ${id} ${enabled ? "enabled with consent" : "disabled and acknowledgement cleared"}.`);
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
     }
 
     setOnboardingStep(rawStep: number): void {
         if (this.#document.onboarding.status !== "pending") return;
         const lastStep = boundedNumber(rawStep, this.#document.onboarding.lastStep, 0, 7);
         if (lastStep === this.#document.onboarding.lastStep) return;
+        const beforeMutation = clone(this.#document);
         this.#document.onboarding.lastStep = lastStep;
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
     }
 
     capture(reason: string, activeAddons?: {plugins?: string[]; themes?: string[]}): SoulCordSnapshot {
@@ -708,14 +811,20 @@ class SoulCordStore extends Store {
         const restored = restoreSnapshotState(this.#document, snapshotId);
         if (!restored) return false;
         this.capture(`Before rollback to ${snapshotId}`);
+        const beforeMutation = clone(this.#document);
         this.#document.modules = restored.modules;
         this.#document.profiles = restored.profiles;
         this.#document.selectedTheme = restored.selectedTheme;
         this.#document.curatedAddons = restored.curatedAddons;
         this.#document.timelinePolicy = restored.timelinePolicy;
         this.#document.productPreferences = restored.productPreferences;
+        applyModulePreferenceBindings(this.#document);
         this.#appendLedger("rollback", `Rolled back to snapshot ${snapshotId}.`);
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
         return true;
     }
 
@@ -738,10 +847,16 @@ class SoulCordStore extends Store {
         const profile = this.#document.profiles.find(item => item.id === profileId);
         if (!profile) return false;
         if (captureSnapshot) this.capture(`Before applying ${profile.name}`);
+        const beforeMutation = clone(this.#document);
         this.#document.modules = clone(profile.modules);
         this.#document.modules["plugin-doctor"].enabled = true;
+        applyModulePreferenceBindings(this.#document);
         this.#appendLedger("profile", `Applied ${profile.name}.`);
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
         return true;
     }
 
@@ -759,15 +874,21 @@ class SoulCordStore extends Store {
         const candidate = verifySoulCordImportAtApply(this.#document, text, expectedFingerprint);
         if (!candidate) return false;
         this.capture("Before importing settings");
+        const beforeMutation = clone(this.#document);
         this.#document.modules = candidate.modules;
         this.#document.profiles = candidate.profiles;
         this.#document.selectedTheme = candidate.selectedTheme;
         this.#document.curatedAddons = candidate.curatedAddons;
         this.#document.timelinePolicy = candidate.timelinePolicy;
         this.#document.productPreferences = candidate.productPreferences;
+        applyModulePreferenceBindings(this.#document);
         this.#document.powerLab = defaultPowerLab();
         this.#appendLedger("schema", "Imported and validated SoulCord settings format 2; Power Lab acknowledgements were not imported.");
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
         return true;
     }
 
@@ -778,14 +899,11 @@ class SoulCordStore extends Store {
     completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>;}): SoulCordSetupTransactionRecord {
         const draft = normalizeSetupDraft(rawDraft);
         const snapshot = this.capture("Before completing SoulCord setup");
+        const beforeCompletion = clone(this.#document);
         this.#document.selectedTheme = draft.selectedTheme;
         this.#document.timelinePolicy = draft.timelinePolicy;
-        this.#document.productPreferences = draft.productPreferences;
+        applyProductPreferenceBindings(this.#document, draft.productPreferences);
         this.#document.modules["message-timeline"].enabled = draft.timelinePolicy.enabled;
-        this.#document.modules["link-lens"].enabled = draft.productPreferences.safety.linkLens;
-        this.#document.modules["friend-watch"].enabled = draft.productPreferences.friendWatch.enabled;
-        this.#document.modules["friend-watch"].values.retentionDays = draft.productPreferences.friendWatch.retentionDays;
-        this.#document.modules["friend-watch"].values.digest = draft.productPreferences.friendWatch.digest;
         for (const name of SOULCORD_PRESET_ADDONS) {
             const selected = draft.selectedAddons.includes(name);
             const result = installResults[name];
@@ -798,12 +916,16 @@ class SoulCordStore extends Store {
                 ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
             };
         }
-        this.#document.onboarding = {version: 2, status: "complete", lastStep: 7, completedAt: Date.now()};
+        this.#document.onboarding = {version: 3, status: "complete", lastStep: 7, completedAt: Date.now()};
         const record: SoulCordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates};
         this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
         this.#appendLedger("schema", "Completed SoulCord setup transaction version 1.");
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeCompletion;
+            throw error;
+        }
         return clone(record);
     }
 
@@ -812,29 +934,35 @@ class SoulCordStore extends Store {
         if (!transaction || transaction.id !== transactionId) return false;
         const restored = restoreSnapshotState(this.#document, transaction.snapshotId);
         if (!restored) return false;
+        const beforeMutation = clone(this.#document);
         this.#document.modules = restored.modules;
         this.#document.profiles = restored.profiles;
         this.#document.selectedTheme = restored.selectedTheme;
         this.#document.curatedAddons = restored.curatedAddons;
         this.#document.timelinePolicy = restored.timelinePolicy;
         this.#document.productPreferences = restored.productPreferences;
-        this.#document.onboarding = {version: 2, status: "pending", lastStep: 6};
+        applyModulePreferenceBindings(this.#document);
+        this.#document.onboarding = {version: 3, status: "pending", lastStep: 6};
         this.#document.setupTransactions.pop();
         this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
         this.#appendLedger("rollback", "Aborted an unacknowledged SoulCord setup transaction.");
-        this.#save();
+        try {this.#save();}
+        catch (error) {
+            this.#document = beforeMutation;
+            throw error;
+        }
         return true;
     }
 
     skipOnboarding(): void {
         if (this.#document.onboarding.status !== "pending") return;
-        this.#document.onboarding = {version: 2, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
+        this.#document.onboarding = {version: 3, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
         this.#appendLedger("schema", "Skipped SoulCord setup; addon and theme state was not changed.");
         this.#save();
     }
 
     reopenOnboarding(): void {
-        this.#document.onboarding = {version: 2, status: "pending", lastStep: 0};
+        this.#document.onboarding = {version: 3, status: "pending", lastStep: 0};
         this.#appendLedger("schema", "Reopened SoulCord setup.");
         this.#save();
     }
@@ -877,8 +1005,8 @@ class SoulCordStore extends Store {
         const target = this.#filePath();
         const temporary = `${target}.${Date.now().toString(36)}.tmp`;
         fs.mkdirSync(path.dirname(target), {recursive: true});
-        fs.writeFileSync(temporary, `${JSON.stringify(clone(this.#document), null, 4)}\n`);
         try {
+            fs.writeFileSync(temporary, `${JSON.stringify(clone(this.#document), null, 4)}\n`);
             fs.renameSync(temporary, target);
         }
         catch (error) {
@@ -888,7 +1016,8 @@ class SoulCordStore extends Store {
             catch {/* cleanup already best-effort */}
             throw error;
         }
-        this.emitChange();
+        try {this.emitChange();}
+        catch {/* settings are already durable; isolate observer failures */}
     }
 
     #filePath(): string {

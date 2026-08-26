@@ -24,6 +24,11 @@ interface TransactionFile {
     sha256: string;
 }
 
+interface LegacyThemeFile {
+    fileName: string;
+    sha256: string;
+}
+
 interface TransactionJournal {
     version: 1;
     transactionId: string;
@@ -31,6 +36,7 @@ interface TransactionJournal {
     /** Contains only files whose durable ownership receipt was written. */
     added: TransactionFile[];
     reused: TransactionFile[];
+    legacyThemes: LegacyThemeFile[];
     selectedAddons: string[];
     selectedTheme: string;
 }
@@ -41,6 +47,7 @@ interface TransactionIntent {
     createdAt: number;
     planned: TransactionFile[];
     reused: TransactionFile[];
+    legacyThemes: LegacyThemeFile[];
     selectedAddons: string[];
     selectedTheme: string;
 }
@@ -74,6 +81,13 @@ const TRANSACTION_ID = /^[a-z0-9]+-[0-9a-f]{16}$/;
 const TRANSACTION_JOURNAL = /^([a-z0-9]+-[0-9a-f]{16})\.json$/;
 const TRANSACTION_INTENT = /^([a-z0-9]+-[0-9a-f]{16})\.intent\.json$/;
 const SHA256 = /^[0-9a-f]{64}$/;
+const LEGACY_SOULCORD_THEME_SHA256: Readonly<Record<string, ReadonlySet<string>>> = {
+    "SoulCord-Default.theme.css": new Set(["411c277ccfecd53c28a344f22f66c2ac28a6ea16533d4365ddd9a24e80e5f536", "0056bcf888af2f5c9e43ae14ae299fa63dfa6ef0f1f29ece9af6e42536ac0765"]),
+    "SoulCord-ObsidianThread.theme.css": new Set(["da8058f1f0ad765654d11906cff1e2e71c13e1c60bf8d79f6a110435557b3ff8", "7cdb781861ec59bab0378b8b0e64dda97ba2eb43531b7fdcd2888e4350a2c128"]),
+    "SoulCord-CarbonEmber.theme.css": new Set(["6b4bd267a172f2eaf2c5847d47305862e411e5b3b35a025169d796caf914de8d", "ac8bcca42f1712538d840f669551ddb119b36d9490978bfb9fd07e1dbb826184"]),
+    "SoulCord-MidnightGlass.theme.css": new Set(["2f29872d7e225e71e03810805f7033b43930f9d9e02840fe37d2014c4c835801", "1d7ff58696b495a6a3cd67d0702ef95f8d3e90d77993e95ab2143e3992ccb483"]),
+    "SoulCord-PaperSignal.theme.css": new Set(["23ec183af6391d2dbc7ec73fd36b953ebe39735965203ce7d2b4b59df66c0cd4", "9c6fc63aa4299881ebf3b7f6a442a7e27aca376e751f7e5f0b82900c6e9c46b9", "8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d"])
+};
 
 function digest(value: Buffer | string): string {
     return crypto.createHash("sha256").update(value).digest("hex");
@@ -84,6 +98,12 @@ function safeFileName(value: string, kind?: ManagedKind): string {
     if (kind === "plugin" && !value.endsWith(".plugin.js")) throw new TypeError("Plugin transaction contains a non-plugin filename.");
     if (kind === "theme" && !value.endsWith(".theme.css")) throw new TypeError("Theme transaction contains a non-theme filename.");
     return value;
+}
+
+export function isReviewedLegacySoulCordTheme(fileName: string, sha256: string): boolean {
+    if (!SHA256.test(sha256)) return false;
+    try {return LEGACY_SOULCORD_THEME_SHA256[safeFileName(fileName, "theme")]?.has(sha256) === true;}
+    catch {return false;}
 }
 
 function atomicWrite(target: string, content: string): void {
@@ -169,6 +189,7 @@ export class SoulCordSetupTransactions {
             this.#assertExistingSafeDirectory(stage);
             const added: TransactionFile[] = [];
             const reused: TransactionFile[] = [];
+            const legacyThemeReplacements = new Map<string, string>();
             let planned: TransactionFile[] = [];
             let intentFile: string | undefined;
             let journalFile: string | undefined;
@@ -176,7 +197,7 @@ export class SoulCordSetupTransactions {
             try {
                 const pluginCandidates: Array<AddonCandidate | DependencyCandidate> = [...dependencies, ...selected];
                 for (const candidate of pluginCandidates) await this.#stageRemote(candidate, "plugin", stage, reused);
-                for (const theme of SOULCORD_RUNTIME_THEMES) this.#stageTheme(theme, stage, reused);
+                for (const theme of SOULCORD_RUNTIME_THEMES) this.#stageTheme(theme, stage, reused, legacyThemeReplacements);
 
                 planned = [
                     ...pluginCandidates.map(candidate => ({kind: "plugin" as const, fileName: candidate.fileName, sha256: candidate.sourceSha256})),
@@ -188,6 +209,7 @@ export class SoulCordSetupTransactions {
                     createdAt: Date.now(),
                     planned,
                     reused,
+                    legacyThemes: [...legacyThemeReplacements].map(([fileName, sha256]) => ({fileName, sha256})),
                     selectedAddons: request.selectedAddons,
                     selectedTheme: request.selectedTheme
                 };
@@ -197,7 +219,10 @@ export class SoulCordSetupTransactions {
                 atomicWrite(intentFile, `${JSON.stringify(intent, null, 2)}\n`);
 
                 for (const candidate of pluginCandidates) this.#applyStaged(transactionId, candidate.fileName, candidate.sourceSha256, "plugin", stage, added, reused);
-                for (const theme of SOULCORD_RUNTIME_THEMES) this.#applyStaged(transactionId, theme.fileName, theme.sourceSha256, "theme", stage, added, reused);
+                for (const theme of SOULCORD_RUNTIME_THEMES) {
+                    if (legacyThemeReplacements.has(theme.fileName)) this.#backupLegacyTheme(transactionId, theme);
+                    this.#applyStaged(transactionId, theme.fileName, theme.sourceSha256, "theme", stage, added, reused);
+                }
 
                 const journal: TransactionJournal = {
                     version: 1,
@@ -205,6 +230,7 @@ export class SoulCordSetupTransactions {
                     createdAt: intent.createdAt,
                     added,
                     reused,
+                    legacyThemes: intent.legacyThemes,
                     selectedAddons: request.selectedAddons,
                     selectedTheme: request.selectedTheme
                 };
@@ -220,16 +246,20 @@ export class SoulCordSetupTransactions {
                 return {transactionId, added, reused, selectedTheme: request.selectedTheme};
             }
             catch (error) {
-                const cleanup = intentFile && fs.existsSync(intentFile)
-                    ? this.#cleanupTransactionFiles(transactionId, planned, stage)
-                    : {removed: [] as TransactionFile[], preserved: [] as TransactionFile[]};
+                const legacyThemes = [...legacyThemeReplacements].map(([fileName, sha256]) => ({fileName, sha256}));
+                const legacyReady = this.#legacyThemeRecoveryReady(transactionId, legacyThemes, true);
+                const cleanup = intentFile && fs.existsSync(intentFile) && legacyReady
+                    ? this.#cleanupTransactionFiles(transactionId, planned, stage, legacyThemeReplacements)
+                    : {removed: [] as TransactionFile[], preserved: legacyReady ? [] as TransactionFile[] : [...planned]};
+                const legacyRestored = legacyReady && this.#restoreLegacyThemeBackups(transactionId, legacyThemes);
                 let stageRemoved = true;
                 try {this.#removeStage(stage);}
                 catch {stageRemoved = false;}
                 try {
                     if ((intentFile && fs.existsSync(intentFile)) || (journalFile && fs.existsSync(journalFile))) {
-                        this.#writeMarker(transactionId, cleanup.preserved.length === 0 && stageRemoved ? "rolledback" : "incomplete", cleanup.preserved.length === 0 && stageRemoved ? "failed-before-completion" : "cleanup-pending");
-                        if (cleanup.preserved.length === 0 && stageRemoved && intentFile) this.#removeJournalArtifact(intentFile);
+                        const complete = cleanup.preserved.length === 0 && legacyRestored && stageRemoved;
+                        this.#writeMarker(transactionId, complete ? "rolledback" : "incomplete", complete ? "failed-before-completion" : "cleanup-pending");
+                        if (complete && intentFile) this.#removeJournalArtifact(intentFile);
                     }
                 }
                 catch {/* preserve the original failure */}
@@ -271,8 +301,14 @@ export class SoulCordSetupTransactions {
                 : fs.existsSync(preparedMarker)
                     ? this.#readJournal(transactionId, "prepared")
                     : this.#readJournal(transactionId, false);
-            const cleanup = this.#cleanupTransactionFiles(transactionId, journal.added);
-            const complete = cleanup.preserved.length === 0;
+            if (!this.#legacyThemeRecoveryReady(transactionId, journal.legacyThemes, true)) {
+                this.#writeMarker(transactionId, "incomplete", "legacy-backup-unavailable");
+                return {complete: false, removed: [], preserved: [...journal.added]};
+            }
+            const legacyThemes = new Map(journal.legacyThemes.map(file => [file.fileName, file.sha256]));
+            const cleanup = this.#cleanupTransactionFiles(transactionId, journal.added, undefined, legacyThemes);
+            const legacyRestored = this.#restoreLegacyThemeBackups(transactionId, journal.legacyThemes);
+            const complete = cleanup.preserved.length === 0 && legacyRestored;
             this.#writeMarker(transactionId, complete ? "rolledback" : "incomplete", complete ? "owner-requested" : "cleanup-pending");
             if (complete) {
                 if (fs.existsSync(preparedMarker)) this.#removeJournalArtifact(preparedMarker);
@@ -297,6 +333,7 @@ export class SoulCordSetupTransactions {
         }
 
         const journal = this.#readJournal(transactionId, "prepared");
+        if (!this.#legacyThemeRecoveryReady(transactionId, journal.legacyThemes, false)) throw new Error("Prepared SoulCord legacy theme backup is missing or invalid.");
         for (const file of journal.added) {
             const targetRoot = this.#targetRoot(file.kind);
             if (!this.#ensureSafeDirectory(targetRoot, false)) throw new Error("Prepared SoulCord target directory is missing.");
@@ -382,7 +419,7 @@ export class SoulCordSetupTransactions {
         fs.writeFileSync(path.join(stage, fileName), bytes, {flag: "wx", mode: 0o600});
     }
 
-    #stageTheme(theme: ThemeCandidate, stage: string, reused: TransactionFile[]): void {
+    #stageTheme(theme: ThemeCandidate, stage: string, reused: TransactionFile[], legacyReplacements: Map<string, string>): void {
         const fileName = safeFileName(theme.fileName, "theme");
         if (!SHA256.test(theme.sourceSha256)) throw new TypeError(`Invalid reviewed hash for ${fileName}.`);
         const targetRoot = this.#targetRoot("theme");
@@ -390,12 +427,93 @@ export class SoulCordSetupTransactions {
         const target = path.join(targetRoot, fileName);
         if (fs.existsSync(target)) {
             const current = this.#digestManagedFile(target, targetRoot);
-            if (current !== theme.sourceSha256) throw new Error(`${fileName} already exists with a different hash; SoulCord will not overwrite it.`);
-            reused.push({kind: "theme", fileName, sha256: current});
-            return;
+            if (current === theme.sourceSha256) {
+                reused.push({kind: "theme", fileName, sha256: current});
+                return;
+            }
+            if (!this.#isLegacySoulCordTheme(fileName, current)) throw new Error(`${fileName} already exists with a different hash; SoulCord will not overwrite it.`);
+            legacyReplacements.set(fileName, current);
         }
         if (digest(theme.content) !== theme.sourceSha256) throw new Error(`Embedded theme verification failed for ${fileName}.`);
         fs.writeFileSync(path.join(stage, fileName), theme.content, {encoding: "utf8", flag: "wx", mode: 0o600});
+    }
+
+    #isLegacySoulCordTheme(fileName: string, sha256: string): boolean {
+        return isReviewedLegacySoulCordTheme(fileName, sha256);
+    }
+
+    #legacyThemeBackupPath(transactionId: string, fileName: string): string {
+        if (!TRANSACTION_ID.test(transactionId)) throw new TypeError("Invalid SoulCord transaction id.");
+        const key = digest(`legacy-theme\0${safeFileName(fileName, "theme")}`).slice(0, 32);
+        return path.join(this.#journalRoot(), `${transactionId}.${key}.legacy-theme-backup`);
+    }
+
+    #backupLegacyTheme(transactionId: string, theme: ThemeCandidate): void {
+        const fileName = safeFileName(theme.fileName, "theme");
+        const targetRoot = this.#targetRoot("theme");
+        this.#ensureSafeDirectory(targetRoot, true);
+        const target = path.join(targetRoot, fileName);
+        if (!fs.existsSync(target)) throw new Error(`Legacy ${fileName} disappeared before its reviewed migration.`);
+        const current = this.#digestManagedFile(target, targetRoot);
+        if (!this.#isLegacySoulCordTheme(fileName, current)) throw new Error(`${fileName} changed before its reviewed migration; SoulCord will not overwrite it.`);
+        const backup = this.#legacyThemeBackupPath(transactionId, fileName);
+        this.#ensureSafeDirectory(this.#journalRoot(), true);
+        if (fs.existsSync(backup)) throw new Error(`Legacy backup already exists for ${fileName}.`);
+        fs.renameSync(target, backup);
+        if (this.#digestManagedFile(backup, this.#journalRoot()) !== current) throw new Error(`Legacy backup verification failed for ${fileName}.`);
+    }
+
+    #legacyThemeRecoveryReady(transactionId: string, legacyThemes: readonly LegacyThemeFile[], allowOriginalTarget: boolean): boolean {
+        for (const file of legacyThemes) {
+            try {
+                const backup = this.#legacyThemeBackupPath(transactionId, file.fileName);
+                if (fs.existsSync(backup)) {
+                    if (this.#digestManagedFile(backup, this.#journalRoot()) !== file.sha256) return false;
+                    continue;
+                }
+                if (!allowOriginalTarget) return false;
+                const targetRoot = this.#targetRoot("theme");
+                if (!this.#ensureSafeDirectory(targetRoot, false)) return false;
+                const target = path.join(targetRoot, safeFileName(file.fileName, "theme"));
+                if (!fs.existsSync(target) || this.#digestManagedFile(target, targetRoot) !== file.sha256) return false;
+            }
+            catch {return false;}
+        }
+        return true;
+    }
+
+    #restoreLegacyThemeBackups(transactionId: string, legacyThemes: readonly LegacyThemeFile[]): boolean {
+        let complete = true;
+        for (const file of legacyThemes) {
+            const backup = this.#legacyThemeBackupPath(transactionId, file.fileName);
+            if (!fs.existsSync(backup)) {
+                try {
+                    const targetRoot = this.#targetRoot("theme");
+                    const target = path.join(targetRoot, safeFileName(file.fileName, "theme"));
+                    if (!this.#ensureSafeDirectory(targetRoot, false) || !fs.existsSync(target) || this.#digestManagedFile(target, targetRoot) !== file.sha256) complete = false;
+                }
+                catch {complete = false;}
+                continue;
+            }
+            try {
+                const backupHash = this.#digestManagedFile(backup, this.#journalRoot());
+                if (backupHash !== file.sha256 || !this.#isLegacySoulCordTheme(file.fileName, backupHash)) {
+                    complete = false;
+                    continue;
+                }
+                const targetRoot = this.#targetRoot("theme");
+                this.#ensureSafeDirectory(targetRoot, true);
+                const target = path.join(targetRoot, safeFileName(file.fileName, "theme"));
+                if (fs.existsSync(target)) {
+                    complete = false;
+                    continue;
+                }
+                fs.renameSync(backup, target);
+                if (this.#digestManagedFile(target, targetRoot) !== backupHash) complete = false;
+            }
+            catch {complete = false;}
+        }
+        return complete;
     }
 
     #applyStaged(transactionId: string, fileName: string, sha256: string, kind: ManagedKind, stage: string, added: TransactionFile[], reused: TransactionFile[]): void {
@@ -440,18 +558,18 @@ export class SoulCordSetupTransactions {
         catch {return true;}
     }
 
-    #cleanupTransactionFiles(transactionId: string, files: TransactionFile[], stage?: string): {removed: TransactionFile[]; preserved: TransactionFile[];} {
+    #cleanupTransactionFiles(transactionId: string, files: TransactionFile[], stage?: string, legacyThemes = new Map<string, string>()): {removed: TransactionFile[]; preserved: TransactionFile[];} {
         const removed: TransactionFile[] = [];
         const preserved: TransactionFile[] = [];
         for (const file of [...files].reverse()) {
-            const outcome = this.#removeAddedIfUnchanged(transactionId, file, stage);
+            const outcome = this.#removeAddedIfUnchanged(transactionId, file, stage, legacyThemes);
             if (outcome === "removed") removed.push(file);
             else if (outcome === "preserved") preserved.push(file);
         }
         return {removed, preserved};
     }
 
-    #removeAddedIfUnchanged(transactionId: string, file: TransactionFile, stage?: string): "removed" | "absent" | "preserved" {
+    #removeAddedIfUnchanged(transactionId: string, file: TransactionFile, stage?: string, legacyThemes = new Map<string, string>()): "removed" | "absent" | "preserved" {
         try {
             const targetRoot = this.#targetRoot(file.kind);
             if (!this.#ensureSafeDirectory(targetRoot, false)) return "absent";
@@ -459,7 +577,9 @@ export class SoulCordSetupTransactions {
             if (!fs.existsSync(target)) return "absent";
             const targetIdentity = this.#fileIdentity(target, targetRoot);
             const receipt = this.#readReceipt(transactionId, file);
+            const legacyHash = file.kind === "theme" ? legacyThemes.get(file.fileName) : undefined;
             let owned = Boolean(receipt && this.#sameFileIdentity(receipt, targetIdentity));
+            if (!owned && legacyHash && this.#digestManagedFile(target, targetRoot) === legacyHash) return "absent";
             if (!owned && !receipt && stage && fs.existsSync(stage)) {
                 this.#assertExistingSafeDirectory(stage);
                 const source = path.join(stage, safeFileName(file.fileName, file.kind));
@@ -628,12 +748,13 @@ export class SoulCordSetupTransactions {
             if (!SHA256.test(marker) || marker !== digest(serialized)) throw new TypeError("SoulCord transaction journal integrity check failed.");
         }
         const raw = JSON.parse(serialized) as Partial<TransactionJournal>;
-        if (raw.version !== 1 || raw.transactionId !== transactionId || !Number.isSafeInteger(raw.createdAt) || !Array.isArray(raw.added) || !Array.isArray(raw.reused) || !Array.isArray(raw.selectedAddons) || typeof raw.selectedTheme !== "string") {
+        if (raw.version !== 1 || raw.transactionId !== transactionId || !Number.isSafeInteger(raw.createdAt) || !Array.isArray(raw.added) || !Array.isArray(raw.reused) || (raw.legacyThemes !== undefined && !Array.isArray(raw.legacyThemes)) || !Array.isArray(raw.selectedAddons) || typeof raw.selectedTheme !== "string") {
             throw new TypeError("Invalid SoulCord transaction journal.");
         }
         const journal = raw as TransactionJournal;
         journal.added = this.#validateJournalFiles(journal.added);
         journal.reused = this.#validateJournalFiles(journal.reused);
+        journal.legacyThemes = this.#validateLegacyThemeFiles(raw.legacyThemes ?? []);
         const request = this.#normalizeRequest({selectedAddons: journal.selectedAddons, selectedTheme: journal.selectedTheme});
         journal.selectedAddons = request.selectedAddons;
         journal.selectedTheme = request.selectedTheme;
@@ -648,16 +769,29 @@ export class SoulCordSetupTransactions {
         const stat = fs.lstatSync(intentFile);
         if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_JOURNAL_BYTES) throw new TypeError("Invalid SoulCord transaction intent file.");
         const raw = JSON.parse(fs.readFileSync(intentFile, "utf8")) as Partial<TransactionIntent>;
-        if (raw.version !== 1 || raw.transactionId !== transactionId || !Number.isSafeInteger(raw.createdAt) || !Array.isArray(raw.planned) || !Array.isArray(raw.reused) || !Array.isArray(raw.selectedAddons) || typeof raw.selectedTheme !== "string") {
+        if (raw.version !== 1 || raw.transactionId !== transactionId || !Number.isSafeInteger(raw.createdAt) || !Array.isArray(raw.planned) || !Array.isArray(raw.reused) || (raw.legacyThemes !== undefined && !Array.isArray(raw.legacyThemes)) || !Array.isArray(raw.selectedAddons) || typeof raw.selectedTheme !== "string") {
             throw new TypeError("Invalid SoulCord transaction intent.");
         }
         const intent = raw as TransactionIntent;
         intent.planned = this.#validateJournalFiles(intent.planned);
         intent.reused = this.#validateJournalFiles(intent.reused);
+        intent.legacyThemes = this.#validateLegacyThemeFiles(raw.legacyThemes ?? []);
         const request = this.#normalizeRequest({selectedAddons: intent.selectedAddons, selectedTheme: intent.selectedTheme});
         intent.selectedAddons = request.selectedAddons;
         intent.selectedTheme = request.selectedTheme;
         return intent;
+    }
+
+    #validateLegacyThemeFiles(files: LegacyThemeFile[]): LegacyThemeFile[] {
+        const seen = new Set<string>();
+        return files.map(raw => {
+            if (!raw || typeof raw.fileName !== "string" || typeof raw.sha256 !== "string") throw new TypeError("Invalid SoulCord legacy theme record.");
+            const fileName = safeFileName(raw.fileName, "theme");
+            const sha256 = raw.sha256.toLowerCase();
+            if (seen.has(fileName) || !this.#isLegacySoulCordTheme(fileName, sha256)) throw new TypeError("SoulCord legacy theme is not in the reviewed migration allowlist.");
+            seen.add(fileName);
+            return {fileName, sha256};
+        });
     }
 
     #validateJournalFiles(files: TransactionFile[]): TransactionFile[] {
@@ -667,11 +801,18 @@ export class SoulCordSetupTransactions {
         const seen = new Set<string>();
         return files.map(raw => {
             if (!raw || (raw.kind !== "plugin" && raw.kind !== "theme") || typeof raw.fileName !== "string" || typeof raw.sha256 !== "string") throw new TypeError("Invalid SoulCord transaction file record.");
-            const key = `${raw.kind}\0${safeFileName(raw.fileName, raw.kind)}`;
+            const fileName = safeFileName(raw.fileName, raw.kind);
+            const sha256 = raw.sha256.toLowerCase();
+            const key = `${raw.kind}\0${fileName}`;
             const expected = known.get(key);
-            if (!expected || expected.sha256 !== raw.sha256 || seen.has(key)) throw new TypeError("SoulCord transaction file is not in the reviewed catalog.");
+            const reviewedHistoricalTheme = raw.kind === "theme" && isReviewedLegacySoulCordTheme(fileName, sha256);
+            if (!expected || (expected.sha256 !== sha256 && !reviewedHistoricalTheme) || seen.has(key)) throw new TypeError("SoulCord transaction file is not in the reviewed catalog.");
             seen.add(key);
-            return expected;
+            // Historical transaction records must keep the exact reviewed hash
+            // that their receipt and marker were written against. Returning the
+            // current catalog record here would make rollback ownership checks
+            // compare an old file to a new digest after an ordinary upgrade.
+            return expected.sha256 === sha256 ? expected : {kind: "theme", fileName, sha256};
         });
     }
 
@@ -715,14 +856,23 @@ export class SoulCordSetupTransactions {
                     committed.push(transactionId);
                     continue;
                 }
-                const files = fs.existsSync(intentFile)
-                    ? this.#readIntent(transactionId).planned
-                    : this.#readJournal(transactionId, false).added;
-                const cleanup = this.#cleanupTransactionFiles(transactionId, files, fs.existsSync(stage) ? stage : undefined);
+                const intent = fs.existsSync(intentFile) ? this.#readIntent(transactionId) : undefined;
+                const journal = intent ? undefined : this.#readJournal(transactionId, false);
+                const files = intent?.planned ?? journal!.added;
+                const legacyFiles = intent?.legacyThemes ?? journal!.legacyThemes;
+                const allowOriginalTarget = true;
+                if (!this.#legacyThemeRecoveryReady(transactionId, legacyFiles, allowOriginalTarget)) {
+                    this.#writeMarker(transactionId, "incomplete", "legacy-backup-unavailable");
+                    ambiguous = true;
+                    continue;
+                }
+                const legacyThemes = new Map(legacyFiles.map(file => [file.fileName, file.sha256]));
+                const cleanup = this.#cleanupTransactionFiles(transactionId, files, fs.existsSync(stage) ? stage : undefined, legacyThemes);
+                const legacyRestored = this.#restoreLegacyThemeBackups(transactionId, legacyFiles);
                 let stageRemoved = true;
                 try {if (fs.existsSync(stage)) this.#removeStage(stage);}
                 catch {stageRemoved = false;}
-                if (cleanup.preserved.length > 0 || !stageRemoved) {
+                if (cleanup.preserved.length > 0 || !legacyRestored || !stageRemoved) {
                     this.#writeMarker(transactionId, "incomplete", "cleanup-pending");
                     ambiguous = true;
                     continue;
