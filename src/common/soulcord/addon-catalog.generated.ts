@@ -18,7 +18,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "ATTACHMENT_SEND_PATH_REQUIRES_CONFIRMATION"
         ],
-        "provenance": "AGPL"
+        "provenance": "GPL-3.0"
     },
     {
         "name": "AudioOptions",
@@ -36,27 +36,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "EXTERNAL_AUDIO_DOWNLOAD_REQUIRES_CONFIRMATION"
         ],
-        "provenance": "AGPL"
-    },
-    {
-        "name": "BetterFolders",
-        "fileName": "BetterFolders.plugin.js",
-        "version": "3.8.1",
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
-        "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
-        "sizeBytes": 23865,
-        "dependencies": [],
-        "conflicts": [
-            "ServerFolders"
-        ],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
-        ],
-        "provenance": "MIT"
+        "provenance": "GPL-3.0"
     },
     {
         "name": "BlurNSFW",
@@ -73,42 +53,6 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityDisposition": "HOLD",
         "securityReasonCodes": [
             "PATCH_TEARDOWN_INCOMPLETE"
-        ],
-        "provenance": "MIT"
-    },
-    {
-        "name": "CallTimeCounter",
-        "fileName": "CallTimeCounter.plugin.js",
-        "version": "1.0.2",
-        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
-        "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
-        "sizeBytes": 3809,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
-        ],
-        "provenance": "official-catalog-unchanged-only"
-    },
-    {
-        "name": "HideDisabledEmojis",
-        "fileName": "HideDisabledEmojis.plugin.js",
-        "version": "0.1.0",
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
-        "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
-        "sizeBytes": 11205,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
         ],
         "provenance": "MIT"
     },
@@ -148,15 +92,33 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "AUDIO_CONTEXT_TEARDOWN_INCOMPLETE",
             "CONFIG_DELETE_ON_PARSE_ERROR"
         ],
-        "provenance": "AGPL"
+        "provenance": "GPL-3.0"
     },
     {
-        "name": "ViewProfilePicture",
-        "fileName": "ViewProfilePicture.plugin.js",
-        "version": "1.3.15",
-        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/364b4f372afe6febe8d6afa49fd254bf2800fe67/ViewProfilePicture/ViewProfilePicture.plugin.js",
-        "sourceSha256": "8755d6e19694439affee769f2d822013c4b1c77d5bc7eaa7a5e52d9ca4218e6a",
-        "sizeBytes": 19281,
+        "name": "PermissionsViewer",
+        "fileName": "PermissionsViewer.plugin.js",
+        "version": "1.0.1",
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
+        "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
+        "sizeBytes": 239714,
+        "dependencies": [],
+        "conflicts": [],
+        "stageable": true,
+        "installable": false,
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "securityReasonCodes": [
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        ],
+        "provenance": "MIT"
+    },
+    {
+        "name": "DoubleClickToReply",
+        "fileName": "DoubleClickToReply.plugin.js",
+        "version": "1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
+        "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+        "sizeBytes": 5610,
         "dependencies": [],
         "conflicts": [],
         "stageable": true,
@@ -184,7 +146,79 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "VOICE_AND_REMOTE_AUDIO_REQUIRES_CONFIRMATION"
         ],
-        "provenance": "AGPL"
+        "provenance": "GPL-3.0"
+    },
+    {
+        "name": "ViewProfilePicture",
+        "fileName": "ViewProfilePicture.plugin.js",
+        "version": "1.3.15",
+        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/364b4f372afe6febe8d6afa49fd254bf2800fe67/ViewProfilePicture/ViewProfilePicture.plugin.js",
+        "sourceSha256": "8755d6e19694439affee769f2d822013c4b1c77d5bc7eaa7a5e52d9ca4218e6a",
+        "sizeBytes": 19281,
+        "dependencies": [],
+        "conflicts": [],
+        "stageable": true,
+        "installable": false,
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "securityReasonCodes": [
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        ],
+        "provenance": "official-catalog-unchanged-only"
+    },
+    {
+        "name": "CallTimeCounter",
+        "fileName": "CallTimeCounter.plugin.js",
+        "version": "1.0.2",
+        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
+        "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
+        "sizeBytes": 3809,
+        "dependencies": [],
+        "conflicts": [],
+        "stageable": true,
+        "installable": false,
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "securityReasonCodes": [
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        ],
+        "provenance": "official-catalog-unchanged-only"
+    },
+    {
+        "name": "InsertTimestamps",
+        "fileName": "InsertTimestamps.plugin.js",
+        "version": "1.0.13",
+        "sourceUrl": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/Plugins/InsertTimestamps/InsertTimestamps.plugin.js",
+        "sourceSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61",
+        "sizeBytes": 6177,
+        "dependencies": [],
+        "conflicts": [],
+        "stageable": true,
+        "installable": false,
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "securityReasonCodes": [
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        ],
+        "provenance": "GPL-3.0"
+    },
+    {
+        "name": "BetterVolume",
+        "fileName": "BetterVolume.plugin.js",
+        "version": "3.2.4",
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
+        "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+        "sizeBytes": 20060,
+        "dependencies": [],
+        "conflicts": [],
+        "stageable": false,
+        "installable": false,
+        "reviewStatus": "HOLD",
+        "securityDisposition": "HOLD",
+        "securityReasonCodes": [
+            "USER_IDENTIFIER_LOGGING"
+        ],
+        "provenance": "MIT"
     },
     {
         "name": "DiscordEffects",
@@ -208,22 +242,24 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "provenance": "official-catalog-unchanged-only"
     },
     {
-        "name": "PermissionsViewer",
-        "fileName": "PermissionsViewer.plugin.js",
-        "version": "1.0.1",
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
-        "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
-        "sizeBytes": 239714,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        "name": "PinDMs",
+        "fileName": "PinDMs.plugin.js",
+        "version": "2.0.9",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
+        "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+        "sizeBytes": 62157,
+        "dependencies": [
+            "BDFDB"
         ],
-        "provenance": "MIT"
+        "conflicts": [],
+        "stageable": false,
+        "installable": false,
+        "reviewStatus": "HOLD",
+        "securityDisposition": "HOLD",
+        "securityReasonCodes": [
+            "BDFDB_DEPENDENCY_HOLD"
+        ],
+        "provenance": "GPL-2.0"
     },
     {
         "name": "EditServers",
@@ -244,15 +280,35 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "TLS_VERIFICATION_DISABLED",
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
-        "name": "PinDMs",
-        "fileName": "PinDMs.plugin.js",
-        "version": "2.0.9",
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
-        "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
-        "sizeBytes": 62157,
+        "name": "BetterFolders",
+        "fileName": "BetterFolders.plugin.js",
+        "version": "3.8.1",
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
+        "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
+        "sizeBytes": 23865,
+        "dependencies": [],
+        "conflicts": [
+            "ServerFolders"
+        ],
+        "stageable": true,
+        "installable": false,
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "securityReasonCodes": [
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+        ],
+        "provenance": "MIT"
+    },
+    {
+        "name": "BetterSearchPage",
+        "fileName": "BetterSearchPage.plugin.js",
+        "version": "1.3.2",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/Plugins/BetterSearchPage/BetterSearchPage.plugin.js",
+        "sourceSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096",
+        "sizeBytes": 4996,
         "dependencies": [
             "BDFDB"
         ],
@@ -264,7 +320,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "MessagePeek",
@@ -286,26 +342,6 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "provenance": "official-catalog-unchanged-only"
     },
     {
-        "name": "BetterSearchPage",
-        "fileName": "BetterSearchPage.plugin.js",
-        "version": "1.3.2",
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/Plugins/BetterSearchPage/BetterSearchPage.plugin.js",
-        "sourceSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096",
-        "sizeBytes": 4996,
-        "dependencies": [
-            "BDFDB"
-        ],
-        "conflicts": [],
-        "stageable": false,
-        "installable": false,
-        "reviewStatus": "HOLD",
-        "securityDisposition": "HOLD",
-        "securityReasonCodes": [
-            "BDFDB_DEPENDENCY_HOLD"
-        ],
-        "provenance": "GPL"
-    },
-    {
         "name": "ServerHider",
         "fileName": "ServerHider.plugin.js",
         "version": "6.3.4",
@@ -323,7 +359,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "PersonalPins",
@@ -343,7 +379,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "CompleteTimestamps",
@@ -363,28 +399,25 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
-        "name": "ReadAllNotificationsButton",
-        "fileName": "ReadAllNotificationsButton.plugin.js",
-        "version": "1.8.5",
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
-        "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
-        "sizeBytes": 35542,
-        "dependencies": [
-            "BDFDB"
-        ],
+        "name": "HideDisabledEmojis",
+        "fileName": "HideDisabledEmojis.plugin.js",
+        "version": "0.1.0",
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
+        "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
+        "sizeBytes": 11205,
+        "dependencies": [],
         "conflicts": [],
-        "stageable": false,
+        "stageable": true,
         "installable": false,
-        "reviewStatus": "HOLD",
-        "securityDisposition": "HOLD",
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
         "securityReasonCodes": [
-            "BDFDB_DEPENDENCY_HOLD",
-            "READ_STATE_ACTION_REQUIRES_CONFIRMATION"
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
         ],
-        "provenance": "GPL"
+        "provenance": "MIT"
     },
     {
         "name": "Translator",
@@ -407,7 +440,28 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "ARBITRARY_PROVIDER_ENDPOINT",
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
+    },
+    {
+        "name": "ReadAllNotificationsButton",
+        "fileName": "ReadAllNotificationsButton.plugin.js",
+        "version": "1.8.5",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
+        "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+        "sizeBytes": 35542,
+        "dependencies": [
+            "BDFDB"
+        ],
+        "conflicts": [],
+        "stageable": false,
+        "installable": false,
+        "reviewStatus": "HOLD",
+        "securityDisposition": "HOLD",
+        "securityReasonCodes": [
+            "BDFDB_DEPENDENCY_HOLD",
+            "READ_STATE_ACTION_REQUIRES_CONFIRMATION"
+        ],
+        "provenance": "GPL-2.0"
     },
     {
         "name": "ServerDetails",
@@ -427,48 +481,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
-    },
-    {
-        "name": "ImageUtilities",
-        "fileName": "ImageUtilities.plugin.js",
-        "version": "5.6.7",
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/Plugins/ImageUtilities/ImageUtilities.plugin.js",
-        "sourceSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2",
-        "sizeBytes": 121002,
-        "dependencies": [
-            "BDFDB"
-        ],
-        "conflicts": [
-            "competing media viewers"
-        ],
-        "stageable": false,
-        "installable": false,
-        "reviewStatus": "HOLD",
-        "securityDisposition": "HOLD",
-        "securityReasonCodes": [
-            "BDFDB_DEPENDENCY_HOLD",
-            "DOWNLOAD_AND_FILESYSTEM_ACTION_GATE"
-        ],
-        "provenance": "GPL"
-    },
-    {
-        "name": "InsertTimestamps",
-        "fileName": "InsertTimestamps.plugin.js",
-        "version": "1.0.13",
-        "sourceUrl": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/Plugins/InsertTimestamps/InsertTimestamps.plugin.js",
-        "sourceSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61",
-        "sizeBytes": 6177,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
-        ],
-        "provenance": "AGPL"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "RevealAllSpoilers",
@@ -488,25 +501,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
-    },
-    {
-        "name": "ActivityFilter",
-        "fileName": "ActivityFilter.plugin.js",
-        "version": "2.2.0",
-        "sourceUrl": "https://raw.githubusercontent.com/sewsho/BetterDiscordAddons/9ed66ec7ef30c237032e09b8458aeba71e64eb3e/Plugins/ActivityFilter/ActivityFilter.plugin.js",
-        "sourceSha256": "5d2e7236033ce7f161b13024681e4b8a6189911f4f5ed3fc07a0662ba06de9cf",
-        "sizeBytes": 14089,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": true,
-        "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
-        ],
-        "provenance": "MIT"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "BetterFriendList",
@@ -526,23 +521,23 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
-        "name": "BetterVolume",
-        "fileName": "BetterVolume.plugin.js",
-        "version": "3.2.4",
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
-        "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
-        "sizeBytes": 20060,
+        "name": "ActivityFilter",
+        "fileName": "ActivityFilter.plugin.js",
+        "version": "2.2.0",
+        "sourceUrl": "https://raw.githubusercontent.com/sewsho/BetterDiscordAddons/9ed66ec7ef30c237032e09b8458aeba71e64eb3e/Plugins/ActivityFilter/ActivityFilter.plugin.js",
+        "sourceSha256": "5d2e7236033ce7f161b13024681e4b8a6189911f4f5ed3fc07a0662ba06de9cf",
+        "sizeBytes": 14089,
         "dependencies": [],
         "conflicts": [],
-        "stageable": false,
+        "stageable": true,
         "installable": false,
-        "reviewStatus": "HOLD",
-        "securityDisposition": "HOLD",
+        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
         "securityReasonCodes": [
-            "USER_IDENTIFIER_LOGGING"
+            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
         ],
         "provenance": "MIT"
     },
@@ -588,12 +583,35 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "provenance": "MIT"
     },
     {
-        "name": "DoubleClickToReply",
-        "fileName": "DoubleClickToReply.plugin.js",
-        "version": "1.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
-        "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
-        "sizeBytes": 5610,
+        "name": "ImageUtilities",
+        "fileName": "ImageUtilities.plugin.js",
+        "version": "5.6.7",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/Plugins/ImageUtilities/ImageUtilities.plugin.js",
+        "sourceSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2",
+        "sizeBytes": 121002,
+        "dependencies": [
+            "BDFDB"
+        ],
+        "conflicts": [
+            "competing media viewers"
+        ],
+        "stageable": false,
+        "installable": false,
+        "reviewStatus": "HOLD",
+        "securityDisposition": "HOLD",
+        "securityReasonCodes": [
+            "BDFDB_DEPENDENCY_HOLD",
+            "DOWNLOAD_AND_FILESYSTEM_ACTION_GATE"
+        ],
+        "provenance": "GPL-2.0"
+    },
+    {
+        "name": "ShowSpectators",
+        "fileName": "ShowSpectators.plugin.js",
+        "version": "1.0.6",
+        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/e9c5b2ec2a0c778adf37781f690811253863a3cc/ShowSpectators/ShowSpectators.plugin.js",
+        "sourceSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
+        "sizeBytes": 16367,
         "dependencies": [],
         "conflicts": [],
         "stageable": true,
@@ -604,25 +622,6 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
         ],
         "provenance": "official-catalog-unchanged-only"
-    },
-    {
-        "name": "DoNotTrack",
-        "fileName": "DoNotTrack.plugin.js",
-        "version": "0.1.0",
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
-        "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
-        "sizeBytes": 10460,
-        "dependencies": [],
-        "conflicts": [],
-        "stageable": false,
-        "installable": false,
-        "reviewStatus": "HOLD",
-        "securityDisposition": "HOLD",
-        "securityReasonCodes": [
-            "NONREVERSIBLE_TELEMETRY_MUTATION",
-            "RELOAD_REQUIRED"
-        ],
-        "provenance": "MIT"
     },
     {
         "name": "SpellCheck",
@@ -644,25 +643,26 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "MUTABLE_DICTIONARY_DOWNLOAD",
             "REQUEST_NOT_ABORTED"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
-        "name": "ShowSpectators",
-        "fileName": "ShowSpectators.plugin.js",
-        "version": "1.0.6",
-        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/e9c5b2ec2a0c778adf37781f690811253863a3cc/ShowSpectators/ShowSpectators.plugin.js",
-        "sourceSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
-        "sizeBytes": 16367,
+        "name": "DoNotTrack",
+        "fileName": "DoNotTrack.plugin.js",
+        "version": "0.1.0",
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
+        "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+        "sizeBytes": 10460,
         "dependencies": [],
         "conflicts": [],
-        "stageable": true,
+        "stageable": false,
         "installable": false,
-        "reviewStatus": "SAFE_TO_RUNTIME_TEST",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "reviewStatus": "HOLD",
+        "securityDisposition": "HOLD",
         "securityReasonCodes": [
-            "DEEP_STATIC_PASS_RUNTIME_REQUIRED"
+            "NONREVERSIBLE_TELEMETRY_MUTATION",
+            "RELOAD_REQUIRED"
         ],
-        "provenance": "official-catalog-unchanged-only"
+        "provenance": "MIT"
     },
     {
         "name": "SplitLargeMessages",
@@ -687,7 +687,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
             "MULTI_SEND_ACTION_GATE",
             "SOULCORD_GUARDED_MODE_AVAILABLE_WITHOUT_FILE"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     },
     {
         "name": "CharCounter",
@@ -707,7 +707,7 @@ export const SOULCORD_RUNTIME_ADDONS = [
         "securityReasonCodes": [
             "BDFDB_DEPENDENCY_HOLD"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     }
 ] as const;
 
@@ -727,7 +727,7 @@ export const SOULCORD_RUNTIME_DEPENDENCIES = [
             "PLUGIN_FILE_MUTATION",
             "OWN_TEARDOWN_EMPTY"
         ],
-        "provenance": "GPL"
+        "provenance": "GPL-2.0"
     }
 ] as const;
 
@@ -743,20 +743,20 @@ export const SOULCORD_REVIEWED_OPTIONALS = [
         "installable": false
     },
     {
-        "name": "BetterMediaPlayer",
-        "fileName": "BetterMediaPlayer.plugin.js",
-        "version": "1.2.22",
-        "sourceSha256": "9cc63632d20c5a055d52f6c0f2111ecb051b03ce004690fbfb90b30451195fc0",
-        "reviewStatus": "HOLD",
-        "licenseStatus": "UNRESOLVED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "name": "ChannelTabs",
         "fileName": "ChannelTabs.plugin.js",
         "version": "2.8.9",
         "sourceSha256": "01ab24714c62ee055668a1ff05aec2504634c10e99d0b2aeee0abd5f673a81f1",
+        "reviewStatus": "HOLD",
+        "licenseStatus": "FOUND",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "name": "ShowPing",
+        "fileName": "ShowPing.plugin.js",
+        "version": "2.6.13",
+        "sourceSha256": "a1fd1faaf73df95a32ae1abbe1063f1e681dcfb186550520b8072c2843e1004e",
         "reviewStatus": "HOLD",
         "licenseStatus": "FOUND",
         "runtimeStatus": "PENDING",
@@ -803,20 +803,20 @@ export const SOULCORD_REVIEWED_OPTIONALS = [
         "installable": false
     },
     {
-        "name": "RoleExplorer",
-        "fileName": "RoleExplorer.plugin.js",
-        "version": "1.0.8",
-        "sourceSha256": "52cf86bf13dc26b8fadb86dff4c1cc9ff4bda370d51b141e959faf5704be8e22",
-        "reviewStatus": "HOLD",
-        "licenseStatus": "UNRESOLVED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "name": "InMyVoice",
         "fileName": "InMyVoice.plugin.js",
         "version": "1.2.4",
         "sourceSha256": "884ab5777dfe5c325a917cb17ac3b720cda3f8c26f7558b8cb918c3d78c3ab37",
+        "reviewStatus": "HOLD",
+        "licenseStatus": "FOUND",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "name": "FavoriteMedia",
+        "fileName": "FavoriteMedia.plugin.js",
+        "version": "1.13.34",
+        "sourceSha256": "09455cd7546c59215f98235e7cd250f2bb03045b123dfc626032e34fcb8c2fe0",
         "reviewStatus": "HOLD",
         "licenseStatus": "FOUND",
         "runtimeStatus": "PENDING",
@@ -833,12 +833,22 @@ export const SOULCORD_REVIEWED_OPTIONALS = [
         "installable": false
     },
     {
-        "name": "FavoriteMedia",
-        "fileName": "FavoriteMedia.plugin.js",
-        "version": "1.13.34",
-        "sourceSha256": "09455cd7546c59215f98235e7cd250f2bb03045b123dfc626032e34fcb8c2fe0",
+        "name": "RoleExplorer",
+        "fileName": "RoleExplorer.plugin.js",
+        "version": "1.0.8",
+        "sourceSha256": "52cf86bf13dc26b8fadb86dff4c1cc9ff4bda370d51b141e959faf5704be8e22",
         "reviewStatus": "HOLD",
-        "licenseStatus": "FOUND",
+        "licenseStatus": "UNRESOLVED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "name": "BetterMediaPlayer",
+        "fileName": "BetterMediaPlayer.plugin.js",
+        "version": "1.2.22",
+        "sourceSha256": "9cc63632d20c5a055d52f6c0f2111ecb051b03ce004690fbfb90b30451195fc0",
+        "reviewStatus": "HOLD",
+        "licenseStatus": "UNRESOLVED",
         "runtimeStatus": "PENDING",
         "installable": false
     }
@@ -879,15 +889,57 @@ export const SOULCORD_RUNTIME_THEMES = [
         "fileName": "SoulCord-PaperSignal.theme.css",
         "sourceSha256": "4f2570cf612510e0802b728b0c778aee05408681347146cfa7cf590c39b5ac46",
         "content": "/**\n * @name SoulCord — Paper Signal\n * @author slaveofsolace\n * @version 1.2.0\n * @description A warm paper SoulCord theme with ink, coral, and teal signals.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */\n\n:root {\n    --soulcord-paper: #F3EDE3;\n    --soulcord-panel: #E8E0D5;\n    --soulcord-raised: #FFFAF2;\n    --soulcord-ink: #242525;\n    --soulcord-muted: #535856;\n    --soulcord-coral: #C95849;\n    --soulcord-teal: #287D78;\n    --soulcord-seam: #CFC4B7;\n    --soulcord-focus: #176C68;\n    --soulcord-canvas: #D8D0C4;\n    --soulcord-surface-0: #E8E0D5;\n    --soulcord-surface-1: #F3EDE3;\n    --soulcord-surface-2: #FFFAF2;\n    --soulcord-accent: var(--soulcord-teal);\n    --soulcord-accent-strong: var(--soulcord-coral);\n    --soulcord-on-accent: #FFFDF8;\n    --soulcord-accent-text: #0A4F52;\n    --soulcord-warning-text: #704B00;\n    --soulcord-danger-text: #923229;\n    --soulcord-callout-text: #454A48;\n    --soulcord-panel-shadow: none;\n    --soulcord-panel-filter: none;\n    --soulcord-message-hover: rgb(40 125 120 / 8%);\n    --soulcord-gap: 8px;\n    --soulcord-radius: 2px;\n    --soulcord-radius-small: 1px;\n    --soulcord-avatar-radius: 6px;\n    --soulcord-graphite: var(--soulcord-ink);\n    --soulcord-cream: var(--soulcord-raised);\n    --soulcord-sea: var(--soulcord-teal);\n    --custom-message-spacing-vertical-container-cozy: 0.34rem;\n    --custom-message-spacing-vertical-container-compact: 0.1rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: light;\n\n    --background-primary: var(--soulcord-paper);\n    --background-secondary: var(--soulcord-panel);\n    --background-secondary-alt: #DED4C8;\n    --background-tertiary: #D5CBBF;\n    --background-floating: var(--soulcord-raised);\n    --background-modifier-hover: rgb(40 125 120 / 9%);\n    --background-modifier-active: rgb(40 125 120 / 14%);\n    --background-modifier-selected: rgb(201 88 73 / 12%);\n    --background-modifier-accent: var(--soulcord-seam);\n    --text-normal: var(--soulcord-ink);\n    --text-default: var(--soulcord-ink);\n    --text-primary: var(--soulcord-ink);\n    --text-strong: #191B1B;\n    --text-secondary: #4D5251;\n    --text-tertiary: var(--soulcord-muted);\n    --text-muted: var(--soulcord-muted);\n    --text-link: #0F6268;\n    --text-brand: var(--soulcord-focus);\n    --text-positive: #225F3F;\n    --text-warning: #704B00;\n    --text-danger: #923229;\n    --text-feedback-positive: #225F3F;\n    --text-feedback-warning: #704B00;\n    --text-feedback-critical: #923229;\n    --header-primary: #191B1B;\n    --header-secondary: #4D5251;\n    --channels-default: #4D5251;\n    --channel-icon: var(--soulcord-muted);\n    --icon-primary: var(--soulcord-ink);\n    --icon-secondary: #4D5251;\n    --icon-tertiary: var(--soulcord-muted);\n    --icon-muted: #737876;\n    --interactive-normal: #4F5554;\n    --interactive-hover: #1D2120;\n    --interactive-active: #131515;\n    --interactive-muted: #5F6462;\n    --brand-experiment: var(--soulcord-teal);\n    --brand-experiment-560: #236E69;\n    --brand-500: var(--soulcord-teal);\n    --brand-560: #236E69;\n    --brand-600: #1D5C58;\n    --button-filled-brand-background: var(--soulcord-teal);\n    --button-filled-brand-background-hover: var(--brand-560);\n    --button-filled-brand-text: var(--soulcord-on-accent);\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --interactive-text-muted: var(--interactive-muted);\n    --interactive-background-default: transparent;\n    --interactive-background-hover: var(--background-modifier-hover);\n    --interactive-background-active: var(--background-modifier-active);\n    --interactive-background-selected: var(--background-modifier-selected);\n    --status-danger: var(--soulcord-coral);\n    --channel-text-area-placeholder: var(--soulcord-muted);\n    --input-text-default: var(--soulcord-ink);\n    --input-placeholder-text: var(--soulcord-muted);\n    --input-background-default: var(--soulcord-surface-2);\n    --input-border-default: var(--soulcord-seam);\n    --input-border-hover: #AFA194;\n    --input-border-focus: var(--soulcord-focus);\n    --checkbox-border-default: #8F8479;\n    --scrollbar-thin-thumb: #B3A99D;\n    --scrollbar-thin-track: #E4DCD1;\n    --scrollbar-auto-thumb: #B3A99D;\n    --scrollbar-auto-track: #E4DCD1;\n    --app-frame-background: var(--soulcord-canvas);\n    --app-frame-border: var(--soulcord-seam);\n    --background-base-low: var(--soulcord-surface-1);\n    --background-base-lower: var(--soulcord-surface-0);\n    --background-base-lowest: var(--soulcord-canvas);\n    --background-surface-high: var(--soulcord-surface-1);\n    --background-surface-higher: var(--soulcord-surface-2);\n    --background-surface-highest: var(--soulcord-raised);\n    --background-mod-subtle: rgb(40 125 120 / 8%);\n    --background-mod-normal: rgb(40 125 120 / 13%);\n    --background-mod-strong: rgb(201 88 73 / 15%);\n    --bg-surface-overlay-tmp: var(--soulcord-raised);\n    --bg-surface-raised: var(--soulcord-raised);\n    --border-muted: rgb(207 196 183 / 72%);\n    --border-normal: var(--soulcord-seam);\n    --border-strong: #AFA194;\n    --border-subtle: rgb(207 196 183 / 86%);\n    --card-background-default: var(--soulcord-surface-1);\n    --channeltextarea-background: var(--soulcord-surface-2);\n    --chat-background-default: var(--soulcord-surface-1);\n    --input-background: var(--soulcord-surface-2);\n    --modal-background: var(--soulcord-raised);\n    --modal-footer-background: var(--soulcord-panel);\n    --background-mobile-primary: var(--soulcord-paper);\n    --background-mobile-secondary: var(--soulcord-panel);\n    --deprecated-card-bg: var(--soulcord-surface-1);\n    --deprecated-card-editable-bg: var(--soulcord-surface-2);\n    --control-secondary-text-default: #4D5251;\n    --control-secondary-text-hover: #1D2120;\n    --control-secondary-text-active: #131515;\n    --control-secondary-background-default: var(--soulcord-panel);\n    --control-secondary-background-hover: var(--soulcord-raised);\n    --control-secondary-background-active: #DED4C8;\n    --control-secondary-border-default: #AFA194;\n    --control-secondary-border-hover: var(--soulcord-teal);\n    --control-secondary-border-active: var(--soulcord-focus);\n}\n\n::selection { color: #FFFAF2; background: #287D78; }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--soulcord-focus) !important; outline-offset: 2px; }\n:where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }\n#app-mount :is([class*=\"sidebarList_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"], [class*=\"contentRegion_\"]) { border-color: var(--soulcord-seam) !important; }\n#app-mount [class*=\"mentioned_\"] { background: rgb(201 88 73 / 10%) !important; border-left: 2px solid var(--soulcord-coral); }\n#app-mount [class*=\"newMessagesBar_\"] { background: var(--soulcord-teal) !important; color: #FFFAF2 !important; }\n\n#app-mount [class*=\"numberBadge_\"],\n#app-mount [class*=\"eyebrow_\"][class*=\"live_\"] { background-color: #C2393E !important; color: #FFFFFF !important; }\n\nbody {\n    background: var(--soulcord-canvas) !important;\n    font-family: \"Segoe UI Variable\", \"gg sans\", sans-serif;\n}\n\n#app-mount { background: var(--soulcord-canvas) !important; }\n\n#app-mount [class*=\"standardSidebarView_\"] {\n    color: var(--text-default);\n    background: var(--background-primary);\n}\n\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"contentRegion_\"], [class*=\"contentRegionScroller_\"], [class*=\"contentColumn_\"]) {\n    color: var(--text-default);\n    background-color: var(--background-primary);\n}\n\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"sidebarRegion_\"], [class*=\"sidebarRegionScroller_\"]) {\n    color: var(--text-secondary);\n    background-color: var(--background-secondary);\n}\n\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"defaultColor_\"], [class*=\"colorStandard_\"], [class*=\"colorHeaderPrimary_\"]) {\n    color: var(--text-primary) !important;\n}\n\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"colorHeaderSecondary_\"], [class*=\"colorMuted_\"]) {\n    color: var(--text-secondary) !important;\n}\n\n#app-mount [class*=\"standardSidebarView_\"] :is(.bd-settings-title, .bd-setting-header label) { color: var(--text-strong); }\n#app-mount [class*=\"standardSidebarView_\"] :is(.bd-setting-note, .bd-description, .bd-empty-updates) { color: var(--text-default); }\n\n#app-mount [class*=\"sidebar_\"]:has(> [class*=\"guilds_\"]) {\n    gap: var(--soulcord-gap);\n    margin: 0 var(--soulcord-gap) var(--soulcord-gap);\n    background: transparent !important;\n}\n\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"panels_\"], [class*=\"subtitleContainer_\"], [class*=\"chatContent_\"], [class*=\"peopleColumn_\"], [class*=\"nowPlayingColumn_\"], [class*=\"membersWrap_\"]) {\n    box-sizing: border-box;\n    border: 1px solid var(--soulcord-seam);\n    border-radius: var(--soulcord-radius);\n    background: var(--soulcord-surface-1) !important;\n    box-shadow: var(--soulcord-panel-shadow);\n    backdrop-filter: var(--soulcord-panel-filter);\n}\n\n#app-mount [class*=\"guilds_\"] {\n    margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--soulcord-gap));\n}\n\n#app-mount [class*=\"sidebarList_\"] { margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--soulcord-gap)); }\n#app-mount [class*=\"panels_\"] { border-top: 2px solid var(--soulcord-teal); }\n#app-mount [class*=\"subtitleContainer_\"] { margin-bottom: var(--soulcord-gap); }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { margin-left: var(--soulcord-gap); }\n\n#app-mount [class*=\"page_\"] > :is([class*=\"chat_\"], [class*=\"peopleColumn_\"]) {\n    padding-right: var(--soulcord-gap);\n    padding-bottom: var(--soulcord-gap);\n    background: transparent !important;\n}\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) {\n    border: 1px solid var(--soulcord-seam) !important;\n    border-radius: var(--soulcord-radius-small) !important;\n    background: var(--soulcord-surface-2) !important;\n    box-shadow: inset 0 -2px 0 var(--soulcord-accent-strong) !important;\n}\n\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"], [class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) {\n    border: 1px solid transparent;\n    border-radius: var(--soulcord-radius-small) !important;\n    transition: background-color 140ms ease, border-color 140ms ease;\n}\n\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"], [class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover {\n    border-color: var(--soulcord-seam);\n    background: var(--soulcord-surface-2) !important;\n}\n\n#app-mount [class*=\"peopleListItem_\"] { border-width: 0 0 1px; border-bottom-color: var(--soulcord-seam); border-radius: 0 !important; background: transparent !important; }\n#app-mount [class*=\"itemCard_\"] { border-width: 0 0 1px; border-bottom-color: var(--soulcord-seam); border-radius: 0 !important; background: transparent !important; box-shadow: none; }\n#app-mount li[id^=\"chat-messages-\"] { margin-inline: 6px; border-left: 2px solid transparent; border-radius: 0; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-left-color: var(--soulcord-coral); background: var(--soulcord-message-hover) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--soulcord-seam) !important; border-left: 4px solid var(--soulcord-coral) !important; border-radius: 0 !important; background: var(--soulcord-raised) !important; }\n#app-mount [class*=\"guilds_\"] [class*=\"icon_\"] { border-radius: var(--soulcord-avatar-radius) !important; }\n\n#app-mount [class*=\"critical-secondary_\"],\n#app-mount [class*=\"critical-secondary_\"] * { color: var(--text-danger) !important; }\n\n#app-mount [class*=\"topPill_\"] [class*=\"item_\"]:not([aria-selected=\"true\"]) { color: var(--interactive-normal) !important; }\n#app-mount [class*=\"topPill_\"] [class*=\"item_\"][aria-selected=\"true\"] { box-shadow: inset 0 -2px 0 var(--soulcord-teal); }\n\n#app-mount [class*=\"topPill_\"] [class*=\"addFriend_\"],\n#app-mount [class*=\"topPill_\"] [class*=\"addFriend_\"] * { color: #FFFDF8 !important; }\n\n#app-mount [class*=\"topPill_\"] [class*=\"addFriend_\"] { background: #176C68 !important; }\n\n::-webkit-scrollbar-thumb {\n    border: 3px solid transparent !important;\n    border-radius: 999px !important;\n    background: var(--soulcord-seam) !important;\n    background-clip: padding-box !important;\n}\n\n@media (max-width: 900px) {\n    :root { --soulcord-gap: 4px; }\n    #app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { margin-left: 4px; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n    *,\n    *::before,\n    *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "threadline",
+        "name": "Threadline",
+        "fileName": "SoulCord-Threadline.theme.css",
+        "sourceSha256": "8c8283b10e507daabe9af7c30bc3e1e563b6c1cbd44d76bb0eb97c27d1eac1ee",
+        "content": "/**\n * @name SoulCord — Threadline\n * @author slaveofsolace\n * @version 2.0.0\n * @description A compact ruled workspace with indexed navigation and precise message rails.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, length-zero-no-unit, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --sct-canvas: #0B1115;\n    --sct-sidebar: #111A20;\n    --sct-chat: #151F26;\n    --sct-raised: #1B2831;\n    --sct-rule: #344651;\n    --sct-rule-strong: #607987;\n    --sct-text: #EDF1EE;\n    --sct-muted: #AAB7BB;\n    --sct-accent: #65C6B8;\n    --sct-accent-strong: #327F76;\n    --sct-alert: #F08061;\n    --sct-focus: #9DE8DD;\n    --sct-on-accent: #071310;\n    --sct-radius: 0px;\n    --sct-density: 0.24rem;\n    --soulcord-graphite: var(--sct-canvas);\n    --soulcord-cream: var(--sct-text);\n    --soulcord-sea: var(--sct-accent);\n    --soulcord-coral: var(--sct-alert);\n    --soulcord-focus: var(--sct-focus);\n    --soulcord-on-accent: var(--sct-on-accent);\n    --soulcord-accent-text: #8DDED3;\n    --soulcord-warning-text: #F3B79F;\n    --soulcord-danger-text: #F39A84;\n    --soulcord-callout-text: var(--sct-muted);\n    --custom-message-spacing-vertical-container-cozy: var(--sct-density);\n    --custom-message-spacing-vertical-container-compact: 0.08rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: dark;\n    --background-primary: var(--sct-chat);\n    --background-secondary: var(--sct-sidebar);\n    --background-secondary-alt: #0E171C;\n    --background-tertiary: var(--sct-canvas);\n    --background-floating: var(--sct-raised);\n    --background-base-low: var(--sct-chat);\n    --background-base-lower: var(--sct-sidebar);\n    --background-base-lowest: var(--sct-canvas);\n    --background-surface-high: #18242B;\n    --background-surface-higher: var(--sct-raised);\n    --background-surface-highest: #22333D;\n    --background-modifier-hover: rgb(101 198 184 / 9%);\n    --background-modifier-active: rgb(101 198 184 / 15%);\n    --background-modifier-selected: rgb(101 198 184 / 20%);\n    --background-modifier-accent: var(--sct-rule);\n    --background-mod-subtle: rgb(101 198 184 / 7%);\n    --background-mod-normal: rgb(101 198 184 / 12%);\n    --background-mod-strong: rgb(101 198 184 / 18%);\n    --bg-surface-overlay-tmp: var(--sct-raised);\n    --bg-surface-raised: var(--sct-raised);\n    --text-normal: var(--sct-text);\n    --text-default: var(--sct-text);\n    --text-muted: var(--sct-muted);\n    --text-link: #7ED9CF;\n    --header-primary: #FFFFFF;\n    --header-secondary: #C5D0D2;\n    --interactive-normal: #B8C5C8;\n    --interactive-hover: #FFFFFF;\n    --interactive-active: var(--sct-text);\n    --interactive-muted: #82949A;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: var(--sct-accent-strong);\n    --brand-560: #2A6E66;\n    --brand-600: #235E58;\n    --button-filled-brand-background: var(--sct-accent);\n    --button-filled-brand-background-hover: #7ED9CF;\n    --button-filled-brand-text: var(--sct-on-accent);\n    --border-subtle: rgb(52 70 81 / 80%);\n    --border-muted: var(--sct-rule);\n    --border-normal: var(--sct-rule);\n    --border-strong: var(--sct-rule-strong);\n    --channeltextarea-background: #10191E;\n    --chat-background-default: var(--sct-chat);\n    --input-background: #10191E;\n    --card-background-default: var(--sct-sidebar);\n    --modal-background: var(--sct-chat);\n    --modal-footer-background: var(--sct-sidebar);\n    --status-danger: var(--sct-alert);\n    --scrollbar-thin-thumb: #526873;\n    --scrollbar-auto-thumb: #526873;\n    --scrollbar-auto-track: var(--sct-canvas);\n}\n\nbody { background: var(--sct-canvas) !important; font-family: \"Segoe UI Variable\", \"gg sans\", sans-serif; }\n#app-mount { background: var(--sct-canvas) !important; }\n::selection { color: var(--sct-on-accent); background: var(--sct-accent); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--sct-focus) !important; outline-offset: 2px; }\n\n/* Signature: a single continuous rule ties the shell together. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) {\n    border-right: 1px solid var(--sct-rule);\n    border-radius: var(--sct-radius) !important;\n    background: var(--background-primary) !important;\n}\n#app-mount [class*=\"guilds_\"] { border-left: 3px solid var(--sct-accent-strong); background: var(--sct-canvas) !important; }\n#app-mount [class*=\"sidebarList_\"] { background: var(--sct-sidebar) !important; }\n#app-mount :is([class*=\"subtitleContainer_\"], [class*=\"container_\" i][class*=\"themed_\"]) { border-bottom: 1px solid var(--sct-rule) !important; }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { border-left: 1px solid var(--sct-rule); background: var(--sct-sidebar) !important; }\n\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) {\n    border-left: 3px solid transparent;\n    border-bottom: 1px solid rgb(52 70 81 / 58%);\n    border-radius: 0 !important;\n    transition: border-color 120ms linear, background-color 120ms linear;\n}\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { border-left-color: var(--sct-rule-strong); background: rgb(101 198 184 / 7%) !important; }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { border-left-color: var(--sct-accent) !important; background: rgb(101 198 184 / 13%) !important; }\n\n#app-mount li[id^=\"chat-messages-\"] { border-left: 3px solid transparent; border-bottom: 1px solid rgb(52 70 81 / 42%); border-radius: 0; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-left-color: var(--sct-accent); background: rgb(101 198 184 / 6%) !important; }\n#app-mount [class*=\"mentioned_\"] { border-left-color: var(--sct-alert) !important; background: rgb(240 128 97 / 10%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { border: 0; border-bottom: 1px solid var(--sct-rule); border-radius: 0 !important; background: transparent !important; }\n#app-mount [class*=\"itemCard_\"] { border-left: 3px solid var(--sct-accent-strong); }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { border: 1px solid var(--sct-rule-strong) !important; border-radius: 0 !important; background: #10191E !important; box-shadow: inset 3px 0 0 var(--sct-accent-strong); }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"]) { border: 1px solid var(--sct-rule-strong); border-radius: 0 !important; background: var(--sct-raised) !important; box-shadow: 10px 10px 0 rgb(0 0 0 / 28%); }\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"sidebarRegion_\"], [class*=\"contentRegion_\"]) { border-right: 1px solid var(--sct-rule); background: var(--background-secondary) !important; }\n#app-mount [class*=\"contentRegion_\"] { background: var(--background-primary) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--sct-rule) !important; border-left: 3px solid var(--sct-accent) !important; border-radius: 0 !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: var(--sct-on-accent) !important; background: var(--sct-accent) !important; border-radius: 0 !important; }\n\n@media (max-width: 900px) {\n    #app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { border-left-width: 0; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "signal-block",
+        "name": "Signal Block",
+        "fileName": "SoulCord-SignalBlock.theme.css",
+        "sourceSha256": "4b648c012f9017cb3334c987e09fc3190b1ce30681d30d792e2860b756a0c071",
+        "content": "/**\n * @name SoulCord — Signal Block\n * @author slaveofsolace\n * @version 2.0.0\n * @description High-contrast block controls with deliberate containment and unmistakable state changes.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --scb-black: #090A0A;\n    --scb-panel: #141616;\n    --scb-raised: #202323;\n    --scb-line: #596060;\n    --scb-text: #F4F1E8;\n    --scb-muted: #B6BAB4;\n    --scb-yellow: #F5BF41;\n    --scb-cyan: #54C8C1;\n    --scb-red: #EF755F;\n    --scb-focus: #FFE084;\n    --scb-on-accent: #171100;\n    --soulcord-graphite: var(--scb-black);\n    --soulcord-cream: var(--scb-text);\n    --soulcord-sea: var(--scb-cyan);\n    --soulcord-coral: var(--scb-red);\n    --soulcord-focus: var(--scb-focus);\n    --soulcord-on-accent: var(--scb-on-accent);\n    --soulcord-accent-text: #82DED8;\n    --soulcord-warning-text: #FFD978;\n    --soulcord-danger-text: #FFAA99;\n    --soulcord-callout-text: var(--scb-muted);\n    --custom-message-spacing-vertical-container-cozy: 0.44rem;\n    --custom-message-spacing-vertical-container-compact: 0.16rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: dark;\n    --background-primary: var(--scb-panel);\n    --background-secondary: #101212;\n    --background-secondary-alt: var(--scb-black);\n    --background-tertiary: var(--scb-black);\n    --background-floating: var(--scb-raised);\n    --background-base-low: var(--scb-panel);\n    --background-base-lower: #101212;\n    --background-base-lowest: var(--scb-black);\n    --background-surface-high: #191C1C;\n    --background-surface-higher: var(--scb-raised);\n    --background-surface-highest: #292D2D;\n    --background-modifier-hover: rgb(245 191 65 / 10%);\n    --background-modifier-active: rgb(245 191 65 / 17%);\n    --background-modifier-selected: rgb(84 200 193 / 18%);\n    --background-modifier-accent: var(--scb-line);\n    --background-mod-subtle: rgb(245 191 65 / 8%);\n    --background-mod-normal: rgb(245 191 65 / 13%);\n    --background-mod-strong: rgb(84 200 193 / 19%);\n    --bg-surface-overlay-tmp: var(--scb-raised);\n    --bg-surface-raised: var(--scb-raised);\n    --text-normal: var(--scb-text);\n    --text-default: var(--scb-text);\n    --text-muted: var(--scb-muted);\n    --text-link: #7EDBD5;\n    --header-primary: #FFFFFF;\n    --header-secondary: #D1D2CC;\n    --interactive-normal: #C7CAC4;\n    --interactive-hover: #FFFFFF;\n    --interactive-active: var(--scb-yellow);\n    --interactive-muted: #8E9691;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: #B58413;\n    --brand-560: #9D7110;\n    --brand-600: #825C0B;\n    --button-filled-brand-background: var(--scb-yellow);\n    --button-filled-brand-background-hover: #FFD36B;\n    --button-filled-brand-text: var(--scb-on-accent);\n    --border-subtle: #3A3F3F;\n    --border-muted: #474D4D;\n    --border-normal: var(--scb-line);\n    --border-strong: #858D8B;\n    --channeltextarea-background: #090A0A;\n    --chat-background-default: var(--scb-panel);\n    --input-background: var(--scb-black);\n    --card-background-default: #101212;\n    --modal-background: var(--scb-raised);\n    --modal-footer-background: #101212;\n    --status-danger: var(--scb-red);\n    --scrollbar-thin-thumb: #737B79;\n    --scrollbar-auto-thumb: #737B79;\n    --scrollbar-auto-track: var(--scb-black);\n}\n\nbody { background: var(--scb-black) !important; font-family: \"Arial Narrow\", \"Segoe UI Variable\", \"gg sans\", sans-serif; }\n#app-mount { background: var(--scb-black) !important; }\n::selection { color: var(--scb-on-accent); background: var(--scb-yellow); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scb-focus) !important; outline-offset: 3px; }\n\n/* Signature: each major work region behaves like a labeled physical block. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { box-sizing: border-box; border: 2px solid var(--scb-line); border-radius: 0 !important; background: var(--background-primary) !important; }\n#app-mount [class*=\"guilds_\"] { border-color: var(--scb-yellow); background: var(--scb-black) !important; }\n#app-mount [class*=\"sidebarList_\"] { border-left-width: 0; background: #101212 !important; }\n#app-mount [class*=\"chatContent_\"] { border-inline-width: 0; }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: #101212 !important; }\n#app-mount [class*=\"subtitleContainer_\"] { border: 2px solid var(--scb-line); border-bottom-color: var(--scb-cyan); border-radius: 0 !important; }\n\n#app-mount :is(button, [role=\"button\"], [class*=\"button_\"]) { border-radius: 0 !important; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) { margin-block: 2px; border: 1px solid transparent; border-radius: 0 !important; transition: color 90ms linear, border-color 90ms linear, background-color 90ms linear; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { border-color: var(--scb-line); background: #202323 !important; }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { border-color: var(--scb-cyan) !important; box-shadow: inset 5px 0 0 var(--scb-cyan); }\n\n#app-mount li[id^=\"chat-messages-\"] { margin: 3px 8px; border: 1px solid transparent; border-radius: 0; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-color: #3E4444; background: #191C1C !important; }\n#app-mount [class*=\"mentioned_\"] { border-color: var(--scb-yellow) !important; box-shadow: inset 5px 0 0 var(--scb-yellow); background: rgb(245 191 65 / 9%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { margin-block: 4px; border: 2px solid #3E4444; border-radius: 0 !important; background: #101212 !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]):hover { border-color: var(--scb-yellow); }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { border: 2px solid var(--scb-line) !important; border-bottom-color: var(--scb-yellow) !important; border-radius: 0 !important; background: var(--scb-black) !important; box-shadow: none !important; }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"], [class*=\"popout_\"]) { border: 2px solid var(--scb-text); border-radius: 0 !important; background: var(--scb-raised) !important; box-shadow: 8px 8px 0 var(--scb-black); }\n#app-mount [class*=\"standardSidebarView_\"] :is([class*=\"sidebarRegion_\"], [class*=\"contentRegion_\"]) { border: 2px solid var(--scb-line); background: var(--background-secondary) !important; }\n#app-mount [class*=\"contentRegion_\"] { background: var(--background-primary) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 2px solid var(--scb-line) !important; border-left: 6px solid var(--scb-cyan) !important; border-radius: 0 !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: var(--scb-on-accent) !important; background: var(--scb-yellow) !important; border: 2px solid var(--scb-black); border-radius: 0 !important; font-weight: 700; }\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "relay-classic",
+        "name": "Relay Classic",
+        "fileName": "SoulCord-RelayClassic.theme.css",
+        "sourceSha256": "07f3bf94c5bbf3d7fe7c8310ea2a2cf8134da4cc2367038fc9f2710aab036931",
+        "content": "/**\n * @name SoulCord — Relay Classic\n * @author slaveofsolace\n * @version 2.0.0\n * @description A calm continuous-shell theme with familiar Discord density and restrained relay-blue states.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --scr-canvas: #1D2228;\n    --scr-sidebar: #242A31;\n    --scr-chat: #2B323A;\n    --scr-raised: #343D46;\n    --scr-line: #46515C;\n    --scr-text: #F1F3F5;\n    --scr-muted: #B6C0C8;\n    --scr-blue: #6EB6D8;\n    --scr-blue-strong: #347B9B;\n    --scr-green: #68B89A;\n    --scr-red: #E78272;\n    --scr-focus: #A8DBF1;\n    --scr-on-accent: #071219;\n    --soulcord-graphite: var(--scr-canvas);\n    --soulcord-cream: var(--scr-text);\n    --soulcord-sea: var(--scr-blue);\n    --soulcord-coral: var(--scr-red);\n    --soulcord-focus: var(--scr-focus);\n    --soulcord-on-accent: var(--scr-on-accent);\n    --soulcord-accent-text: #95CDE6;\n    --soulcord-warning-text: #F2C786;\n    --soulcord-danger-text: #F0A699;\n    --soulcord-callout-text: var(--scr-muted);\n    --custom-message-spacing-vertical-container-cozy: 0.42rem;\n    --custom-message-spacing-vertical-container-compact: 0.18rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: dark;\n    --background-primary: var(--scr-chat);\n    --background-secondary: var(--scr-sidebar);\n    --background-secondary-alt: #20262C;\n    --background-tertiary: var(--scr-canvas);\n    --background-floating: var(--scr-raised);\n    --background-base-low: var(--scr-chat);\n    --background-base-lower: var(--scr-sidebar);\n    --background-base-lowest: var(--scr-canvas);\n    --background-surface-high: #303840;\n    --background-surface-higher: var(--scr-raised);\n    --background-surface-highest: #3C4650;\n    --background-modifier-hover: rgb(110 182 216 / 9%);\n    --background-modifier-active: rgb(110 182 216 / 14%);\n    --background-modifier-selected: rgb(110 182 216 / 18%);\n    --background-modifier-accent: var(--scr-line);\n    --background-mod-subtle: rgb(110 182 216 / 7%);\n    --background-mod-normal: rgb(110 182 216 / 11%);\n    --background-mod-strong: rgb(110 182 216 / 17%);\n    --bg-surface-overlay-tmp: var(--scr-raised);\n    --bg-surface-raised: var(--scr-raised);\n    --text-normal: var(--scr-text);\n    --text-default: var(--scr-text);\n    --text-muted: var(--scr-muted);\n    --text-link: #8CCDE9;\n    --header-primary: #FFFFFF;\n    --header-secondary: #CCD3D9;\n    --interactive-normal: #C1CBD2;\n    --interactive-hover: #FFFFFF;\n    --interactive-active: var(--scr-blue);\n    --interactive-muted: #8998A3;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: var(--scr-blue-strong);\n    --brand-560: #2D6C89;\n    --brand-600: #275D76;\n    --button-filled-brand-background: var(--scr-blue);\n    --button-filled-brand-background-hover: #8CCDE9;\n    --button-filled-brand-text: var(--scr-on-accent);\n    --border-subtle: #3B454E;\n    --border-muted: var(--scr-line);\n    --border-normal: var(--scr-line);\n    --border-strong: #687784;\n    --channeltextarea-background: #222930;\n    --chat-background-default: var(--scr-chat);\n    --input-background: #222930;\n    --card-background-default: var(--scr-sidebar);\n    --modal-background: var(--scr-raised);\n    --modal-footer-background: var(--scr-sidebar);\n    --status-positive: var(--scr-green);\n    --status-danger: var(--scr-red);\n    --scrollbar-thin-thumb: #5A6873;\n    --scrollbar-auto-thumb: #5A6873;\n    --scrollbar-auto-track: var(--scr-canvas);\n}\n\nbody { background: var(--scr-canvas) !important; font-family: \"Segoe UI Variable\", \"gg sans\", sans-serif; }\n#app-mount { background: var(--scr-canvas) !important; }\n::selection { color: var(--scr-on-accent); background: var(--scr-blue); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scr-focus) !important; outline-offset: 2px; }\n\n/* Signature: familiar continuous regions, separated by quiet relay-blue state bars. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--background-primary) !important; }\n#app-mount [class*=\"guilds_\"] { background: var(--scr-canvas) !important; }\n#app-mount [class*=\"sidebarList_\"] { background: var(--scr-sidebar) !important; border-right: 1px solid var(--scr-line); }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--scr-sidebar) !important; border-left: 1px solid var(--scr-line); }\n#app-mount [class*=\"subtitleContainer_\"] { border-bottom: 1px solid var(--scr-line); background: var(--scr-chat) !important; }\n\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) { border-radius: 6px !important; transition: background-color 140ms ease, color 140ms ease; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { background: rgb(110 182 216 / 8%) !important; }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { background: rgb(110 182 216 / 14%) !important; box-shadow: inset 3px 0 0 var(--scr-blue); }\n\n#app-mount li[id^=\"chat-messages-\"] { border-left: 3px solid transparent; border-radius: 4px; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-left-color: var(--scr-blue-strong); background: rgb(110 182 216 / 6%) !important; }\n#app-mount [class*=\"mentioned_\"] { border-left-color: var(--scr-red) !important; background: rgb(231 130 114 / 10%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { border: 1px solid transparent; border-radius: 7px !important; background: transparent !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]):hover { border-color: var(--scr-line); background: #303840 !important; }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { border: 1px solid var(--scr-line) !important; border-radius: 7px !important; background: #222930 !important; box-shadow: none !important; }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"], [class*=\"popout_\"]) { border: 1px solid var(--scr-line); border-radius: 8px !important; background: var(--scr-raised) !important; box-shadow: 0 12px 30px rgb(0 0 0 / 28%); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"sidebarRegion_\"] { background: var(--scr-sidebar) !important; }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"contentRegion_\"] { background: var(--scr-chat) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--scr-line) !important; border-left: 4px solid var(--scr-blue) !important; border-radius: 5px !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: var(--scr-on-accent) !important; background: var(--scr-blue) !important; border-radius: 5px !important; }\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "workshop",
+        "name": "Workshop",
+        "fileName": "SoulCord-Workshop.theme.css",
+        "sourceSha256": "d6e443561148683a556897b7bf0d869705b0521fa9a1204f38083f7c69b6faa3",
+        "content": "/**\n * @name SoulCord — Workshop\n * @author slaveofsolace\n * @version 2.0.0\n * @description Tactile charcoal work surfaces with inset controls, copper fixtures, and practical grouping.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --scw-canvas: #171513;\n    --scw-sidebar: #211E1B;\n    --scw-bench: #292521;\n    --scw-raised: #342F2A;\n    --scw-recess: #12110F;\n    --scw-line: #594E44;\n    --scw-text: #F3E8D8;\n    --scw-muted: #C0B4A5;\n    --scw-copper: #D49458;\n    --scw-copper-strong: #9A5F32;\n    --scw-green: #70AF8C;\n    --scw-red: #E27C66;\n    --scw-focus: #F2BD7E;\n    --scw-on-accent: #201207;\n    --soulcord-graphite: var(--scw-canvas);\n    --soulcord-cream: var(--scw-text);\n    --soulcord-sea: var(--scw-green);\n    --soulcord-coral: var(--scw-red);\n    --soulcord-focus: var(--scw-focus);\n    --soulcord-on-accent: var(--scw-on-accent);\n    --soulcord-accent-text: #E5AD75;\n    --soulcord-warning-text: #F0C28D;\n    --soulcord-danger-text: #F0A08E;\n    --soulcord-callout-text: var(--scw-muted);\n    --custom-message-spacing-vertical-container-cozy: 0.48rem;\n    --custom-message-spacing-vertical-container-compact: 0.18rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: dark;\n    --background-primary: var(--scw-bench);\n    --background-secondary: var(--scw-sidebar);\n    --background-secondary-alt: #1B1917;\n    --background-tertiary: var(--scw-canvas);\n    --background-floating: var(--scw-raised);\n    --background-base-low: var(--scw-bench);\n    --background-base-lower: var(--scw-sidebar);\n    --background-base-lowest: var(--scw-canvas);\n    --background-surface-high: #302B27;\n    --background-surface-higher: var(--scw-raised);\n    --background-surface-highest: #3D3731;\n    --background-modifier-hover: rgb(212 148 88 / 9%);\n    --background-modifier-active: rgb(212 148 88 / 15%);\n    --background-modifier-selected: rgb(112 175 140 / 17%);\n    --background-modifier-accent: var(--scw-line);\n    --background-mod-subtle: rgb(212 148 88 / 7%);\n    --background-mod-normal: rgb(212 148 88 / 12%);\n    --background-mod-strong: rgb(112 175 140 / 17%);\n    --bg-surface-overlay-tmp: var(--scw-raised);\n    --bg-surface-raised: var(--scw-raised);\n    --text-normal: var(--scw-text);\n    --text-default: var(--scw-text);\n    --text-muted: var(--scw-muted);\n    --text-link: #E6AD76;\n    --header-primary: #FFF8EE;\n    --header-secondary: #D5CABC;\n    --interactive-normal: #CFC4B6;\n    --interactive-hover: #FFF8EE;\n    --interactive-active: var(--scw-copper);\n    --interactive-muted: #91877B;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: var(--scw-copper-strong);\n    --brand-560: #86502A;\n    --brand-600: #704322;\n    --button-filled-brand-background: var(--scw-copper);\n    --button-filled-brand-background-hover: #E6AD76;\n    --button-filled-brand-text: var(--scw-on-accent);\n    --border-subtle: #463D36;\n    --border-muted: var(--scw-line);\n    --border-normal: var(--scw-line);\n    --border-strong: #796A5D;\n    --channeltextarea-background: var(--scw-recess);\n    --chat-background-default: var(--scw-bench);\n    --input-background: var(--scw-recess);\n    --card-background-default: var(--scw-sidebar);\n    --modal-background: var(--scw-raised);\n    --modal-footer-background: var(--scw-sidebar);\n    --status-positive: var(--scw-green);\n    --status-danger: var(--scw-red);\n    --scrollbar-thin-thumb: #6D6055;\n    --scrollbar-auto-thumb: #6D6055;\n    --scrollbar-auto-track: var(--scw-canvas);\n}\n\nbody { background: var(--scw-canvas) !important; font-family: \"Segoe UI Variable\", \"gg sans\", sans-serif; }\n#app-mount { background: var(--scw-canvas) !important; }\n::selection { color: var(--scw-on-accent); background: var(--scw-copper); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scw-focus) !important; outline-offset: 2px; }\n\n/* Signature: inset work areas and copper fixtures imply pressable, physical controls. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { margin: 5px; border: 1px solid var(--scw-line); border-radius: 5px !important; background: var(--background-primary) !important; box-shadow: inset 0 1px 0 rgb(255 248 238 / 4%), 0 3px 0 var(--scw-recess); }\n#app-mount [class*=\"guilds_\"] { background: var(--scw-canvas) !important; }\n#app-mount [class*=\"sidebarList_\"] { background: var(--scw-sidebar) !important; }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--scw-sidebar) !important; }\n#app-mount [class*=\"subtitleContainer_\"] { border-bottom: 2px solid var(--scw-copper-strong); background: var(--scw-bench) !important; }\n\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) { margin-block: 3px; border: 1px solid transparent; border-radius: 4px !important; transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { border-color: var(--scw-line); background: #302B27 !important; box-shadow: inset 3px 0 0 var(--scw-copper-strong); }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { border-color: var(--scw-copper-strong) !important; background: rgb(212 148 88 / 13%) !important; box-shadow: inset 3px 0 0 var(--scw-copper); }\n\n#app-mount li[id^=\"chat-messages-\"] { margin: 2px 6px; border: 1px solid transparent; border-radius: 4px; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-color: #463D36; background: rgb(212 148 88 / 5%) !important; }\n#app-mount [class*=\"mentioned_\"] { border-color: var(--scw-red) !important; box-shadow: inset 4px 0 0 var(--scw-red); background: rgb(226 124 102 / 9%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { border: 1px solid var(--scw-line); border-radius: 5px !important; background: var(--scw-sidebar) !important; box-shadow: inset 0 1px 0 rgb(255 248 238 / 4%); }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { border: 1px solid var(--scw-line) !important; border-radius: 4px !important; background: var(--scw-recess) !important; box-shadow: inset 0 2px 4px rgb(0 0 0 / 45%), 0 1px 0 rgb(255 248 238 / 5%) !important; }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"], [class*=\"popout_\"]) { border: 1px solid #796A5D; border-radius: 5px !important; background: var(--scw-raised) !important; box-shadow: 0 10px 24px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(255 248 238 / 5%); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"sidebarRegion_\"] { background: var(--scw-sidebar) !important; border-right: 1px solid var(--scw-line); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"contentRegion_\"] { background: var(--scw-bench) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--scw-line) !important; border-left: 5px solid var(--scw-copper) !important; border-radius: 4px !important; background: #211E1B !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: var(--scw-on-accent) !important; background: var(--scw-copper) !important; border: 1px solid var(--scw-recess); border-radius: 4px !important; box-shadow: 0 3px 0 var(--scw-recess); }\n\n@media (max-width: 900px) {\n    #app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"]) { margin: 2px; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "quiet-read",
+        "name": "Quiet Read",
+        "fileName": "SoulCord-QuietRead.theme.css",
+        "sourceSha256": "0899ac827b8ffc669ba7e7adb27eabce58e0223282d82b97f8e5c94a72ba1643",
+        "content": "/**\n * @name SoulCord — Quiet Read\n * @author slaveofsolace\n * @version 2.0.0\n * @description An accessible light theme with generous reading measure, durable contrast, and still interactions.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --scq-canvas: #DDE4E6;\n    --scq-sidebar: #E9EEF0;\n    --scq-paper: #F8F6F0;\n    --scq-raised: #FFFFFF;\n    --scq-line: #A8B4B8;\n    --scq-text: #20282C;\n    --scq-muted: #4E5C62;\n    --scq-blue: #176875;\n    --scq-blue-strong: #0E5260;\n    --scq-amber: #87550B;\n    --scq-red: #963E35;\n    --scq-focus: #075B68;\n    --scq-on-accent: #FFFFFF;\n    --soulcord-graphite: var(--scq-text);\n    --soulcord-cream: var(--scq-paper);\n    --soulcord-sea: var(--scq-blue);\n    --soulcord-coral: var(--scq-red);\n    --soulcord-focus: var(--scq-focus);\n    --soulcord-on-accent: var(--scq-on-accent);\n    --soulcord-accent-text: var(--scq-blue-strong);\n    --soulcord-warning-text: var(--scq-amber);\n    --soulcord-danger-text: var(--scq-red);\n    --soulcord-callout-text: var(--scq-muted);\n    --custom-message-spacing-vertical-container-cozy: 0.62rem;\n    --custom-message-spacing-vertical-container-compact: 0.3rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: light;\n    --background-primary: var(--scq-paper);\n    --background-secondary: var(--scq-sidebar);\n    --background-secondary-alt: #DDE4E6;\n    --background-tertiary: var(--scq-canvas);\n    --background-floating: var(--scq-raised);\n    --background-base-low: var(--scq-paper);\n    --background-base-lower: var(--scq-sidebar);\n    --background-base-lowest: var(--scq-canvas);\n    --background-surface-high: #F2F2ED;\n    --background-surface-higher: var(--scq-raised);\n    --background-surface-highest: #FFFFFF;\n    --background-modifier-hover: rgb(23 104 117 / 8%);\n    --background-modifier-active: rgb(23 104 117 / 13%);\n    --background-modifier-selected: rgb(23 104 117 / 16%);\n    --background-modifier-accent: var(--scq-line);\n    --background-mod-subtle: rgb(23 104 117 / 7%);\n    --background-mod-normal: rgb(23 104 117 / 11%);\n    --background-mod-strong: rgb(23 104 117 / 16%);\n    --bg-surface-overlay-tmp: var(--scq-raised);\n    --bg-surface-raised: var(--scq-raised);\n    --text-normal: var(--scq-text);\n    --text-default: var(--scq-text);\n    --text-muted: var(--scq-muted);\n    --text-link: var(--scq-blue-strong);\n    --text-warning: var(--scq-amber);\n    --text-danger: var(--scq-red);\n    --header-primary: #151C20;\n    --header-secondary: #3F4B50;\n    --interactive-normal: #46545A;\n    --interactive-hover: #152025;\n    --interactive-active: var(--scq-blue-strong);\n    --interactive-muted: #68757A;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: var(--scq-blue);\n    --brand-560: var(--scq-blue-strong);\n    --brand-600: #0A4651;\n    --button-filled-brand-background: var(--scq-blue);\n    --button-filled-brand-background-hover: var(--scq-blue-strong);\n    --button-filled-brand-text: var(--scq-on-accent);\n    --border-subtle: #C2CCCF;\n    --border-muted: #B5C0C4;\n    --border-normal: var(--scq-line);\n    --border-strong: #7C8D93;\n    --channeltextarea-background: #FFFFFF;\n    --chat-background-default: var(--scq-paper);\n    --input-background: #FFFFFF;\n    --card-background-default: var(--scq-paper);\n    --modal-background: var(--scq-raised);\n    --modal-footer-background: var(--scq-sidebar);\n    --status-warning: var(--scq-amber);\n    --status-danger: var(--scq-red);\n    --scrollbar-thin-thumb: #819096;\n    --scrollbar-auto-thumb: #819096;\n    --scrollbar-auto-track: #E4EAEC;\n}\n\nbody { background: var(--scq-canvas) !important; color: var(--scq-text); font-family: \"Segoe UI Variable Text\", \"Segoe UI\", \"gg sans\", sans-serif; font-size: 16px; }\n#app-mount { background: var(--scq-canvas) !important; }\n::selection { color: #FFFFFF; background: var(--scq-blue); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scq-focus) !important; outline-offset: 3px; }\n\n/* Signature: calm reading columns, larger targets, and stable non-animated state changes. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { border-color: var(--scq-line); background: var(--background-primary) !important; }\n#app-mount [class*=\"guilds_\"] { background: var(--scq-canvas) !important; }\n#app-mount [class*=\"sidebarList_\"] { background: var(--scq-sidebar) !important; border-right: 1px solid var(--scq-line); }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--scq-sidebar) !important; border-left: 1px solid var(--scq-line); }\n#app-mount [class*=\"subtitleContainer_\"] { border-bottom: 1px solid var(--scq-line); background: var(--scq-paper) !important; }\n\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) { min-height: 40px; border: 1px solid transparent; border-radius: 8px !important; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { border-color: var(--scq-line); background: rgb(23 104 117 / 7%) !important; }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { border-color: var(--scq-blue) !important; background: rgb(23 104 117 / 12%) !important; box-shadow: inset 4px 0 0 var(--scq-blue); }\n\n#app-mount li[id^=\"chat-messages-\"] { margin-inline: auto; max-width: 78ch; border-left: 4px solid transparent; border-radius: 6px; line-height: 1.55; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-left-color: var(--scq-blue); background: rgb(23 104 117 / 5%) !important; }\n#app-mount [class*=\"mentioned_\"] { border-left-color: var(--scq-red) !important; background: rgb(150 62 53 / 9%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { min-height: 48px; border: 1px solid var(--scq-line); border-radius: 9px !important; background: var(--scq-paper) !important; }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { min-height: 44px; border: 2px solid var(--scq-line) !important; border-radius: 9px !important; background: #FFFFFF !important; box-shadow: none !important; color: var(--scq-text) !important; }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"], [class*=\"popout_\"]) { border: 1px solid #7C8D93; border-radius: 10px !important; background: #FFFFFF !important; box-shadow: 0 10px 24px rgb(32 40 44 / 18%); color: var(--scq-text) !important; }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"sidebarRegion_\"] { background: var(--scq-sidebar) !important; border-right: 1px solid var(--scq-line); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"contentRegion_\"] { background: var(--scq-paper) !important; color: var(--scq-text) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--scq-line) !important; border-left: 5px solid var(--scq-blue) !important; border-radius: 7px !important; background: #FFFFFF !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: #FFFFFF !important; background: var(--scq-blue) !important; border-radius: 7px !important; }\n\n/* Quiet Read stays still even when the system allows motion. */\n#app-mount *, #app-mount *::before, #app-mount *::after { transition-duration: 0s !important; }\n\n@media (max-width: 900px) {\n    #app-mount li[id^=\"chat-messages-\"] { max-width: none; }\n}\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
+    },
+    {
+        "id": "night-transit",
+        "name": "Night Transit",
+        "fileName": "SoulCord-NightTransit.theme.css",
+        "sourceSha256": "416028f03d7111f8b46d3f7608de741d7265ea148771a4dd64c04963089d460d",
+        "content": "/**\n * @name SoulCord — Night Transit\n * @author slaveofsolace\n * @version 2.0.0\n * @description A navy night network with route rails for selection, unread state, mentions, and live voice.\n * @source https://github.com/slaveofsolace/Solcord\n * @license Apache-2.0\n */\n\n/* SPDX-License-Identifier: Apache-2.0 */\n/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */\n\n:root {\n    --scn-canvas: #070D18;\n    --scn-sidebar: #0D1624;\n    --scn-chat: #111C2B;\n    --scn-raised: #19283A;\n    --scn-line: #31445C;\n    --scn-text: #EEF4FA;\n    --scn-muted: #ABB9C9;\n    --scn-cyan: #58C6E5;\n    --scn-cyan-strong: #227F9B;\n    --scn-orange: #EF9662;\n    --scn-green: #63C49B;\n    --scn-red: #F07F78;\n    --scn-focus: #A7E5F4;\n    --scn-on-accent: #06151B;\n    --soulcord-graphite: var(--scn-canvas);\n    --soulcord-cream: var(--scn-text);\n    --soulcord-sea: var(--scn-cyan);\n    --soulcord-coral: var(--scn-red);\n    --soulcord-focus: var(--scn-focus);\n    --soulcord-on-accent: var(--scn-on-accent);\n    --soulcord-accent-text: #8BDAEF;\n    --soulcord-warning-text: #F3BA91;\n    --soulcord-danger-text: #F4A29D;\n    --soulcord-callout-text: var(--scn-muted);\n    --custom-message-spacing-vertical-container-cozy: 0.36rem;\n    --custom-message-spacing-vertical-container-compact: 0.12rem;\n}\n\n.theme-light,\n.theme-dark,\n.theme-darker,\n.theme-midnight {\n    color-scheme: dark;\n    --background-primary: var(--scn-chat);\n    --background-secondary: var(--scn-sidebar);\n    --background-secondary-alt: #09111D;\n    --background-tertiary: var(--scn-canvas);\n    --background-floating: var(--scn-raised);\n    --background-base-low: var(--scn-chat);\n    --background-base-lower: var(--scn-sidebar);\n    --background-base-lowest: var(--scn-canvas);\n    --background-surface-high: #152235;\n    --background-surface-higher: var(--scn-raised);\n    --background-surface-highest: #203349;\n    --background-modifier-hover: rgb(88 198 229 / 9%);\n    --background-modifier-active: rgb(88 198 229 / 15%);\n    --background-modifier-selected: rgb(88 198 229 / 19%);\n    --background-modifier-accent: var(--scn-line);\n    --background-mod-subtle: rgb(88 198 229 / 7%);\n    --background-mod-normal: rgb(88 198 229 / 12%);\n    --background-mod-strong: rgb(88 198 229 / 18%);\n    --bg-surface-overlay-tmp: var(--scn-raised);\n    --bg-surface-raised: var(--scn-raised);\n    --text-normal: var(--scn-text);\n    --text-default: var(--scn-text);\n    --text-muted: var(--scn-muted);\n    --text-link: #83D8EC;\n    --header-primary: #FFFFFF;\n    --header-secondary: #C7D3DF;\n    --interactive-normal: #C0CDDA;\n    --interactive-hover: #FFFFFF;\n    --interactive-active: var(--scn-cyan);\n    --interactive-muted: #8294A7;\n    --interactive-text-default: var(--interactive-normal);\n    --interactive-text-hover: var(--interactive-hover);\n    --interactive-text-active: var(--interactive-active);\n    --brand-500: var(--scn-cyan-strong);\n    --brand-560: #1D6F88;\n    --brand-600: #185D73;\n    --button-filled-brand-background: var(--scn-cyan);\n    --button-filled-brand-background-hover: #83D8EC;\n    --button-filled-brand-text: var(--scn-on-accent);\n    --border-subtle: #26384E;\n    --border-muted: var(--scn-line);\n    --border-normal: var(--scn-line);\n    --border-strong: #59718A;\n    --channeltextarea-background: #091321;\n    --chat-background-default: var(--scn-chat);\n    --input-background: #091321;\n    --card-background-default: var(--scn-sidebar);\n    --modal-background: var(--scn-raised);\n    --modal-footer-background: var(--scn-sidebar);\n    --status-positive: var(--scn-green);\n    --status-warning: var(--scn-orange);\n    --status-danger: var(--scn-red);\n    --scrollbar-thin-thumb: #486078;\n    --scrollbar-auto-thumb: #486078;\n    --scrollbar-auto-track: var(--scn-canvas);\n}\n\nbody { background: var(--scn-canvas) !important; font-family: \"Segoe UI Variable\", \"gg sans\", sans-serif; }\n#app-mount { background: var(--scn-canvas) !important; }\n::selection { color: var(--scn-on-accent); background: var(--scn-cyan); }\n:where(button, [role=\"button\"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scn-focus) !important; outline-offset: 2px; }\n\n/* Signature: route rails make navigation, mentions, unread state, and voice state distinct. */\n#app-mount :is([class*=\"guilds_\"], [class*=\"sidebarList_\"], [class*=\"chatContent_\"], [class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--background-primary) !important; }\n#app-mount [class*=\"guilds_\"] { background: var(--scn-canvas) !important; border-right: 2px solid var(--scn-cyan-strong); }\n#app-mount [class*=\"sidebarList_\"] { background: var(--scn-sidebar) !important; border-right: 1px solid var(--scn-line); }\n#app-mount :is([class*=\"membersWrap_\"], [class*=\"nowPlayingColumn_\"]) { background: var(--scn-sidebar) !important; border-left: 1px solid var(--scn-line); }\n#app-mount [class*=\"subtitleContainer_\"] { border-bottom: 2px solid var(--scn-line); background: var(--scn-chat) !important; }\n\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]) { position: relative; border-left: 4px solid transparent; border-radius: 0 5px 5px 0 !important; transition: border-color 130ms ease, background-color 130ms ease; }\n#app-mount :is([class*=\"privateChannels_\"] [class*=\"channel_\"], [class*=\"sidebarList_\"] [class*=\"link_\"], [class*=\"membersWrap_\"] [class*=\"member_\"]):hover { border-left-color: var(--scn-line); background: rgb(88 198 229 / 7%) !important; }\n#app-mount [class*=\"selected_\"] > [class*=\"link_\"] { border-left-color: var(--scn-cyan) !important; background: rgb(88 198 229 / 13%) !important; }\n#app-mount [class*=\"unread_\"] + [class*=\"link_\"] { border-left-color: var(--scn-orange) !important; }\n#app-mount [class*=\"voiceUser_\"] [class*=\"content_\"] { border-left: 4px solid var(--scn-green); }\n\n#app-mount li[id^=\"chat-messages-\"] { border-left: 4px solid transparent; border-radius: 0 5px 5px 0; }\n#app-mount li[id^=\"chat-messages-\"]:hover { border-left-color: var(--scn-cyan-strong); background: rgb(88 198 229 / 6%) !important; }\n#app-mount [class*=\"mentioned_\"] { border-left-color: var(--scn-orange) !important; background: rgb(239 150 98 / 10%) !important; }\n#app-mount :is([class*=\"peopleListItem_\"], [class*=\"itemCard_\"]) { border: 1px solid var(--scn-line); border-left: 4px solid var(--scn-cyan-strong); border-radius: 0 6px 6px 0 !important; background: var(--scn-sidebar) !important; }\n\n#app-mount :is([class*=\"channelTextArea_\"], [class*=\"searchBar_\"], [class*=\"inputWrapper_\"]) { border: 1px solid var(--scn-line) !important; border-left: 4px solid var(--scn-cyan-strong) !important; border-radius: 0 6px 6px 0 !important; background: #091321 !important; box-shadow: none !important; }\n#app-mount :is([class*=\"menu_\"], [class*=\"modal_\"], [role=\"dialog\"], [class*=\"popout_\"]) { border: 1px solid #59718A; border-top: 4px solid var(--scn-cyan); border-radius: 0 0 7px 7px !important; background: var(--scn-raised) !important; box-shadow: 0 14px 30px rgb(0 0 0 / 38%); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"sidebarRegion_\"] { background: var(--scn-sidebar) !important; border-right: 2px solid var(--scn-cyan-strong); }\n#app-mount [class*=\"standardSidebarView_\"] [class*=\"contentRegion_\"] { background: var(--scn-chat) !important; }\n#app-mount [class*=\"embedFull_\"] { border: 1px solid var(--scn-line) !important; border-left: 5px solid var(--scn-cyan) !important; border-radius: 0 6px 6px 0 !important; }\n#app-mount [class*=\"newMessagesBar_\"] { color: var(--scn-on-accent) !important; background: var(--scn-cyan) !important; border-radius: 0 0 6px 6px !important; }\n\n@media (prefers-reduced-motion: reduce) {\n    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }\n}\n"
     }
 ] as const;
 
 export const SOULCORD_CATALOG_SNAPSHOT = {
     "reviewedAt": "2026-08-26",
     "pluginCount": 209,
-    "pluginSha256": "d75f7b0b49b88cdb34744fc3472c4344c4bda9f5257be8f537f5d752a961ae30",
+    "pluginSha256": "914d1255580e9d834593cbfe6ca9ec07af8c56151ec388d44ad5cae24832e1ad",
     "themeCount": 114,
-    "themeSha256": "c832881b1b63adba4ba900ee463306ea040ac869fa2e4a6c6944941a89be0108"
+    "themeSha256": "d0205afb84af6f32949e6cbde6e32fc54433a0fe49879fc7b4b3c2c66b7cc433"
 } as const;
 
 export const SOULCORD_CATALOG_INDEX = [
@@ -1029,6 +1081,52 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 1233,
+        "type": "plugin",
+        "name": "UnsuppressEmbeds",
+        "fileName": "UnsuppressEmbeds.plugin.js",
+        "version": "1.0.0",
+        "description": "Allows you to unsuppress embeds in messages",
+        "author": "domi.btnr",
+        "tags": [
+            "chat",
+            "text",
+            "enhancement",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/200911262139967235aecd7df7faf7fa8a47ee1a/UnsuppressEmbeds/UnsuppressEmbeds.plugin.js",
+        "immutableRevision": "200911262139967235aecd7df7faf7fa8a47ee1a",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 1077,
         "type": "plugin",
         "name": "FileNameRandomization",
@@ -1076,52 +1174,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1233,
-        "type": "plugin",
-        "name": "UnsuppressEmbeds",
-        "fileName": "UnsuppressEmbeds.plugin.js",
-        "version": "1.0.0",
-        "description": "Allows you to unsuppress embeds in messages",
-        "author": "domi.btnr",
-        "tags": [
-            "chat",
-            "text",
-            "enhancement",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/200911262139967235aecd7df7faf7fa8a47ee1a/UnsuppressEmbeds/UnsuppressEmbeds.plugin.js",
-        "immutableRevision": "200911262139967235aecd7df7faf7fa8a47ee1a",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -1226,25 +1278,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1453,
+        "catalogId": 1456,
         "type": "plugin",
-        "name": "HoldYourTongue",
-        "fileName": "HoldYourTongue.plugin.js",
-        "version": "2.0.1",
-        "description": "Stop yourself from saying things in chat! Configurable keywords and stop message dialog",
-        "author": "Arven",
+        "name": "AlwaysExpandRoles",
+        "fileName": "AlwaysExpandRoles.plugin.js",
+        "version": "1.1.0",
+        "description": "Always expands the role list in profile popouts (optionally keeps them expanded) and can optionally hide the collapse button.",
+        "author": "samanticate",
         "tags": [
-            "text",
-            "chat",
-            "security",
-            "utility"
+            "status",
+            "servers",
+            "members"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/HoldYourTongue/HoldYourTongue.plugin.js",
-        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+        "sourceUrl": "https://raw.githubusercontent.com/SBvn-dev/BetterDiscord/03ac11ce5cc4529424377d5f2f089ca18075bb63/AlwaysExpandRoles.plugin.js",
+        "immutableRevision": "03ac11ce5cc4529424377d5f2f089ca18075bb63",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -1272,24 +1323,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1456,
+        "catalogId": 1453,
         "type": "plugin",
-        "name": "AlwaysExpandRoles",
-        "fileName": "AlwaysExpandRoles.plugin.js",
-        "version": "1.1.0",
-        "description": "Always expands the role list in profile popouts (optionally keeps them expanded) and can optionally hide the collapse button.",
-        "author": "samanticate",
+        "name": "HoldYourTongue",
+        "fileName": "HoldYourTongue.plugin.js",
+        "version": "2.0.1",
+        "description": "Stop yourself from saying things in chat! Configurable keywords and stop message dialog",
+        "author": "Arven",
         "tags": [
-            "status",
-            "servers",
-            "members"
+            "text",
+            "chat",
+            "security",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/SBvn-dev/BetterDiscord/03ac11ce5cc4529424377d5f2f089ca18075bb63/AlwaysExpandRoles.plugin.js",
-        "immutableRevision": "03ac11ce5cc4529424377d5f2f089ca18075bb63",
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/HoldYourTongue/HoldYourTongue.plugin.js",
+        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -1553,59 +1605,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 228,
-        "type": "plugin",
-        "name": "CallTimeCounter",
-        "fileName": "CallTimeCounter.plugin.js",
-        "version": "1.0.2",
-        "description": "Shows how much time you are in a voice chat.",
-        "author": "KingGamingYT",
-        "tags": [
-            "voice",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
-        "immutableRevision": "0952006f55c44815dfab3c1b827b7110fd97bc34",
-        "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "no-static-network-signal"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "patcher",
-                "timer"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 1424,
         "type": "plugin",
         "name": "MoreQuickReacts",
@@ -1841,60 +1840,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 181,
-        "type": "plugin",
-        "name": "BetterFolders",
-        "fileName": "BetterFolders.plugin.js",
-        "version": "3.8.1",
-        "description": "Adds new functionality to server folders. Custom Folder Icons. Close other folders on open.",
-        "author": "Zerthox",
-        "tags": [
-            "servers",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
-        "immutableRevision": "7c5f6e4ad7cada88974885daf2bfaedae2658a73",
-        "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
-        "licenseStatus": "FOUND",
-        "dependencies": [],
-        "networkBehavior": [
-            "no-static-network-signal"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "patcher"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [
-            "ServerFolders"
-        ],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 158,
         "type": "plugin",
         "name": "PlatformIndicators",
@@ -1941,24 +1886,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1493,
+        "catalogId": 1175,
         "type": "plugin",
-        "name": "MiniChat",
-        "fileName": "MiniChat.plugin.js",
-        "version": "0.8.6",
-        "description": "Pop out any chat into a small Always on Top window.",
-        "author": "Snues",
+        "name": "GameTimeTracker",
+        "fileName": "GameTimeTracker.plugin.js",
+        "version": "1.3.0",
+        "description": "Track time spent in games",
+        "author": "Yentis",
         "tags": [
-            "channels",
-            "enhancement",
-            "chat"
+            "game",
+            "activity",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/6cf35c7eaf37c6f89c0b67cb599fe88ffe67bb6a/MiniChat/MiniChat.plugin.js",
-        "immutableRevision": "6cf35c7eaf37c6f89c0b67cb599fe88ffe67bb6a",
+        "sourceUrl": "https://raw.githubusercontent.com/Yentis/betterdiscord-game-time-tracker/d63ba12519cde53132d6d91f50d51dc8ce59d392/GameTimeTracker.plugin.js",
+        "immutableRevision": "d63ba12519cde53132d6d91f50d51dc8ce59d392",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -1986,15 +1931,16 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1545,
+        "catalogId": 882,
         "type": "plugin",
-        "name": "High-Res Profile Images",
-        "fileName": "HighResProfileImages.plugin.js",
-        "version": "1.0.2",
-        "description": "Replaces user avatars with higher resolution images.",
-        "author": "Z'ark Ashveil",
+        "name": "SendStickersAsLinks",
+        "fileName": "SendStickersAsLinks.plugin.js",
+        "version": "2.3.6",
+        "description": "Enables you to send custom Stickers as links, (custom stickers as in the ones that are added by servers, not official discord stickers).",
+        "author": "Skamt",
         "tags": [
-            "enhancement",
+            "fun",
+            "emotes",
             "chat",
             "utility"
         ],
@@ -2002,8 +1948,8 @@ export const SOULCORD_CATALOG_INDEX = [
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Kawtious/HighResProfileImages/402830211b48dfd57ff4f4641722c29de2a9f279/HighResProfileImages.plugin.js",
-        "immutableRevision": "402830211b48dfd57ff4f4641722c29de2a9f279",
+        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/984585d57d139525fec6bb78f2639a1f933bc911/SendStickersAsLinks/SendStickersAsLinks.plugin.js",
+        "immutableRevision": "984585d57d139525fec6bb78f2639a1f933bc911",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -2076,24 +2022,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1436,
+        "catalogId": 195,
         "type": "plugin",
-        "name": "DiscordEffects",
-        "fileName": "DiscordEffects.plugin.js",
-        "version": "2.2.0",
-        "description": "Adds the ability to put effects on your discord.",
-        "author": "Deleox",
+        "name": "ChannelTabs",
+        "fileName": "ChannelTabs.plugin.js",
+        "version": "2.8.9",
+        "description": "Adds tabs and bookmarks to Discord, just like in a normal web browser.",
+        "author": "samfundev",
         "tags": [
-            "fun"
+            "organization",
+            "shortcut",
+            "enhancement"
         ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/Deleox/BDPlugins/55a2402b53043d49d9163133cca71aa48ce04bdb/DiscordEffects/DiscordEffects.plugin.js",
-        "immutableRevision": "55a2402b53043d49d9163133cca71aa48ce04bdb",
-        "sourceSha256": "87eddfad83c1c779e8fe65a336d96c8242951e025e575137ce41aa1e4de72b1e",
-        "licenseStatus": "UNRESOLVED",
+        "disposition": "OPTIONAL",
+        "targetDisposition": "OPTIONAL",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/Plugins/ChannelTabs/ChannelTabs.plugin.js",
+        "immutableRevision": "b2485111e095270d51265d1b65e7dc26c8251562",
+        "sourceSha256": "01ab24714c62ee055668a1ff05aec2504634c10e99d0b2aeee0abd5f673a81f1",
+        "licenseStatus": "FOUND",
         "dependencies": [],
         "networkBehavior": [
             "no-static-network-signal"
@@ -2102,206 +2050,29 @@ export const SOULCORD_CATALOG_INDEX = [
             "no-static-account-action-signal"
         ],
         "cleanupBehavior": {
-            "resources": [],
+            "resources": [
+                "patcher",
+                "event-listener",
+                "timer"
+            ],
             "cleanup": [
-                "stop-method"
+                "stop-method",
+                "explicit-cleanup"
             ]
         },
-        "conflicts": [
-            "Windows or Discord reduced-motion preference"
-        ],
+        "conflicts": [],
         "supportedModes": [
             "community-file"
         ],
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+            "provenance": "LICENSE_RECORDED",
             "code": "STATIC_REVIEWED",
             "security": "STATIC_REVIEWED",
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 859,
-        "type": "plugin",
-        "name": "RemovedConnectionAlerts",
-        "fileName": "RemovedConnectionAlerts.plugin.js",
-        "version": "0.9.6",
-        "description": "Keep track which friends and servers remove you (original concept by Metalloriff)",
-        "author": "iris!#2888",
-        "tags": [
-            "notifications",
-            "servers",
-            "friends"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/iyu46/RemovedConnectionAlerts/31b868f031a1d23ccbfd4f5503e31affe8b95561/RemovedConnectionAlerts.plugin.js",
-        "immutableRevision": "31b868f031a1d23ccbfd4f5503e31affe8b95561",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1210,
-        "type": "plugin",
-        "name": "Extended Typing Sounds",
-        "fileName": "ExtendedTypingSounds.plugin.js",
-        "version": "1.0.3",
-        "description": "Play different click sounds when you press a key. Supports multiple keyboard sounds",
-        "author": "Slluxx",
-        "tags": [
-            "fun",
-            "text",
-            "chat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Slluxx/BetterDiscord-Extended-Typing-Sounds/8bcbb34eb7925f8771bb1feec3837563dc9fb197/ExtendedTypingSounds.plugin.js",
-        "immutableRevision": "8bcbb34eb7925f8771bb1feec3837563dc9fb197",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 577,
-        "type": "plugin",
-        "name": "AutoIdleOnAFK",
-        "fileName": "AutoIdleOnAFK.plugin.js",
-        "version": "0.5.1",
-        "description": "Automatically updates your discord status to 'idle' when you haven't opened your discord client for more than 5 minutes and then back to 'online' when you're active on Discord window.\r\n",
-        "author": "RoguedBear",
-        "tags": [
-            "utility",
-            "status",
-            "shortcut"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/RoguedBear/BetterDiscordPlugin-AutoIdleOnAFK/1cefea4b8637576462f1a2d027572f858afb0083/release/AutoIdleOnAFK.plugin.js",
-        "immutableRevision": "1cefea4b8637576462f1a2d027572f858afb0083",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1492,
-        "type": "plugin",
-        "name": "LaTeX Generator",
-        "fileName": "LaTeXGenerator.plugin.js",
-        "version": "2.3.1",
-        "description": "Adds a button to the chat bar to generate and copy LaTeX equations as images.",
-        "author": "avasay.sayava",
-        "tags": [
-            "enhancement",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Avasay-Sayava/BetterDiscordPlugins/f815fab3901db71fbe208bc3187d1ab146b0a24d/LaTeXGenerator/LaTeXGenerator.plugin.js",
-        "immutableRevision": "f815fab3901db71fbe208bc3187d1ab146b0a24d",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -2515,16 +2286,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/ShowPing/ShowPing.plugin.js",
         "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
+        "sourceSha256": "a1fd1faaf73df95a32ae1abbe1063f1e681dcfb186550520b8072c2843e1004e",
+        "licenseStatus": "FOUND",
         "dependencies": [],
         "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-network-signal"
         ],
         "accountActions": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-account-action-signal"
         ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "cleanupBehavior": {
+            "resources": [
+                "patcher"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
         "conflicts": [],
         "supportedModes": [
             "community-file"
@@ -2532,12 +2311,12 @@ export const SOULCORD_CATALOG_INDEX = [
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
             "runtime": "PENDING"
         },
-        "codeStatus": "PENDING",
+        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -2595,25 +2374,27 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 195,
+        "catalogId": 29,
         "type": "plugin",
-        "name": "ChannelTabs",
-        "fileName": "ChannelTabs.plugin.js",
-        "version": "2.8.9",
-        "description": "Adds tabs and bookmarks to Discord, just like in a normal web browser.",
-        "author": "samfundev",
+        "name": "PermissionsViewer",
+        "fileName": "PermissionsViewer.plugin.js",
+        "version": "1.0.1",
+        "description": "Allows you to view all the permissions for users, servers, and channels!",
+        "author": "Zerebos",
         "tags": [
-            "organization",
-            "shortcut",
-            "enhancement"
+            "utility",
+            "security",
+            "servers",
+            "members",
+            "roles"
         ],
-        "disposition": "OPTIONAL",
-        "targetDisposition": "OPTIONAL",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/Plugins/ChannelTabs/ChannelTabs.plugin.js",
-        "immutableRevision": "b2485111e095270d51265d1b65e7dc26c8251562",
-        "sourceSha256": "01ab24714c62ee055668a1ff05aec2504634c10e99d0b2aeee0abd5f673a81f1",
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
+        "immutableRevision": "49cdbe56ffc5d9d815663d83454cbe361af2b2cf",
+        "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
         "licenseStatus": "FOUND",
         "dependencies": [],
         "networkBehavior": [
@@ -2624,7 +2405,6 @@ export const SOULCORD_CATALOG_INDEX = [
         ],
         "cleanupBehavior": {
             "resources": [
-                "patcher",
                 "event-listener",
                 "timer"
             ],
@@ -2694,42 +2474,33 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1587,
+        "catalogId": 1097,
         "type": "plugin",
-        "name": "DoubleClickToReply",
-        "fileName": "DoubleClickToReply.plugin.js",
-        "version": "1.0.0",
-        "description": "Double click someone else's message to quickly start replying to it. It does NOT conflict with NoReplyPings (https://betterdiscord.app/plugins/NoReplyPing).",
-        "author": "atamol",
+        "name": "SpotifyEnhance",
+        "fileName": "SpotifyEnhance.plugin.js",
+        "version": "1.1.16",
+        "description": "All in one better spotify-discord experience.",
+        "author": "Skamt",
         "tags": [
-            "shortcut",
             "enhancement",
-            "chat",
             "utility"
         ],
         "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
-        "immutableRevision": "4474ed05346b0b413ee69feaf941a834b84209ea",
-        "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/984585d57d139525fec6bb78f2639a1f933bc911/SpotifyEnhance/SpotifyEnhance.plugin.js",
+        "immutableRevision": "984585d57d139525fec6bb78f2639a1f933bc911",
+        "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
         "networkBehavior": [
-            "no-static-network-signal"
+            "CODE_REVIEW_REQUIRED"
         ],
         "accountActions": [
-            "no-static-account-action-signal"
+            "CODE_REVIEW_REQUIRED"
         ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "explicit-cleanup"
-            ]
-        },
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
         "conflicts": [],
         "supportedModes": [
             "community-file"
@@ -2737,12 +2508,56 @@ export const SOULCORD_CATALOG_INDEX = [
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
             "runtime": "PENDING"
         },
-        "codeStatus": "STATIC_REVIEWED",
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1440,
+        "type": "plugin",
+        "name": "MemberCount",
+        "fileName": "MemberCount.plugin.js",
+        "version": "3.0.17",
+        "description": "Displays a server's member-count at the top of the member-list, can be styled with the `#MemberCount` selector.",
+        "author": "Arashiryuu",
+        "tags": [
+            "enhancement",
+            "members"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Arashiryuu/crap/ae011e7dfe148fdd097a56654b67e52be0562724/BdApi/MemberCount/MemberCount.plugin.js",
+        "immutableRevision": "ae011e7dfe148fdd097a56654b67e52be0562724",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -2836,23 +2651,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1440,
+        "catalogId": 1063,
         "type": "plugin",
-        "name": "MemberCount",
-        "fileName": "MemberCount.plugin.js",
-        "version": "3.0.17",
-        "description": "Displays a server's member-count at the top of the member-list, can be styled with the `#MemberCount` selector.",
-        "author": "Arashiryuu",
+        "name": "UnicodeEmojis",
+        "fileName": "UnicodeEmojis.plugin.js",
+        "version": "1.1.7",
+        "description": "Replaces discord emojis that you send with their unicode equivalent",
+        "author": "TheLazySquid",
         "tags": [
-            "enhancement",
-            "members"
+            "edit",
+            "chat"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Arashiryuu/crap/ae011e7dfe148fdd097a56654b67e52be0562724/BdApi/MemberCount/MemberCount.plugin.js",
-        "immutableRevision": "ae011e7dfe148fdd097a56654b67e52be0562724",
+        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/ea6e18aa86fca6ac7a989e012c40d16a3fbc2d6f/plugins/UnicodeEmojis/UnicodeEmojis.plugin.js",
+        "immutableRevision": "ea6e18aa86fca6ac7a989e012c40d16a3fbc2d6f",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -2880,23 +2695,124 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1063,
+        "catalogId": 1090,
         "type": "plugin",
-        "name": "UnicodeEmojis",
-        "fileName": "UnicodeEmojis.plugin.js",
-        "version": "1.1.7",
-        "description": "Replaces discord emojis that you send with their unicode equivalent",
-        "author": "TheLazySquid",
+        "name": "NoMosaic",
+        "fileName": "NoMosaic.plugin.js",
+        "version": "1.3.2",
+        "description": "Removes the new mosaic image layout on Discord",
+        "author": "KingGamingYT",
         "tags": [
-            "edit",
-            "chat"
+            "channels",
+            "enhancement",
+            "chat",
+            "organization",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/ea6e18aa86fca6ac7a989e012c40d16a3fbc2d6f/plugins/UnicodeEmojis/UnicodeEmojis.plugin.js",
-        "immutableRevision": "ea6e18aa86fca6ac7a989e012c40d16a3fbc2d6f",
+        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/discord-no-mosaic/d3c12fbd3e832403d021b12b99d2a637625821a9/NoMosaic.plugin.js",
+        "immutableRevision": "d3c12fbd3e832403d021b12b99d2a637625821a9",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1587,
+        "type": "plugin",
+        "name": "DoubleClickToReply",
+        "fileName": "DoubleClickToReply.plugin.js",
+        "version": "1.0.0",
+        "description": "Double click someone else's message to quickly start replying to it. It does NOT conflict with NoReplyPings (https://betterdiscord.app/plugins/NoReplyPing).",
+        "author": "atamol",
+        "tags": [
+            "shortcut",
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
+        "immutableRevision": "4474ed05346b0b413ee69feaf941a834b84209ea",
+        "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "no-static-network-signal"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "event-listener"
+            ],
+            "cleanup": [
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 577,
+        "type": "plugin",
+        "name": "AutoIdleOnAFK",
+        "fileName": "AutoIdleOnAFK.plugin.js",
+        "version": "0.5.1",
+        "description": "Automatically updates your discord status to 'idle' when you haven't opened your discord client for more than 5 minutes and then back to 'online' when you're active on Discord window.\r\n",
+        "author": "RoguedBear",
+        "tags": [
+            "utility",
+            "status",
+            "shortcut"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/RoguedBear/BetterDiscordPlugin-AutoIdleOnAFK/1cefea4b8637576462f1a2d027572f858afb0083/release/AutoIdleOnAFK.plugin.js",
+        "immutableRevision": "1cefea4b8637576462f1a2d027572f858afb0083",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -2942,6 +2858,51 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/b2b6ec7bf8f3c1984c0e36afeaf398381f661231/plugins/CssSnippetRepo/CssSnippetRepo.plugin.js",
         "immutableRevision": "b2b6ec7bf8f3c1984c0e36afeaf398381f661231",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1492,
+        "type": "plugin",
+        "name": "LaTeX Generator",
+        "fileName": "LaTeXGenerator.plugin.js",
+        "version": "2.3.1",
+        "description": "Adds a button to the chat bar to generate and copy LaTeX equations as images.",
+        "author": "avasay.sayava",
+        "tags": [
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Avasay-Sayava/BetterDiscordPlugins/f815fab3901db71fbe208bc3187d1ab146b0a24d/LaTeXGenerator/LaTeXGenerator.plugin.js",
+        "immutableRevision": "f815fab3901db71fbe208bc3187d1ab146b0a24d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3015,23 +2976,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1331,
+        "catalogId": 878,
         "type": "plugin",
-        "name": "FreeEmojis",
-        "fileName": "DiscordFreeEmojis.plugin.js",
-        "version": "1.11.3",
-        "description": "Link emojis if you don't have nitro! Type them out or use the emoji picker!",
-        "author": "gazel",
+        "name": "enhancecodeblocks",
+        "fileName": "EnhanceCodeBlocks.plugin.js",
+        "version": "1.0.27",
+        "description": "Enhances Discords Codeblocks & Text File Attachments",
+        "author": "DoggyBootsy",
         "tags": [
-            "emotes",
-            "chat"
+            "text",
+            "enhancement",
+            "chat",
+            "utility",
+            "developers"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/EpicGazel/DiscordFreeEmojis/dc74a834eb3087cb87e36b236f58b8fca48e07bb/DiscordFreeEmojis.plugin.js",
-        "immutableRevision": "dc74a834eb3087cb87e36b236f58b8fca48e07bb",
+        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/enhancecodeblocks/8cb627c1b879d02accc614dc6492da8866062702/dist/EnhanceCodeBlocks.plugin.js",
+        "immutableRevision": "8cb627c1b879d02accc614dc6492da8866062702",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3167,26 +3131,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1478,
+        "catalogId": 859,
         "type": "plugin",
-        "name": "Incognito",
-        "fileName": "Incognito.plugin.js",
-        "version": "1.0.7",
-        "description": "Stop tracking, hide typing, spoof fingerprints, and much more.",
-        "author": "Snues",
+        "name": "RemovedConnectionAlerts",
+        "fileName": "RemovedConnectionAlerts.plugin.js",
+        "version": "0.9.6",
+        "description": "Keep track which friends and servers remove you (original concept by Metalloriff)",
+        "author": "iris!#2888",
         "tags": [
-            "activity",
-            "status",
-            "enhancement",
-            "security",
-            "utility"
+            "notifications",
+            "servers",
+            "friends"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/c53818992addc44fa3c3dcea4567a2ff3c9bdb2a/Incognito/Incognito.plugin.js",
-        "immutableRevision": "c53818992addc44fa3c3dcea4567a2ff3c9bdb2a",
+        "sourceUrl": "https://raw.githubusercontent.com/iyu46/RemovedConnectionAlerts/31b868f031a1d23ccbfd4f5503e31affe8b95561/RemovedConnectionAlerts.plugin.js",
+        "immutableRevision": "31b868f031a1d23ccbfd4f5503e31affe8b95561",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3214,36 +3176,42 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1343,
+        "catalogId": 228,
         "type": "plugin",
-        "name": "UserTags",
-        "fileName": "UserTags.plugin.js",
-        "version": "1.0.0",
-        "description": "Allows you to add custom tags to users and search by them.",
-        "author": "Nyx#8614",
+        "name": "CallTimeCounter",
+        "fileName": "CallTimeCounter.plugin.js",
+        "version": "1.0.2",
+        "description": "Shows how much time you are in a voice chat.",
+        "author": "KingGamingYT",
         "tags": [
-            "shortcut",
-            "organization",
-            "members",
-            "utility",
-            "search"
+            "voice",
+            "utility"
         ],
         "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/SrS2225a/BetterDiscord/415a84b535ae33f5ac706f647cc54a90bd2db24f/plugins/UserTags/UserTags.plugin.js",
-        "immutableRevision": "415a84b535ae33f5ac706f647cc54a90bd2db24f",
-        "sourceSha256": null,
+        "targetDisposition": "CURATED",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
+        "immutableRevision": "0952006f55c44815dfab3c1b827b7110fd97bc34",
+        "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
         "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-network-signal"
         ],
         "accountActions": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-account-action-signal"
         ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "cleanupBehavior": {
+            "resources": [
+                "patcher",
+                "timer"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
         "conflicts": [],
         "supportedModes": [
             "community-file"
@@ -3251,12 +3219,12 @@ export const SOULCORD_CATALOG_INDEX = [
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
+            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
             "runtime": "PENDING"
         },
-        "codeStatus": "PENDING",
+        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -3279,50 +3247,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/4004f5c940202598cfc98ded3ea346c4c71ed47e/Plugins/MentionFix/MentionFix.plugin.js",
         "immutableRevision": "4004f5c940202598cfc98ded3ea346c4c71ed47e",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 189,
-        "type": "plugin",
-        "name": "HideIconBadge",
-        "fileName": "HideIconBadge.plugin.js",
-        "version": "0.0.6",
-        "description": "Hides the badge that appears on the taskbar icon.",
-        "author": "Zerebos",
-        "tags": [
-            "utility",
-            "edit"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/9ddd6f5852b3b24dd22fe1504911d9c8d1706bf6/Plugins/HideIconBadge/HideIconBadge.plugin.js",
-        "immutableRevision": "9ddd6f5852b3b24dd22fe1504911d9c8d1706bf6",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3396,24 +3320,67 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1074,
+        "catalogId": 1331,
         "type": "plugin",
-        "name": "GifCaptioner",
-        "fileName": "GifCaptioner.plugin.js",
-        "version": "2.4.0",
-        "description": "Allows you to add a caption to discord gifs",
-        "author": "TheLazySquid",
+        "name": "FreeEmojis",
+        "fileName": "DiscordFreeEmojis.plugin.js",
+        "version": "1.11.3",
+        "description": "Link emojis if you don't have nitro! Type them out or use the emoji picker!",
+        "author": "gazel",
         "tags": [
-            "fun",
-            "text",
-            "friends"
+            "emotes",
+            "chat"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/e509c23f697b15cbd9f43c58ce70fc6e2c2399e2/plugins/GifCaptioner/GifCaptioner.plugin.js",
-        "immutableRevision": "e509c23f697b15cbd9f43c58ce70fc6e2c2399e2",
+        "sourceUrl": "https://raw.githubusercontent.com/EpicGazel/DiscordFreeEmojis/dc74a834eb3087cb87e36b236f58b8fca48e07bb/DiscordFreeEmojis.plugin.js",
+        "immutableRevision": "dc74a834eb3087cb87e36b236f58b8fca48e07bb",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 189,
+        "type": "plugin",
+        "name": "HideIconBadge",
+        "fileName": "HideIconBadge.plugin.js",
+        "version": "0.0.6",
+        "description": "Hides the badge that appears on the taskbar icon.",
+        "author": "Zerebos",
+        "tags": [
+            "utility",
+            "edit"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/9ddd6f5852b3b24dd22fe1504911d9c8d1706bf6/Plugins/HideIconBadge/HideIconBadge.plugin.js",
+        "immutableRevision": "9ddd6f5852b3b24dd22fe1504911d9c8d1706bf6",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3575,51 +3542,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1460,
-        "type": "plugin",
-        "name": "PriorityDM",
-        "fileName": "PriorityDM.plugin.js",
-        "version": "1.1.0",
-        "description": "Let DMs from specific people bypass Do Not Disturb.",
-        "author": "Snues",
-        "tags": [
-            "notifications",
-            "enhancement",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/a60205b18f394a2a2bf664194ab251532369dfc3/PriorityDM/PriorityDM.plugin.js",
-        "immutableRevision": "a60205b18f394a2a2bf664194ab251532369dfc3",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 1437,
         "type": "plugin",
         "name": "Quoter",
@@ -3665,79 +3587,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 188,
+        "catalogId": 1460,
         "type": "plugin",
-        "name": "HideDisabledEmojis",
-        "fileName": "HideDisabledEmojis.plugin.js",
-        "version": "0.1.0",
-        "description": "Hides disabled emojis from the emoji picker. Useful for non-nitro users.",
-        "author": "Zerebos",
+        "name": "PriorityDM",
+        "fileName": "PriorityDM.plugin.js",
+        "version": "1.1.0",
+        "description": "Let DMs from specific people bypass Do Not Disturb.",
+        "author": "Snues",
         "tags": [
-            "edit",
-            "chat",
-            "text",
-            "utility",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
-        "immutableRevision": "c2fdb36b97e4aee083130381a20ace050dd16621",
-        "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
-        "licenseStatus": "FOUND",
-        "dependencies": [],
-        "networkBehavior": [
-            "no-static-network-signal"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "patcher"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1240,
-        "type": "plugin",
-        "name": "ADifferentSearch",
-        "fileName": "ADifferentSearch.plugin.js",
-        "version": "1.2.8",
-        "description": "Change the search engine used in the `Search With` feature.",
-        "author": "ace.",
-        "tags": [
-            "text",
-            "chat",
+            "notifications",
+            "enhancement",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/AceLikesGhosts/bd-plugins/c5be834fc5deaf3da8240ec5dc370ff164bdf2d4/dist/ADifferentSearch/ADifferentSearch.plugin.js",
-        "immutableRevision": "c5be834fc5deaf3da8240ec5dc370ff164bdf2d4",
+        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/a60205b18f394a2a2bf664194ab251532369dfc3/PriorityDM/PriorityDM.plugin.js",
+        "immutableRevision": "a60205b18f394a2a2bf664194ab251532369dfc3",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -3858,6 +3725,152 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1240,
+        "type": "plugin",
+        "name": "ADifferentSearch",
+        "fileName": "ADifferentSearch.plugin.js",
+        "version": "1.2.8",
+        "description": "Change the search engine used in the `Search With` feature.",
+        "author": "ace.",
+        "tags": [
+            "text",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/AceLikesGhosts/bd-plugins/c5be834fc5deaf3da8240ec5dc370ff164bdf2d4/dist/ADifferentSearch/ADifferentSearch.plugin.js",
+        "immutableRevision": "c5be834fc5deaf3da8240ec5dc370ff164bdf2d4",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 184,
+        "type": "plugin",
+        "name": "BetterVolume",
+        "fileName": "BetterVolume.plugin.js",
+        "version": "3.2.4",
+        "description": "Set user volume values manually instead of using a slider. Allows setting volumes higher than 200%.",
+        "author": "Zerthox",
+        "tags": [
+            "voice",
+            "enhancement",
+            "utility",
+            "members"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
+        "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
+        "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+        "licenseStatus": "FOUND",
+        "dependencies": [],
+        "networkBehavior": [
+            "no-static-network-signal"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "patcher"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1343,
+        "type": "plugin",
+        "name": "UserTags",
+        "fileName": "UserTags.plugin.js",
+        "version": "1.0.0",
+        "description": "Allows you to add custom tags to users and search by them.",
+        "author": "Nyx#8614",
+        "tags": [
+            "shortcut",
+            "organization",
+            "members",
+            "utility",
+            "search"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/SrS2225a/BetterDiscord/415a84b535ae33f5ac706f647cc54a90bd2db24f/plugins/UserTags/UserTags.plugin.js",
+        "immutableRevision": "415a84b535ae33f5ac706f647cc54a90bd2db24f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -3997,6 +4010,51 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 93,
+        "type": "plugin",
+        "name": "QuickMention",
+        "fileName": "QuickMention.plugin.js",
+        "version": "1.0.9",
+        "description": "Adds a Mention Button to the Message Options Bar",
+        "author": "DevilBro",
+        "tags": [
+            "chat",
+            "shortcut",
+            "notifications"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/QuickMention/QuickMention.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 1486,
         "type": "plugin",
         "name": "MobileForAll",
@@ -4016,6 +4074,93 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/BDPlugins/d2525a1e7f07ce36c7e11859e1294acf74997f06/mobile-for-all/MobileForAll.plugin.js",
         "immutableRevision": "d2525a1e7f07ce36c7e11859e1294acf74997f06",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1269,
+        "type": "plugin",
+        "name": "NoSpotifyPause",
+        "fileName": "NoSpotifyPause.plugin.js",
+        "version": "1.0.2",
+        "description": "Prevents Discord from pausing your Spotify when streaming or gaming.",
+        "author": "nicola02nb",
+        "tags": [
+            "enhancement",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/NoSpotifyPause/NoSpotifyPause.plugin.js",
+        "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 108,
+        "type": "plugin",
+        "name": "TimedLightDarkMode",
+        "fileName": "TimedLightDarkMode.plugin.js",
+        "version": "1.2.2",
+        "description": "Adds a Time Slider to the Appearance Settings",
+        "author": "DevilBro",
+        "tags": [
+            "enhancement"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/68430a0a64740a2e30c2eecf5456d9c522f9ffe9/Plugins/TimedLightDarkMode/TimedLightDarkMode.plugin.js",
+        "immutableRevision": "68430a0a64740a2e30c2eecf5456d9c522f9ffe9",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -4088,113 +4233,189 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 108,
+        "catalogId": 1436,
         "type": "plugin",
-        "name": "TimedLightDarkMode",
-        "fileName": "TimedLightDarkMode.plugin.js",
-        "version": "1.2.2",
-        "description": "Adds a Time Slider to the Appearance Settings",
-        "author": "DevilBro",
+        "name": "DiscordEffects",
+        "fileName": "DiscordEffects.plugin.js",
+        "version": "2.2.0",
+        "description": "Adds the ability to put effects on your discord.",
+        "author": "Deleox",
         "tags": [
-            "enhancement"
+            "fun"
         ],
         "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/68430a0a64740a2e30c2eecf5456d9c522f9ffe9/Plugins/TimedLightDarkMode/TimedLightDarkMode.plugin.js",
-        "immutableRevision": "68430a0a64740a2e30c2eecf5456d9c522f9ffe9",
-        "sourceSha256": null,
+        "targetDisposition": "CURATED",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/Deleox/BDPlugins/55a2402b53043d49d9163133cca71aa48ce04bdb/DiscordEffects/DiscordEffects.plugin.js",
+        "immutableRevision": "55a2402b53043d49d9163133cca71aa48ce04bdb",
+        "sourceSha256": "87eddfad83c1c779e8fe65a336d96c8242951e025e575137ce41aa1e4de72b1e",
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
         "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-network-signal"
         ],
         "accountActions": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-account-action-signal"
         ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
+        "cleanupBehavior": {
+            "resources": [],
+            "cleanup": [
+                "stop-method"
+            ]
+        },
+        "conflicts": [
+            "Windows or Discord reduced-motion preference"
+        ],
         "supportedModes": [
             "community-file"
         ],
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
+            "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
             "runtime": "PENDING"
         },
-        "codeStatus": "PENDING",
+        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
     {
-        "catalogId": 93,
+        "catalogId": 592,
         "type": "plugin",
-        "name": "QuickMention",
-        "fileName": "QuickMention.plugin.js",
-        "version": "1.0.9",
-        "description": "Adds a Mention Button to the Message Options Bar",
-        "author": "DevilBro",
+        "name": "ChannelsPreview",
+        "fileName": "ChannelsPreview.plugin.js",
+        "version": "2.1.16",
+        "description": "Allows you to view recent messages in channels without switching to them.",
+        "author": "arg0NNY",
         "tags": [
+            "servers",
             "chat",
-            "shortcut",
-            "notifications"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/QuickMention/QuickMention.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1130,
-        "type": "plugin",
-        "name": "MessageScanAI",
-        "fileName": "MessageScanAI.plugin.js",
-        "version": "2.1.4",
-        "description": "Adds a button to scan messages for phishing/scams with AI",
-        "author": "programmer2514",
-        "tags": [
             "enhancement",
-            "chat",
-            "security",
+            "channels",
+            "text"
+        ],
+        "disposition": "OPTIONAL",
+        "targetDisposition": "OPTIONAL",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/ChannelsPreview/ChannelsPreview.plugin.js",
+        "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
+        "sourceSha256": "30ae6a611766d4bf5bbb1bcbdad04a478eefc87190decefefd6dd48969bc2015",
+        "licenseStatus": "FOUND",
+        "dependencies": [],
+        "networkBehavior": [
+            "no-static-network-signal"
+        ],
+        "accountActions": [
+            "message-send-path"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "patcher",
+                "event-listener",
+                "timer"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [
+            "other channel-preview tools"
+        ],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 92,
+        "type": "plugin",
+        "name": "PinDMs",
+        "fileName": "PinDMs.plugin.js",
+        "version": "2.0.9",
+        "description": "Allows you to pin DMs, making them appear at the top of your DMs/ServerList",
+        "author": "DevilBro",
+        "tags": [
+            "channels",
+            "members",
+            "organization"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
+        "immutableRevision": "303f9ff6ba59c8acd83c3e203e2aaaa20f63c347",
+        "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+        "licenseStatus": "FOUND",
+        "dependencies": [
+            "BDFDB"
+        ],
+        "networkBehavior": [
+            "fetch",
+            "network-api"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "event-listener"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "external-service",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1382,
+        "type": "plugin",
+        "name": "SendAndForget",
+        "fileName": "SendAndForget.plugin.js",
+        "version": "1.0.3",
+        "description": "Don't follow forwarded messages after sending them. Port of [Vendicated/Vencord#3558](<https://github.com/Vendicated/Vencord/pull/3558>)",
+        "author": "DoggyBootsy",
+        "tags": [
+            "shortcut",
+            "enhancement",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/programmer2514/BetterDiscord-MessageScanAI/67438f1adba749a2420b4f74f82d2129bf41053b/MessageScanAI.plugin.js",
-        "immutableRevision": "67438f1adba749a2420b4f74f82d2129bf41053b",
+        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/BDPlugins/4b5577432606c92466fd12f96dfc6a59ece69393/SendAndForget/SendAndForget.plugin.js",
+        "immutableRevision": "4b5577432606c92466fd12f96dfc6a59ece69393",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -4266,98 +4487,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 87,
-        "type": "plugin",
-        "name": "MessageUtilities",
-        "fileName": "MessageUtilities.plugin.js",
-        "version": "2.0.1",
-        "description": "Adds several Quick Actions for Messages (Delete, Edit, Pin, etc.)",
-        "author": "DevilBro",
-        "tags": [
-            "text",
-            "chat",
-            "organization",
-            "edit",
-            "shortcut"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/3793cd86b60db12f4e2916f4f21dc7d9a88a1483/Plugins/MessageUtilities/MessageUtilities.plugin.js",
-        "immutableRevision": "3793cd86b60db12f4e2916f4f21dc7d9a88a1483",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1023,
-        "type": "plugin",
-        "name": "AuroraGSI",
-        "fileName": "AuroraGSI.plugin.js",
-        "version": "2.7.3",
-        "description": "Sends information to Aurora about users connecting to/disconnecting from, mute/deafen status       https://www.project-aurora.com/",
-        "author": "Martian#8833",
-        "tags": [
-            "activity",
-            "status",
-            "notifications"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Aurora-RGB/Discord-GSI/9d5c5a1a7cf6f4fc1472114e41b5ae78677c4a49/AuroraGSI.plugin.js",
-        "immutableRevision": "9d5c5a1a7cf6f4fc1472114e41b5ae78677c4a49",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 89,
         "type": "plugin",
         "name": "OldTitlebar",
@@ -4401,83 +4530,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 592,
+        "catalogId": 87,
         "type": "plugin",
-        "name": "ChannelsPreview",
-        "fileName": "ChannelsPreview.plugin.js",
-        "version": "2.1.16",
-        "description": "Allows you to view recent messages in channels without switching to them.",
-        "author": "arg0NNY",
+        "name": "MessageUtilities",
+        "fileName": "MessageUtilities.plugin.js",
+        "version": "2.0.1",
+        "description": "Adds several Quick Actions for Messages (Delete, Edit, Pin, etc.)",
+        "author": "DevilBro",
         "tags": [
-            "servers",
+            "text",
             "chat",
-            "enhancement",
-            "channels",
-            "text"
-        ],
-        "disposition": "OPTIONAL",
-        "targetDisposition": "OPTIONAL",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/ChannelsPreview/ChannelsPreview.plugin.js",
-        "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
-        "sourceSha256": "30ae6a611766d4bf5bbb1bcbdad04a478eefc87190decefefd6dd48969bc2015",
-        "licenseStatus": "FOUND",
-        "dependencies": [],
-        "networkBehavior": [
-            "no-static-network-signal"
-        ],
-        "accountActions": [
-            "message-send-path"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "patcher",
-                "event-listener",
-                "timer"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [
-            "other channel-preview tools"
-        ],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1382,
-        "type": "plugin",
-        "name": "SendAndForget",
-        "fileName": "SendAndForget.plugin.js",
-        "version": "1.0.3",
-        "description": "Don't follow forwarded messages after sending them. Port of [Vendicated/Vencord#3558](<https://github.com/Vendicated/Vencord/pull/3558>)",
-        "author": "DoggyBootsy",
-        "tags": [
-            "shortcut",
-            "enhancement",
-            "utility"
+            "organization",
+            "edit",
+            "shortcut"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/BDPlugins/4b5577432606c92466fd12f96dfc6a59ece69393/SendAndForget/SendAndForget.plugin.js",
-        "immutableRevision": "4b5577432606c92466fd12f96dfc6a59ece69393",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/3793cd86b60db12f4e2916f4f21dc7d9a88a1483/Plugins/MessageUtilities/MessageUtilities.plugin.js",
+        "immutableRevision": "3793cd86b60db12f4e2916f4f21dc7d9a88a1483",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -4555,195 +4627,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 92,
-        "type": "plugin",
-        "name": "PinDMs",
-        "fileName": "PinDMs.plugin.js",
-        "version": "2.0.9",
-        "description": "Allows you to pin DMs, making them appear at the top of your DMs/ServerList",
-        "author": "DevilBro",
-        "tags": [
-            "channels",
-            "members",
-            "organization"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
-        "immutableRevision": "303f9ff6ba59c8acd83c3e203e2aaaa20f63c347",
-        "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
-        "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
-        "networkBehavior": [
-            "fetch",
-            "network-api"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "external-service",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 96,
-        "type": "plugin",
-        "name": "RemoveNicknames",
-        "fileName": "RemoveNicknames.plugin.js",
-        "version": "1.4.5",
-        "description": "Replaces Nicknames with Accountnames",
-        "author": "DevilBro",
-        "tags": [
-            "members",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RemoveNicknames/RemoveNicknames.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 74,
-        "type": "plugin",
-        "name": "EditChannels",
-        "fileName": "EditChannels.plugin.js",
-        "version": "4.6.4",
-        "description": "Allows you to locally edit Channels",
-        "author": "DevilBro",
-        "tags": [
-            "channels",
-            "edit"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/a0bc89713a2a92af1a1f42311c3442d56269cc4d/Plugins/EditChannels/EditChannels.plugin.js",
-        "immutableRevision": "a0bc89713a2a92af1a1f42311c3442d56269cc4d",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 106,
-        "type": "plugin",
-        "name": "OpenSteamLinksInApp",
-        "fileName": "OpenSteamLinksInApp.plugin.js",
-        "version": "1.1.8",
-        "description": "Opens Steam Links in Steam instead of your Browser",
-        "author": "DevilBro",
-        "tags": [
-            "activity",
-            "game",
-            "shortcut"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/OpenSteamLinksInApp/OpenSteamLinksInApp.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -4838,69 +4721,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 127,
+        "catalogId": 106,
         "type": "plugin",
-        "name": "EditRoles",
-        "fileName": "EditRoles.plugin.js",
-        "version": "1.2.7",
-        "description": "Allows you to locally edit Roles",
+        "name": "OpenSteamLinksInApp",
+        "fileName": "OpenSteamLinksInApp.plugin.js",
+        "version": "1.1.8",
+        "description": "Opens Steam Links in Steam instead of your Browser",
         "author": "DevilBro",
         "tags": [
-            "roles",
-            "edit",
-            "members"
+            "activity",
+            "game",
+            "shortcut"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/8c4178a4202e18dcb36649d5ce7290065e2d6dbf/Plugins/EditRoles/EditRoles.plugin.js",
-        "immutableRevision": "8c4178a4202e18dcb36649d5ce7290065e2d6dbf",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 132,
-        "type": "plugin",
-        "name": "EmoteReplacer",
-        "fileName": "EmoteReplacer.plugin.js",
-        "version": "2.2.6",
-        "description": "Check for known emote names and replace them with an embedded image of the emote. Also supports modifiers similar to BetterDiscord's emotes.",
-        "author": "Yentis",
-        "tags": [
-            "emotes",
-            "enhancement",
-            "text"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Yentis/betterdiscord-emotereplacer/c39e4239633a72ad44cd243663df7d920e392a37/EmoteReplacer.plugin.js",
-        "immutableRevision": "c39e4239633a72ad44cd243663df7d920e392a37",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/OpenSteamLinksInApp/OpenSteamLinksInApp.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -4973,24 +4811,256 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1311,
+        "catalogId": 74,
         "type": "plugin",
-        "name": "TypingIndicator",
-        "fileName": "LiveTyping.plugin.js",
-        "version": "2.1.2",
-        "description": "Typing status per user on servers, channels or threads.",
-        "author": "Arven",
+        "name": "EditChannels",
+        "fileName": "EditChannels.plugin.js",
+        "version": "4.6.4",
+        "description": "Allows you to locally edit Channels",
+        "author": "DevilBro",
         "tags": [
-            "friends",
-            "members",
-            "utility"
+            "channels",
+            "edit"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/5a84d3d42bbed846d96d289948edd7b839d08cf3/Plugins/LiveTyping/LiveTyping.plugin.js",
-        "immutableRevision": "5a84d3d42bbed846d96d289948edd7b839d08cf3",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/a0bc89713a2a92af1a1f42311c3442d56269cc4d/Plugins/EditChannels/EditChannels.plugin.js",
+        "immutableRevision": "a0bc89713a2a92af1a1f42311c3442d56269cc4d",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 127,
+        "type": "plugin",
+        "name": "EditRoles",
+        "fileName": "EditRoles.plugin.js",
+        "version": "1.2.7",
+        "description": "Allows you to locally edit Roles",
+        "author": "DevilBro",
+        "tags": [
+            "roles",
+            "edit",
+            "members"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/8c4178a4202e18dcb36649d5ce7290065e2d6dbf/Plugins/EditRoles/EditRoles.plugin.js",
+        "immutableRevision": "8c4178a4202e18dcb36649d5ce7290065e2d6dbf",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 96,
+        "type": "plugin",
+        "name": "RemoveNicknames",
+        "fileName": "RemoveNicknames.plugin.js",
+        "version": "1.4.5",
+        "description": "Replaces Nicknames with Accountnames",
+        "author": "DevilBro",
+        "tags": [
+            "members",
+            "enhancement"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RemoveNicknames/RemoveNicknames.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 181,
+        "type": "plugin",
+        "name": "BetterFolders",
+        "fileName": "BetterFolders.plugin.js",
+        "version": "3.8.1",
+        "description": "Adds new functionality to server folders. Custom Folder Icons. Close other folders on open.",
+        "author": "Zerthox",
+        "tags": [
+            "servers",
+            "enhancement"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
+        "immutableRevision": "7c5f6e4ad7cada88974885daf2bfaedae2658a73",
+        "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
+        "licenseStatus": "FOUND",
+        "dependencies": [],
+        "networkBehavior": [
+            "no-static-network-signal"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "patcher"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [
+            "ServerFolders"
+        ],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 132,
+        "type": "plugin",
+        "name": "EmoteReplacer",
+        "fileName": "EmoteReplacer.plugin.js",
+        "version": "2.2.6",
+        "description": "Check for known emote names and replace them with an embedded image of the emote. Also supports modifiers similar to BetterDiscord's emotes.",
+        "author": "Yentis",
+        "tags": [
+            "emotes",
+            "enhancement",
+            "text"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Yentis/betterdiscord-emotereplacer/c39e4239633a72ad44cd243663df7d920e392a37/EmoteReplacer.plugin.js",
+        "immutableRevision": "c39e4239633a72ad44cd243663df7d920e392a37",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 95,
+        "type": "plugin",
+        "name": "RemoveBlockedUsers",
+        "fileName": "RemoveBlockedUsers.plugin.js",
+        "version": "1.8.1",
+        "description": "Removes blocked/ignored Messages/Users",
+        "author": "DevilBro",
+        "tags": [
+            "enhancement",
+            "chat",
+            "members"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RemoveBlockedUsers/RemoveBlockedUsers.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -5127,23 +5197,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 73,
+        "catalogId": 352,
         "type": "plugin",
-        "name": "DisplayServersAsChannels",
-        "fileName": "DisplayServersAsChannels.plugin.js",
-        "version": "2.0.5",
-        "description": "Displays Servers in a similar way as Channels",
+        "name": "ClickableMentions",
+        "fileName": "ClickableMentions.plugin.js",
+        "version": "1.0.8",
+        "description": "Allows you to open a User Popout by clicking a Mention in your Message Input",
         "author": "DevilBro",
         "tags": [
-            "servers",
-            "channels"
+            "members",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/1a37dc3a0f5292b7c9f85c7dd8b52e1aa4d8a8b7/Plugins/DisplayServersAsChannels/DisplayServersAsChannels.plugin.js",
-        "immutableRevision": "1a37dc3a0f5292b7c9f85c7dd8b52e1aa4d8a8b7",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/e5bd286711cb3d3855238fd71235b36ddcad53d8/Plugins/ClickableMentions/ClickableMentions.plugin.js",
+        "immutableRevision": "e5bd286711cb3d3855238fd71235b36ddcad53d8",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -5171,23 +5241,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 352,
+        "catalogId": 73,
         "type": "plugin",
-        "name": "ClickableMentions",
-        "fileName": "ClickableMentions.plugin.js",
-        "version": "1.0.8",
-        "description": "Allows you to open a User Popout by clicking a Mention in your Message Input",
+        "name": "DisplayServersAsChannels",
+        "fileName": "DisplayServersAsChannels.plugin.js",
+        "version": "2.0.5",
+        "description": "Displays Servers in a similar way as Channels",
         "author": "DevilBro",
         "tags": [
-            "members",
-            "utility"
+            "servers",
+            "channels"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/e5bd286711cb3d3855238fd71235b36ddcad53d8/Plugins/ClickableMentions/ClickableMentions.plugin.js",
-        "immutableRevision": "e5bd286711cb3d3855238fd71235b36ddcad53d8",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/1a37dc3a0f5292b7c9f85c7dd8b52e1aa4d8a8b7/Plugins/DisplayServersAsChannels/DisplayServersAsChannels.plugin.js",
+        "immutableRevision": "1a37dc3a0f5292b7c9f85c7dd8b52e1aa4d8a8b7",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -5303,24 +5373,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 95,
+        "catalogId": 1311,
         "type": "plugin",
-        "name": "RemoveBlockedUsers",
-        "fileName": "RemoveBlockedUsers.plugin.js",
-        "version": "1.8.1",
-        "description": "Removes blocked/ignored Messages/Users",
-        "author": "DevilBro",
+        "name": "TypingIndicator",
+        "fileName": "LiveTyping.plugin.js",
+        "version": "2.1.2",
+        "description": "Typing status per user on servers, channels or threads.",
+        "author": "Arven",
         "tags": [
-            "enhancement",
-            "chat",
-            "members"
+            "friends",
+            "members",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RemoveBlockedUsers/RemoveBlockedUsers.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/5a84d3d42bbed846d96d289948edd7b839d08cf3/Plugins/LiveTyping/LiveTyping.plugin.js",
+        "immutableRevision": "5a84d3d42bbed846d96d289948edd7b839d08cf3",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -5348,28 +5418,75 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1476,
+        "catalogId": 1172,
         "type": "plugin",
-        "name": "Timezones",
-        "fileName": "Timezones.plugin.js",
-        "version": "2.1.5",
-        "description": "Allows you to display a local timezone you set for a user.",
-        "author": "Arven",
+        "name": "MoreRoleColors",
+        "fileName": "MoreRoleColors.plugin.js",
+        "version": "2.0.16",
+        "description": "Adds role colors to usernames across Discord - including messages, voice channels, typing indicators, mentions, account area, text editor, audit log, role headers, user profiles, and tags",
+        "author": "DaddyBoard",
         "tags": [
+            "channels",
+            "voice",
             "enhancement",
-            "friends",
-            "members",
-            "utility"
+            "servers",
+            "chat"
         ],
-        "disposition": "OPTIONAL",
-        "targetDisposition": "OPTIONAL",
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/Timezones/Timezones.plugin.js",
-        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
-        "sourceSha256": "6168811850bc4bdb87035867d3f99cde0d3026f0b5805abaffda9023b113d1d5",
-        "licenseStatus": "FOUND",
+        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/a5083e66e2d8eb72d381c53645451ca90ac695f1/MoreRoleColors/MoreRoleColors.plugin.js",
+        "immutableRevision": "a5083e66e2d8eb72d381c53645451ca90ac695f1",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
         "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 102,
+        "type": "plugin",
+        "name": "ServerHider",
+        "fileName": "ServerHider.plugin.js",
+        "version": "6.3.4",
+        "description": "Allows you to hide certain Servers in your Server List",
+        "author": "DevilBro",
+        "tags": [
+            "servers",
+            "organization"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/ServerHider/ServerHider.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+        "sourceSha256": "f5b773a48edf937e321c617dd095779f4c6083b62d33affad919f546700a6a63",
+        "licenseStatus": "FOUND",
+        "dependencies": [
+            "BDFDB"
+        ],
         "networkBehavior": [
             "fetch",
             "network-api"
@@ -5379,11 +5496,10 @@ export const SOULCORD_CATALOG_INDEX = [
         ],
         "cleanupBehavior": {
             "resources": [
-                "patcher"
+                "event-listener"
             ],
             "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
+                "stop-method"
             ]
         },
         "conflicts": [],
@@ -5399,6 +5515,52 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1410,
+        "type": "plugin",
+        "name": "VideoCompressor",
+        "fileName": "VideoCompressor.plugin.js",
+        "version": "0.5.0",
+        "description": "Compress videos that are too large to upload normally",
+        "author": "TheLazySquid",
+        "tags": [
+            "edit",
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/1949ed87878708962061384e4871dae01594feb4/plugins/VideoCompressor/VideoCompressor.plugin.js",
+        "immutableRevision": "1949ed87878708962061384e4871dae01594feb4",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -5503,114 +5665,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 184,
-        "type": "plugin",
-        "name": "BetterVolume",
-        "fileName": "BetterVolume.plugin.js",
-        "version": "3.2.4",
-        "description": "Set user volume values manually instead of using a slider. Allows setting volumes higher than 200%.",
-        "author": "Zerthox",
-        "tags": [
-            "voice",
-            "enhancement",
-            "utility",
-            "members"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
-        "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
-        "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
-        "licenseStatus": "FOUND",
-        "dependencies": [],
-        "networkBehavior": [
-            "no-static-network-signal"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "patcher"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 102,
-        "type": "plugin",
-        "name": "ServerHider",
-        "fileName": "ServerHider.plugin.js",
-        "version": "6.3.4",
-        "description": "Allows you to hide certain Servers in your Server List",
-        "author": "DevilBro",
-        "tags": [
-            "servers",
-            "organization"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/ServerHider/ServerHider.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-        "sourceSha256": "f5b773a48edf937e321c617dd095779f4c6083b62d33affad919f546700a6a63",
-        "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
-        "networkBehavior": [
-            "fetch",
-            "network-api"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "stop-method"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "external-service",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 71,
         "type": "plugin",
         "name": "CustomStatusPresets",
@@ -5652,6 +5706,107 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1048,
+        "type": "plugin",
+        "name": "LaTeX Renderer",
+        "fileName": "LaTeX.plugin.js",
+        "version": "1.0.5",
+        "description": "Renders LaTeX equations using MathJax",
+        "author": "quantumsoul",
+        "tags": [
+            "text",
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/BinaryQuantumSoul/discord-latex/a2051554763d1bbfde1d540def8a9efb965dadcf/dist/LaTeX.plugin.js",
+        "immutableRevision": "a2051554763d1bbfde1d540def8a9efb965dadcf",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1476,
+        "type": "plugin",
+        "name": "Timezones",
+        "fileName": "Timezones.plugin.js",
+        "version": "2.1.5",
+        "description": "Allows you to display a local timezone you set for a user.",
+        "author": "Arven",
+        "tags": [
+            "enhancement",
+            "friends",
+            "members",
+            "utility"
+        ],
+        "disposition": "OPTIONAL",
+        "targetDisposition": "OPTIONAL",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/Timezones/Timezones.plugin.js",
+        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+        "sourceSha256": "6168811850bc4bdb87035867d3f99cde0d3026f0b5805abaffda9023b113d1d5",
+        "licenseStatus": "FOUND",
+        "dependencies": [],
+        "networkBehavior": [
+            "fetch",
+            "network-api"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "patcher"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "external-service",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -5755,48 +5910,49 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 94,
+        "catalogId": 188,
         "type": "plugin",
-        "name": "ReadAllNotificationsButton",
-        "fileName": "ReadAllNotificationsButton.plugin.js",
-        "version": "1.8.5",
-        "description": "Adds a Clear Button to the Server List and the Mentions Popout",
-        "author": "DevilBro",
+        "name": "HideDisabledEmojis",
+        "fileName": "HideDisabledEmojis.plugin.js",
+        "version": "0.1.0",
+        "description": "Hides disabled emojis from the emoji picker. Useful for non-nitro users.",
+        "author": "Zerebos",
         "tags": [
-            "notifications",
-            "shortcut"
+            "edit",
+            "chat",
+            "text",
+            "utility",
+            "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
+        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
         "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
-        "immutableRevision": "80de11f2cc8b769f80ac3aceb41ec3262a8839ac",
-        "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
+        "immutableRevision": "c2fdb36b97e4aee083130381a20ace050dd16621",
+        "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
         "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
+        "dependencies": [],
         "networkBehavior": [
-            "fetch",
-            "network-api"
+            "no-static-network-signal"
         ],
         "accountActions": [
-            "read-state-path"
+            "no-static-account-action-signal"
         ],
         "cleanupBehavior": {
             "resources": [
-                "event-listener"
+                "patcher"
             ],
             "cleanup": [
-                "stop-method"
+                "stop-method",
+                "explicit-cleanup"
             ]
         },
         "conflicts": [],
         "supportedModes": [
             "community-file"
         ],
-        "risk": "external-service",
+        "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
             "provenance": "LICENSE_RECORDED",
@@ -5865,26 +6021,79 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1141,
+        "catalogId": 94,
         "type": "plugin",
-        "name": "PingNotification",
-        "fileName": "PingNotification.plugin.js",
-        "version": "9.4.5",
-        "description": "Show in-app notifications for anything you would hear a ping for.",
-        "author": "DaddyBoard",
+        "name": "ReadAllNotificationsButton",
+        "fileName": "ReadAllNotificationsButton.plugin.js",
+        "version": "1.8.5",
+        "description": "Adds a Clear Button to the Server List and the Mentions Popout",
+        "author": "DevilBro",
         "tags": [
             "notifications",
+            "shortcut"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
+        "immutableRevision": "80de11f2cc8b769f80ac3aceb41ec3262a8839ac",
+        "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+        "licenseStatus": "FOUND",
+        "dependencies": [
+            "BDFDB"
+        ],
+        "networkBehavior": [
+            "fetch",
+            "network-api"
+        ],
+        "accountActions": [
+            "read-state-path"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "event-listener"
+            ],
+            "cleanup": [
+                "stop-method"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "external-service",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1130,
+        "type": "plugin",
+        "name": "MessageScanAI",
+        "fileName": "MessageScanAI.plugin.js",
+        "version": "2.1.4",
+        "description": "Adds a button to scan messages for phishing/scams with AI",
+        "author": "programmer2514",
+        "tags": [
             "enhancement",
-            "activity",
-            "text",
+            "chat",
+            "security",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/537f66e3bccc94b34de4f646c1a272eadb9f0846/PingNotification/PingNotification.plugin.js",
-        "immutableRevision": "537f66e3bccc94b34de4f646c1a272eadb9f0846",
+        "sourceUrl": "https://raw.githubusercontent.com/programmer2514/BetterDiscord-MessageScanAI/67438f1adba749a2420b4f74f82d2129bf41053b/MessageScanAI.plugin.js",
+        "immutableRevision": "67438f1adba749a2420b4f74f82d2129bf41053b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -5930,6 +6139,50 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/Naru-kami/BackgroundManager-plugin/2dbc9a28e0cb05612cf97780dd5cd856cd24aa68/BackgroundManager.plugin.js",
         "immutableRevision": "2dbc9a28e0cb05612cf97780dd5cd856cd24aa68",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 99,
+        "type": "plugin",
+        "name": "ServerCounter",
+        "fileName": "ServerCounter.plugin.js",
+        "version": "1.1.1",
+        "description": "Adds a Server Counter to the Server List",
+        "author": "DevilBro",
+        "tags": [
+            "servers",
+            "organization"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/ServerCounter/ServerCounter.plugin.js",
+        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -6009,142 +6262,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 99,
-        "type": "plugin",
-        "name": "ServerCounter",
-        "fileName": "ServerCounter.plugin.js",
-        "version": "1.1.1",
-        "description": "Adds a Server Counter to the Server List",
-        "author": "DevilBro",
-        "tags": [
-            "servers",
-            "organization"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/ServerCounter/ServerCounter.plugin.js",
-        "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 699,
-        "type": "plugin",
-        "name": "ReplaceTimestamps",
-        "fileName": "ReplaceTimestamps.plugin.js",
-        "version": "1.4.4",
-        "description": "Replaces plaintext times and dates into Discord's timestamps",
-        "author": "domi.btnr",
-        "tags": [
-            "text",
-            "enhancement",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/12c47a664c0f9b6c5e908461efd4fb0dfa0a80c6/ReplaceTimestamps/ReplaceTimestamps.plugin.js",
-        "immutableRevision": "12c47a664c0f9b6c5e908461efd4fb0dfa0a80c6",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 882,
-        "type": "plugin",
-        "name": "SendStickersAsLinks",
-        "fileName": "SendStickersAsLinks.plugin.js",
-        "version": "2.3.6",
-        "description": "Enables you to send custom Stickers as links, (custom stickers as in the ones that are added by servers, not official discord stickers).",
-        "author": "Skamt",
-        "tags": [
-            "fun",
-            "emotes",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/984585d57d139525fec6bb78f2639a1f933bc911/SendStickersAsLinks/SendStickersAsLinks.plugin.js",
-        "immutableRevision": "984585d57d139525fec6bb78f2639a1f933bc911",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -6239,69 +6356,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1040,
+        "catalogId": 699,
         "type": "plugin",
-        "name": "MemberCounter",
-        "fileName": "MemberCounter.plugin.js",
-        "version": "2.32",
-        "description": "Displays the Member Count of a Server at the top of the Member List, can be configured to show Total Members, Online Members, Offline Members, and a DM Counter.",
-        "author": "SyndiShanX",
+        "name": "ReplaceTimestamps",
+        "fileName": "ReplaceTimestamps.plugin.js",
+        "version": "1.4.4",
+        "description": "Replaces plaintext times and dates into Discord's timestamps",
+        "author": "domi.btnr",
         "tags": [
+            "text",
             "enhancement",
-            "servers",
-            "members",
+            "chat",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/SyndiShanX/Better-Discord-Plugins/1e2126efc63b2d88fe430d861214f97f728bac0e/MemberCounter/MemberCounter.plugin.js",
-        "immutableRevision": "1e2126efc63b2d88fe430d861214f97f728bac0e",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 353,
-        "type": "plugin",
-        "name": "Hide Channels",
-        "fileName": "HideChannels.plugin.js",
-        "version": "2.2.14",
-        "description": "Hide channel list from view. This also works for DM list.",
-        "author": "Farcrada",
-        "tags": [
-            "channels",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Farcrada/DiscordPlugins/8b3b2f766a645de5db9152df0c6c2830aacf092f/Hide-Channels/HideChannels.plugin.js",
-        "immutableRevision": "8b3b2f766a645de5db9152df0c6c2830aacf092f",
+        "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/12c47a664c0f9b6c5e908461efd4fb0dfa0a80c6/ReplaceTimestamps/ReplaceTimestamps.plugin.js",
+        "immutableRevision": "12c47a664c0f9b6c5e908461efd4fb0dfa0a80c6",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -6376,23 +6449,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1425,
+        "catalogId": 353,
         "type": "plugin",
-        "name": "DynamicChatButtons",
-        "fileName": "DynamicChatButtons.plugin.js",
-        "version": "1.0.0",
-        "description": "Customize which chat buttons are visible in Discord by right clicking the chat area.",
-        "author": "Arven",
+        "name": "Hide Channels",
+        "fileName": "HideChannels.plugin.js",
+        "version": "2.2.14",
+        "description": "Hide channel list from view. This also works for DM list.",
+        "author": "Farcrada",
         "tags": [
-            "enhancement",
+            "channels",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/DynamicChatButtons/DynamicChatButtons.plugin.js",
-        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+        "sourceUrl": "https://raw.githubusercontent.com/Farcrada/DiscordPlugins/8b3b2f766a645de5db9152df0c6c2830aacf092f/Hide-Channels/HideChannels.plugin.js",
+        "immutableRevision": "8b3b2f766a645de5db9152df0c6c2830aacf092f",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -6465,6 +6538,95 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 1425,
+        "type": "plugin",
+        "name": "DynamicChatButtons",
+        "fileName": "DynamicChatButtons.plugin.js",
+        "version": "1.0.0",
+        "description": "Customize which chat buttons are visible in Discord by right clicking the chat area.",
+        "author": "Arven",
+        "tags": [
+            "enhancement",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/DynamicChatButtons/DynamicChatButtons.plugin.js",
+        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1493,
+        "type": "plugin",
+        "name": "MiniChat",
+        "fileName": "MiniChat.plugin.js",
+        "version": "0.8.6",
+        "description": "Pop out any chat into a small Always on Top window.",
+        "author": "Snues",
+        "tags": [
+            "channels",
+            "enhancement",
+            "chat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/6cf35c7eaf37c6f89c0b67cb599fe88ffe67bb6a/MiniChat/MiniChat.plugin.js",
+        "immutableRevision": "6cf35c7eaf37c6f89c0b67cb599fe88ffe67bb6a",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 1458,
         "type": "plugin",
         "name": "TranscribeVoiceNotes",
@@ -6510,26 +6672,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1172,
+        "catalogId": 802,
         "type": "plugin",
-        "name": "MoreRoleColors",
-        "fileName": "MoreRoleColors.plugin.js",
-        "version": "2.0.16",
-        "description": "Adds role colors to usernames across Discord - including messages, voice channels, typing indicators, mentions, account area, text editor, audit log, role headers, user profiles, and tags",
-        "author": "DaddyBoard",
+        "name": "AutoScroll",
+        "fileName": "AutoScroll.plugin.js",
+        "version": "0.3.0",
+        "description": "Autoscroll with the mouse wheel button on GNU/Linux and macOS!",
+        "author": "programmerpony",
         "tags": [
-            "channels",
-            "voice",
             "enhancement",
-            "servers",
-            "chat"
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/a5083e66e2d8eb72d381c53645451ca90ac695f1/MoreRoleColors/MoreRoleColors.plugin.js",
-        "immutableRevision": "a5083e66e2d8eb72d381c53645451ca90ac695f1",
+        "sourceUrl": "https://raw.githubusercontent.com/hackermare/BD-AutoScroll/f9e225ecd49375749ba689a969da2b1a1c5e71af/AutoScroll.plugin.js",
+        "immutableRevision": "f9e225ecd49375749ba689a969da2b1a1c5e71af",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -6557,14 +6716,16 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 802,
+        "catalogId": 1459,
         "type": "plugin",
-        "name": "AutoScroll",
-        "fileName": "AutoScroll.plugin.js",
-        "version": "0.3.0",
-        "description": "Autoscroll with the mouse wheel button on GNU/Linux and macOS!",
-        "author": "programmerpony",
+        "name": "AutoSwitchStatus",
+        "fileName": "AutoSwitchStatus.plugin.js",
+        "version": "1.9.5",
+        "description": "Automatically switches your discord status when you are muted, connected to a server or when disconnected from a server.",
+        "author": "nicola02nb",
         "tags": [
+            "status",
+            "notifications",
             "enhancement",
             "utility"
         ],
@@ -6572,8 +6733,8 @@ export const SOULCORD_CATALOG_INDEX = [
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/hackermare/BD-AutoScroll/f9e225ecd49375749ba689a969da2b1a1c5e71af/AutoScroll.plugin.js",
-        "immutableRevision": "f9e225ecd49375749ba689a969da2b1a1c5e71af",
+        "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/AutoSwitchStatus/AutoSwitchStatus.plugin.js",
+        "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -6656,48 +6817,57 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1459,
+        "catalogId": 61,
         "type": "plugin",
-        "name": "AutoSwitchStatus",
-        "fileName": "AutoSwitchStatus.plugin.js",
-        "version": "1.9.5",
-        "description": "Automatically switches your discord status when you are muted, connected to a server or when disconnected from a server.",
-        "author": "nicola02nb",
+        "name": "BetterFriendList",
+        "fileName": "BetterFriendList.plugin.js",
+        "version": "1.7.2",
+        "description": "Adds extra Controls to the Friends Page, for example sort by Name/Status, Search and Amount Numbers, new Tabs",
+        "author": "DevilBro",
         "tags": [
-            "status",
-            "notifications",
-            "enhancement",
-            "utility"
+            "organization",
+            "friends",
+            "enhancement"
         ],
         "disposition": "HOLD",
-        "targetDisposition": "HOLD",
+        "targetDisposition": "CURATED",
         "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/AutoSwitchStatus/AutoSwitchStatus.plugin.js",
-        "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/Plugins/BetterFriendList/BetterFriendList.plugin.js",
+        "immutableRevision": "d2c23f5ca7d0c8398213aee653668c211b7700a4",
+        "sourceSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
+        "licenseStatus": "FOUND",
+        "dependencies": [
+            "BDFDB"
+        ],
         "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
+            "fetch",
+            "network-api"
         ],
         "accountActions": [
-            "CODE_REVIEW_REQUIRED"
+            "no-static-account-action-signal"
         ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "cleanupBehavior": {
+            "resources": [
+                "event-listener"
+            ],
+            "cleanup": [
+                "stop-method"
+            ]
+        },
         "conflicts": [],
         "supportedModes": [
             "community-file"
         ],
-        "risk": "standard",
+        "risk": "external-service",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
             "runtime": "PENDING"
         },
-        "codeStatus": "PENDING",
+        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -6745,108 +6915,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "community-file"
         ],
         "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1241,
-        "type": "plugin",
-        "name": "PeekMessageLinks",
-        "fileName": "PeekMessageLinks.plugin.js",
-        "version": "1.2.9",
-        "description": "Peek into message links without leaving your current channel",
-        "author": "DaddyBoard",
-        "tags": [
-            "shortcut",
-            "text",
-            "enhancement",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/c5d104e2aa6e1db632fa582c26c002e8f968b952/PeekMessageLinks/PeekMessageLinks.plugin.js",
-        "immutableRevision": "c5d104e2aa6e1db632fa582c26c002e8f968b952",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 61,
-        "type": "plugin",
-        "name": "BetterFriendList",
-        "fileName": "BetterFriendList.plugin.js",
-        "version": "1.7.2",
-        "description": "Adds extra Controls to the Friends Page, for example sort by Name/Status, Search and Amount Numbers, new Tabs",
-        "author": "DevilBro",
-        "tags": [
-            "organization",
-            "friends",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/Plugins/BetterFriendList/BetterFriendList.plugin.js",
-        "immutableRevision": "d2c23f5ca7d0c8398213aee653668c211b7700a4",
-        "sourceSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
-        "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
-        "networkBehavior": [
-            "fetch",
-            "network-api"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "stop-method"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "external-service",
         "verification": {
             "metadata": "REVIEWED",
             "provenance": "LICENSE_RECORDED",
@@ -6947,23 +7015,69 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 183,
+        "catalogId": 1241,
         "type": "plugin",
-        "name": "OnlineFriendCount",
-        "fileName": "OnlineFriendCount.plugin.js",
-        "version": "3.3.2",
-        "description": "Adds the old online friend count back to server list. Because nostalgia.",
-        "author": "Zerthox",
+        "name": "PeekMessageLinks",
+        "fileName": "PeekMessageLinks.plugin.js",
+        "version": "1.2.9",
+        "description": "Peek into message links without leaving your current channel",
+        "author": "DaddyBoard",
         "tags": [
-            "friends",
+            "shortcut",
+            "text",
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/c5d104e2aa6e1db632fa582c26c002e8f968b952/PeekMessageLinks/PeekMessageLinks.plugin.js",
+        "immutableRevision": "c5d104e2aa6e1db632fa582c26c002e8f968b952",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1469,
+        "type": "plugin",
+        "name": "AutoAnimate",
+        "fileName": "AutoAnimate.plugin.js",
+        "version": "1.0.2",
+        "description": "Forces hover-only animations to play automatically when an animated asset is already available (avatars, server icons, banners, emojis, nameplates, role gradients etc.), with configurable settings. May increase GPU usage. Note: Does not unlock Nitro assets.",
+        "author": "gingerthedwarf",
+        "tags": [
             "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/OnlineFriendCount.plugin.js",
-        "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
+        "sourceUrl": "https://raw.githubusercontent.com/GingerDeDwarf/BDplugs/fc7143c146f0d50da66649fb25771e31e3902298/AutoAnimate/AutoAnimate.plugin.js",
+        "immutableRevision": "fc7143c146f0d50da66649fb25771e31e3902298",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7011,49 +7125,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/Strencher/BetterDiscordStuff/9a7f0cfd9b5462e483bb5ecb17462fdb21c21ba4/Copier/Copier.plugin.js",
         "immutableRevision": "9a7f0cfd9b5462e483bb5ecb17462fdb21c21ba4",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1469,
-        "type": "plugin",
-        "name": "AutoAnimate",
-        "fileName": "AutoAnimate.plugin.js",
-        "version": "1.0.2",
-        "description": "Forces hover-only animations to play automatically when an animated asset is already available (avatars, server icons, banners, emojis, nameplates, role gradients etc.), with configurable settings. May increase GPU usage. Note: Does not unlock Nitro assets.",
-        "author": "gingerthedwarf",
-        "tags": [
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/GingerDeDwarf/BDplugs/fc7143c146f0d50da66649fb25771e31e3902298/AutoAnimate/AutoAnimate.plugin.js",
-        "immutableRevision": "fc7143c146f0d50da66649fb25771e31e3902298",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7135,50 +7206,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1451,
-        "type": "plugin",
-        "name": "ScrollToLatest",
-        "fileName": "ScrollToLatest.plugin.js",
-        "version": "1.0.4",
-        "description": "Scroll to the last message when entering a channel.",
-        "author": "Snues",
-        "tags": [
-            "enhancement",
-            "chat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/6ac80dce71d982108c79193d8d691f4744ed1de4/ScrollToLatest/ScrollToLatest.plugin.js",
-        "immutableRevision": "6ac80dce71d982108c79193d8d691f4744ed1de4",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -7271,96 +7298,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1298,
-        "type": "plugin",
-        "name": "Summarizer",
-        "fileName": "Summarizer.plugin.js",
-        "version": "0.6.2",
-        "description": "**Summarize articles and YouTube videos.** Right-click on any link and select `Summarize` to extract key insights.",
-        "author": "SuperTouch",
-        "tags": [
-            "text",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/JanitorialMess/Summarizer/55b2c08a0dc6be834eaa02437f1dc1ae92a3e57f/dist/Summarizer.plugin.js",
-        "immutableRevision": "55b2c08a0dc6be834eaa02437f1dc1ae92a3e57f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 366,
-        "type": "plugin",
-        "name": "CollapsibleUI",
-        "fileName": "CollapsibleUI.plugin.js",
-        "version": "12.3.5",
-        "description": "A feature-rich BetterDiscord plugin that reworks the Discord UI to be significantly more modular.",
-        "author": "programmer2514",
-        "tags": [
-            "enhancement",
-            "utility",
-            "organization"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/programmer2514/BetterDiscord-CollapsibleUI/ef71d4fb06b02c9f7bc0c87da56daf9a0ff614e3/CollapsibleUI.plugin.js",
-        "immutableRevision": "ef71d4fb06b02c9f7bc0c87da56daf9a0ff614e3",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 670,
         "type": "plugin",
         "name": "VoiceActivity",
@@ -7414,26 +7351,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 190,
+        "catalogId": 366,
         "type": "plugin",
-        "name": "RoleMembers",
-        "fileName": "RoleMembers.plugin.js",
-        "version": "0.2.1",
-        "description": "Allows you to see the members of each role on a server. Can also see members from a mention.",
-        "author": "Zerebos",
+        "name": "CollapsibleUI",
+        "fileName": "CollapsibleUI.plugin.js",
+        "version": "12.3.5",
+        "description": "A feature-rich BetterDiscord plugin that reworks the Discord UI to be significantly more modular.",
+        "author": "programmer2514",
         "tags": [
-            "roles",
-            "chat",
+            "enhancement",
             "utility",
-            "search",
-            "members"
+            "organization"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/34a7ae023a35fbc72f8179631b126001e8c2ec6c/Plugins/RoleMembers/RoleMembers.plugin.js",
-        "immutableRevision": "34a7ae023a35fbc72f8179631b126001e8c2ec6c",
+        "sourceUrl": "https://raw.githubusercontent.com/programmer2514/BetterDiscord-CollapsibleUI/ef71d4fb06b02c9f7bc0c87da56daf9a0ff614e3/CollapsibleUI.plugin.js",
+        "immutableRevision": "ef71d4fb06b02c9f7bc0c87da56daf9a0ff614e3",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7461,45 +7396,34 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 29,
+        "catalogId": 1298,
         "type": "plugin",
-        "name": "PermissionsViewer",
-        "fileName": "PermissionsViewer.plugin.js",
-        "version": "1.0.1",
-        "description": "Allows you to view all the permissions for users, servers, and channels!",
-        "author": "Zerebos",
+        "name": "Summarizer",
+        "fileName": "Summarizer.plugin.js",
+        "version": "0.6.2",
+        "description": "**Summarize articles and YouTube videos.** Right-click on any link and select `Summarize` to extract key insights.",
+        "author": "SuperTouch",
         "tags": [
-            "utility",
-            "security",
-            "servers",
-            "members",
-            "roles"
+            "text",
+            "chat",
+            "utility"
         ],
         "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "SAFE_TO_RUNTIME_TEST",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
-        "immutableRevision": "49cdbe56ffc5d9d815663d83454cbe361af2b2cf",
-        "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
-        "licenseStatus": "FOUND",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/JanitorialMess/Summarizer/55b2c08a0dc6be834eaa02437f1dc1ae92a3e57f/dist/Summarizer.plugin.js",
+        "immutableRevision": "55b2c08a0dc6be834eaa02437f1dc1ae92a3e57f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
         "dependencies": [],
         "networkBehavior": [
-            "no-static-network-signal"
+            "CODE_REVIEW_REQUIRED"
         ],
         "accountActions": [
-            "no-static-account-action-signal"
+            "CODE_REVIEW_REQUIRED"
         ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener",
-                "timer"
-            ],
-            "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
-            ]
-        },
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
         "conflicts": [],
         "supportedModes": [
             "community-file"
@@ -7507,12 +7431,12 @@ export const SOULCORD_CATALOG_INDEX = [
         "risk": "standard",
         "verification": {
             "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
             "runtime": "PENDING"
         },
-        "codeStatus": "STATIC_REVIEWED",
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -7535,6 +7459,53 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/bd1a59f50652bc844c9ddd949a5bf042fb9f4e53/plugins/ImageFolder/ImageFolder.plugin.js",
         "immutableRevision": "bd1a59f50652bc844c9ddd949a5bf042fb9f4e53",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 190,
+        "type": "plugin",
+        "name": "RoleMembers",
+        "fileName": "RoleMembers.plugin.js",
+        "version": "0.2.1",
+        "description": "Allows you to see the members of each role on a server. Can also see members from a mention.",
+        "author": "Zerebos",
+        "tags": [
+            "roles",
+            "chat",
+            "utility",
+            "search",
+            "members"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/34a7ae023a35fbc72f8179631b126001e8c2ec6c/Plugins/RoleMembers/RoleMembers.plugin.js",
+        "immutableRevision": "34a7ae023a35fbc72f8179631b126001e8c2ec6c",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7663,68 +7634,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1301,
+        "catalogId": 1040,
         "type": "plugin",
-        "name": "AutoStartRichPresence",
-        "fileName": "AutoStartRichPresence.plugin.js",
-        "version": "2.0.20",
-        "description": "Auto starts Rich Presence with configurable settings.",
-        "author": "miniontoby",
+        "name": "MemberCounter",
+        "fileName": "MemberCounter.plugin.js",
+        "version": "2.32",
+        "description": "Displays the Member Count of a Server at the top of the Member List, can be configured to show Total Members, Online Members, Offline Members, and a DM Counter.",
+        "author": "SyndiShanX",
         "tags": [
-            "activity",
-            "status"
+            "enhancement",
+            "servers",
+            "members",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Miniontoby/MinionBDStuff/ddd6d251bd76ec2865072226b0bcecda709aedc7/Plugins/AutoStartRichPresence/AutoStartRichPresence.plugin.js",
-        "immutableRevision": "ddd6d251bd76ec2865072226b0bcecda709aedc7",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1290,
-        "type": "plugin",
-        "name": "AutoDNDOnGame",
-        "fileName": "AutoDNDOnGame.plugin.js",
-        "version": "1.2.0",
-        "description": "Automatically set your status to Do Not Disturb when you launch a game",
-        "author": "xenoncolt",
-        "tags": [
-            "game",
-            "activity",
-            "status"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/xenoncolt/AutoDNDOnGame/76d276c8fe6e419a79878b907a4c4f2da7933a7f/AutoDNDOnGame.plugin.js",
-        "immutableRevision": "76d276c8fe6e419a79878b907a4c4f2da7933a7f",
+        "sourceUrl": "https://raw.githubusercontent.com/SyndiShanX/Better-Discord-Plugins/1e2126efc63b2d88fe430d861214f97f728bac0e/MemberCounter/MemberCounter.plugin.js",
+        "immutableRevision": "1e2126efc63b2d88fe430d861214f97f728bac0e",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7841,26 +7769,68 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 878,
+        "catalogId": 1301,
         "type": "plugin",
-        "name": "enhancecodeblocks",
-        "fileName": "EnhanceCodeBlocks.plugin.js",
-        "version": "1.0.27",
-        "description": "Enhances Discords Codeblocks & Text File Attachments",
-        "author": "DoggyBootsy",
+        "name": "AutoStartRichPresence",
+        "fileName": "AutoStartRichPresence.plugin.js",
+        "version": "2.0.20",
+        "description": "Auto starts Rich Presence with configurable settings.",
+        "author": "miniontoby",
         "tags": [
-            "text",
-            "enhancement",
-            "chat",
-            "utility",
-            "developers"
+            "activity",
+            "status"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/enhancecodeblocks/8cb627c1b879d02accc614dc6492da8866062702/dist/EnhanceCodeBlocks.plugin.js",
-        "immutableRevision": "8cb627c1b879d02accc614dc6492da8866062702",
+        "sourceUrl": "https://raw.githubusercontent.com/Miniontoby/MinionBDStuff/ddd6d251bd76ec2865072226b0bcecda709aedc7/Plugins/AutoStartRichPresence/AutoStartRichPresence.plugin.js",
+        "immutableRevision": "ddd6d251bd76ec2865072226b0bcecda709aedc7",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1290,
+        "type": "plugin",
+        "name": "AutoDNDOnGame",
+        "fileName": "AutoDNDOnGame.plugin.js",
+        "version": "1.2.0",
+        "description": "Automatically set your status to Do Not Disturb when you launch a game",
+        "author": "xenoncolt",
+        "tags": [
+            "game",
+            "activity",
+            "status"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/xenoncolt/AutoDNDOnGame/76d276c8fe6e419a79878b907a4c4f2da7933a7f/AutoDNDOnGame.plugin.js",
+        "immutableRevision": "76d276c8fe6e419a79878b907a4c4f2da7933a7f",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7906,6 +7876,96 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/BinaryQuantumSoul/discord-better-messages/a2022c8879b06bb80e0378ba0b6d9323557bd13d/plugins/ColorIndicator/ColorIndicator.plugin.js",
         "immutableRevision": "a2022c8879b06bb80e0378ba0b6d9323557bd13d",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1210,
+        "type": "plugin",
+        "name": "Extended Typing Sounds",
+        "fileName": "ExtendedTypingSounds.plugin.js",
+        "version": "1.0.3",
+        "description": "Play different click sounds when you press a key. Supports multiple keyboard sounds",
+        "author": "Slluxx",
+        "tags": [
+            "fun",
+            "text",
+            "chat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Slluxx/BetterDiscord-Extended-Typing-Sounds/8bcbb34eb7925f8771bb1feec3837563dc9fb197/ExtendedTypingSounds.plugin.js",
+        "immutableRevision": "8bcbb34eb7925f8771bb1feec3837563dc9fb197",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1532,
+        "type": "plugin",
+        "name": "LinkCleaner",
+        "fileName": "LinkCleaner.plugin.js",
+        "version": "1.0.5",
+        "description": "Clean URLs automatically every time you send a message",
+        "author": "Arven",
+        "tags": [
+            "enhancement",
+            "security",
+            "text"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/6ec4909bffc339ee03c97f3f2b3f1c170a3afecb/Plugins/LinkCleaner/LinkCleaner.plugin.js",
+        "immutableRevision": "6ec4909bffc339ee03c97f3f2b3f1c170a3afecb",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -7983,24 +8043,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1532,
+        "catalogId": 105,
         "type": "plugin",
-        "name": "LinkCleaner",
-        "fileName": "LinkCleaner.plugin.js",
-        "version": "1.0.5",
-        "description": "Clean URLs automatically every time you send a message",
-        "author": "Arven",
+        "name": "SpotifyControls",
+        "fileName": "SpotifyControls.plugin.js",
+        "version": "1.5.3",
+        "description": "Adds a Control Panel while listening to Spotify on a connected Account",
+        "author": "DevilBro",
         "tags": [
+            "activity",
+            "shortcut",
             "enhancement",
-            "security",
-            "text"
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/6ec4909bffc339ee03c97f3f2b3f1c170a3afecb/Plugins/LinkCleaner/LinkCleaner.plugin.js",
-        "immutableRevision": "6ec4909bffc339ee03c97f3f2b3f1c170a3afecb",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/3487fff34f53d621526bcc9a9c34a751ab82ca5d/Plugins/SpotifyControls/SpotifyControls.plugin.js",
+        "immutableRevision": "3487fff34f53d621526bcc9a9c34a751ab82ca5d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8044,52 +8105,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/PasscodeLock/PasscodeLock.plugin.js",
         "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 105,
-        "type": "plugin",
-        "name": "SpotifyControls",
-        "fileName": "SpotifyControls.plugin.js",
-        "version": "1.5.3",
-        "description": "Adds a Control Panel while listening to Spotify on a connected Account",
-        "author": "DevilBro",
-        "tags": [
-            "activity",
-            "shortcut",
-            "enhancement",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/3487fff34f53d621526bcc9a9c34a751ab82ca5d/Plugins/SpotifyControls/SpotifyControls.plugin.js",
-        "immutableRevision": "3487fff34f53d621526bcc9a9c34a751ab82ca5d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8170,6 +8185,96 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 850,
+        "type": "plugin",
+        "name": "LastFMRichPresence",
+        "fileName": "LastFMRichPresence.plugin.js",
+        "version": "1.0.9",
+        "description": "Last.fm rich presence to show what you're listening to. Finally not just Spotify!",
+        "author": "dimden",
+        "tags": [
+            "fun",
+            "activity",
+            "status"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/dimdenGD/LastFMRichPresence/cfd07b3d85411383b640af5cb9bc4e3141c065dd/LastFMRichPresence.plugin.js",
+        "immutableRevision": "cfd07b3d85411383b640af5cb9bc4e3141c065dd",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 382,
+        "type": "plugin",
+        "name": "ClickToChat",
+        "fileName": "ClickToChat.plugin.js",
+        "version": "1.1.5",
+        "description": "Click to open direct message",
+        "author": "hobbica",
+        "tags": [
+            "shortcut",
+            "organization",
+            "chat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/hobbica98/ClickToChat-BetterDiscord-Plugin/b994a63b5d37721a1224e0345444da59e69d97ee/ClickToChat.plugin.js",
+        "immutableRevision": "b994a63b5d37721a1224e0345444da59e69d97ee",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -8266,69 +8371,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 382,
+        "catalogId": 827,
         "type": "plugin",
-        "name": "ClickToChat",
-        "fileName": "ClickToChat.plugin.js",
-        "version": "1.1.5",
-        "description": "Click to open direct message",
-        "author": "hobbica",
+        "name": "CollapseEmbeds",
+        "fileName": "CollapseEmbeds.plugin.js",
+        "version": "2.2.1",
+        "description": "Collapse embeds & attachments.",
+        "author": "Zerthox",
         "tags": [
-            "shortcut",
-            "organization",
+            "text",
+            "enhancement",
             "chat"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/hobbica98/ClickToChat-BetterDiscord-Plugin/b994a63b5d37721a1224e0345444da59e69d97ee/ClickToChat.plugin.js",
-        "immutableRevision": "b994a63b5d37721a1224e0345444da59e69d97ee",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 850,
-        "type": "plugin",
-        "name": "LastFMRichPresence",
-        "fileName": "LastFMRichPresence.plugin.js",
-        "version": "1.0.9",
-        "description": "Last.fm rich presence to show what you're listening to. Finally not just Spotify!",
-        "author": "dimden",
-        "tags": [
-            "fun",
-            "activity",
-            "status"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/dimdenGD/LastFMRichPresence/cfd07b3d85411383b640af5cb9bc4e3141c065dd/LastFMRichPresence.plugin.js",
-        "immutableRevision": "cfd07b3d85411383b640af5cb9bc4e3141c065dd",
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/070dd1cdaeb505a219f01c3da409e7e8aae717ef/dist/bd/CollapseEmbeds.plugin.js",
+        "immutableRevision": "070dd1cdaeb505a219f01c3da409e7e8aae717ef",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8373,51 +8433,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/BetterChannelList/BetterChannelList.plugin.js",
         "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 827,
-        "type": "plugin",
-        "name": "CollapseEmbeds",
-        "fileName": "CollapseEmbeds.plugin.js",
-        "version": "2.2.1",
-        "description": "Collapse embeds & attachments.",
-        "author": "Zerthox",
-        "tags": [
-            "text",
-            "enhancement",
-            "chat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/070dd1cdaeb505a219f01c3da409e7e8aae717ef/dist/bd/CollapseEmbeds.plugin.js",
-        "immutableRevision": "070dd1cdaeb505a219f01c3da409e7e8aae717ef",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8490,6 +8505,53 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 1478,
+        "type": "plugin",
+        "name": "Incognito",
+        "fileName": "Incognito.plugin.js",
+        "version": "1.0.7",
+        "description": "Stop tracking, hide typing, spoof fingerprints, and much more.",
+        "author": "Snues",
+        "tags": [
+            "activity",
+            "status",
+            "enhancement",
+            "security",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/c53818992addc44fa3c3dcea4567a2ff3c9bdb2a/Incognito/Incognito.plugin.js",
+        "immutableRevision": "c53818992addc44fa3c3dcea4567a2ff3c9bdb2a",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 807,
         "type": "plugin",
         "name": "StickerEmojiPreview",
@@ -8508,6 +8570,94 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/984585d57d139525fec6bb78f2639a1f933bc911/StickerEmojiPreview/StickerEmojiPreview.plugin.js",
         "immutableRevision": "984585d57d139525fec6bb78f2639a1f933bc911",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1463,
+        "type": "plugin",
+        "name": "ChatButtonsBegone",
+        "fileName": "ChatButtonsBegone.plugin.js",
+        "version": "4.5.2",
+        "description": "Remove annoying stuff from your Discord clients.",
+        "author": "thelastbucket",
+        "tags": [
+            "enhancement"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/LancersBucket/ChatButtonsBegone/176d52d56a5bdafac97f58f975186bbec93522ec/ChatButtonsBegone.plugin.js",
+        "immutableRevision": "176d52d56a5bdafac97f58f975186bbec93522ec",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1628,
+        "type": "plugin",
+        "name": "Steam Workshop Embed",
+        "fileName": "SteamWorkshopEmbedder.plugin.js",
+        "version": "0.0.2",
+        "description": "Embed steam workshop items",
+        "author": "DoggyBootsy",
+        "tags": [
+            "enhancement",
+            "chat",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/BDPlugins/71d18a13c4c99d32db754445f3a36ed68b52c39f/SteamWorkshopEmbedder/SteamWorkshopEmbedder.plugin.js",
+        "immutableRevision": "71d18a13c4c99d32db754445f3a36ed68b52c39f",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8588,22 +8738,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 819,
+        "catalogId": 162,
         "type": "plugin",
-        "name": "DateViewer",
-        "fileName": "DateViewer.plugin.js",
-        "version": "1.0.26",
-        "description": "Displays the current date, weekday, and time, at the bottom of the member-list.",
-        "author": "Arashiryuu",
+        "name": "StaffTag",
+        "fileName": "StaffTag.plugin.js",
+        "version": "1.7.4",
+        "description": "Adds a Crown/Tag to Server Owners (or Admins/Management)",
+        "author": "DevilBro",
         "tags": [
-            "enhancement"
+            "roles",
+            "members"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Arashiryuu/crap/f1dc39bd440ed91b79115a579fed2a73d3ffc82b/BdApi/DateViewer/DateViewer.plugin.js",
-        "immutableRevision": "f1dc39bd440ed91b79115a579fed2a73d3ffc82b",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/20e22dfbf7f55d84b22a703a594242275c525399/Plugins/StaffTag/StaffTag.plugin.js",
+        "immutableRevision": "20e22dfbf7f55d84b22a703a594242275c525399",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8631,13 +8782,58 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1628,
+        "catalogId": 1074,
         "type": "plugin",
-        "name": "Steam Workshop Embed",
-        "fileName": "SteamWorkshopEmbedder.plugin.js",
-        "version": "0.0.2",
-        "description": "Embed steam workshop items",
-        "author": "DoggyBootsy",
+        "name": "GifCaptioner",
+        "fileName": "GifCaptioner.plugin.js",
+        "version": "2.4.0",
+        "description": "Allows you to add a caption to discord gifs",
+        "author": "TheLazySquid",
+        "tags": [
+            "fun",
+            "text",
+            "friends"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/e509c23f697b15cbd9f43c58ce70fc6e2c2399e2/plugins/GifCaptioner/GifCaptioner.plugin.js",
+        "immutableRevision": "e509c23f697b15cbd9f43c58ce70fc6e2c2399e2",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1000,
+        "type": "plugin",
+        "name": "Embed More Images",
+        "fileName": "EmbedMoreImages.plugin.js",
+        "version": "1.14",
+        "description": "Embed formats you usually can't.\r\n\r\nExpanded description:\r\nEmbed file formats that Discord can but won't support for whatever reason. \r\n\r\nThis plugin currently adds embed support for sequenced WebP, APNG, AVIF, BitMaP, ICO, CUR, and additional JPEG 1 file extensions (like *.jfif).",
+        "author": "Knew",
         "tags": [
             "enhancement",
             "chat",
@@ -8647,51 +8843,8 @@ export const SOULCORD_CATALOG_INDEX = [
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/doggybootsy/BDPlugins/71d18a13c4c99d32db754445f3a36ed68b52c39f/SteamWorkshopEmbedder/SteamWorkshopEmbedder.plugin.js",
-        "immutableRevision": "71d18a13c4c99d32db754445f3a36ed68b52c39f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1463,
-        "type": "plugin",
-        "name": "ChatButtonsBegone",
-        "fileName": "ChatButtonsBegone.plugin.js",
-        "version": "4.5.2",
-        "description": "Remove annoying stuff from your Discord clients.",
-        "author": "thelastbucket",
-        "tags": [
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/LancersBucket/ChatButtonsBegone/176d52d56a5bdafac97f58f975186bbec93522ec/ChatButtonsBegone.plugin.js",
-        "immutableRevision": "176d52d56a5bdafac97f58f975186bbec93522ec",
+        "sourceUrl": "https://raw.githubusercontent.com/Knewest/embed-more-images/08bc91484bbcd8763ce2707b24b4fc7b84534c18/EmbedMoreImages.plugin.js",
+        "immutableRevision": "08bc91484bbcd8763ce2707b24b4fc7b84534c18",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8736,50 +8889,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/e23da79dd6cd08ecbbde13be0598fe8e1808202f/Plugins/NotificationSounds/NotificationSounds.plugin.js",
         "immutableRevision": "e23da79dd6cd08ecbbde13be0598fe8e1808202f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 162,
-        "type": "plugin",
-        "name": "StaffTag",
-        "fileName": "StaffTag.plugin.js",
-        "version": "1.7.4",
-        "description": "Adds a Crown/Tag to Server Owners (or Admins/Management)",
-        "author": "DevilBro",
-        "tags": [
-            "roles",
-            "members"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/20e22dfbf7f55d84b22a703a594242275c525399/Plugins/StaffTag/StaffTag.plugin.js",
-        "immutableRevision": "20e22dfbf7f55d84b22a703a594242275c525399",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8865,24 +8974,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1000,
+        "catalogId": 1075,
         "type": "plugin",
-        "name": "Embed More Images",
-        "fileName": "EmbedMoreImages.plugin.js",
-        "version": "1.14",
-        "description": "Embed formats you usually can't.\r\n\r\nExpanded description:\r\nEmbed file formats that Discord can but won't support for whatever reason. \r\n\r\nThis plugin currently adds embed support for sequenced WebP, APNG, AVIF, BitMaP, ICO, CUR, and additional JPEG 1 file extensions (like *.jfif).",
-        "author": "Knew",
+        "name": "BetterImageViewer",
+        "fileName": "BetterImageViewer.plugin.js",
+        "version": "1.8",
+        "description": "Better image viewer",
+        "author": ".legend_master",
         "tags": [
             "enhancement",
-            "chat",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Knewest/embed-more-images/08bc91484bbcd8763ce2707b24b4fc7b84534c18/EmbedMoreImages.plugin.js",
-        "immutableRevision": "08bc91484bbcd8763ce2707b24b4fc7b84534c18",
+        "sourceUrl": "https://raw.githubusercontent.com/Legend-Master/discord-better-image-viewer/93edf7cda3cb863458c26bd6504d133a4110d1ec/BetterImageViewer.plugin.js",
+        "immutableRevision": "93edf7cda3cb863458c26bd6504d133a4110d1ec",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -8906,197 +9014,6 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1410,
-        "type": "plugin",
-        "name": "VideoCompressor",
-        "fileName": "VideoCompressor.plugin.js",
-        "version": "0.5.0",
-        "description": "Compress videos that are too large to upload normally",
-        "author": "TheLazySquid",
-        "tags": [
-            "edit",
-            "enhancement",
-            "chat",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/1949ed87878708962061384e4871dae01594feb4/plugins/VideoCompressor/VideoCompressor.plugin.js",
-        "immutableRevision": "1949ed87878708962061384e4871dae01594feb4",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 599,
-        "type": "plugin",
-        "name": "RoleMentionIcons",
-        "fileName": "RoleMentionIcons.plugin.js",
-        "version": "1.4.3",
-        "description": "Displays icons next to role mentions.",
-        "author": "Neodymium",
-        "tags": [
-            "roles",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Neodymium7/BetterDiscordStuff/2b70e2e774d5dd0f9f3a3cf762f264225108e312/RoleMentionIcons/RoleMentionIcons.plugin.js",
-        "immutableRevision": "2b70e2e774d5dd0f9f3a3cf762f264225108e312",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1549,
-        "type": "plugin",
-        "name": "JumpToTop",
-        "fileName": "JumpToTop.plugin.js",
-        "version": "1.0.6",
-        "description": "Adds a button to the channel header allowing you to jump to first message in a channel. (Original by Huderon)",
-        "author": "SnappyC",
-        "tags": [
-            "channels",
-            "shortcut",
-            "enhancement",
-            "chat",
-            "text"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/snappycreeper/BetterDiscordPlugins/5054a6681f86e5b62f9b87d43982a8490665bc6e/JumpToTop/JumpToTop.plugin.js",
-        "immutableRevision": "5054a6681f86e5b62f9b87d43982a8490665bc6e",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 104,
-        "type": "plugin",
-        "name": "SpellCheck",
-        "fileName": "SpellCheck.plugin.js",
-        "version": "1.7.3",
-        "description": "Adds a Spell Check to all Message Inputs. Select a Word and Right Click it to add it to your Dictionary",
-        "author": "DevilBro",
-        "tags": [
-            "text",
-            "enhancement"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/Plugins/SpellCheck/SpellCheck.plugin.js",
-        "immutableRevision": "92f52d9f66172df2c4f0d4394de843332689b861",
-        "sourceSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a",
-        "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
-        "networkBehavior": [
-            "fetch",
-            "network-api"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "stop-method"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "external-service",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -9154,66 +9071,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1075,
+        "catalogId": 599,
         "type": "plugin",
-        "name": "BetterImageViewer",
-        "fileName": "BetterImageViewer.plugin.js",
-        "version": "1.8",
-        "description": "Better image viewer",
-        "author": ".legend_master",
+        "name": "RoleMentionIcons",
+        "fileName": "RoleMentionIcons.plugin.js",
+        "version": "1.4.3",
+        "description": "Displays icons next to role mentions.",
+        "author": "Neodymium",
         "tags": [
-            "enhancement",
-            "utility"
+            "roles",
+            "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Legend-Master/discord-better-image-viewer/93edf7cda3cb863458c26bd6504d133a4110d1ec/BetterImageViewer.plugin.js",
-        "immutableRevision": "93edf7cda3cb863458c26bd6504d133a4110d1ec",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1522,
-        "type": "plugin",
-        "name": "Oneko",
-        "fileName": "oneko.plugin.js",
-        "version": "1",
-        "description": "Cat follows your cursor (Go check out vencord's code ( I just ported it to BD :) https://github.com/Vendicated/Vencord/tree/main/src/plugins/oneko which was based off of Adryd's code.)",
-        "author": "vwilk",
-        "tags": [
-            "fun"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/VWilk/Oneko_BetterDiscord/b118ec4f3caf32a5db1e6c29da933e58aa53f331/oneko.plugin.js",
-        "immutableRevision": "b118ec4f3caf32a5db1e6c29da933e58aa53f331",
+        "sourceUrl": "https://raw.githubusercontent.com/Neodymium7/BetterDiscordStuff/2b70e2e774d5dd0f9f3a3cf762f264225108e312/RoleMentionIcons/RoleMentionIcons.plugin.js",
+        "immutableRevision": "2b70e2e774d5dd0f9f3a3cf762f264225108e312",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -9295,48 +9169,48 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 186,
+        "catalogId": 104,
         "type": "plugin",
-        "name": "DoNotTrack",
-        "fileName": "DoNotTrack.plugin.js",
-        "version": "0.1.0",
-        "description": "Stops Discord from tracking everything you do like Sentry and Analytics.",
-        "author": "Zerebos",
+        "name": "SpellCheck",
+        "fileName": "SpellCheck.plugin.js",
+        "version": "1.7.3",
+        "description": "Adds a Spell Check to all Message Inputs. Select a Word and Right Click it to add it to your Dictionary",
+        "author": "DevilBro",
         "tags": [
-            "activity",
-            "status",
-            "enhancement",
-            "security"
+            "text",
+            "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "CURATED",
         "securityDisposition": "HOLD",
         "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
-        "immutableRevision": "6d839d0ab65371819b081218bc43b09d7d6e762d",
-        "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/Plugins/SpellCheck/SpellCheck.plugin.js",
+        "immutableRevision": "92f52d9f66172df2c4f0d4394de843332689b861",
+        "sourceSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a",
         "licenseStatus": "FOUND",
-        "dependencies": [],
+        "dependencies": [
+            "BDFDB"
+        ],
         "networkBehavior": [
-            "no-static-network-signal"
+            "fetch",
+            "network-api"
         ],
         "accountActions": [
             "no-static-account-action-signal"
         ],
         "cleanupBehavior": {
             "resources": [
-                "patcher"
+                "event-listener"
             ],
             "cleanup": [
-                "stop-method",
-                "explicit-cleanup"
+                "stop-method"
             ]
         },
         "conflicts": [],
         "supportedModes": [
             "community-file"
         ],
-        "risk": "standard",
+        "risk": "external-service",
         "verification": {
             "metadata": "REVIEWED",
             "provenance": "LICENSE_RECORDED",
@@ -9345,6 +9219,143 @@ export const SOULCORD_CATALOG_INDEX = [
             "runtime": "PENDING"
         },
         "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1549,
+        "type": "plugin",
+        "name": "JumpToTop",
+        "fileName": "JumpToTop.plugin.js",
+        "version": "1.0.6",
+        "description": "Adds a button to the channel header allowing you to jump to first message in a channel. (Original by Huderon)",
+        "author": "SnappyC",
+        "tags": [
+            "channels",
+            "shortcut",
+            "enhancement",
+            "chat",
+            "text"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/snappycreeper/BetterDiscordPlugins/5054a6681f86e5b62f9b87d43982a8490665bc6e/JumpToTop/JumpToTop.plugin.js",
+        "immutableRevision": "5054a6681f86e5b62f9b87d43982a8490665bc6e",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1522,
+        "type": "plugin",
+        "name": "Oneko",
+        "fileName": "oneko.plugin.js",
+        "version": "1",
+        "description": "Cat follows your cursor (Go check out vencord's code ( I just ported it to BD :) https://github.com/Vendicated/Vencord/tree/main/src/plugins/oneko which was based off of Adryd's code.)",
+        "author": "vwilk",
+        "tags": [
+            "fun"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/VWilk/Oneko_BetterDiscord/b118ec4f3caf32a5db1e6c29da933e58aa53f331/oneko.plugin.js",
+        "immutableRevision": "b118ec4f3caf32a5db1e6c29da933e58aa53f331",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1565,
+        "type": "plugin",
+        "name": "ActivityFeed",
+        "fileName": "ActivityFeed.plugin.js",
+        "version": "1.0.2",
+        "description": "A from-the-ground-up recreation of Discord's Activity Feed tab circa late 2018-early 2019, featuring game news, a quick launcher, and friend activity with modern touches.",
+        "author": "KingGamingYT",
+        "tags": [
+            "fun",
+            "activity",
+            "game",
+            "enhancement",
+            "friends"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/ActivityFeed/21b78742f7c2a0e64a856e710b4b01fc1f74e627/dist/ActivityFeed.plugin.js",
+        "immutableRevision": "21b78742f7c2a0e64a856e710b4b01fc1f74e627",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
         "runtimeStatus": "PENDING",
         "installable": false
     },
@@ -9436,26 +9447,76 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1565,
+        "catalogId": 186,
         "type": "plugin",
-        "name": "ActivityFeed",
-        "fileName": "ActivityFeed.plugin.js",
-        "version": "1.0.2",
-        "description": "A from-the-ground-up recreation of Discord's Activity Feed tab circa late 2018-early 2019, featuring game news, a quick launcher, and friend activity with modern touches.",
-        "author": "KingGamingYT",
+        "name": "DoNotTrack",
+        "fileName": "DoNotTrack.plugin.js",
+        "version": "0.1.0",
+        "description": "Stops Discord from tracking everything you do like Sentry and Analytics.",
+        "author": "Zerebos",
         "tags": [
-            "fun",
             "activity",
-            "game",
+            "status",
             "enhancement",
-            "friends"
+            "security"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
+        "immutableRevision": "6d839d0ab65371819b081218bc43b09d7d6e762d",
+        "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+        "licenseStatus": "FOUND",
+        "dependencies": [],
+        "networkBehavior": [
+            "no-static-network-signal"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "patcher"
+            ],
+            "cleanup": [
+                "stop-method",
+                "explicit-cleanup"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 819,
+        "type": "plugin",
+        "name": "DateViewer",
+        "fileName": "DateViewer.plugin.js",
+        "version": "1.0.26",
+        "description": "Displays the current date, weekday, and time, at the bottom of the member-list.",
+        "author": "Arashiryuu",
+        "tags": [
+            "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/ActivityFeed/21b78742f7c2a0e64a856e710b4b01fc1f74e627/dist/ActivityFeed.plugin.js",
-        "immutableRevision": "21b78742f7c2a0e64a856e710b4b01fc1f74e627",
+        "sourceUrl": "https://raw.githubusercontent.com/Arashiryuu/crap/f1dc39bd440ed91b79115a579fed2a73d3ffc82b/BdApi/DateViewer/DateViewer.plugin.js",
+        "immutableRevision": "f1dc39bd440ed91b79115a579fed2a73d3ffc82b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -9483,26 +9544,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1457,
+        "catalogId": 1141,
         "type": "plugin",
-        "name": "MoreDoubleClicks",
-        "fileName": "MoreDoubleClicks.plugin.js",
-        "version": "3.0.3",
-        "description": "Enables double-click actions across more areas, with modifier keys for different behaviors like double-click to reply, react, edit, or delete messages.",
-        "author": "Arven",
+        "name": "PingNotification",
+        "fileName": "PingNotification.plugin.js",
+        "version": "9.4.5",
+        "description": "Show in-app notifications for anything you would hear a ping for.",
+        "author": "DaddyBoard",
         "tags": [
-            "edit",
-            "shortcut",
+            "notifications",
+            "enhancement",
+            "activity",
             "text",
-            "chat",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/MoreDoubleClicks/MoreDoubleClicks.plugin.js",
-        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/537f66e3bccc94b34de4f646c1a272eadb9f0846/PingNotification/PingNotification.plugin.js",
+        "immutableRevision": "537f66e3bccc94b34de4f646c1a272eadb9f0846",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -9577,70 +9638,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1277,
+        "catalogId": 1457,
         "type": "plugin",
-        "name": "StatusEverywhereV2",
-        "fileName": "StatusEverywhereV2.plugin.js",
-        "version": "1.0.12",
-        "description": "Show status everywhere (chat avatars and voice chat avatars)",
-        "author": "DaddyBoard",
+        "name": "MoreDoubleClicks",
+        "fileName": "MoreDoubleClicks.plugin.js",
+        "version": "3.0.3",
+        "description": "Enables double-click actions across more areas, with modifier keys for different behaviors like double-click to reply, react, edit, or delete messages.",
+        "author": "Arven",
         "tags": [
-            "status",
-            "voice",
-            "enhancement",
+            "edit",
+            "shortcut",
+            "text",
             "chat",
-            "members"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/a1a88e3048008f51bd8a345283a1109bebc6af0b/StatusEverywhereV2/StatusEverywhereV2.plugin.js",
-        "immutableRevision": "a1a88e3048008f51bd8a345283a1109bebc6af0b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1269,
-        "type": "plugin",
-        "name": "NoSpotifyPause",
-        "fileName": "NoSpotifyPause.plugin.js",
-        "version": "1.0.2",
-        "description": "Prevents Discord from pausing your Spotify when streaming or gaming.",
-        "author": "nicola02nb",
-        "tags": [
-            "enhancement",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/NoSpotifyPause/NoSpotifyPause.plugin.js",
-        "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
+        "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/MoreDoubleClicks/MoreDoubleClicks.plugin.js",
+        "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -9688,53 +9705,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/NewOldProfiles/7d5e788362fcfed84f17acdc117ba982e08a3851/dist/NewOldProfiles.plugin.js",
         "immutableRevision": "7d5e788362fcfed84f17acdc117ba982e08a3851",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1090,
-        "type": "plugin",
-        "name": "NoMosaic",
-        "fileName": "NoMosaic.plugin.js",
-        "version": "1.3.2",
-        "description": "Removes the new mosaic image layout on Discord",
-        "author": "KingGamingYT",
-        "tags": [
-            "channels",
-            "enhancement",
-            "chat",
-            "organization",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/discord-no-mosaic/d3c12fbd3e832403d021b12b99d2a637625821a9/NoMosaic.plugin.js",
-        "immutableRevision": "d3c12fbd3e832403d021b12b99d2a637625821a9",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -9896,6 +9866,53 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 1543,
+        "type": "plugin",
+        "name": "SpotifyTitleDisplay",
+        "fileName": "SpotifyTitleDisplay.plugin.js",
+        "version": "1.1.1",
+        "description": "Replaces the artist name with the song title on Spotify statuses, with an optional setting to show both.",
+        "author": "sewsho",
+        "tags": [
+            "activity",
+            "status",
+            "enhancement",
+            "friends",
+            "utility"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/sewsho/BetterDiscordAddons/9ed66ec7ef30c237032e09b8458aeba71e64eb3e/Plugins/SpotifyTitleDisplay/SpotifyTitleDisplay.plugin.js",
+        "immutableRevision": "9ed66ec7ef30c237032e09b8458aeba71e64eb3e",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 98,
         "type": "plugin",
         "name": "SplitLargeMessages",
@@ -9955,26 +9972,26 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1543,
+        "catalogId": 1277,
         "type": "plugin",
-        "name": "SpotifyTitleDisplay",
-        "fileName": "SpotifyTitleDisplay.plugin.js",
-        "version": "1.1.1",
-        "description": "Replaces the artist name with the song title on Spotify statuses, with an optional setting to show both.",
-        "author": "sewsho",
+        "name": "StatusEverywhereV2",
+        "fileName": "StatusEverywhereV2.plugin.js",
+        "version": "1.0.12",
+        "description": "Show status everywhere (chat avatars and voice chat avatars)",
+        "author": "DaddyBoard",
         "tags": [
-            "activity",
             "status",
+            "voice",
             "enhancement",
-            "friends",
-            "utility"
+            "chat",
+            "members"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/sewsho/BetterDiscordAddons/9ed66ec7ef30c237032e09b8458aeba71e64eb3e/Plugins/SpotifyTitleDisplay/SpotifyTitleDisplay.plugin.js",
-        "immutableRevision": "9ed66ec7ef30c237032e09b8458aeba71e64eb3e",
+        "sourceUrl": "https://raw.githubusercontent.com/DaddyBoard/BD-Plugins/a1a88e3048008f51bd8a345283a1109bebc6af0b/StatusEverywhereV2/StatusEverywhereV2.plugin.js",
+        "immutableRevision": "a1a88e3048008f51bd8a345283a1109bebc6af0b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10285,24 +10302,77 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1312,
+        "catalogId": 64,
         "type": "plugin",
-        "name": "FactOfTheDay",
-        "fileName": "FactOfTheDay.plugin.js",
-        "version": "2.0.0",
-        "description": "Gives you a (useless) random fact, or qoute of the day each time you login to discord.",
-        "author": "Nyx#8614",
+        "name": "CharCounter",
+        "fileName": "CharCounter.plugin.js",
+        "version": "1.7.1",
+        "description": "Adds a Character Counter to most Inputs",
+        "author": "DevilBro",
         "tags": [
-            "game",
-            "fun",
-            "notifications"
+            "chat",
+            "text"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "CURATED",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": true,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/23c24d91e7449c27b497784761ff1e82df273a59/Plugins/CharCounter/CharCounter.plugin.js",
+        "immutableRevision": "23c24d91e7449c27b497784761ff1e82df273a59",
+        "sourceSha256": "ac1c3864a9dbeb5da09256c27b1937a5cd706b66be8fb7f835d598345409d8c2",
+        "licenseStatus": "FOUND",
+        "dependencies": [
+            "BDFDB"
+        ],
+        "networkBehavior": [
+            "fetch",
+            "network-api"
+        ],
+        "accountActions": [
+            "no-static-account-action-signal"
+        ],
+        "cleanupBehavior": {
+            "resources": [
+                "event-listener"
+            ],
+            "cleanup": [
+                "stop-method"
+            ]
+        },
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "external-service",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "LICENSE_RECORDED",
+            "code": "STATIC_REVIEWED",
+            "security": "STATIC_REVIEWED",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "STATIC_REVIEWED",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1556,
+        "type": "plugin",
+        "name": "PasteAndSend",
+        "fileName": "PasteAndSend.plugin.js",
+        "version": "1.0.0",
+        "description": "Adds a \"Paste and Send\" button the message box's right click menu. Remake of the original by ak-tr",
+        "author": "TheLazySquid",
+        "tags": [
+            "chat",
+            "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/SrS2225a/BetterDiscord/2ebf9561c8a308585d0eeaec1cf33af7b36df8ef/plugins/FactOfTheDay/FactOfTheDay.plugin.js",
-        "immutableRevision": "2ebf9561c8a308585d0eeaec1cf33af7b36df8ef",
+        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/9067e54bdab22b410cc18337c9aced00d8a2370d/plugins/PasteAndSend/PasteAndSend.plugin.js",
+        "immutableRevision": "9067e54bdab22b410cc18337c9aced00d8a2370d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10375,23 +10445,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1556,
+        "catalogId": 1312,
         "type": "plugin",
-        "name": "PasteAndSend",
-        "fileName": "PasteAndSend.plugin.js",
-        "version": "1.0.0",
-        "description": "Adds a \"Paste and Send\" button the message box's right click menu. Remake of the original by ak-tr",
-        "author": "TheLazySquid",
+        "name": "FactOfTheDay",
+        "fileName": "FactOfTheDay.plugin.js",
+        "version": "2.0.0",
+        "description": "Gives you a (useless) random fact, or qoute of the day each time you login to discord.",
+        "author": "Nyx#8614",
         "tags": [
-            "chat",
-            "utility"
+            "game",
+            "fun",
+            "notifications"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TheLazySquid/BetterDiscordPlugins/9067e54bdab22b410cc18337c9aced00d8a2370d/plugins/PasteAndSend/PasteAndSend.plugin.js",
-        "immutableRevision": "9067e54bdab22b410cc18337c9aced00d8a2370d",
+        "sourceUrl": "https://raw.githubusercontent.com/SrS2225a/BetterDiscord/2ebf9561c8a308585d0eeaec1cf33af7b36df8ef/plugins/FactOfTheDay/FactOfTheDay.plugin.js",
+        "immutableRevision": "2ebf9561c8a308585d0eeaec1cf33af7b36df8ef",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10419,79 +10490,67 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 64,
+        "catalogId": 183,
         "type": "plugin",
-        "name": "CharCounter",
-        "fileName": "CharCounter.plugin.js",
-        "version": "1.7.1",
-        "description": "Adds a Character Counter to most Inputs",
-        "author": "DevilBro",
+        "name": "OnlineFriendCount",
+        "fileName": "OnlineFriendCount.plugin.js",
+        "version": "3.3.2",
+        "description": "Adds the old online friend count back to server list. Because nostalgia.",
+        "author": "Zerthox",
         "tags": [
-            "chat",
-            "text"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "CURATED",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": true,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/23c24d91e7449c27b497784761ff1e82df273a59/Plugins/CharCounter/CharCounter.plugin.js",
-        "immutableRevision": "23c24d91e7449c27b497784761ff1e82df273a59",
-        "sourceSha256": "ac1c3864a9dbeb5da09256c27b1937a5cd706b66be8fb7f835d598345409d8c2",
-        "licenseStatus": "FOUND",
-        "dependencies": [
-            "BDFDB"
-        ],
-        "networkBehavior": [
-            "fetch",
-            "network-api"
-        ],
-        "accountActions": [
-            "no-static-account-action-signal"
-        ],
-        "cleanupBehavior": {
-            "resources": [
-                "event-listener"
-            ],
-            "cleanup": [
-                "stop-method"
-            ]
-        },
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "external-service",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "LICENSE_RECORDED",
-            "code": "STATIC_REVIEWED",
-            "security": "STATIC_REVIEWED",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "STATIC_REVIEWED",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1048,
-        "type": "plugin",
-        "name": "LaTeX Renderer",
-        "fileName": "LaTeX.plugin.js",
-        "version": "1.0.5",
-        "description": "Renders LaTeX equations using MathJax",
-        "author": "quantumsoul",
-        "tags": [
-            "text",
-            "enhancement",
-            "chat",
-            "utility"
+            "friends",
+            "enhancement"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/BinaryQuantumSoul/discord-latex/a2051554763d1bbfde1d540def8a9efb965dadcf/dist/LaTeX.plugin.js",
-        "immutableRevision": "a2051554763d1bbfde1d540def8a9efb965dadcf",
+        "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/OnlineFriendCount.plugin.js",
+        "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1451,
+        "type": "plugin",
+        "name": "ScrollToLatest",
+        "fileName": "ScrollToLatest.plugin.js",
+        "version": "1.0.4",
+        "description": "Scroll to the last message when entering a channel.",
+        "author": "Snues",
+        "tags": [
+            "enhancement",
+            "chat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Snusene/BetterDiscordPlugins/6ac80dce71d982108c79193d8d691f4744ed1de4/ScrollToLatest/ScrollToLatest.plugin.js",
+        "immutableRevision": "6ac80dce71d982108c79193d8d691f4744ed1de4",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10536,51 +10595,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/fluzzeon/betterdiscord-OpenInApp/2b1f7c2c05af8abb16529dc9c248a224a15492c3/OpenInApp.plugin.js",
         "immutableRevision": "2b1f7c2c05af8abb16529dc9c248a224a15492c3",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1175,
-        "type": "plugin",
-        "name": "GameTimeTracker",
-        "fileName": "GameTimeTracker.plugin.js",
-        "version": "1.3.0",
-        "description": "Track time spent in games",
-        "author": "Yentis",
-        "tags": [
-            "game",
-            "activity",
-            "utility"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Yentis/betterdiscord-game-time-tracker/d63ba12519cde53132d6d91f50d51dc8ce59d392/GameTimeTracker.plugin.js",
-        "immutableRevision": "d63ba12519cde53132d6d91f50d51dc8ce59d392",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10705,23 +10719,69 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1097,
+        "catalogId": 1545,
         "type": "plugin",
-        "name": "SpotifyEnhance",
-        "fileName": "SpotifyEnhance.plugin.js",
-        "version": "1.1.16",
-        "description": "All in one better spotify-discord experience.",
-        "author": "Skamt",
+        "name": "High-Res Profile Images",
+        "fileName": "HighResProfileImages.plugin.js",
+        "version": "1.0.2",
+        "description": "Replaces user avatars with higher resolution images.",
+        "author": "Z'ark Ashveil",
         "tags": [
             "enhancement",
+            "chat",
             "utility"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Skamt/BDAddons/984585d57d139525fec6bb78f2639a1f933bc911/SpotifyEnhance/SpotifyEnhance.plugin.js",
-        "immutableRevision": "984585d57d139525fec6bb78f2639a1f933bc911",
+        "sourceUrl": "https://raw.githubusercontent.com/Kawtious/HighResProfileImages/402830211b48dfd57ff4f4641722c29de2a9f279/HighResProfileImages.plugin.js",
+        "immutableRevision": "402830211b48dfd57ff4f4641722c29de2a9f279",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1023,
+        "type": "plugin",
+        "name": "AuroraGSI",
+        "fileName": "AuroraGSI.plugin.js",
+        "version": "2.7.3",
+        "description": "Sends information to Aurora about users connecting to/disconnecting from, mute/deafen status       https://www.project-aurora.com/",
+        "author": "Martian#8833",
+        "tags": [
+            "activity",
+            "status",
+            "notifications"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Aurora-RGB/Discord-GSI/9d5c5a1a7cf6f4fc1472114e41b5ae78677c4a49/AuroraGSI.plugin.js",
+        "immutableRevision": "9d5c5a1a7cf6f4fc1472114e41b5ae78677c4a49",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10765,93 +10825,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/milbits/oldcord/cb656082b31267f3e8adbdef5839b53d8075e55d/OldCord.theme.css",
         "immutableRevision": "cb656082b31267f3e8adbdef5839b53d8075e55d",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 45,
-        "type": "theme",
-        "name": "BasicBackground",
-        "fileName": "BasicBackground.theme.css",
-        "version": "1.0.5",
-        "description": "Allows you to use a Background Image without greatly altering the basic Layout of Discord",
-        "author": "DevilBro",
-        "tags": [
-            "transparent",
-            "customizable"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/bca7c871d2374f0b21e836d60dbf096d65df53aa/Themes/BasicBackground/BasicBackground.theme.css",
-        "immutableRevision": "bca7c871d2374f0b21e836d60dbf096d65df53aa",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 695,
-        "type": "theme",
-        "name": "MixPack",
-        "fileName": "MixPack.theme.css",
-        "version": "1.0",
-        "description": "A pack that combines things I've created and liked the look of.",
-        "author": "Mixter213",
-        "tags": [
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Mixter213/Discord/239b85bce411de74c5bb4ed18071e091f3ec99ec/Theme/MixPack.theme.css",
-        "immutableRevision": "239b85bce411de74c5bb4ed18071e091f3ec99ec",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10924,26 +10897,22 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1008,
+        "catalogId": 695,
         "type": "theme",
-        "name": "Tritone",
-        "fileName": "Tritone.theme.css",
-        "version": "2.5",
-        "description": "A customisable tri-tone theme inspired by IEYTD.",
-        "author": "Saltssaumure",
+        "name": "MixPack",
+        "fileName": "MixPack.theme.css",
+        "version": "1.0",
+        "description": "A pack that combines things I've created and liked the look of.",
+        "author": "Mixter213",
         "tags": [
-            "customizable",
-            "game",
-            "red",
-            "abstract",
-            "high-contrast"
+            "dark"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/ieytd-discord-theme/f9487410c07d9a1b7aa292383021406e8d0989d8/Tritone.theme.css",
-        "immutableRevision": "f9487410c07d9a1b7aa292383021406e8d0989d8",
+        "sourceUrl": "https://raw.githubusercontent.com/Mixter213/Discord/239b85bce411de74c5bb4ed18071e091f3ec99ec/Theme/MixPack.theme.css",
+        "immutableRevision": "239b85bce411de74c5bb4ed18071e091f3ec99ec",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -10971,24 +10940,70 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 412,
+        "catalogId": 45,
         "type": "theme",
-        "name": "Dark+",
-        "fileName": "Dark+.theme.css",
-        "version": "Dark+6",
-        "description": "Highly customized dark and purple theme ",
-        "author": "DevEvil",
+        "name": "BasicBackground",
+        "fileName": "BasicBackground.theme.css",
+        "version": "1.0.5",
+        "description": "Allows you to use a Background Image without greatly altering the basic Layout of Discord",
+        "author": "DevilBro",
         "tags": [
-            "customizable",
-            "dark",
-            "purple"
+            "transparent",
+            "customizable"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/DarkPlus-Discord-Theme/92105070e81adac511be555fdc4af08c605876b7/Dark+.theme.css",
-        "immutableRevision": "92105070e81adac511be555fdc4af08c605876b7",
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/bca7c871d2374f0b21e836d60dbf096d65df53aa/Themes/BasicBackground/BasicBackground.theme.css",
+        "immutableRevision": "bca7c871d2374f0b21e836d60dbf096d65df53aa",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1008,
+        "type": "theme",
+        "name": "Tritone",
+        "fileName": "Tritone.theme.css",
+        "version": "2.5",
+        "description": "A customisable tri-tone theme inspired by IEYTD.",
+        "author": "Saltssaumure",
+        "tags": [
+            "customizable",
+            "game",
+            "red",
+            "abstract",
+            "high-contrast"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/ieytd-discord-theme/f9487410c07d9a1b7aa292383021406e8d0989d8/Tritone.theme.css",
+        "immutableRevision": "f9487410c07d9a1b7aa292383021406e8d0989d8",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11108,50 +11123,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 483,
-        "type": "theme",
-        "name": "Moon Rabbits Dream About Virtual",
-        "fileName": "Moon-Rabbits-Dream-About-Virtual.theme.css",
-        "version": "4",
-        "description": "Based in Tsukino Mito Album cover\r\n| Lastest version is 4!!!\r\n| support server: https://discord.gg/PsNtzGeHuW",
-        "author": "zuzumi",
-        "tags": [
-            "anime",
-            "customizable"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zuzumi-f/Moon-Rabbits-Dream-About-Virtual/dca0908c01f4912bc9337f586e8dc71fd81b3c4a/Moon-Rabbits-Dream-About-Virtual.theme.css",
-        "immutableRevision": "dca0908c01f4912bc9337f586e8dc71fd81b3c4a",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 1504,
         "type": "theme",
         "name": "TheHolyOneZ-Dream",
@@ -11199,23 +11170,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 40,
+        "catalogId": 209,
         "type": "theme",
-        "name": "Frosted Glass",
-        "fileName": "FrostedGlass.theme.css",
-        "version": "2.0.0",
-        "description": "Display your picture of choice with adjustable blur and brightness. Dark theme is required.",
-        "author": "Gibbu",
+        "name": "Discord+",
+        "fileName": "DiscordPlus.theme.css",
+        "version": "3.4.1",
+        "description": "A sleek, customizable Discord theme, inspired by Material",
+        "author": "Insta",
         "tags": [
             "customizable",
-            "nature"
+            "dark",
+            "light",
+            "transparent"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/FrostedGlass/c87ce3498268bdb3757f20858365c1f4f505cec3/dist/FrostedGlass.theme.css",
-        "immutableRevision": "c87ce3498268bdb3757f20858365c1f4f505cec3",
+        "sourceUrl": "https://raw.githubusercontent.com/PlusInsta/discord-plus/56c5a26008339cfd82f2a69648d717a556d5758b/DiscordPlus.theme.css",
+        "immutableRevision": "56c5a26008339cfd82f2a69648d717a556d5758b",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11290,24 +11263,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 713,
+        "catalogId": 664,
         "type": "theme",
-        "name": "Old-Akame_Ga_Kill-Theme",
-        "fileName": "Old-AkameGaKill-Theme.theme.css",
-        "version": "7",
-        "description": "Akame from Akame Ga Kill. This theme is back at it again",
+        "name": "Bubble Theme v2",
+        "fileName": "BubbleThemev2.theme.css",
+        "version": "2.9",
+        "description": "Bubble Theme v2. Return request by Reeses Benis Butter Cups",
         "author": "ShadowDevilsAvenged",
         "tags": [
             "transparent",
-            "red",
-            "anime"
+            "abstract"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/Old-AkameGaKill-Theme.theme.css",
-        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/398be14a65264534ebaf564f8fa34cff9a71985d/My_Theme_Collection/BubbleThemev2.theme.css",
+        "immutableRevision": "398be14a65264534ebaf564f8fa34cff9a71985d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11354,50 +11326,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/puckzxz/NotAnotherAnimeTheme/50d1dca2f31425a0b3e722469a473a9a71e7f87a/NotAnotherAnimeTheme.theme.css",
         "immutableRevision": "50d1dca2f31425a0b3e722469a473a9a71e7f87a",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 205,
-        "type": "theme",
-        "name": "DTM-08",
-        "fileName": "dtm-08.theme.css",
-        "version": "2.0.2",
-        "description": "A skeuomorphic / glossy theme for Discord",
-        "author": "11pixels",
-        "tags": [
-            "dark",
-            "light"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/XYZenix/DTM-08/2fcf10fbdd544f6ef4ded65c3f0c45f1d52afdd9/dtm-08.theme.css",
-        "immutableRevision": "2fcf10fbdd544f6ef4ded65c3f0c45f1d52afdd9",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11514,6 +11442,97 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 256,
+        "type": "theme",
+        "name": "Nocturnal",
+        "fileName": "nocturnal.theme.css",
+        "version": "4.0.0",
+        "description": "For when default discord just isn't dark enough, a theme for those who live at night.  Now with extra spice!",
+        "author": "cruxie",
+        "tags": [
+            "flat",
+            "customizable",
+            "blue",
+            "green",
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/xcruxiex/themes/1fe6fa366035bea3790d5acd4366498f2e5577c3/themes-files/nocturnal.theme.css",
+        "immutableRevision": "1fe6fa366035bea3790d5acd4366498f2e5577c3",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 205,
+        "type": "theme",
+        "name": "DTM-08",
+        "fileName": "dtm-08.theme.css",
+        "version": "2.0.2",
+        "description": "A skeuomorphic / glossy theme for Discord",
+        "author": "11pixels",
+        "tags": [
+            "dark",
+            "light"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/XYZenix/DTM-08/2fcf10fbdd544f6ef4ded65c3f0c45f1d52afdd9/dtm-08.theme.css",
+        "immutableRevision": "2fcf10fbdd544f6ef4ded65c3f0c45f1d52afdd9",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 359,
         "type": "theme",
         "name": "GitHub Dark",
@@ -11532,6 +11551,50 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/moistp1ckle/GitHub_Dark/320e4264ee2ed37e2db9d92c7d2877e6683be807/GitHub-Dark.theme.css",
         "immutableRevision": "320e4264ee2ed37e2db9d92c7d2877e6683be807",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 422,
+        "type": "theme",
+        "name": "Amethyst",
+        "fileName": "amethyst.theme.css",
+        "version": "1.7.0",
+        "description": "A calm, deep purple theme for those seeking serenity.",
+        "author": "Alex",
+        "tags": [
+            "purple",
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/spinfish/amethyst/9386ffda4343380841e7ed028c8b0e433b380423/support/amethyst.theme.css",
+        "immutableRevision": "9386ffda4343380841e7ed028c8b0e433b380423",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11648,70 +11711,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1014,
+        "catalogId": 713,
         "type": "theme",
-        "name": "WizardUI",
-        "fileName": "WizardUI.theme.css",
-        "version": "1.91",
-        "description": "An amazing fully customizable theme with many addons, made with 💖 by NEBULYS.",
-        "author": "Nebulys",
+        "name": "Old-Akame_Ga_Kill-Theme",
+        "fileName": "Old-AkameGaKill-Theme.theme.css",
+        "version": "7",
+        "description": "Akame from Akame Ga Kill. This theme is back at it again",
+        "author": "ShadowDevilsAvenged",
         "tags": [
-            "animated",
-            "customizable",
-            "space",
-            "dark"
+            "transparent",
+            "red",
+            "anime"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/GoldenLys/WizardUI/7574cd66ea99dada911176431c209ab520892f66/WizardUI.theme.css",
-        "immutableRevision": "7574cd66ea99dada911176431c209ab520892f66",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 581,
-        "type": "theme",
-        "name": "Neptune",
-        "fileName": "Neptune.theme.css",
-        "version": "4",
-        "description": "A dark, blue and customizable theme",
-        "author": "DevEvil",
-        "tags": [
-            "customizable",
-            "dark",
-            "blue"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Neptune-Discord-Theme/de1277722fbebdb24818450de1a370ccc32a7b73/Neptune.theme.css",
-        "immutableRevision": "de1277722fbebdb24818450de1a370ccc32a7b73",
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/Old-AkameGaKill-Theme.theme.css",
+        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -11757,863 +11774,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/deadfrekk/AlternativeVista/fac1b9487e0a9c5d394e5e441f9c75535afb66bf/themes/vista/AlternativeVistaAutoUpdate.theme.css",
         "immutableRevision": "fac1b9487e0a9c5d394e5e441f9c75535afb66bf",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 308,
-        "type": "theme",
-        "name": "Vibrant Glass (31/10/2023)",
-        "fileName": "glass_local.theme.css",
-        "version": "1.1",
-        "description": "Customizable simple glass theme, idk what else I can say.\r\nIt is still WIP, so if you have any issues or see anything weird, make a PR/issue in github.",
-        "author": "Kaynooo",
-        "tags": [
-            "dark",
-            "abstract",
-            "transparent",
-            "customizable",
-            "flat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Kayno0o/vibrant-glass-theme/c7937bc6830d46adc1f5f79899599df439d27303/glass_local.theme.css",
-        "immutableRevision": "c7937bc6830d46adc1f5f79899599df439d27303",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1030,
-        "type": "theme",
-        "name": "Pesterchum",
-        "fileName": "Pesterchum.theme.css",
-        "version": "1.7",
-        "description": "Emulates the Pesterchum chat client from Homestuck.",
-        "author": "Saltssaumure",
-        "tags": [
-            "flat",
-            "customizable",
-            "fiction",
-            "yellow",
-            "high-contrast"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/MiniDiscordThemes/Pesterchum/f3dd9dc84ab65faf03ca372cbdb3c6c4176cb47d/Pesterchum.theme.css",
-        "immutableRevision": "f3dd9dc84ab65faf03ca372cbdb3c6c4176cb47d",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 933,
-        "type": "theme",
-        "name": "NineX",
-        "fileName": "NineX.theme.css",
-        "version": "1.7",
-        "description": "A Windows 9x style Discord theme.",
-        "author": "Saltssaumure",
-        "tags": [
-            "customizable",
-            "dark",
-            "light",
-            "other"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/w9x-discord-theme/287375731ec93cdadbcfa4728a55b25e1b35c7b9/NineX.theme.css",
-        "immutableRevision": "287375731ec93cdadbcfa4728a55b25e1b35c7b9",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 641,
-        "type": "theme",
-        "name": "New BNHA Theme",
-        "fileName": "NewBNHA.theme.css",
-        "version": "7",
-        "description": "Newer BNHA theme for my return",
-        "author": "ShadowDevilsAvenged",
-        "tags": [
-            "anime",
-            "transparent"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewBNHA.theme.css",
-        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 662,
-        "type": "theme",
-        "name": "Fluent",
-        "fileName": "Fluent.theme.css",
-        "version": "1.0.10",
-        "description": "Brings the look of Windows 11 to Discord.",
-        "author": "Gibbu",
-        "tags": [
-            "flat",
-            "dark",
-            "light"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/Fluent/ea0306b27d8a72bccfdecbf43c8d2076d0e62180/Fluent.theme.css",
-        "immutableRevision": "ea0306b27d8a72bccfdecbf43c8d2076d0e62180",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 422,
-        "type": "theme",
-        "name": "Amethyst",
-        "fileName": "amethyst.theme.css",
-        "version": "1.7.0",
-        "description": "A calm, deep purple theme for those seeking serenity.",
-        "author": "Alex",
-        "tags": [
-            "purple",
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/spinfish/amethyst/9386ffda4343380841e7ed028c8b0e433b380423/support/amethyst.theme.css",
-        "immutableRevision": "9386ffda4343380841e7ed028c8b0e433b380423",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1506,
-        "type": "theme",
-        "name": "Aider",
-        "fileName": "aider.theme.css",
-        "version": "1.0",
-        "description": "Yet another skeuo theme, focused around being square, while others are circles.",
-        "author": "the.rabbit.disabler",
-        "tags": [
-            "dark",
-            "black"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Blade04208/aider/95f7abc3fb5e027e417ef90f29801f75ff227f09/theme/aider.theme.css",
-        "immutableRevision": "95f7abc3fb5e027e417ef90f29801f75ff227f09",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 468,
-        "type": "theme",
-        "name": "Ocean",
-        "fileName": "Ocean.theme.css",
-        "version": "3.1",
-        "description": "Highly customized and customizable theme for Discord",
-        "author": "DevEvil",
-        "tags": [
-            "transparent",
-            "customizable",
-            "blue",
-            "aqua"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Ocean-Discord-Theme/5e4624a67fe92afdec9101524847c5212975cf95/Ocean.theme.css",
-        "immutableRevision": "5e4624a67fe92afdec9101524847c5212975cf95",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 770,
-        "type": "theme",
-        "name": "Synthesis",
-        "fileName": "Synthesis.theme.css",
-        "version": "1.8",
-        "description": "A vibrant neon synthwave theme with customisable background and tweaks.",
-        "author": "Saltssaumure",
-        "tags": [
-            "transparent",
-            "customizable",
-            "orange",
-            "purple",
-            "blue"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/synthesis-discord-theme/abb3c00f351069be3ed3617f114c2d65a19e9d9f/Synthesis.theme.css",
-        "immutableRevision": "abb3c00f351069be3ed3617f114c2d65a19e9d9f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1152,
-        "type": "theme",
-        "name": "Discord Mica",
-        "fileName": "discord-mica.theme.css",
-        "version": "1.0",
-        "description": "Discord with mica :)",
-        "author": "coolkie",
-        "tags": [
-            "transparent"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/PL7963/Discord-Mica/5a4b26304e430d269923a131c0a3c682872a227c/discord-mica.theme.css",
-        "immutableRevision": "5a4b26304e430d269923a131c0a3c682872a227c",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 371,
-        "type": "theme",
-        "name": "Eris",
-        "fileName": "Eris.theme.css",
-        "version": "1.4",
-        "description": "A darker, cooler, classier look for Discord.",
-        "author": "Rock#5429",
-        "tags": [
-            "dark",
-            "flat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/RockESV/Eris/95b6e0d18e754322c61693f84c5bad21170cd119/Eris.theme.css",
-        "immutableRevision": "95b6e0d18e754322c61693f84c5bad21170cd119",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 33,
-        "type": "theme",
-        "name": "Nordic",
-        "fileName": "nordic.theme.css",
-        "version": "4.13.1",
-        "description": "An full themed discord with Nord palette (https://www.nordtheme.com/)",
-        "author": "orblazer",
-        "tags": [
-            "light",
-            "dark",
-            "blue",
-            "customizable"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/orblazer/discord-nordic/99e6edc29239df004a99dd4e79a724f089edcbb8/nordic.theme.css",
-        "immutableRevision": "99e6edc29239df004a99dd4e79a724f089edcbb8",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 515,
-        "type": "theme",
-        "name": "SoftX",
-        "fileName": "SoftX.theme.css",
-        "version": "2.0.0",
-        "description": "A soft and comfy feel for Discord.",
-        "author": "Gibbu",
-        "tags": [
-            "dark",
-            "abstract"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/SoftX/e10600ca55392f77741c099aa729b12ccba570b5/SoftX.theme.css",
-        "immutableRevision": "e10600ca55392f77741c099aa729b12ccba570b5",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 601,
-        "type": "theme",
-        "name": "SpotiCord",
-        "fileName": "SpotiCord.theme.css",
-        "version": "AutoUpdating",
-        "description": "Light-weight Spotify theme for Discord",
-        "author": "Sappy",
-        "tags": [
-            "green",
-            "dark",
-            "flat",
-            "customizable"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Slddev/SpotiCord/661ae15f4b835664291f4b9764886d06ea8f67a6/SpotiCord.theme.css",
-        "immutableRevision": "661ae15f4b835664291f4b9764886d06ea8f67a6",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1221,
-        "type": "theme",
-        "name": "Lande della Discordia",
-        "fileName": "discordia.theme.css",
-        "version": "25.1",
-        "description": "Lande della Discordia implements a custom purple theme to enhance your Discord experience.",
-        "author": "ungiglio",
-        "tags": [
-            "customizable",
-            "purple"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ungiglio/DiscordDiscordia/2bb4257878fb905d1345e5e86d5b6e86df4eab8f/discordia.theme.css",
-        "immutableRevision": "2bb4257878fb905d1345e5e86d5b6e86df4eab8f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 320,
-        "type": "theme",
-        "name": "Noctis Viola",
-        "fileName": "noctis-viola.theme.css",
-        "version": "0.6.1",
-        "description": "A Better Discord theme based on the Noctis Viola VSCode theme.",
-        "author": "Goslopo",
-        "tags": [
-            "purple",
-            "flat",
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ChaseIngebritson/noctis-viola-discord-theme/e75113fd20476786042826de7cd408af65d011aa/dist/noctis-viola.theme.css",
-        "immutableRevision": "e75113fd20476786042826de7cd408af65d011aa",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1475,
-        "type": "theme",
-        "name": "Discord Reborn",
-        "fileName": "Discord Reborn.theme.css",
-        "version": "2.0",
-        "description": "Transparent, fully customizable theme. The Original",
-        "author": "Izy    ",
-        "tags": [
-            "transparent",
-            "customizable",
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/squee666/Discord-Themes/5b04bf7c0ef7d9306496416ae0deb7880009fc74/Themes/Discord Reborn.theme.css",
-        "immutableRevision": "5b04bf7c0ef7d9306496416ae0deb7880009fc74",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 734,
-        "type": "theme",
-        "name": "MaterialDesign",
-        "fileName": "MaterialDesign.theme.css",
-        "version": "1.0.0",
-        "description": "A clean theme inspired by Google's Material Design Guidelines.",
-        "author": "The Commie Axolotl",
-        "tags": [
-            "flat",
-            "layout",
-            "customizable",
-            "dark",
-            "light"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TheCommieAxolotl/BetterDiscord-Stuff/2ac5b8a215e35a4c66777b469da4ce858be49092/MaterialDesign/MaterialDesign.theme.css",
-        "immutableRevision": "2ac5b8a215e35a4c66777b469da4ce858be49092",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 32,
-        "type": "theme",
-        "name": "RadialStatus",
-        "fileName": "RadialStatus.theme.css",
-        "version": "2.0.0",
-        "description": "Changes the status icons to wrap around the avatar. Shape can be changed inside the theme file.",
-        "author": "Gibbu",
-        "tags": [
-            "other"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/RadialStatus/e361ae760dd8b88f6c187efa11a83e9aea3afd83/RadialStatus.theme.css",
-        "immutableRevision": "e361ae760dd8b88f6c187efa11a83e9aea3afd83",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -12688,24 +11848,207 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 174,
+        "catalogId": 218,
         "type": "theme",
-        "name": "Dark Matter",
-        "fileName": "DarkMatter.theme.css",
-        "version": "3.0.0",
-        "description": "A cold, dark & frosty theme.",
-        "author": "Tropical",
+        "name": "T1",
+        "fileName": "T1.theme.css",
+        "version": "0.11.0",
+        "description": "Image background + Horizontal server bar",
+        "author": "Eight_P",
         "tags": [
-            "transparent",
+            "layout",
             "customizable",
-            "blue"
+            "dark",
+            "flat"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/DarkMatter/3ac5b187799ad90f59d4201b0b91725a92674e43/DarkMatter.theme.css",
-        "immutableRevision": "3ac5b187799ad90f59d4201b0b91725a92674e43",
+        "sourceUrl": "https://raw.githubusercontent.com/Eight-P/BD.8P/69e54ab797127c7fac9d14f006c99cc11a50904c/Themes/T1/T1.theme.css",
+        "immutableRevision": "69e54ab797127c7fac9d14f006c99cc11a50904c",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1030,
+        "type": "theme",
+        "name": "Pesterchum",
+        "fileName": "Pesterchum.theme.css",
+        "version": "1.7",
+        "description": "Emulates the Pesterchum chat client from Homestuck.",
+        "author": "Saltssaumure",
+        "tags": [
+            "flat",
+            "customizable",
+            "fiction",
+            "yellow",
+            "high-contrast"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/MiniDiscordThemes/Pesterchum/f3dd9dc84ab65faf03ca372cbdb3c6c4176cb47d/Pesterchum.theme.css",
+        "immutableRevision": "f3dd9dc84ab65faf03ca372cbdb3c6c4176cb47d",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 641,
+        "type": "theme",
+        "name": "New BNHA Theme",
+        "fileName": "NewBNHA.theme.css",
+        "version": "7",
+        "description": "Newer BNHA theme for my return",
+        "author": "ShadowDevilsAvenged",
+        "tags": [
+            "anime",
+            "transparent"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewBNHA.theme.css",
+        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 933,
+        "type": "theme",
+        "name": "NineX",
+        "fileName": "NineX.theme.css",
+        "version": "1.7",
+        "description": "A Windows 9x style Discord theme.",
+        "author": "Saltssaumure",
+        "tags": [
+            "customizable",
+            "dark",
+            "light",
+            "other"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/w9x-discord-theme/287375731ec93cdadbcfa4728a55b25e1b35c7b9/NineX.theme.css",
+        "immutableRevision": "287375731ec93cdadbcfa4728a55b25e1b35c7b9",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 662,
+        "type": "theme",
+        "name": "Fluent",
+        "fileName": "Fluent.theme.css",
+        "version": "1.0.10",
+        "description": "Brings the look of Windows 11 to Discord.",
+        "author": "Gibbu",
+        "tags": [
+            "flat",
+            "dark",
+            "light"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/Fluent/ea0306b27d8a72bccfdecbf43c8d2076d0e62180/Fluent.theme.css",
+        "immutableRevision": "ea0306b27d8a72bccfdecbf43c8d2076d0e62180",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -12776,23 +12119,338 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 653,
+        "catalogId": 770,
         "type": "theme",
-        "name": "New Rem Theme",
-        "fileName": "NewRemTheme.theme.css",
-        "version": "7.2",
-        "description": "Newer Rem theme for my return",
-        "author": "ShadowDevilsAvenged",
+        "name": "Synthesis",
+        "fileName": "Synthesis.theme.css",
+        "version": "1.8",
+        "description": "A vibrant neon synthwave theme with customisable background and tweaks.",
+        "author": "Saltssaumure",
         "tags": [
             "transparent",
-            "anime",
+            "customizable",
+            "orange",
+            "purple",
             "blue"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewRemTheme.theme.css",
+        "sourceUrl": "https://raw.githubusercontent.com/Saltssaumure/synthesis-discord-theme/abb3c00f351069be3ed3617f114c2d65a19e9d9f/Synthesis.theme.css",
+        "immutableRevision": "abb3c00f351069be3ed3617f114c2d65a19e9d9f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 371,
+        "type": "theme",
+        "name": "Eris",
+        "fileName": "Eris.theme.css",
+        "version": "1.4",
+        "description": "A darker, cooler, classier look for Discord.",
+        "author": "Rock#5429",
+        "tags": [
+            "dark",
+            "flat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/RockESV/Eris/95b6e0d18e754322c61693f84c5bad21170cd119/Eris.theme.css",
+        "immutableRevision": "95b6e0d18e754322c61693f84c5bad21170cd119",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 56,
+        "type": "theme",
+        "name": "GGO Kirito",
+        "fileName": "GGO_Kirito.theme.css",
+        "version": "1.4.X",
+        "description": "A theme with Kirito and Deathgun fighting in GGO (Gun Gale Online)",
+        "author": "VaporousCreeper",
+        "tags": [
+            "red",
+            "dark",
+            "customizable",
+            "anime"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/VaporousCreeper/BetterDiscord-ThemesAndPlugins/6d5c56ec225a04c6e29f5cc11fd415650008c9c7/Themes/GGO_Kirito/GGO_Kirito.theme.css",
+        "immutableRevision": "6d5c56ec225a04c6e29f5cc11fd415650008c9c7",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 174,
+        "type": "theme",
+        "name": "Dark Matter",
+        "fileName": "DarkMatter.theme.css",
+        "version": "3.0.0",
+        "description": "A cold, dark & frosty theme.",
+        "author": "Tropical",
+        "tags": [
+            "transparent",
+            "customizable",
+            "blue"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/DarkMatter/3ac5b187799ad90f59d4201b0b91725a92674e43/DarkMatter.theme.css",
+        "immutableRevision": "3ac5b187799ad90f59d4201b0b91725a92674e43",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1152,
+        "type": "theme",
+        "name": "Discord Mica",
+        "fileName": "discord-mica.theme.css",
+        "version": "1.0",
+        "description": "Discord with mica :)",
+        "author": "coolkie",
+        "tags": [
+            "transparent"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/PL7963/Discord-Mica/5a4b26304e430d269923a131c0a3c682872a227c/discord-mica.theme.css",
+        "immutableRevision": "5a4b26304e430d269923a131c0a3c682872a227c",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1221,
+        "type": "theme",
+        "name": "Lande della Discordia",
+        "fileName": "discordia.theme.css",
+        "version": "25.1",
+        "description": "Lande della Discordia implements a custom purple theme to enhance your Discord experience.",
+        "author": "ungiglio",
+        "tags": [
+            "customizable",
+            "purple"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/ungiglio/DiscordDiscordia/2bb4257878fb905d1345e5e86d5b6e86df4eab8f/discordia.theme.css",
+        "immutableRevision": "2bb4257878fb905d1345e5e86d5b6e86df4eab8f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 33,
+        "type": "theme",
+        "name": "Nordic",
+        "fileName": "nordic.theme.css",
+        "version": "4.13.1",
+        "description": "An full themed discord with Nord palette (https://www.nordtheme.com/)",
+        "author": "orblazer",
+        "tags": [
+            "light",
+            "dark",
+            "blue",
+            "customizable"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/orblazer/discord-nordic/99e6edc29239df004a99dd4e79a724f089edcbb8/nordic.theme.css",
+        "immutableRevision": "99e6edc29239df004a99dd4e79a724f089edcbb8",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 659,
+        "type": "theme",
+        "name": "New Akame Ga Kill! Theme",
+        "fileName": "NewAkameGaKill.theme.css",
+        "version": "7.5",
+        "description": "Newer Akame Ga Kill! theme for my return",
+        "author": "ShadowDevilsAvenged",
+        "tags": [
+            "transparent",
+            "red",
+            "anime"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewAkameGaKill.theme.css",
         "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
@@ -12821,25 +12479,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 929,
+        "catalogId": 468,
         "type": "theme",
-        "name": "Glass Wave",
-        "fileName": "Glass Wave.theme.css",
-        "version": "1.2",
-        "description": "Discord Glass Wave transparent theme.",
-        "author": "Elisniper ",
+        "name": "Ocean",
+        "fileName": "Ocean.theme.css",
+        "version": "3.1",
+        "description": "Highly customized and customizable theme for Discord",
+        "author": "DevEvil",
         "tags": [
             "transparent",
             "customizable",
-            "dark",
+            "blue",
             "aqua"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Elisniper/Glass-Wave/58bce62db14c379deeacb9f2df93c5a5509999b7/release/Glass Wave.theme.css",
-        "immutableRevision": "58bce62db14c379deeacb9f2df93c5a5509999b7",
+        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Ocean-Discord-Theme/5e4624a67fe92afdec9101524847c5212975cf95/Ocean.theme.css",
+        "immutableRevision": "5e4624a67fe92afdec9101524847c5212975cf95",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -12867,26 +12525,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 256,
+        "catalogId": 1143,
         "type": "theme",
-        "name": "Nocturnal",
-        "fileName": "nocturnal.theme.css",
-        "version": "4.0.0",
-        "description": "For when default discord just isn't dark enough, a theme for those who live at night.  Now with extra spice!",
-        "author": "cruxie",
+        "name": "system24",
+        "fileName": "system24.theme.css",
+        "version": "2.1.0",
+        "description": "A tui-style discord theme.",
+        "author": "refact0r",
         "tags": [
-            "flat",
             "customizable",
-            "blue",
-            "green",
             "dark"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/xcruxiex/themes/1fe6fa366035bea3790d5acd4366498f2e5577c3/themes-files/nocturnal.theme.css",
-        "immutableRevision": "1fe6fa366035bea3790d5acd4366498f2e5577c3",
+        "sourceUrl": "https://raw.githubusercontent.com/refact0r/system24/7dfb15b0ae968333104fb9a7a97404a25ac5a771/theme/system24.theme.css",
+        "immutableRevision": "7dfb15b0ae968333104fb9a7a97404a25ac5a771",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -12914,16 +12569,17 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 915,
+        "catalogId": 734,
         "type": "theme",
-        "name": "DTM-18",
-        "fileName": "dtm-18.theme.css",
-        "version": "2",
-        "description": "Aims to recreate the 2018 Discord style.",
-        "author": "dav#8444",
+        "name": "MaterialDesign",
+        "fileName": "MaterialDesign.theme.css",
+        "version": "1.0.0",
+        "description": "A clean theme inspired by Google's Material Design Guidelines.",
+        "author": "The Commie Axolotl",
         "tags": [
             "flat",
-            "transparent",
+            "layout",
+            "customizable",
             "dark",
             "light"
         ],
@@ -12931,8 +12587,503 @@ export const SOULCORD_CATALOG_INDEX = [
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/davart154/DTM-18/8dd25c8cd22807e2651c3d1bc57d0e0b1bd2cb60/dtm-18.theme.css",
-        "immutableRevision": "8dd25c8cd22807e2651c3d1bc57d0e0b1bd2cb60",
+        "sourceUrl": "https://raw.githubusercontent.com/TheCommieAxolotl/BetterDiscord-Stuff/2ac5b8a215e35a4c66777b469da4ce858be49092/MaterialDesign/MaterialDesign.theme.css",
+        "immutableRevision": "2ac5b8a215e35a4c66777b469da4ce858be49092",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 385,
+        "type": "theme",
+        "name": "Simplify",
+        "fileName": "simplify.theme.css",
+        "version": "1.0.0",
+        "description": "a simple clean looking theme with blue colors.",
+        "author": "Ashtrath",
+        "tags": [
+            "blue",
+            "customizable",
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Dyzean/Simplify/a1c9857c00084d4ed5b33166ef92721b5f7c3cfb/simplify.theme.css",
+        "immutableRevision": "a1c9857c00084d4ed5b33166ef92721b5f7c3cfb",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 412,
+        "type": "theme",
+        "name": "Dark+",
+        "fileName": "Dark+.theme.css",
+        "version": "Dark+6",
+        "description": "Highly customized dark and purple theme ",
+        "author": "DevEvil",
+        "tags": [
+            "customizable",
+            "dark",
+            "purple"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/DarkPlus-Discord-Theme/92105070e81adac511be555fdc4af08c605876b7/Dark+.theme.css",
+        "immutableRevision": "92105070e81adac511be555fdc4af08c605876b7",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 722,
+        "type": "theme",
+        "name": "Azurite",
+        "fileName": "Azurite.theme.css",
+        "version": "4",
+        "description": "Bring a new look to your Discord with Azurite!",
+        "author": "DevEvil",
+        "tags": [
+            "customizable",
+            "dark",
+            "green"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Azurite-Discord-Theme/aaf6bdd8c601dba33fd19bf50746b2331fd9890f/Azurite.theme.css",
+        "immutableRevision": "aaf6bdd8c601dba33fd19bf50746b2331fd9890f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 144,
+        "type": "theme",
+        "name": "AMOLED-Cord",
+        "fileName": "amoled-cord.theme.css",
+        "version": "5.0.11",
+        "description": "A theme that's nice on your eyes.. lights out baby!",
+        "author": "LuckFire",
+        "tags": [
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/LuckFire/amoled-cord/343808e7d5297223e43868b3955da4cbbd01ceef/clients/amoled-cord.theme.css",
+        "immutableRevision": "343808e7d5297223e43868b3955da4cbbd01ceef",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1506,
+        "type": "theme",
+        "name": "Aider",
+        "fileName": "aider.theme.css",
+        "version": "1.0",
+        "description": "Yet another skeuo theme, focused around being square, while others are circles.",
+        "author": "the.rabbit.disabler",
+        "tags": [
+            "dark",
+            "black"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Blade04208/aider/95f7abc3fb5e027e417ef90f29801f75ff227f09/theme/aider.theme.css",
+        "immutableRevision": "95f7abc3fb5e027e417ef90f29801f75ff227f09",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 483,
+        "type": "theme",
+        "name": "Moon Rabbits Dream About Virtual",
+        "fileName": "Moon-Rabbits-Dream-About-Virtual.theme.css",
+        "version": "4",
+        "description": "Based in Tsukino Mito Album cover\r\n| Lastest version is 4!!!\r\n| support server: https://discord.gg/PsNtzGeHuW",
+        "author": "zuzumi",
+        "tags": [
+            "anime",
+            "customizable"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/zuzumi-f/Moon-Rabbits-Dream-About-Virtual/dca0908c01f4912bc9337f586e8dc71fd81b3c4a/Moon-Rabbits-Dream-About-Virtual.theme.css",
+        "immutableRevision": "dca0908c01f4912bc9337f586e8dc71fd81b3c4a",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 507,
+        "type": "theme",
+        "name": "midnight",
+        "fileName": "midnight.theme.css",
+        "version": "2.1.1",
+        "description": "a dark, customizable discord theme.",
+        "author": "refact0r",
+        "tags": [
+            "flat",
+            "dark",
+            "customizable",
+            "black"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/refact0r/midnight-discord/0c6e4b5009df5f13fe33d9b279378378d5212330/themes/midnight.theme.css",
+        "immutableRevision": "0c6e4b5009df5f13fe33d9b279378378d5212330",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 308,
+        "type": "theme",
+        "name": "Vibrant Glass (31/10/2023)",
+        "fileName": "glass_local.theme.css",
+        "version": "1.1",
+        "description": "Customizable simple glass theme, idk what else I can say.\r\nIt is still WIP, so if you have any issues or see anything weird, make a PR/issue in github.",
+        "author": "Kaynooo",
+        "tags": [
+            "dark",
+            "abstract",
+            "transparent",
+            "customizable",
+            "flat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Kayno0o/vibrant-glass-theme/c7937bc6830d46adc1f5f79899599df439d27303/glass_local.theme.css",
+        "immutableRevision": "c7937bc6830d46adc1f5f79899599df439d27303",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 342,
+        "type": "theme",
+        "name": "Roundmoled",
+        "fileName": "roundmoled.theme.css",
+        "version": "1.1",
+        "description": "Simple but COOL Discord theme inspired by the AMOLED mode from Mobile, mixed with new rounded borders to the main sections of the user interface for a cleaner look.",
+        "author": "malasangre",
+        "tags": [
+            "customizable",
+            "black",
+            "blue",
+            "dark",
+            "layout"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/tiredmala/Roundmoled/7975ad63bbbbb047b9c4000adc76b0b719d89eea/BetterDiscord/roundmoled.theme.css",
+        "immutableRevision": "7975ad63bbbbb047b9c4000adc76b0b719d89eea",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 53,
+        "type": "theme",
+        "name": "Nord",
+        "fileName": "Nord.theme.css",
+        "version": "1.0.0",
+        "description": "A theme for discord inspired by the deep blues of the Atlantic",
+        "author": "Daggy1234",
+        "tags": [
+            "blue",
+            "black",
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DagCord/Nord/086c6dc2acdf04bdd764256a8edd609f1ff34567/BetterDiscord/Nord.theme.css",
+        "immutableRevision": "086c6dc2acdf04bdd764256a8edd609f1ff34567",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 642,
+        "type": "theme",
+        "name": "New Kemono Friends Theme",
+        "fileName": "NewKemonoFriends.theme.css",
+        "version": "7.3",
+        "description": "Newer Kemono Friends theme for my return",
+        "author": "ShadowDevilsAvenged",
+        "tags": [
+            "transparent",
+            "anime"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewKemonoFriends.theme.css",
+        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13007,24 +13158,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 53,
+        "catalogId": 3,
         "type": "theme",
-        "name": "Nord",
-        "fileName": "Nord.theme.css",
-        "version": "1.0.0",
-        "description": "A theme for discord inspired by the deep blues of the Atlantic",
-        "author": "Daggy1234",
+        "name": "Nox",
+        "fileName": "Nox.theme.css",
+        "version": "2.0.0",
+        "description": "A theme for Discord *loosely* based on Google's Material Design Guidelines.",
+        "author": "epic1online",
         "tags": [
-            "blue",
-            "black",
-            "dark"
+            "flat",
+            "layout",
+            "dark",
+            "black"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DagCord/Nord/086c6dc2acdf04bdd764256a8edd609f1ff34567/BetterDiscord/Nord.theme.css",
-        "immutableRevision": "086c6dc2acdf04bdd764256a8edd609f1ff34567",
+        "sourceUrl": "https://raw.githubusercontent.com/zerebos/Nox/6e16e5be2a388d6785aa1843d16e5ed409dc0331/release/Nox.theme.css",
+        "immutableRevision": "6e16e5be2a388d6785aa1843d16e5ed409dc0331",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13140,25 +13292,67 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 3,
+        "catalogId": 653,
         "type": "theme",
-        "name": "Nox",
-        "fileName": "Nox.theme.css",
-        "version": "2.0.0",
-        "description": "A theme for Discord *loosely* based on Google's Material Design Guidelines.",
-        "author": "epic1online",
+        "name": "New Rem Theme",
+        "fileName": "NewRemTheme.theme.css",
+        "version": "7.2",
+        "description": "Newer Rem theme for my return",
+        "author": "ShadowDevilsAvenged",
         "tags": [
-            "flat",
-            "layout",
-            "dark",
-            "black"
+            "transparent",
+            "anime",
+            "blue"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/zerebos/Nox/6e16e5be2a388d6785aa1843d16e5ed409dc0331/release/Nox.theme.css",
-        "immutableRevision": "6e16e5be2a388d6785aa1843d16e5ed409dc0331",
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewRemTheme.theme.css",
+        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 257,
+        "type": "theme",
+        "name": "kaleidoscope",
+        "fileName": "kaleidoscope.theme.css",
+        "version": "2.4.2",
+        "description": "A vibrant, colourful dark theme inspired by the 2077 theme for VSCode.",
+        "author": "Alex",
+        "tags": [
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/spinfish/kaleidoscope/2f219f5d95911b955c1de8d066225ad97baebed7/source/support/kaleidoscope.theme.css",
+        "immutableRevision": "2f219f5d95911b955c1de8d066225ad97baebed7",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13231,206 +13425,115 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 52,
+        "catalogId": 1138,
         "type": "theme",
-        "name": "Wildberry",
-        "fileName": "Wildberry.theme.css",
-        "version": "1.0.0",
-        "description": "Inspired by a Pop Tart flavour enjoy a berry inspired color storm for discord. Over 75k+ downloads!",
-        "author": "Daggy1234",
-        "tags": [
-            "dark",
-            "purple",
-            "abstract",
-            "customizable",
-            "red"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DagCord/Wildberry/c4f538773a6ccf021c8246496ffc1d347d24cdea/BetterDiscord/Wildberry.theme.css",
-        "immutableRevision": "c4f538773a6ccf021c8246496ffc1d347d24cdea",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1143,
-        "type": "theme",
-        "name": "system24",
-        "fileName": "system24.theme.css",
-        "version": "2.1.0",
-        "description": "A tui-style discord theme.",
-        "author": "refact0r",
-        "tags": [
-            "customizable",
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/refact0r/system24/7dfb15b0ae968333104fb9a7a97404a25ac5a771/theme/system24.theme.css",
-        "immutableRevision": "7dfb15b0ae968333104fb9a7a97404a25ac5a771",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 257,
-        "type": "theme",
-        "name": "kaleidoscope",
-        "fileName": "kaleidoscope.theme.css",
-        "version": "2.4.2",
-        "description": "A vibrant, colourful dark theme inspired by the 2077 theme for VSCode.",
-        "author": "Alex",
-        "tags": [
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/spinfish/kaleidoscope/2f219f5d95911b955c1de8d066225ad97baebed7/source/support/kaleidoscope.theme.css",
-        "immutableRevision": "2f219f5d95911b955c1de8d066225ad97baebed7",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 858,
-        "type": "theme",
-        "name": "Unity",
-        "fileName": "Unity.theme.css",
-        "version": "1.5",
-        "description": "All for one, One for all. A theme inspired by Samsung's OneUI.",
-        "author": "Superuser",
+        "name": "RosyNight",
+        "fileName": "RosyNight.theme.css",
+        "version": "RN.1",
+        "description": "A sleek and elegant theme blending deep blacks with soft rosy hues for a stunning night-time aesthetic.",
+        "author": "DevEvil",
         "tags": [
             "customizable",
             "dark",
-            "light",
-            "layout"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/joshuah345/Discord-Stuff/3b4843879a804dc7c9130953607e1780e3b8af83/Themes/Unity/Unity.theme.css",
-        "immutableRevision": "3b4843879a804dc7c9130953607e1780e3b8af83",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 252,
-        "type": "theme",
-        "name": "Discord Dark",
-        "fileName": "discorddark.theme.css",
-        "version": "1.59",
-        "description": "A Dark Theme for Discord, Inspired by Github Dark",
-        "author": "SyndiShanX",
-        "tags": [
-            "dark",
-            "other",
-            "customizable",
-            "transparent",
+            "red",
             "black"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/SyndiShanX/Discord-Dark/ed84f9627161a79f167202bb7f05e340d81a8b00/discorddark.theme.css",
-        "immutableRevision": "ed84f9627161a79f167202bb7f05e340d81a8b00",
+        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/RosyNight-Discord-Theme/3a6cd3b48e327cf3cc2e3c95e5a73a48249298be/RosyNight.theme.css",
+        "immutableRevision": "3a6cd3b48e327cf3cc2e3c95e5a73a48249298be",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1450,
+        "type": "theme",
+        "name": "PurpleOnyx",
+        "fileName": "PurpleOnyx.theme.css",
+        "version": "2.0.9",
+        "description": "Purple Accented NewUI Onyx Compact",
+        "author": "Zacam",
+        "tags": [
+            "dark",
+            "purple"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Zacam/BetterDiscord/9a7c2c14c3740d76f09180af898a0025ec67e6cc/PurpleOnyx/PurpleOnyx.theme.css",
+        "immutableRevision": "9a7c2c14c3740d76f09180af898a0025ec67e6cc",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 915,
+        "type": "theme",
+        "name": "DTM-18",
+        "fileName": "dtm-18.theme.css",
+        "version": "2",
+        "description": "Aims to recreate the 2018 Discord style.",
+        "author": "dav#8444",
+        "tags": [
+            "flat",
+            "transparent",
+            "dark",
+            "light"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/davart154/DTM-18/8dd25c8cd22807e2651c3d1bc57d0e0b1bd2cb60/dtm-18.theme.css",
+        "immutableRevision": "8dd25c8cd22807e2651c3d1bc57d0e0b1bd2cb60",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13503,24 +13606,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 636,
+        "catalogId": 858,
         "type": "theme",
-        "name": "MinimalImprovement (With Borders)",
-        "fileName": "MinimalImprovement.theme.css",
-        "version": "3.14.0",
-        "description": "Dark mode, made geometric and sleek. Contains borders to emphasize distinct spaces.",
-        "author": "Juicysteak117",
+        "name": "Unity",
+        "fileName": "Unity.theme.css",
+        "version": "1.5",
+        "description": "All for one, One for all. A theme inspired by Samsung's OneUI.",
+        "author": "Superuser",
         "tags": [
-            "flat",
+            "customizable",
             "dark",
-            "black"
+            "light",
+            "layout"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Juicysteak117/MinimalImprovement/1e7f3c87a21b924e1c8afc9f2629ff15a4ba5a4f/MinimalImprovement.theme.css",
-        "immutableRevision": "1e7f3c87a21b924e1c8afc9f2629ff15a4ba5a4f",
+        "sourceUrl": "https://raw.githubusercontent.com/joshuah345/Discord-Stuff/3b4843879a804dc7c9130953607e1780e3b8af83/Themes/Unity/Unity.theme.css",
+        "immutableRevision": "3b4843879a804dc7c9130953607e1780e3b8af83",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13595,26 +13699,68 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1033,
+        "catalogId": 636,
         "type": "theme",
-        "name": "FVUI",
-        "fileName": "FVUI.theme.css",
-        "version": "2.0.0",
-        "description": "Blur is the New Black",
-        "author": "FeoreV",
+        "name": "MinimalImprovement (With Borders)",
+        "fileName": "MinimalImprovement.theme.css",
+        "version": "3.14.0",
+        "description": "Dark mode, made geometric and sleek. Contains borders to emphasize distinct spaces.",
+        "author": "Juicysteak117",
         "tags": [
-            "transparent",
-            "customizable",
+            "flat",
             "dark",
-            "light",
-            "animated"
+            "black"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/FeoreV/Themes/58988c87e4ea10b078cac6b768f8d657910b2357/Discord/Release/FVUI.theme.css",
-        "immutableRevision": "58988c87e4ea10b078cac6b768f8d657910b2357",
+        "sourceUrl": "https://raw.githubusercontent.com/Juicysteak117/MinimalImprovement/1e7f3c87a21b924e1c8afc9f2629ff15a4ba5a4f/MinimalImprovement.theme.css",
+        "immutableRevision": "1e7f3c87a21b924e1c8afc9f2629ff15a4ba5a4f",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 515,
+        "type": "theme",
+        "name": "SoftX",
+        "fileName": "SoftX.theme.css",
+        "version": "2.0.0",
+        "description": "A soft and comfy feel for Discord.",
+        "author": "Gibbu",
+        "tags": [
+            "dark",
+            "abstract"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/SoftX/e10600ca55392f77741c099aa729b12ccba570b5/SoftX.theme.css",
+        "immutableRevision": "e10600ca55392f77741c099aa729b12ccba570b5",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13661,6 +13807,100 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/SlippingGittys-Discord-Themes/surCord/cd8b5a2ba681d0878abdd01c5aec4082765d927e/surCord.theme.css",
         "immutableRevision": "cd8b5a2ba681d0878abdd01c5aec4082765d927e",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1407,
+        "type": "theme",
+        "name": "Sleekcord",
+        "fileName": "SleekCord.theme.css",
+        "version": "4",
+        "description": "A pitch black theme that's sleek and modern in every way.",
+        "author": "tnt4me",
+        "tags": [
+            "flat",
+            "customizable",
+            "dark",
+            "purple",
+            "animated"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/TNT4ME/SleekCord/f511d5672346d2ab61b4da2142ce64e360e15485/SleekCord.theme.css",
+        "immutableRevision": "f511d5672346d2ab61b4da2142ce64e360e15485",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1033,
+        "type": "theme",
+        "name": "FVUI",
+        "fileName": "FVUI.theme.css",
+        "version": "2.0.0",
+        "description": "Blur is the New Black",
+        "author": "FeoreV",
+        "tags": [
+            "transparent",
+            "customizable",
+            "dark",
+            "light",
+            "animated"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/FeoreV/Themes/58988c87e4ea10b078cac6b768f8d657910b2357/Discord/Release/FVUI.theme.css",
+        "immutableRevision": "58988c87e4ea10b078cac6b768f8d657910b2357",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13779,26 +14019,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1407,
+        "catalogId": 39,
         "type": "theme",
-        "name": "Sleekcord",
-        "fileName": "SleekCord.theme.css",
-        "version": "4",
-        "description": "A pitch black theme that's sleek and modern in every way.",
-        "author": "tnt4me",
+        "name": "NieR: Automata - YoRHa Menu UI",
+        "fileName": "NieR-Light-Source.theme.css",
+        "version": "1.4",
+        "description": "Better Discord theme based around NieR: Automata's Menu UI. Dark Mode available on my git page!",
+        "author": "accrazed",
         "tags": [
-            "flat",
-            "customizable",
             "dark",
-            "purple",
-            "animated"
+            "light",
+            "game"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/TNT4ME/SleekCord/f511d5672346d2ab61b4da2142ce64e360e15485/SleekCord.theme.css",
-        "immutableRevision": "f511d5672346d2ab61b4da2142ce64e360e15485",
+        "sourceUrl": "https://raw.githubusercontent.com/AccraZed/YoRHA-UI-BetterDiscord/49d5eeee90307fbab5bac301010fcad5e6705be9/NieR-Light-Source.theme.css",
+        "immutableRevision": "49d5eeee90307fbab5bac301010fcad5e6705be9",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13872,23 +14110,24 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 161,
+        "catalogId": 581,
         "type": "theme",
-        "name": "DTM-16",
-        "fileName": "dtm-16.theme.css",
-        "version": "7",
-        "description": "Formerly called Oldcord - a theme that tries to bring back the 2016 look of Discord.",
-        "author": "11pixels",
+        "name": "Neptune",
+        "fileName": "Neptune.theme.css",
+        "version": "4",
+        "description": "A dark, blue and customizable theme",
+        "author": "DevEvil",
         "tags": [
+            "customizable",
             "dark",
-            "light"
+            "blue"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/XYZenix/DTM-16/76c586165b3ab694ac5403e0755e749c7a06b023/dtm-16.theme.css",
-        "immutableRevision": "76c586165b3ab694ac5403e0755e749c7a06b023",
+        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Neptune-Discord-Theme/de1277722fbebdb24818450de1a370ccc32a7b73/Neptune.theme.css",
+        "immutableRevision": "de1277722fbebdb24818450de1a370ccc32a7b73",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -13959,25 +14198,23 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 218,
+        "catalogId": 40,
         "type": "theme",
-        "name": "T1",
-        "fileName": "T1.theme.css",
-        "version": "0.11.0",
-        "description": "Image background + Horizontal server bar",
-        "author": "Eight_P",
+        "name": "Frosted Glass",
+        "fileName": "FrostedGlass.theme.css",
+        "version": "2.0.0",
+        "description": "Display your picture of choice with adjustable blur and brightness. Dark theme is required.",
+        "author": "Gibbu",
         "tags": [
-            "layout",
             "customizable",
-            "dark",
-            "flat"
+            "nature"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Eight-P/BD.8P/69e54ab797127c7fac9d14f006c99cc11a50904c/Themes/T1/T1.theme.css",
-        "immutableRevision": "69e54ab797127c7fac9d14f006c99cc11a50904c",
+        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/FrostedGlass/c87ce3498268bdb3757f20858365c1f4f505cec3/dist/FrostedGlass.theme.css",
+        "immutableRevision": "c87ce3498268bdb3757f20858365c1f4f505cec3",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14023,6 +14260,52 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/SnajperEXE/TokyoMidnight/e613cca68442c8cdde74a7510a0a5c9c51db64a3/tokyo_midnight.theme.css",
         "immutableRevision": "e613cca68442c8cdde74a7510a0a5c9c51db64a3",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 929,
+        "type": "theme",
+        "name": "Glass Wave",
+        "fileName": "Glass Wave.theme.css",
+        "version": "1.2",
+        "description": "Discord Glass Wave transparent theme.",
+        "author": "Elisniper ",
+        "tags": [
+            "transparent",
+            "customizable",
+            "dark",
+            "aqua"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/Elisniper/Glass-Wave/58bce62db14c379deeacb9f2df93c5a5509999b7/release/Glass Wave.theme.css",
+        "immutableRevision": "58bce62db14c379deeacb9f2df93c5a5509999b7",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14110,6 +14393,53 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/Riddim-GLiTCH/Virtual-Boy/e64f327132e7c3c4ae447895456bb5f398146f66/virtual-boy.theme.css",
         "immutableRevision": "e64f327132e7c3c4ae447895456bb5f398146f66",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 52,
+        "type": "theme",
+        "name": "Wildberry",
+        "fileName": "Wildberry.theme.css",
+        "version": "1.0.0",
+        "description": "Inspired by a Pop Tart flavour enjoy a berry inspired color storm for discord. Over 75k+ downloads!",
+        "author": "Daggy1234",
+        "tags": [
+            "dark",
+            "purple",
+            "abstract",
+            "customizable",
+            "red"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DagCord/Wildberry/c4f538773a6ccf021c8246496ffc1d347d24cdea/BetterDiscord/Wildberry.theme.css",
+        "immutableRevision": "c4f538773a6ccf021c8246496ffc1d347d24cdea",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14226,50 +14556,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 112,
-        "type": "theme",
-        "name": "Spotify Discord",
-        "fileName": "Spotify-Discord.theme.css",
-        "version": "2.0.0",
-        "description": "Combine Discord and Spotify into one",
-        "author": "CapnKitten",
-        "tags": [
-            "dark",
-            "flat"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/CapnKitten/Spotify-Discord/9984ccda043f3fc9b715991eadd81db62c153026/Spotify-Discord.theme.css",
-        "immutableRevision": "9984ccda043f3fc9b715991eadd81db62c153026",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 1232,
         "type": "theme",
         "name": "DDEX4",
@@ -14314,23 +14600,112 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 1450,
+        "catalogId": 1475,
         "type": "theme",
-        "name": "PurpleOnyx",
-        "fileName": "PurpleOnyx.theme.css",
-        "version": "2.0.9",
-        "description": "Purple Accented NewUI Onyx Compact",
-        "author": "Zacam",
+        "name": "Discord Reborn",
+        "fileName": "Discord Reborn.theme.css",
+        "version": "2.0",
+        "description": "Transparent, fully customizable theme. The Original",
+        "author": "Izy    ",
         "tags": [
-            "dark",
-            "purple"
+            "transparent",
+            "customizable",
+            "dark"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Zacam/BetterDiscord/9a7c2c14c3740d76f09180af898a0025ec67e6cc/PurpleOnyx/PurpleOnyx.theme.css",
-        "immutableRevision": "9a7c2c14c3740d76f09180af898a0025ec67e6cc",
+        "sourceUrl": "https://raw.githubusercontent.com/squee666/Discord-Themes/5b04bf7c0ef7d9306496416ae0deb7880009fc74/Themes/Discord Reborn.theme.css",
+        "immutableRevision": "5b04bf7c0ef7d9306496416ae0deb7880009fc74",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 112,
+        "type": "theme",
+        "name": "Spotify Discord",
+        "fileName": "Spotify-Discord.theme.css",
+        "version": "2.0.0",
+        "description": "Combine Discord and Spotify into one",
+        "author": "CapnKitten",
+        "tags": [
+            "dark",
+            "flat"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/CapnKitten/Spotify-Discord/9984ccda043f3fc9b715991eadd81db62c153026/Spotify-Discord.theme.css",
+        "immutableRevision": "9984ccda043f3fc9b715991eadd81db62c153026",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 161,
+        "type": "theme",
+        "name": "DTM-16",
+        "fileName": "dtm-16.theme.css",
+        "version": "7",
+        "description": "Formerly called Oldcord - a theme that tries to bring back the 2016 look of Discord.",
+        "author": "11pixels",
+        "tags": [
+            "dark",
+            "light"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/XYZenix/DTM-16/76c586165b3ab694ac5403e0755e749c7a06b023/dtm-16.theme.css",
+        "immutableRevision": "76c586165b3ab694ac5403e0755e749c7a06b023",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14496,50 +14871,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 642,
-        "type": "theme",
-        "name": "New Kemono Friends Theme",
-        "fileName": "NewKemonoFriends.theme.css",
-        "version": "7.3",
-        "description": "Newer Kemono Friends theme for my return",
-        "author": "ShadowDevilsAvenged",
-        "tags": [
-            "transparent",
-            "anime"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewKemonoFriends.theme.css",
-        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 439,
         "type": "theme",
         "name": "Tokyo Night",
@@ -14587,22 +14918,70 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 46,
+        "catalogId": 320,
         "type": "theme",
-        "name": "BlurpleRecolor",
-        "fileName": "BlurpleRecolor.theme.css",
-        "version": "1.0.0",
-        "description": "Replaces Discord's native Blurple and Boost-Pink with your own Color",
-        "author": "DevilBro",
+        "name": "Noctis Viola",
+        "fileName": "noctis-viola.theme.css",
+        "version": "0.6.1",
+        "description": "A Better Discord theme based on the Noctis Viola VSCode theme.",
+        "author": "Goslopo",
         "tags": [
-            "customizable"
+            "purple",
+            "flat",
+            "dark"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d25feb904b1beb2cb3a0e2db32d0d43386113d64/Themes/BlurpleRecolor/BlurpleRecolor.theme.css",
-        "immutableRevision": "d25feb904b1beb2cb3a0e2db32d0d43386113d64",
+        "sourceUrl": "https://raw.githubusercontent.com/ChaseIngebritson/noctis-viola-discord-theme/e75113fd20476786042826de7cd408af65d011aa/dist/noctis-viola.theme.css",
+        "immutableRevision": "e75113fd20476786042826de7cd408af65d011aa",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1271,
+        "type": "theme",
+        "name": "Discord 1.6",
+        "fileName": "discord16.theme.css",
+        "version": "0.0.3",
+        "description": "CS 1.6 + Old Steam Inspired Theme for Discord",
+        "author": ".domitori",
+        "tags": [
+            "customizable",
+            "game",
+            "green",
+            "other"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/dom1torii/discord16/532a51b09070180e6e9c38fea74f3a6329b30067/src/discord16.theme.css",
+        "immutableRevision": "532a51b09070180e6e9c38fea74f3a6329b30067",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14694,6 +15073,49 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/zuzumi-f/Discord-11/8425eaa47b60a684705f3fcf2ff48004e25c2d21/Discord11.theme.css",
         "immutableRevision": "8425eaa47b60a684705f3fcf2ff48004e25c2d21",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 46,
+        "type": "theme",
+        "name": "BlurpleRecolor",
+        "fileName": "BlurpleRecolor.theme.css",
+        "version": "1.0.0",
+        "description": "Replaces Discord's native Blurple and Boost-Pink with your own Color",
+        "author": "DevilBro",
+        "tags": [
+            "customizable"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d25feb904b1beb2cb3a0e2db32d0d43386113d64/Themes/BlurpleRecolor/BlurpleRecolor.theme.css",
+        "immutableRevision": "d25feb904b1beb2cb3a0e2db32d0d43386113d64",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -14900,6 +15322,50 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 866,
+        "type": "theme",
+        "name": "Youtube Nation",
+        "fileName": "Youtube_Nation.theme.css",
+        "version": "4.4",
+        "description": "The Storage of All Videos",
+        "author": "ShadowDevilsAvenged",
+        "tags": [
+            "flat",
+            "transparent"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/Youtube_Nation.theme.css",
+        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 18,
         "type": "theme",
         "name": "EzLight",
@@ -15034,144 +15500,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 722,
-        "type": "theme",
-        "name": "Azurite",
-        "fileName": "Azurite.theme.css",
-        "version": "4",
-        "description": "Bring a new look to your Discord with Azurite!",
-        "author": "DevEvil",
-        "tags": [
-            "customizable",
-            "dark",
-            "green"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/Azurite-Discord-Theme/aaf6bdd8c601dba33fd19bf50746b2331fd9890f/Azurite.theme.css",
-        "immutableRevision": "aaf6bdd8c601dba33fd19bf50746b2331fd9890f",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 342,
-        "type": "theme",
-        "name": "Roundmoled",
-        "fileName": "roundmoled.theme.css",
-        "version": "1.1",
-        "description": "Simple but COOL Discord theme inspired by the AMOLED mode from Mobile, mixed with new rounded borders to the main sections of the user interface for a cleaner look.",
-        "author": "malasangre",
-        "tags": [
-            "customizable",
-            "black",
-            "blue",
-            "dark",
-            "layout"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/tiredmala/Roundmoled/7975ad63bbbbb047b9c4000adc76b0b719d89eea/BetterDiscord/roundmoled.theme.css",
-        "immutableRevision": "7975ad63bbbbb047b9c4000adc76b0b719d89eea",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 209,
-        "type": "theme",
-        "name": "Discord+",
-        "fileName": "DiscordPlus.theme.css",
-        "version": "3.4.1",
-        "description": "A sleek, customizable Discord theme, inspired by Material",
-        "author": "Insta",
-        "tags": [
-            "customizable",
-            "dark",
-            "light",
-            "transparent"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/PlusInsta/discord-plus/56c5a26008339cfd82f2a69648d717a556d5758b/DiscordPlus.theme.css",
-        "immutableRevision": "56c5a26008339cfd82f2a69648d717a556d5758b",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 580,
         "type": "theme",
         "name": "Quiet",
@@ -15191,6 +15519,95 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/squee666/Discord-Themes/539276464948d29e244b64653d7094ce8c3865c3/Themes/Quiet.theme.css",
         "immutableRevision": "539276464948d29e244b64653d7094ce8c3865c3",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 32,
+        "type": "theme",
+        "name": "RadialStatus",
+        "fileName": "RadialStatus.theme.css",
+        "version": "2.0.0",
+        "description": "Changes the status icons to wrap around the avatar. Shape can be changed inside the theme file.",
+        "author": "Gibbu",
+        "tags": [
+            "other"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/DiscordStyles/RadialStatus/e361ae760dd8b88f6c187efa11a83e9aea3afd83/RadialStatus.theme.css",
+        "immutableRevision": "e361ae760dd8b88f6c187efa11a83e9aea3afd83",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
+        "catalogId": 1014,
+        "type": "theme",
+        "name": "WizardUI",
+        "fileName": "WizardUI.theme.css",
+        "version": "1.91",
+        "description": "An amazing fully customizable theme with many addons, made with 💖 by NEBULYS.",
+        "author": "Nebulys",
+        "tags": [
+            "animated",
+            "customizable",
+            "space",
+            "dark"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/GoldenLys/WizardUI/7574cd66ea99dada911176431c209ab520892f66/WizardUI.theme.css",
+        "immutableRevision": "7574cd66ea99dada911176431c209ab520892f66",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -15265,6 +15682,53 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
+        "catalogId": 252,
+        "type": "theme",
+        "name": "Discord Dark",
+        "fileName": "discorddark.theme.css",
+        "version": "1.59",
+        "description": "A Dark Theme for Discord, Inspired by Github Dark",
+        "author": "SyndiShanX",
+        "tags": [
+            "dark",
+            "other",
+            "customizable",
+            "transparent",
+            "black"
+        ],
+        "disposition": "HOLD",
+        "targetDisposition": "HOLD",
+        "securityDisposition": "HOLD",
+        "requestedByPreset": false,
+        "sourceUrl": "https://raw.githubusercontent.com/SyndiShanX/Discord-Dark/ed84f9627161a79f167202bb7f05e340d81a8b00/discorddark.theme.css",
+        "immutableRevision": "ed84f9627161a79f167202bb7f05e340d81a8b00",
+        "sourceSha256": null,
+        "licenseStatus": "UNRESOLVED",
+        "dependencies": [],
+        "networkBehavior": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "accountActions": [
+            "CODE_REVIEW_REQUIRED"
+        ],
+        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
+        "conflicts": [],
+        "supportedModes": [
+            "community-file"
+        ],
+        "risk": "standard",
+        "verification": {
+            "metadata": "REVIEWED",
+            "provenance": "PENDING",
+            "code": "PENDING",
+            "security": "PENDING",
+            "runtime": "PENDING"
+        },
+        "codeStatus": "PENDING",
+        "runtimeStatus": "PENDING",
+        "installable": false
+    },
+    {
         "catalogId": 508,
         "type": "theme",
         "name": "Alan Walker Theme",
@@ -15311,51 +15775,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 659,
-        "type": "theme",
-        "name": "New Akame Ga Kill! Theme",
-        "fileName": "NewAkameGaKill.theme.css",
-        "version": "7.5",
-        "description": "Newer Akame Ga Kill! theme for my return",
-        "author": "ShadowDevilsAvenged",
-        "tags": [
-            "transparent",
-            "red",
-            "anime"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/NewAkameGaKill.theme.css",
-        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
         "catalogId": 714,
         "type": "theme",
         "name": "Old BNHA Theme Returns",
@@ -15374,142 +15793,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/Old-BNHA-Theme.theme.css",
         "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 507,
-        "type": "theme",
-        "name": "midnight",
-        "fileName": "midnight.theme.css",
-        "version": "2.1.1",
-        "description": "a dark, customizable discord theme.",
-        "author": "refact0r",
-        "tags": [
-            "flat",
-            "dark",
-            "customizable",
-            "black"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/refact0r/midnight-discord/0c6e4b5009df5f13fe33d9b279378378d5212330/themes/midnight.theme.css",
-        "immutableRevision": "0c6e4b5009df5f13fe33d9b279378378d5212330",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 56,
-        "type": "theme",
-        "name": "GGO Kirito",
-        "fileName": "GGO_Kirito.theme.css",
-        "version": "1.4.X",
-        "description": "A theme with Kirito and Deathgun fighting in GGO (Gun Gale Online)",
-        "author": "VaporousCreeper",
-        "tags": [
-            "red",
-            "dark",
-            "customizable",
-            "anime"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/VaporousCreeper/BetterDiscord-ThemesAndPlugins/6d5c56ec225a04c6e29f5cc11fd415650008c9c7/Themes/GGO_Kirito/GGO_Kirito.theme.css",
-        "immutableRevision": "6d5c56ec225a04c6e29f5cc11fd415650008c9c7",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 664,
-        "type": "theme",
-        "name": "Bubble Theme v2",
-        "fileName": "BubbleThemev2.theme.css",
-        "version": "2.9",
-        "description": "Bubble Theme v2. Return request by Reeses Benis Butter Cups",
-        "author": "ShadowDevilsAvenged",
-        "tags": [
-            "transparent",
-            "abstract"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/398be14a65264534ebaf564f8fa34cff9a71985d/My_Theme_Collection/BubbleThemev2.theme.css",
-        "immutableRevision": "398be14a65264534ebaf564f8fa34cff9a71985d",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -15584,202 +15867,25 @@ export const SOULCORD_CATALOG_INDEX = [
         "installable": false
     },
     {
-        "catalogId": 866,
+        "catalogId": 601,
         "type": "theme",
-        "name": "Youtube Nation",
-        "fileName": "Youtube_Nation.theme.css",
-        "version": "4.4",
-        "description": "The Storage of All Videos",
-        "author": "ShadowDevilsAvenged",
+        "name": "SpotiCord",
+        "fileName": "SpotiCord.theme.css",
+        "version": "AutoUpdating",
+        "description": "Light-weight Spotify theme for Discord",
+        "author": "Sappy",
         "tags": [
+            "green",
+            "dark",
             "flat",
-            "transparent"
+            "customizable"
         ],
         "disposition": "HOLD",
         "targetDisposition": "HOLD",
         "securityDisposition": "HOLD",
         "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/ShadowDevilsAvenged/ShadowDevilsAvenged/84c3dd45b7bfe98ee6482b2abfa467c1b81580df/My_Theme_Collection/Youtube_Nation.theme.css",
-        "immutableRevision": "84c3dd45b7bfe98ee6482b2abfa467c1b81580df",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1138,
-        "type": "theme",
-        "name": "RosyNight",
-        "fileName": "RosyNight.theme.css",
-        "version": "RN.1",
-        "description": "A sleek and elegant theme blending deep blacks with soft rosy hues for a stunning night-time aesthetic.",
-        "author": "DevEvil",
-        "tags": [
-            "customizable",
-            "dark",
-            "red",
-            "black"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/DevEvil99/RosyNight-Discord-Theme/3a6cd3b48e327cf3cc2e3c95e5a73a48249298be/RosyNight.theme.css",
-        "immutableRevision": "3a6cd3b48e327cf3cc2e3c95e5a73a48249298be",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 144,
-        "type": "theme",
-        "name": "AMOLED-Cord",
-        "fileName": "amoled-cord.theme.css",
-        "version": "5.0.11",
-        "description": "A theme that's nice on your eyes.. lights out baby!",
-        "author": "LuckFire",
-        "tags": [
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/LuckFire/amoled-cord/343808e7d5297223e43868b3955da4cbbd01ceef/clients/amoled-cord.theme.css",
-        "immutableRevision": "343808e7d5297223e43868b3955da4cbbd01ceef",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 39,
-        "type": "theme",
-        "name": "NieR: Automata - YoRHa Menu UI",
-        "fileName": "NieR-Light-Source.theme.css",
-        "version": "1.4",
-        "description": "Better Discord theme based around NieR: Automata's Menu UI. Dark Mode available on my git page!",
-        "author": "accrazed",
-        "tags": [
-            "dark",
-            "light",
-            "game"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/AccraZed/YoRHA-UI-BetterDiscord/49d5eeee90307fbab5bac301010fcad5e6705be9/NieR-Light-Source.theme.css",
-        "immutableRevision": "49d5eeee90307fbab5bac301010fcad5e6705be9",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 385,
-        "type": "theme",
-        "name": "Simplify",
-        "fileName": "simplify.theme.css",
-        "version": "1.0.0",
-        "description": "a simple clean looking theme with blue colors.",
-        "author": "Ashtrath",
-        "tags": [
-            "blue",
-            "customizable",
-            "dark"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/Dyzean/Simplify/a1c9857c00084d4ed5b33166ef92721b5f7c3cfb/simplify.theme.css",
-        "immutableRevision": "a1c9857c00084d4ed5b33166ef92721b5f7c3cfb",
+        "sourceUrl": "https://raw.githubusercontent.com/Slddev/SpotiCord/661ae15f4b835664291f4b9764886d06ea8f67a6/SpotiCord.theme.css",
+        "immutableRevision": "661ae15f4b835664291f4b9764886d06ea8f67a6",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],
@@ -15825,52 +15931,6 @@ export const SOULCORD_CATALOG_INDEX = [
         "requestedByPreset": false,
         "sourceUrl": "https://raw.githubusercontent.com/TheCommieAxolotl/BetterDiscord-Stuff/0cef4643ae6a0ea9cc4914c41d9a42c51295e532/Ultra/Ultra.theme.css",
         "immutableRevision": "0cef4643ae6a0ea9cc4914c41d9a42c51295e532",
-        "sourceSha256": null,
-        "licenseStatus": "UNRESOLVED",
-        "dependencies": [],
-        "networkBehavior": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "accountActions": [
-            "CODE_REVIEW_REQUIRED"
-        ],
-        "cleanupBehavior": "RUNTIME_REVIEW_REQUIRED",
-        "conflicts": [],
-        "supportedModes": [
-            "community-file"
-        ],
-        "risk": "standard",
-        "verification": {
-            "metadata": "REVIEWED",
-            "provenance": "PENDING",
-            "code": "PENDING",
-            "security": "PENDING",
-            "runtime": "PENDING"
-        },
-        "codeStatus": "PENDING",
-        "runtimeStatus": "PENDING",
-        "installable": false
-    },
-    {
-        "catalogId": 1271,
-        "type": "theme",
-        "name": "Discord 1.6",
-        "fileName": "discord16.theme.css",
-        "version": "0.0.3",
-        "description": "CS 1.6 + Old Steam Inspired Theme for Discord",
-        "author": ".domitori",
-        "tags": [
-            "customizable",
-            "game",
-            "green",
-            "other"
-        ],
-        "disposition": "HOLD",
-        "targetDisposition": "HOLD",
-        "securityDisposition": "HOLD",
-        "requestedByPreset": false,
-        "sourceUrl": "https://raw.githubusercontent.com/dom1torii/discord16/532a51b09070180e6e9c38fea74f3a6329b30067/src/discord16.theme.css",
-        "immutableRevision": "532a51b09070180e6e9c38fea74f3a6329b30067",
         "sourceSha256": null,
         "licenseStatus": "UNRESOLVED",
         "dependencies": [],

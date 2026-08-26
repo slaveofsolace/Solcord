@@ -7,7 +7,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const catalogPath = path.join(root, "assets", "catalog", "soulcord-catalog.json");
-const quarantineRoot = path.resolve(root, "..", "quarantine-soulcord-v1", "addon-review");
+const quarantineRoot = path.resolve(root, "..", "quarantine-soulcord-v2", "addon-review");
 const outputPath = path.join(root, "assets", "catalog", "soulcord-reviewed-addons.json");
 const MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 const LICENSE_NAMES = ["LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING"];
@@ -39,8 +39,12 @@ async function fetchBounded(url, maximumBytes = MAX_SOURCE_BYTES) {
 }
 
 function classifyLicense(text) {
+    const heading = text.slice(0, 2048);
     if (/apache license\s*,?\s*version 2\.0/i.test(text)) return "Apache-2.0";
     if (/permission is hereby granted, free of charge/i.test(text)) return "MIT";
+    if (/gnu affero general public license[\s\S]{0,160}version\s+3/i.test(heading)) return "AGPL-3.0";
+    if (/gnu general public license[\s\S]{0,160}version\s+3/i.test(heading)) return "GPL-3.0";
+    if (/gnu general public license[\s\S]{0,160}version\s+2/i.test(heading)) return "GPL-2.0";
     if (/gnu affero general public license/i.test(text)) return "AGPL";
     if (/gnu general public license/i.test(text)) return "GPL";
     if (/redistribution and use in source and binary forms/i.test(text)) return "BSD-family";

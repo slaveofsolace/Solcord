@@ -19,7 +19,13 @@ const themes = [
     ["obsidian-thread", "Obsidian Thread", "SoulCord-ObsidianThread.theme.css"],
     ["carbon-ember", "Carbon Ember", "SoulCord-CarbonEmber.theme.css"],
     ["midnight-glass", "Midnight Glass", "SoulCord-MidnightGlass.theme.css"],
-    ["paper-signal", "Paper Signal", "SoulCord-PaperSignal.theme.css"]
+    ["paper-signal", "Paper Signal", "SoulCord-PaperSignal.theme.css"],
+    ["threadline", "Threadline", "SoulCord-Threadline.theme.css"],
+    ["signal-block", "Signal Block", "SoulCord-SignalBlock.theme.css"],
+    ["relay-classic", "Relay Classic", "SoulCord-RelayClassic.theme.css"],
+    ["workshop", "Workshop", "SoulCord-Workshop.theme.css"],
+    ["quiet-read", "Quiet Read", "SoulCord-QuietRead.theme.css"],
+    ["night-transit", "Night Transit", "SoulCord-NightTransit.theme.css"]
 ];
 
 const REVIEW_SCHEMA_VERSION = 1;

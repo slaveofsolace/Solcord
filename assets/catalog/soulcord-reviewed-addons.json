@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "reviewedAt": "2026-08-22",
   "catalogSnapshot": {
-    "reviewedAt": "2026-08-22",
+    "reviewedAt": "2026-08-26",
     "pluginCount": 209,
-    "pluginSha256": "693ff65d00a7aec0f4ccc091c579c33616b60082122c546cf8c8c7fd2af3fa0c",
+    "pluginSha256": "914d1255580e9d834593cbfe6ca9ec07af8c56151ec388d44ad5cae24832e1ad",
     "themeCount": 114,
-    "themeSha256": "d3de7baa261f47153a54243b68a2c3fe0e44b65c51f5daac5f6af07a66cfae31"
+    "themeSha256": "d0205afb84af6f32949e6cbde6e32fc54433a0fe49879fc7b4b3c2c66b7cc433"
   },
   "sourcePayloadLocation": "Sibling quarantine only; third-party source is not committed.",
   "dependencies": [
@@ -19,7 +19,7 @@
       "sizeBytes": 481040,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/f8709446e30af2448824278091fd36dfdada0088/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -50,7 +50,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "AGPL",
+        "name": "GPL-3.0",
         "url": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/LICENSE",
         "sha256": "605e9047a563c5c8396ffb18232aa4304ec56586aee537c45064c6fb425e44ad"
       },
@@ -100,7 +100,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "AGPL",
+        "name": "GPL-3.0",
         "url": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/77f082d80e0911beab521377036f3a4a94cc5fe9/LICENSE",
         "sha256": "605e9047a563c5c8396ffb18232aa4304ec56586aee537c45064c6fb425e44ad"
       },
@@ -113,59 +113,6 @@
       "conflicts": [],
       "networkBehavior": [
         "fetch"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 181,
-      "name": "BetterFolders",
-      "fileName": "BetterFolders.plugin.js",
-      "version": "3.8.1",
-      "author": "Zerthox",
-      "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
-      "immutableRevision": "7c5f6e4ad7cada88974885daf2bfaedae2658a73",
-      "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
-      "sizeBytes": 23865,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/LICENSE",
-        "sha256": "f27c7dc434f8719d01bc4ae2b2d3c8f44c1b7bb88432473f41311e7f8177dea9"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "servers",
-        "enhancement"
-      ],
-      "conflicts": [
-        "ServerFolders"
-      ],
-      "networkBehavior": [
-        "no-static-network-signal"
       ],
       "accountActions": [
         "no-static-account-action-signal"
@@ -205,7 +152,7 @@
       "requestedByPreset": false,
       "license": {
         "status": "FOUND",
-        "name": "AGPL",
+        "name": "GPL-3.0",
         "url": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/db24a9a737fc96ba6d08449cf934be2d1ae7391e/LICENSE",
         "sha256": "605e9047a563c5c8396ffb18232aa4304ec56586aee537c45064c6fb425e44ad"
       },
@@ -299,81 +246,27 @@
       "reviewError": null
     },
     {
-      "catalogId": 228,
-      "name": "CallTimeCounter",
-      "fileName": "CallTimeCounter.plugin.js",
-      "version": "1.0.2",
-      "author": "KingGamingYT",
-      "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
-      "immutableRevision": "0952006f55c44815dfab3c1b827b7110fd97bc34",
-      "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
-      "sizeBytes": 3809,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "UNRESOLVED",
-        "name": null,
-        "url": null,
-        "sha256": null
-      },
-      "dependencies": [],
-      "capabilities": [
-        "voice",
-        "utility"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher",
-          "timer"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 188,
-      "name": "HideDisabledEmojis",
-      "fileName": "HideDisabledEmojis.plugin.js",
-      "version": "0.1.0",
-      "author": "Zerebos",
-      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
-      "immutableRevision": "c2fdb36b97e4aee083130381a20ace050dd16621",
-      "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
-      "sizeBytes": 11205,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
+      "catalogId": 195,
+      "name": "ChannelTabs",
+      "fileName": "ChannelTabs.plugin.js",
+      "version": "2.8.9",
+      "author": "samfundev",
+      "sourceUrl": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/Plugins/ChannelTabs/ChannelTabs.plugin.js",
+      "immutableRevision": "b2485111e095270d51265d1b65e7dc26c8251562",
+      "sourceSha256": "01ab24714c62ee055668a1ff05aec2504634c10e99d0b2aeee0abd5f673a81f1",
+      "sizeBytes": 140738,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
       "license": {
         "status": "FOUND",
         "name": "MIT",
-        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/LICENSE",
-        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
+        "url": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/LICENSE",
+        "sha256": "d9e220a1b20100f966c44d27e80300ae1400c758c35496dbfd697e095370308d"
       },
       "dependencies": [],
       "capabilities": [
-        "edit",
-        "chat",
-        "text",
-        "utility",
+        "organization",
+        "shortcut",
         "enhancement"
       ],
       "conflicts": [],
@@ -386,7 +279,9 @@
       "prohibitedSignals": [],
       "cleanupBehavior": {
         "resources": [
-          "patcher"
+          "patcher",
+          "event-listener",
+          "timer"
         ],
         "cleanup": [
           "stop-method",
@@ -458,6 +353,57 @@
       "reviewError": null
     },
     {
+      "catalogId": 1225,
+      "name": "ShowPing",
+      "fileName": "ShowPing.plugin.js",
+      "version": "2.6.13",
+      "author": "nicola02nb",
+      "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/ShowPing/ShowPing.plugin.js",
+      "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
+      "sourceSha256": "a1fd1faaf73df95a32ae1abbe1063f1e681dcfb186550520b8072c2843e1004e",
+      "sizeBytes": 7104,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "voice",
+        "enhancement"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
       "catalogId": 1199,
       "name": "VoiceMessages",
       "fileName": "VoiceMessages.plugin.js",
@@ -471,7 +417,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "AGPL",
+        "name": "GPL-3.0",
         "url": "https://raw.githubusercontent.com/riolubruh/VoiceMessages/651f87d787e28d7867f9e2948b42fb47de496138/LICENSE",
         "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
       },
@@ -510,17 +456,72 @@
       "reviewError": null
     },
     {
-      "catalogId": 377,
-      "name": "BetterMediaPlayer",
-      "fileName": "BetterMediaPlayer.plugin.js",
-      "version": "1.2.22",
-      "author": "unknown81311",
-      "sourceUrl": "https://raw.githubusercontent.com/unknown81311/BetterMediaPlayer/8081c989e1982453202e07b7eabbf61d6c0914fa/BetterMediaPlayer.plugin.js",
-      "immutableRevision": "8081c989e1982453202e07b7eabbf61d6c0914fa",
-      "sourceSha256": "9cc63632d20c5a055d52f6c0f2111ecb051b03ce004690fbfb90b30451195fc0",
-      "sizeBytes": 35908,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
+      "catalogId": 29,
+      "name": "PermissionsViewer",
+      "fileName": "PermissionsViewer.plugin.js",
+      "version": "1.0.1",
+      "author": "Zerebos",
+      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
+      "immutableRevision": "49cdbe56ffc5d9d815663d83454cbe361af2b2cf",
+      "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
+      "sizeBytes": 239714,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/LICENSE",
+        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "utility",
+        "security",
+        "servers",
+        "members",
+        "roles"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener",
+          "timer"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 1587,
+      "name": "DoubleClickToReply",
+      "fileName": "DoubleClickToReply.plugin.js",
+      "version": "1.0.0",
+      "author": "atamol",
+      "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
+      "immutableRevision": "4474ed05346b0b413ee69feaf941a834b84209ea",
+      "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
+      "sizeBytes": 5610,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
       "license": {
         "status": "UNRESOLVED",
         "name": null,
@@ -529,7 +530,9 @@
       },
       "dependencies": [],
       "capabilities": [
+        "shortcut",
         "enhancement",
+        "chat",
         "utility"
       ],
       "conflicts": [],
@@ -542,11 +545,9 @@
       "prohibitedSignals": [],
       "cleanupBehavior": {
         "resources": [
-          "patcher",
           "event-listener"
         ],
         "cleanup": [
-          "stop-method",
           "explicit-cleanup"
         ]
       },
@@ -562,28 +563,28 @@
       "reviewError": null
     },
     {
-      "catalogId": 195,
-      "name": "ChannelTabs",
-      "fileName": "ChannelTabs.plugin.js",
-      "version": "2.8.9",
-      "author": "samfundev",
-      "sourceUrl": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/Plugins/ChannelTabs/ChannelTabs.plugin.js",
-      "immutableRevision": "b2485111e095270d51265d1b65e7dc26c8251562",
-      "sourceSha256": "01ab24714c62ee055668a1ff05aec2504634c10e99d0b2aeee0abd5f673a81f1",
-      "sizeBytes": 140738,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
+      "catalogId": 1206,
+      "name": "NotifyWhenMuted",
+      "fileName": "NotifyWhenMuted.plugin.js",
+      "version": "1.4.19",
+      "author": "nicola02nb",
+      "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/NotifyWhenMuted/NotifyWhenMuted.plugin.js",
+      "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
+      "sourceSha256": "64ca857fca4adc1b2e760dac75ef06706336d620f7486ef7a907600e34eecdb4",
+      "sizeBytes": 10109,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/samfundev/BetterDiscordStuff/b2485111e095270d51265d1b65e7dc26c8251562/LICENSE",
-        "sha256": "d9e220a1b20100f966c44d27e80300ae1400c758c35496dbfd697e095370308d"
+        "name": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
       },
       "dependencies": [],
       "capabilities": [
-        "organization",
-        "shortcut",
-        "enhancement"
+        "notifications",
+        "voice",
+        "utility"
       ],
       "conflicts": [],
       "networkBehavior": [
@@ -668,26 +669,25 @@
       "reviewError": null
     },
     {
-      "catalogId": 1206,
-      "name": "NotifyWhenMuted",
-      "fileName": "NotifyWhenMuted.plugin.js",
-      "version": "1.4.19",
-      "author": "nicola02nb",
-      "sourceUrl": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/Plugins/NotifyWhenMuted/NotifyWhenMuted.plugin.js",
-      "immutableRevision": "8240972400ef46a83120efca381dfa7888efe82e",
-      "sourceSha256": "64ca857fca4adc1b2e760dac75ef06706336d620f7486ef7a907600e34eecdb4",
-      "sizeBytes": 10109,
+      "catalogId": 228,
+      "name": "CallTimeCounter",
+      "fileName": "CallTimeCounter.plugin.js",
+      "version": "1.0.2",
+      "author": "KingGamingYT",
+      "sourceUrl": "https://raw.githubusercontent.com/KingGamingYT/CallTimeCounter/0952006f55c44815dfab3c1b827b7110fd97bc34/CallTimeCounter.plugin.js",
+      "immutableRevision": "0952006f55c44815dfab3c1b827b7110fd97bc34",
+      "sourceSha256": "e2abf51a8e04bb3c629aaa8140e87d472951cd522c89648fd246668214b133b2",
+      "sizeBytes": 3809,
       "targetDisposition": "CURATED",
       "requestedByPreset": true,
       "license": {
-        "status": "FOUND",
-        "name": "AGPL",
-        "url": "https://raw.githubusercontent.com/nicola02nb/BetterDiscord-Stuff/8240972400ef46a83120efca381dfa7888efe82e/LICENSE",
-        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+        "status": "UNRESOLVED",
+        "name": null,
+        "url": null,
+        "sha256": null
       },
       "dependencies": [],
       "capabilities": [
-        "notifications",
         "voice",
         "utility"
       ],
@@ -702,8 +702,112 @@
       "cleanupBehavior": {
         "resources": [
           "patcher",
-          "event-listener",
           "timer"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 953,
+      "name": "InsertTimestamps",
+      "fileName": "InsertTimestamps.plugin.js",
+      "version": "1.0.13",
+      "author": "vee 💢",
+      "sourceUrl": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/Plugins/InsertTimestamps/InsertTimestamps.plugin.js",
+      "immutableRevision": "09bd7603c379b695102110ac838e59b4a1105ff4",
+      "sourceSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61",
+      "sizeBytes": 6177,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "text",
+        "chat",
+        "utility"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 184,
+      "name": "BetterVolume",
+      "fileName": "BetterVolume.plugin.js",
+      "version": "3.2.4",
+      "author": "Zerthox",
+      "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
+      "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
+      "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
+      "sizeBytes": 20060,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/LICENSE",
+        "sha256": "f27c7dc434f8719d01bc4ae2b2d3c8f44c1b7bb88432473f41311e7f8177dea9"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "voice",
+        "enhancement",
+        "utility",
+        "members"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
         ],
         "cleanup": [
           "stop-method",
@@ -771,169 +875,6 @@
       "reviewError": null
     },
     {
-      "catalogId": 29,
-      "name": "PermissionsViewer",
-      "fileName": "PermissionsViewer.plugin.js",
-      "version": "1.0.1",
-      "author": "Zerebos",
-      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/Plugins/PermissionsViewer/PermissionsViewer.plugin.js",
-      "immutableRevision": "49cdbe56ffc5d9d815663d83454cbe361af2b2cf",
-      "sourceSha256": "6f62e73ad44b2c8ec23a352e5b120b674090eca141d75bc360bef08e2bf2a58e",
-      "sizeBytes": 239714,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/49cdbe56ffc5d9d815663d83454cbe361af2b2cf/LICENSE",
-        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "utility",
-        "security",
-        "servers",
-        "members",
-        "roles"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener",
-          "timer"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 75,
-      "name": "EditServers",
-      "fileName": "EditServers.plugin.js",
-      "version": "2.4.8",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/EditServers/EditServers.plugin.js",
-      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-      "sourceSha256": "b46e8d1af3799e6ab34da638942dd21dece10e66f13ce8b13089aad43e63c99d",
-      "sizeBytes": 56835,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "edit",
-        "servers"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 92,
-      "name": "PinDMs",
-      "fileName": "PinDMs.plugin.js",
-      "version": "2.0.9",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
-      "immutableRevision": "303f9ff6ba59c8acd83c3e203e2aaaa20f63c347",
-      "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
-      "sizeBytes": 62157,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "channels",
-        "members",
-        "organization"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
       "catalogId": 592,
       "name": "ChannelsPreview",
       "fileName": "ChannelsPreview.plugin.js",
@@ -978,6 +919,220 @@
         "cleanup": [
           "stop-method",
           "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 92,
+      "name": "PinDMs",
+      "fileName": "PinDMs.plugin.js",
+      "version": "2.0.9",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/Plugins/PinDMs/PinDMs.plugin.js",
+      "immutableRevision": "303f9ff6ba59c8acd83c3e203e2aaaa20f63c347",
+      "sourceSha256": "fdbffe32203d5db301c74195f245bcd4759315ac1132d7c3cbd061f7477815a0",
+      "sizeBytes": 62157,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/303f9ff6ba59c8acd83c3e203e2aaaa20f63c347/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "channels",
+        "members",
+        "organization"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 75,
+      "name": "EditServers",
+      "fileName": "EditServers.plugin.js",
+      "version": "2.4.8",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/EditServers/EditServers.plugin.js",
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "b46e8d1af3799e6ab34da638942dd21dece10e66f13ce8b13089aad43e63c99d",
+      "sizeBytes": 56835,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "edit",
+        "servers"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 181,
+      "name": "BetterFolders",
+      "fileName": "BetterFolders.plugin.js",
+      "version": "3.8.1",
+      "author": "Zerthox",
+      "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/dist/bd/BetterFolders.plugin.js",
+      "immutableRevision": "7c5f6e4ad7cada88974885daf2bfaedae2658a73",
+      "sourceSha256": "ba1f4977ed76f56ef4117bfa0a1301ec306a90aca9beef1baa1b2b50b2a1a71a",
+      "sizeBytes": 23865,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/7c5f6e4ad7cada88974885daf2bfaedae2658a73/LICENSE",
+        "sha256": "f27c7dc434f8719d01bc4ae2b2d3c8f44c1b7bb88432473f41311e7f8177dea9"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "servers",
+        "enhancement"
+      ],
+      "conflicts": [
+        "ServerFolders"
+      ],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 63,
+      "name": "BetterSearchPage",
+      "fileName": "BetterSearchPage.plugin.js",
+      "version": "1.3.2",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/Plugins/BetterSearchPage/BetterSearchPage.plugin.js",
+      "immutableRevision": "677bd668ec3f89de9a66b74bb69566676ec6da17",
+      "sourceSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096",
+      "sizeBytes": 4996,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "search",
+        "enhancement"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method"
         ]
       },
       "verification": {
@@ -1046,113 +1201,6 @@
       "reviewError": null
     },
     {
-      "catalogId": 63,
-      "name": "BetterSearchPage",
-      "fileName": "BetterSearchPage.plugin.js",
-      "version": "1.3.2",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/Plugins/BetterSearchPage/BetterSearchPage.plugin.js",
-      "immutableRevision": "677bd668ec3f89de9a66b74bb69566676ec6da17",
-      "sourceSha256": "f29d60047164328c6a71e89bef95b35dc2135e5e9c4655f852c8e986886ea096",
-      "sizeBytes": 4996,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/677bd668ec3f89de9a66b74bb69566676ec6da17/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "search",
-        "enhancement"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 1476,
-      "name": "Timezones",
-      "fileName": "Timezones.plugin.js",
-      "version": "2.1.5",
-      "author": "Arven",
-      "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/Timezones/Timezones.plugin.js",
-      "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
-      "sourceSha256": "6168811850bc4bdb87035867d3f99cde0d3026f0b5805abaffda9023b113d1d5",
-      "sizeBytes": 18597,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
-      "license": {
-        "status": "FOUND",
-        "name": "AGPL",
-        "url": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/LICENSE",
-        "sha256": "605e9047a563c5c8396ffb18232aa4304ec56586aee537c45064c6fb425e44ad"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "enhancement",
-        "friends",
-        "members",
-        "utility"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
       "catalogId": 102,
       "name": "ServerHider",
       "fileName": "ServerHider.plugin.js",
@@ -1166,7 +1214,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -1219,7 +1267,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c4ee578034688dc77bc30624146770fe57a9a76a/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -1260,6 +1308,60 @@
       "reviewError": null
     },
     {
+      "catalogId": 1476,
+      "name": "Timezones",
+      "fileName": "Timezones.plugin.js",
+      "version": "2.1.5",
+      "author": "Arven",
+      "sourceUrl": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/Plugins/Timezones/Timezones.plugin.js",
+      "immutableRevision": "a3582983ca5013a19d375d58371fcc109c591ba8",
+      "sourceSha256": "6168811850bc4bdb87035867d3f99cde0d3026f0b5805abaffda9023b113d1d5",
+      "sizeBytes": 18597,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/zrodevkaan/BDPlugins/a3582983ca5013a19d375d58371fcc109c591ba8/LICENSE",
+        "sha256": "605e9047a563c5c8396ffb18232aa4304ec56586aee537c45064c6fb425e44ad"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "enhancement",
+        "friends",
+        "members",
+        "utility"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
       "catalogId": 67,
       "name": "CompleteTimestamps",
       "fileName": "CompleteTimestamps.plugin.js",
@@ -1273,7 +1375,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/0f668ff478ea824d0cb13d5a68cd54862fc82b4a/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -1313,45 +1415,46 @@
       "reviewError": null
     },
     {
-      "catalogId": 94,
-      "name": "ReadAllNotificationsButton",
-      "fileName": "ReadAllNotificationsButton.plugin.js",
-      "version": "1.8.5",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
-      "immutableRevision": "80de11f2cc8b769f80ac3aceb41ec3262a8839ac",
-      "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
-      "sizeBytes": 35542,
+      "catalogId": 188,
+      "name": "HideDisabledEmojis",
+      "fileName": "HideDisabledEmojis.plugin.js",
+      "version": "0.1.0",
+      "author": "Zerebos",
+      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/Plugins/HideDisabledEmojis/HideDisabledEmojis.plugin.js",
+      "immutableRevision": "c2fdb36b97e4aee083130381a20ace050dd16621",
+      "sourceSha256": "4e5682987afbf8ad831bd5f3080b66680d11d1c5a8cf8f5fb4266c563fe6c698",
+      "sizeBytes": 11205,
       "targetDisposition": "CURATED",
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/c2fdb36b97e4aee083130381a20ace050dd16621/LICENSE",
+        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
       },
-      "dependencies": [
-        "BDFDB"
-      ],
+      "dependencies": [],
       "capabilities": [
-        "notifications",
-        "shortcut"
+        "edit",
+        "chat",
+        "text",
+        "utility",
+        "enhancement"
       ],
       "conflicts": [],
       "networkBehavior": [
-        "fetch",
-        "network-api"
+        "no-static-network-signal"
       ],
       "accountActions": [
-        "read-state-path"
+        "no-static-account-action-signal"
       ],
       "prohibitedSignals": [],
       "cleanupBehavior": {
         "resources": [
-          "event-listener"
+          "patcher"
         ],
         "cleanup": [
-          "stop-method"
+          "stop-method",
+          "explicit-cleanup"
         ]
       },
       "verification": {
@@ -1379,7 +1482,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/295c2102402b1dc7eb543d45fc7236c34d6503ac/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -1421,6 +1524,59 @@
       "reviewError": null
     },
     {
+      "catalogId": 94,
+      "name": "ReadAllNotificationsButton",
+      "fileName": "ReadAllNotificationsButton.plugin.js",
+      "version": "1.8.5",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/Plugins/ReadAllNotificationsButton/ReadAllNotificationsButton.plugin.js",
+      "immutableRevision": "80de11f2cc8b769f80ac3aceb41ec3262a8839ac",
+      "sourceSha256": "ea1bda45ee3734340e0c95574bebd76e8076bd2edbb722702f59191f29b42bfc",
+      "sizeBytes": 35542,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/80de11f2cc8b769f80ac3aceb41ec3262a8839ac/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "notifications",
+        "shortcut"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "read-state-path"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
       "catalogId": 100,
       "name": "ServerDetails",
       "fileName": "ServerDetails.plugin.js",
@@ -1434,7 +1590,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/3010da472dda22cf9744a13616a8e0b3f3a5afb2/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -1476,86 +1632,29 @@
       "reviewError": null
     },
     {
-      "catalogId": 83,
-      "name": "ImageUtilities",
-      "fileName": "ImageUtilities.plugin.js",
-      "version": "5.6.7",
+      "catalogId": 97,
+      "name": "RevealAllSpoilers",
+      "fileName": "RevealAllSpoilers.plugin.js",
+      "version": "1.1.2",
       "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/Plugins/ImageUtilities/ImageUtilities.plugin.js",
-      "immutableRevision": "4534f0217cc4b5a69cd3a09e6d795e966daded77",
-      "sourceSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2",
-      "sizeBytes": 121002,
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RevealAllSpoilers/RevealAllSpoilers.plugin.js",
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "0ef125fbac6591e72523b3e99dc0e2271dd63cf2e91f158b937d531450c4789c",
+      "sizeBytes": 4092,
       "targetDisposition": "CURATED",
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/LICENSE",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
       "dependencies": [
         "BDFDB"
       ],
       "capabilities": [
-        "utility"
-      ],
-      "conflicts": [
-        "competing media viewers"
-      ],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener",
-          "mutation-observer"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 120,
-      "name": "GameActivityToggle",
-      "fileName": "GameActivityToggle.plugin.js",
-      "version": "1.4.0",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/5ce223bba8d2cd25050df67d6592bfd96adefbb0/Plugins/GameActivityToggle/GameActivityToggle.plugin.js",
-      "immutableRevision": "5ce223bba8d2cd25050df67d6592bfd96adefbb0",
-      "sourceSha256": "18d57cdd5669f19edfc2fe23c141026e4bb5996d204d71b9bfda5fe5c1c40b39",
-      "sizeBytes": 20133,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/5ce223bba8d2cd25050df67d6592bfd96adefbb0/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "utility",
-        "activity",
-        "game",
+        "chat",
+        "text",
         "shortcut"
       ],
       "conflicts": [],
@@ -1587,82 +1686,30 @@
       "reviewError": null
     },
     {
-      "catalogId": 953,
-      "name": "InsertTimestamps",
-      "fileName": "InsertTimestamps.plugin.js",
-      "version": "1.0.13",
-      "author": "vee 💢",
-      "sourceUrl": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/Plugins/InsertTimestamps/InsertTimestamps.plugin.js",
-      "immutableRevision": "09bd7603c379b695102110ac838e59b4a1105ff4",
-      "sourceSha256": "dc98490b45386f016f4f504b2fb16da823f6ec33da47a143f6861bb286bead61",
-      "sizeBytes": 6177,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "AGPL",
-        "url": "https://raw.githubusercontent.com/Vendicated/BetterDiscordPlugins/09bd7603c379b695102110ac838e59b4a1105ff4/LICENSE",
-        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "text",
-        "chat",
-        "utility"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 97,
-      "name": "RevealAllSpoilers",
-      "fileName": "RevealAllSpoilers.plugin.js",
-      "version": "1.1.2",
+      "catalogId": 61,
+      "name": "BetterFriendList",
+      "fileName": "BetterFriendList.plugin.js",
+      "version": "1.7.2",
       "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/RevealAllSpoilers/RevealAllSpoilers.plugin.js",
-      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-      "sourceSha256": "0ef125fbac6591e72523b3e99dc0e2271dd63cf2e91f158b937d531450c4789c",
-      "sizeBytes": 4092,
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/Plugins/BetterFriendList/BetterFriendList.plugin.js",
+      "immutableRevision": "d2c23f5ca7d0c8398213aee653668c211b7700a4",
+      "sourceSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
+      "sizeBytes": 42326,
       "targetDisposition": "CURATED",
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
       "dependencies": [
         "BDFDB"
       ],
       "capabilities": [
-        "chat",
-        "text",
-        "shortcut"
+        "organization",
+        "friends",
+        "enhancement"
       ],
       "conflicts": [],
       "networkBehavior": [
@@ -1717,113 +1764,6 @@
         "utility",
         "game",
         "enhancement"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 61,
-      "name": "BetterFriendList",
-      "fileName": "BetterFriendList.plugin.js",
-      "version": "1.7.2",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/Plugins/BetterFriendList/BetterFriendList.plugin.js",
-      "immutableRevision": "d2c23f5ca7d0c8398213aee653668c211b7700a4",
-      "sourceSha256": "4e31a362bb2e5fa5d5e6bffb891beefb1aa851ec1cac1d1fe9b1b3b60499e0ae",
-      "sizeBytes": 42326,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/d2c23f5ca7d0c8398213aee653668c211b7700a4/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "organization",
-        "friends",
-        "enhancement"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 184,
-      "name": "BetterVolume",
-      "fileName": "BetterVolume.plugin.js",
-      "version": "3.2.4",
-      "author": "Zerthox",
-      "sourceUrl": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/dist/bd/BetterVolume.plugin.js",
-      "immutableRevision": "4661fc3b8215976b32924bd7e84fbd0b6a2c6909",
-      "sourceSha256": "021f628cc0cc7bf0f04521ef802123aba0821f122d592c7c0ba58b9c1cbaa7d1",
-      "sizeBytes": 20060,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/Zerthox/BetterDiscord-Plugins/4661fc3b8215976b32924bd7e84fbd0b6a2c6909/LICENSE",
-        "sha256": "f27c7dc434f8719d01bc4ae2b2d3c8f44c1b7bb88432473f41311e7f8177dea9"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "voice",
-        "enhancement",
-        "utility",
-        "members"
       ],
       "conflicts": [],
       "networkBehavior": [
@@ -1963,33 +1903,36 @@
       "reviewError": null
     },
     {
-      "catalogId": 1587,
-      "name": "DoubleClickToReply",
-      "fileName": "DoubleClickToReply.plugin.js",
-      "version": "1.0.0",
-      "author": "atamol",
-      "sourceUrl": "https://raw.githubusercontent.com/Atamol/BetterDiscordPlugins/4474ed05346b0b413ee69feaf941a834b84209ea/DoubleClickToReply/DoubleClickToReply.plugin.js",
-      "immutableRevision": "4474ed05346b0b413ee69feaf941a834b84209ea",
-      "sourceSha256": "b3fe23523625b4d915418b79ae859f5b2fef7f617abc464ca718bdefaf110f6a",
-      "sizeBytes": 5610,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
+      "catalogId": 120,
+      "name": "GameActivityToggle",
+      "fileName": "GameActivityToggle.plugin.js",
+      "version": "1.4.0",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/5ce223bba8d2cd25050df67d6592bfd96adefbb0/Plugins/GameActivityToggle/GameActivityToggle.plugin.js",
+      "immutableRevision": "5ce223bba8d2cd25050df67d6592bfd96adefbb0",
+      "sourceSha256": "18d57cdd5669f19edfc2fe23c141026e4bb5996d204d71b9bfda5fe5c1c40b39",
+      "sizeBytes": 20133,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
       "license": {
-        "status": "UNRESOLVED",
-        "name": null,
-        "url": null,
-        "sha256": null
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/5ce223bba8d2cd25050df67d6592bfd96adefbb0/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
-      "dependencies": [],
+      "dependencies": [
+        "BDFDB"
+      ],
       "capabilities": [
-        "shortcut",
-        "enhancement",
-        "chat",
-        "utility"
+        "utility",
+        "activity",
+        "game",
+        "shortcut"
       ],
       "conflicts": [],
       "networkBehavior": [
-        "no-static-network-signal"
+        "fetch",
+        "network-api"
       ],
       "accountActions": [
         "no-static-account-action-signal"
@@ -2000,12 +1943,12 @@
           "event-listener"
         ],
         "cleanup": [
-          "explicit-cleanup"
+          "stop-method"
         ]
       },
       "verification": {
         "metadata": "REVIEWED",
-        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+        "provenance": "LICENSE_RECORDED",
         "code": "STATIC_REVIEWED",
         "security": "STATIC_REVIEWED",
         "runtime": "PENDING"
@@ -2048,6 +1991,441 @@
       "prohibitedSignals": [],
       "cleanupBehavior": {
         "resources": [],
+        "cleanup": [
+          "stop-method"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 83,
+      "name": "ImageUtilities",
+      "fileName": "ImageUtilities.plugin.js",
+      "version": "5.6.7",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/Plugins/ImageUtilities/ImageUtilities.plugin.js",
+      "immutableRevision": "4534f0217cc4b5a69cd3a09e6d795e966daded77",
+      "sourceSha256": "11bd65f37c867e19475bf376b7946f9d11b35c24c52a89f459110545b5ac76d2",
+      "sizeBytes": 121002,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/4534f0217cc4b5a69cd3a09e6d795e966daded77/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "utility"
+      ],
+      "conflicts": [
+        "competing media viewers"
+      ],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener",
+          "mutation-observer"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 598,
+      "name": "InMyVoice",
+      "fileName": "InMyVoice.plugin.js",
+      "version": "1.2.4",
+      "author": "arg0NNY",
+      "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/InMyVoice/InMyVoice.plugin.js",
+      "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
+      "sourceSha256": "884ab5777dfe5c325a917cb17ac3b720cda3f8c26f7558b8cb918c3d78c3ab37",
+      "sizeBytes": 5992,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "FOUND",
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/LICENSE",
+        "sha256": "03c47eaa001cb41456aaae42b8eb18802b6533abdd38e144addf3222afd4369a"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "enhancement",
+        "voice",
+        "chat"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 331,
+      "name": "FavoriteMedia",
+      "fileName": "FavoriteMedia.plugin.js",
+      "version": "1.13.34",
+      "author": "Dastan",
+      "sourceUrl": "https://raw.githubusercontent.com/Dastan21/BDAddons/db347482997a5870f44d1e1607e798e43aaa7f75/plugins/FavoriteMedia/FavoriteMedia.plugin.js",
+      "immutableRevision": "db347482997a5870f44d1e1607e798e43aaa7f75",
+      "sourceSha256": "09455cd7546c59215f98235e7cd250f2bb03045b123dfc626032e34fcb8c2fe0",
+      "sizeBytes": 494848,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/Dastan21/BDAddons/db347482997a5870f44d1e1607e798e43aaa7f75/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "enhancement",
+        "utility",
+        "chat"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api",
+        "translation-provider"
+      ],
+      "accountActions": [
+        "message-send-path"
+      ],
+      "prohibitedSignals": [
+        "entitlement-or-quest"
+      ],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher",
+          "event-listener",
+          "timer",
+          "mutation-observer"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "HOLD",
+        "security": "HOLD",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "HOLD",
+      "reviewError": "Static review found a missing header or prohibited signal."
+    },
+    {
+      "catalogId": 1236,
+      "name": "ShowSpectators",
+      "fileName": "ShowSpectators.plugin.js",
+      "version": "1.0.6",
+      "author": "domi.btnr",
+      "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/e9c5b2ec2a0c778adf37781f690811253863a3cc/ShowSpectators/ShowSpectators.plugin.js",
+      "immutableRevision": "e9c5b2ec2a0c778adf37781f690811253863a3cc",
+      "sourceSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
+      "sizeBytes": 16367,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "UNRESOLVED",
+        "name": null,
+        "url": null,
+        "sha256": null
+      },
+      "dependencies": [],
+      "capabilities": [
+        "enhancement",
+        "members",
+        "utility"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 110,
+      "name": "UserNotes",
+      "fileName": "UserNotes.plugin.js",
+      "version": "1.1.2",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/UserNotes/UserNotes.plugin.js",
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "670394fb8e0f812c75a90bfe958bf4372ae3b319df3a41abc91874849804393d",
+      "sizeBytes": 8243,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "members",
+        "organization"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 104,
+      "name": "SpellCheck",
+      "fileName": "SpellCheck.plugin.js",
+      "version": "1.7.3",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/Plugins/SpellCheck/SpellCheck.plugin.js",
+      "immutableRevision": "92f52d9f66172df2c4f0d4394de843332689b861",
+      "sourceSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a",
+      "sizeBytes": 36735,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "text",
+        "enhancement"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 186,
+      "name": "DoNotTrack",
+      "fileName": "DoNotTrack.plugin.js",
+      "version": "0.1.0",
+      "author": "Zerebos",
+      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
+      "immutableRevision": "6d839d0ab65371819b081218bc43b09d7d6e762d",
+      "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
+      "sizeBytes": 10460,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "MIT",
+        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/LICENSE",
+        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
+      },
+      "dependencies": [],
+      "capabilities": [
+        "activity",
+        "status",
+        "enhancement",
+        "security"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 98,
+      "name": "SplitLargeMessages",
+      "fileName": "SplitLargeMessages.plugin.js",
+      "version": "1.8.7",
+      "author": "DevilBro",
+      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/SplitLargeMessages/SplitLargeMessages.plugin.js",
+      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
+      "sourceSha256": "c5866f77edaf227eb333a2e0f0819f2a8e1e122bd6c4c50f49c2ed3cde2eea46",
+      "sizeBytes": 19021,
+      "targetDisposition": "CURATED",
+      "requestedByPreset": true,
+      "license": {
+        "status": "FOUND",
+        "name": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "dependencies": [
+        "BDFDB"
+      ],
+      "capabilities": [
+        "chat",
+        "shortcut",
+        "enhancement"
+      ],
+      "conflicts": [
+        "Message Splitter",
+        "other automatic message splitters"
+      ],
+      "networkBehavior": [
+        "fetch",
+        "network-api"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "event-listener"
+        ],
         "cleanup": [
           "stop-method"
         ]
@@ -2119,385 +2497,6 @@
       "reviewError": null
     },
     {
-      "catalogId": 598,
-      "name": "InMyVoice",
-      "fileName": "InMyVoice.plugin.js",
-      "version": "1.2.4",
-      "author": "arg0NNY",
-      "sourceUrl": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/InMyVoice/InMyVoice.plugin.js",
-      "immutableRevision": "c5a54762dafef9d1d8bdd62afdaf43eb12dd9389",
-      "sourceSha256": "884ab5777dfe5c325a917cb17ac3b720cda3f8c26f7558b8cb918c3d78c3ab37",
-      "sizeBytes": 5992,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
-      "license": {
-        "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/okdevme/DiscordPlugins/c5a54762dafef9d1d8bdd62afdaf43eb12dd9389/LICENSE",
-        "sha256": "03c47eaa001cb41456aaae42b8eb18802b6533abdd38e144addf3222afd4369a"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "enhancement",
-        "voice",
-        "chat"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 186,
-      "name": "DoNotTrack",
-      "fileName": "DoNotTrack.plugin.js",
-      "version": "0.1.0",
-      "author": "Zerebos",
-      "sourceUrl": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/Plugins/DoNotTrack/DoNotTrack.plugin.js",
-      "immutableRevision": "6d839d0ab65371819b081218bc43b09d7d6e762d",
-      "sourceSha256": "6731d7a48ec8226779abf8251a22dcde30121613f21ffc5fcf3f45ed3fce7293",
-      "sizeBytes": 10460,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "MIT",
-        "url": "https://raw.githubusercontent.com/zerebos/BetterDiscordAddons/6d839d0ab65371819b081218bc43b09d7d6e762d/LICENSE",
-        "sha256": "39ad4a8a01345d7d4b56b9812daa4a3f97d30f1430b4342ef630edc35a536d93"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "activity",
-        "status",
-        "enhancement",
-        "security"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 104,
-      "name": "SpellCheck",
-      "fileName": "SpellCheck.plugin.js",
-      "version": "1.7.3",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/Plugins/SpellCheck/SpellCheck.plugin.js",
-      "immutableRevision": "92f52d9f66172df2c4f0d4394de843332689b861",
-      "sourceSha256": "01afd059a97cbeb3f113217dbc00f132070ef13aeacf59f5f0b36cd5e538579a",
-      "sizeBytes": 36735,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/92f52d9f66172df2c4f0d4394de843332689b861/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "text",
-        "enhancement"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 1236,
-      "name": "ShowSpectators",
-      "fileName": "ShowSpectators.plugin.js",
-      "version": "1.0.6",
-      "author": "domi.btnr",
-      "sourceUrl": "https://raw.githubusercontent.com/domi-btnr/BetterDiscordStuff/e9c5b2ec2a0c778adf37781f690811253863a3cc/ShowSpectators/ShowSpectators.plugin.js",
-      "immutableRevision": "e9c5b2ec2a0c778adf37781f690811253863a3cc",
-      "sourceSha256": "8f01d79117795d2d601cc3f71aed51bebc99665918a9fb11aa395bca70f70e9a",
-      "sizeBytes": 16367,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "UNRESOLVED",
-        "name": null,
-        "url": null,
-        "sha256": null
-      },
-      "dependencies": [],
-      "capabilities": [
-        "enhancement",
-        "members",
-        "utility"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "no-static-network-signal"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 110,
-      "name": "UserNotes",
-      "fileName": "UserNotes.plugin.js",
-      "version": "1.1.2",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/UserNotes/UserNotes.plugin.js",
-      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-      "sourceSha256": "670394fb8e0f812c75a90bfe958bf4372ae3b319df3a41abc91874849804393d",
-      "sizeBytes": 8243,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "members",
-        "organization"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 98,
-      "name": "SplitLargeMessages",
-      "fileName": "SplitLargeMessages.plugin.js",
-      "version": "1.8.7",
-      "author": "DevilBro",
-      "sourceUrl": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/Plugins/SplitLargeMessages/SplitLargeMessages.plugin.js",
-      "immutableRevision": "c561c50fadf8ce7e7862e6a090e48196f6069b9b",
-      "sourceSha256": "c5866f77edaf227eb333a2e0f0819f2a8e1e122bd6c4c50f49c2ed3cde2eea46",
-      "sizeBytes": 19021,
-      "targetDisposition": "CURATED",
-      "requestedByPreset": true,
-      "license": {
-        "status": "FOUND",
-        "name": "GPL",
-        "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/c561c50fadf8ce7e7862e6a090e48196f6069b9b/LICENSE",
-        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
-      },
-      "dependencies": [
-        "BDFDB"
-      ],
-      "capabilities": [
-        "chat",
-        "shortcut",
-        "enhancement"
-      ],
-      "conflicts": [
-        "Message Splitter",
-        "other automatic message splitters"
-      ],
-      "networkBehavior": [
-        "fetch",
-        "network-api"
-      ],
-      "accountActions": [
-        "no-static-account-action-signal"
-      ],
-      "prohibitedSignals": [],
-      "cleanupBehavior": {
-        "resources": [
-          "event-listener"
-        ],
-        "cleanup": [
-          "stop-method"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "STATIC_REVIEWED",
-        "security": "STATIC_REVIEWED",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
-      "reviewError": null
-    },
-    {
-      "catalogId": 331,
-      "name": "FavoriteMedia",
-      "fileName": "FavoriteMedia.plugin.js",
-      "version": "1.13.34",
-      "author": "Dastan",
-      "sourceUrl": "https://raw.githubusercontent.com/Dastan21/BDAddons/db347482997a5870f44d1e1607e798e43aaa7f75/plugins/FavoriteMedia/FavoriteMedia.plugin.js",
-      "immutableRevision": "db347482997a5870f44d1e1607e798e43aaa7f75",
-      "sourceSha256": "09455cd7546c59215f98235e7cd250f2bb03045b123dfc626032e34fcb8c2fe0",
-      "sizeBytes": 494848,
-      "targetDisposition": "OPTIONAL",
-      "requestedByPreset": false,
-      "license": {
-        "status": "FOUND",
-        "name": "AGPL",
-        "url": "https://raw.githubusercontent.com/Dastan21/BDAddons/db347482997a5870f44d1e1607e798e43aaa7f75/LICENSE",
-        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-      },
-      "dependencies": [],
-      "capabilities": [
-        "enhancement",
-        "utility",
-        "chat"
-      ],
-      "conflicts": [],
-      "networkBehavior": [
-        "fetch",
-        "network-api",
-        "translation-provider"
-      ],
-      "accountActions": [
-        "message-send-path"
-      ],
-      "prohibitedSignals": [
-        "entitlement-or-quest"
-      ],
-      "cleanupBehavior": {
-        "resources": [
-          "patcher",
-          "event-listener",
-          "timer",
-          "mutation-observer"
-        ],
-        "cleanup": [
-          "stop-method",
-          "explicit-cleanup"
-        ]
-      },
-      "verification": {
-        "metadata": "REVIEWED",
-        "provenance": "LICENSE_RECORDED",
-        "code": "HOLD",
-        "security": "HOLD",
-        "runtime": "PENDING"
-      },
-      "installable": false,
-      "reviewStatus": "HOLD",
-      "reviewError": "Static review found a missing header or prohibited signal."
-    },
-    {
       "catalogId": 64,
       "name": "CharCounter",
       "fileName": "CharCounter.plugin.js",
@@ -2511,7 +2510,7 @@
       "requestedByPreset": true,
       "license": {
         "status": "FOUND",
-        "name": "GPL",
+        "name": "GPL-2.0",
         "url": "https://raw.githubusercontent.com/mwittrien/BetterDiscordAddons/23c24d91e7449c27b497784761ff1e82df273a59/LICENSE",
         "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
       },
@@ -2542,6 +2541,58 @@
       "verification": {
         "metadata": "REVIEWED",
         "provenance": "LICENSE_RECORDED",
+        "code": "STATIC_REVIEWED",
+        "security": "STATIC_REVIEWED",
+        "runtime": "PENDING"
+      },
+      "installable": false,
+      "reviewStatus": "STATIC_PASS_RUNTIME_REQUIRED",
+      "reviewError": null
+    },
+    {
+      "catalogId": 377,
+      "name": "BetterMediaPlayer",
+      "fileName": "BetterMediaPlayer.plugin.js",
+      "version": "1.2.22",
+      "author": "unknown81311",
+      "sourceUrl": "https://raw.githubusercontent.com/unknown81311/BetterMediaPlayer/8081c989e1982453202e07b7eabbf61d6c0914fa/BetterMediaPlayer.plugin.js",
+      "immutableRevision": "8081c989e1982453202e07b7eabbf61d6c0914fa",
+      "sourceSha256": "9cc63632d20c5a055d52f6c0f2111ecb051b03ce004690fbfb90b30451195fc0",
+      "sizeBytes": 35908,
+      "targetDisposition": "OPTIONAL",
+      "requestedByPreset": false,
+      "license": {
+        "status": "UNRESOLVED",
+        "name": null,
+        "url": null,
+        "sha256": null
+      },
+      "dependencies": [],
+      "capabilities": [
+        "enhancement",
+        "utility"
+      ],
+      "conflicts": [],
+      "networkBehavior": [
+        "no-static-network-signal"
+      ],
+      "accountActions": [
+        "no-static-account-action-signal"
+      ],
+      "prohibitedSignals": [],
+      "cleanupBehavior": {
+        "resources": [
+          "patcher",
+          "event-listener"
+        ],
+        "cleanup": [
+          "stop-method",
+          "explicit-cleanup"
+        ]
+      },
+      "verification": {
+        "metadata": "REVIEWED",
+        "provenance": "OFFICIAL_CATALOG_UNCHANGED_ONLY",
         "code": "STATIC_REVIEWED",
         "security": "STATIC_REVIEWED",
         "runtime": "PENDING"

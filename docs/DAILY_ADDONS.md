@@ -1,43 +1,45 @@
-# Daily add-ons
+# V2 built-in suite and community compatibility
 
-SoulCord V1 has two layers: built-in reliability/privacy tools maintained in this fork, and ordinary BetterDiscord-compatible plugins that remain separate local files. The Suite labels the difference explicitly.
+SoulCord V2 has three distinct layers. Core reliability/privacy modules ship with the fork. Native Suite behavior is grouped into SoulCord-owned adapters. Ordinary BetterDiscord-compatible plugins remain separate local programs until the owner deliberately migrates a matching provider.
 
-## Owner-selected local set
+## Native Suite
 
-These three existing files were checked against the BetterDiscord catalog’s pinned raw source and enabled in the current Windows profile on 2026-08-22:
+| Built-in | Catalog-facing behaviors consolidated | Boundary |
+| --- | --- | --- |
+| Privacy Controls | DoNotTrack, InvisibleTyping | Suppresses only structurally validated outgoing analytics/typing actions; no network-wide blocking claim |
+| Composer Toolkit | DoubleClickToReply, CharCounter, CompleteTimestamps, guarded SplitLargeMessages | Opens reply state and previews/copies content; never sends automatically |
+| Call Context | CallTimeCounter, VoiceActivity, ShowSpectators | Uses already-loaded call/speaker/viewer state only |
+| Audio Console | BetterVolume | Local 0–200% playback change after preview and explicit apply |
+| Voice Note Studio | VoiceMessages | User-gesture record, stop, preview, cancel, then separately reviewed native upload preparation |
+| Translation Desk | Translator | DeepL or configured LibreTranslate only after provider/text disclosure; no provider active by default |
+| People and Spaces | BetterFriendList, PinDMs, ServerHider, ServerDetails, local Server Aliases replacing EditServers | Local organization only; no Discord server profile mutation |
+| Channel Glance | MessagePeek | Shows at most five already-loaded messages; never fetches history or marks read |
+| Notification Review | ReadAllNotificationsButton | Previews scope and count before one explicit mark-read action |
+| Motion Studio | BetterAnimations, DiscordEffects | Bounded local transitions; suppressed when reduced motion is active |
 
-| Add-on | Current behavior | Source status | SoulCord handling |
-| --- | --- | --- | --- |
-| Do Not Track 0.1.0 | Suppresses Discord analytics, Sentry reporting, and process/game monitoring. | Exact catalog revision; permissive repository license. | Enabled locally. Plugin Doctor records bounded failures. |
-| Invisible Typing 1.5.1 | Suppresses typing indicators globally with per-channel opt-back-in controls. | Exact catalog revision; no controlling repository license found. | Enabled locally, never vendored or redistributed. |
-| Double Click to Reply 1.0.0 | Double-clicking another person’s message opens Discord’s normal reply composer. It does not send. | Exact catalog revision; no controlling repository license found. | Enabled locally, never vendored or redistributed. |
+Permission Lens and Voice Health are additional SoulCord V2 tools. Local Identity Notes remains unavailable until its private storage adapter validates. Message Timeline is an independent opt-in private module and never imports MessageLoggerV2 data. Fake Deafen remains default-off Power Lab work rather than a daily default.
 
-The pre-change `plugins.json` is preserved in the task repair backup. Enabling these three does not enable every plugin in the folder.
+The setup draft maps 21 community-facing choices to these built-ins without staging the community files. A built-in can still report `unavailable` when its Discord lookup or required browser API does not validate. A settings card is not evidence that the adapter is live.
 
-## Built-in SoulCord V1 set
+## Provider migration
 
-- Activity Bridge
-- Plugin Doctor + Addon Quarantine
-- Module Drift Radar (preview; captured-fixture Patch Canary is not implemented)
-- Performance HUD
-- Workspace Profiles
-- Command Deck
-- Link Lens + Invite Inspector (held off in the current profile until the repaired build passes installed regression)
-- Stream Shield + Screenshot Scrubber
-- Settings Time Machine + Update Ledger
-- Accessibility Toolkit
-- Do Not Track clean-room adapter (suppresses only Discord's structurally anchored analytics `track` method; it does not claim Sentry, process-monitoring, or network-wide blocking)
-- Double Click to Reply clean-room adapter (opens reply state only; never sends)
-- Invisible Typing clean-room adapter (suppresses only outgoing typing-start calls)
-- Guarded Split Large Messages (PREVIEW: prepares ordered parts for manual copy and never multi-sends; setup keeps it off until a disposable Discord modal/clipboard acceptance receipt exists)
+An enabled community provider keeps control until the owner selects SoulCord and the replacement reports ready. The migration then:
 
-The accepted default interaction set is Do Not Track, Double Click to Reply, and Invisible Typing. Guarded Split Large Messages remains source-present at PREVIEW maturity and is neither recommended nor transaction-executable. These clean-room adapters do not copy the owner-installed plugin files. If a matching owner plugin is already enabled, SoulCord leaves it alone and does not install a duplicate patch.
+1. previews the exact filename, hash, enabled state, dependency state, replacement, and archive destination;
+2. rechecks the source bytes and built-in health immediately before apply;
+3. moves only the unchanged `.plugin.js` into `soulcord-provider-archive-v2`, outside the scanned plugin directory;
+4. records a bounded transaction receipt for rollback;
+5. retires BDFDB only after every known and owner-declared consumer has left the active plugin directory.
 
-## Community candidates considered, not SoulCord-accepted
+No provider file is deleted. Settings and private databases remain untouched. MessageLoggerV2 data is never inspected, imported, moved, or erased. Rollback restores a hash-matching archived source only when the active plugin destination is absent; a later owner change blocks automatic restoration.
 
-- BetterVolume, CallTimeCounter, CompleteTimestamps, PinDMs, VoiceActivity, BetterFriendList, and ServerDetails are sensible next daily-tool candidates. Dependency, license, and installed-runtime checks still apply before enabling them as a pack.
-- Native SplitLargeMessages remains held because it can submit multiple messages. SoulCord's guarded built-in remains PREVIEW: its source prepares and copies ordered parts after confirmation, but setup does not enable it before the disposable Discord modal/clipboard receipt exists.
-- MessageLoggerV2 remains off because it is a private message-retention tool outside the ordinary curated pack. MessagePeek is separately held because its reviewed file preloads DM data through an API path and does not yet prove complete asynchronous teardown.
-- Fake Mute & Deafen remains unavailable. Fake Deafen is now a separate Power Lab preview: it is default-off, requires the current versioned warning plus a second explicit arm action, patches only the validated active gateway socket, and automatically stands down if the owner-installed community FakeDeafen is enabled. Its synthetic adapter tests are not live voice acceptance.
+See [V2 built-in migration](V2_PLUGIN_MIGRATION.md) for the complete source-file map.
 
-The pinned catalog contains 209 plugin and 114 theme metadata records. Forty-seven plugin payloads were statically screened and the requested 36 received manual dispositions; catalog-theme source/license review and every community runtime acceptance remain pending. Catalog names and behavior can inform clean-room product work, but no catalog entry grants blanket permission to copy source or assets.
+## Catalog boundary
+
+The 2026-08-26 snapshot contains 209 plugin and 114 theme metadata records. The raw response hashes are:
+
+- plugins: `914d1255580e9d834593cbfe6ca9ec07af8c56151ec388d44ad5cae24832e1ad`
+- themes: `d0205afb84af6f32949e6cbde6e32fc54433a0fe49879fc7b4b3c2c66b7cc433`
+
+Metadata describes demand; it does not grant copying rights or prove security, teardown, performance, or compatibility. The 36 requested community candidates remain non-installable until their individual runtime and action gates pass. VoiceMessages is GPL-3.0, not AGPL; SoulCord Voice Note Studio remains independently written Apache-2.0 code.
