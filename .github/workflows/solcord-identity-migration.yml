@@ -77,6 +77,14 @@ jobs:
           BRANCH_NAME: audit/solcord-foundation
           COMMIT_HASH: ${{env.MIGRATION_SHA}}
 
-      - name: Push verified migration
+      - name: Restore workflow files for the permission-limited push
+        shell: bash
+        run: |
+          git checkout origin/audit/solcord-foundation -- .github/workflows
+          git add -A
+          git commit --amend --no-edit
+          test -z "$(git diff --name-only origin/audit/solcord-foundation...HEAD -- .github/workflows)"
+
+      - name: Push verified non-workflow migration
         shell: bash
         run: git push origin HEAD:audit/solcord-foundation
