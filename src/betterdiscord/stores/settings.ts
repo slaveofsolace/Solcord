@@ -5,12 +5,11 @@ import SettingsConfig, {type DropdownSetting, type SettingsCategory} from "@data
 import JsonStore from "./json";
 import Events from "@modules/emitter";
 import DiscordModules from "@modules/discordmodules";
-import {t} from "@common/i18n";
 import Store from "./base";
 import type {ComponentType} from "react";
 import type AddonManager from "@modules/addonmanager";
 import {PaletteIcon, PlugIcon, type LucideIcon} from "lucide-react";
-import {resolvePanelLabel} from "./panel-label";
+import {resolvePanelLabel, resolveTranslatedText} from "./panel-label";
 
 export interface SettingsCollection {
     type: "collection";
@@ -100,7 +99,7 @@ class SettingsManager extends Store {
 
     registerAddonPanel(manager: AddonManager) {
         const plural = manager.prefix + "s";
-        const title = t(`Panels.${plural as "plugins" | "themes"}`)!;
+        const title = resolveTranslatedText(`Panels.${plural as "plugins" | "themes"}`, manager.prefix === "plugin" ? "Plugins" : "Themes")!;
 
         this.registerPanel(plural, title, {
             order: manager.order,
@@ -136,7 +135,7 @@ class SettingsManager extends Store {
         const collectionName = collection.name;
         Object.defineProperty(collection, "name", {
             enumerable: true,
-            get: () => t(`Collections.${collection.id}.name`) || collectionName
+            get: () => resolveTranslatedText(`Collections.${collection.id}.name`, collectionName) ?? collectionName
         });
 
         const categories = collection.settings;
@@ -151,7 +150,7 @@ class SettingsManager extends Store {
             const categoryName = category.name;
             Object.defineProperty(category, "name", {
                 enumerable: true,
-                get: () => t(`Collections.${collection.id}.${category.id}.name`) || categoryName
+                get: () => resolveTranslatedText(`Collections.${collection.id}.${category.id}.name`, categoryName) ?? categoryName
             });
 
 
@@ -170,11 +169,11 @@ class SettingsManager extends Store {
                 Object.defineProperties(setting, {
                     name: {
                         enumerable: true,
-                        get: () => t(`Collections.${collection.id}.${category.id}.${setting.id}.name`) || settingName
+                        get: () => resolveTranslatedText(`Collections.${collection.id}.${category.id}.${setting.id}.name`, settingName) ?? settingName
                     },
                     note: {
                         enumerable: true,
-                        get: () => t(`Collections.${collection.id}.${category.id}.${setting.id}.note`) || settingNote
+                        get: () => resolveTranslatedText(`Collections.${collection.id}.${category.id}.${setting.id}.note`, settingNote) ?? settingNote
                     }
                 });
 
@@ -185,7 +184,7 @@ class SettingsManager extends Store {
                         Object.defineProperty(opt, "label", {
                             enumerable: true,
                             get: () => {
-                                return t(`Collections.${collection.id}.${category.id}.${setting.id}.options.${opt.id ?? opt.value}`) || optLabel;
+                                return resolveTranslatedText(`Collections.${collection.id}.${category.id}.${setting.id}.options.${opt.id ?? opt.value}`, optLabel) ?? optLabel;
                             }
                         });
                     }

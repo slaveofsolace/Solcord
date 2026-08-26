@@ -1,7 +1,23 @@
 import {t} from "@common/i18n";
 
+const MISSING_TRANSLATION = "String not found!";
+const PANEL_FALLBACKS: Record<string, string> = {
+    customcss: "Custom CSS",
+    plugins: "Plugins",
+    settings: "Settings",
+    soulcord: "SoulCord Suite",
+    themes: "Themes",
+    updates: "Updates"
+};
+
+export function resolveTranslatedText(key: string, fallback?: string): string | undefined {
+    const translated = t(key);
+    if (translated && translated !== MISSING_TRANSLATION) return translated;
+    return fallback && fallback !== MISSING_TRANSLATION ? fallback : undefined;
+}
+
 export function resolvePanelLabel(id: string, fallback: string, translateLabel = true): string {
-    if (!translateLabel) return fallback;
-    const translated = t(`Panels.${id}`);
-    return !translated || translated === "String not found!" ? fallback : translated;
+    const safeFallback = fallback && fallback !== MISSING_TRANSLATION ? fallback : PANEL_FALLBACKS[id] ?? id;
+    if (!translateLabel) return safeFallback;
+    return resolveTranslatedText(`Panels.${id}`, safeFallback) ?? safeFallback;
 }
