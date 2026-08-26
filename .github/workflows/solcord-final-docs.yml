@@ -31,19 +31,17 @@ jobs:
         shell: bash
         run: |
           output="assets/branding/solcord-social-preview.png"
-          if command -v rsvg-convert >/dev/null 2>&1; then
-            rsvg-convert -w 1200 -h 630 assets/branding/solcord-social-preview.svg -o "$output"
-          elif command -v magick >/dev/null 2>&1; then
-            magick -background none assets/branding/solcord-social-preview.svg -resize 1200x630! "$output"
-          elif command -v convert >/dev/null 2>&1; then
-            convert -background none assets/branding/solcord-social-preview.svg -resize 1200x630! "$output"
-          else
-            echo "No SVG rasterizer is available on the runner."
-            exit 1
+          if ! command -v rsvg-convert >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends librsvg2-bin
           fi
+          rsvg-convert -w 1200 -h 630 assets/branding/solcord-social-preview.svg -o "$output"
           test -s "$output"
-          dimensions="$(identify -format '%wx%h' "$output")"
-          test "$dimensions" = "1200x630"
+          dimensions="$(file "$output")"
+          case "$dimensions" in
+            *"1200 x 630"*) ;;
+            *) echo "Unexpected social preview dimensions: $dimensions"; exit 1 ;;
+          esac
 
       - name: Regenerate persistent repository audit
         run: node scripts/audit-solcord-repository.mjs
