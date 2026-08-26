@@ -42,6 +42,7 @@ jobs:
             *"1200 x 630"*) ;;
             *) echo "Unexpected social preview dimensions: $dimensions"; exit 1 ;;
           esac
+          git add "$output"
 
       - name: Regenerate persistent repository audit
         run: node scripts/audit-solcord-repository.mjs
@@ -51,7 +52,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/branding/solcord-social-preview.png docs/audit/FULL_REPOSITORY_AUDIT.md
+          git add docs/audit/FULL_REPOSITORY_AUDIT.md
           if git diff --cached --quiet; then
             echo "Generated files are already current."
           else
