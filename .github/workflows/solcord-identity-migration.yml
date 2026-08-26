@@ -40,9 +40,9 @@ jobs:
         shell: bash
         run: |
           git add -A
-          if git diff --cached --name-only | grep -Eiq 'soul([ _-]?cord)'; then
-            echo "Old identity remains in a tracked path."
-            git diff --cached --name-only | grep -Ei 'soul([ _-]?cord)'
+          if git ls-files | grep -Eiq 'soul([ _-]?cord)'; then
+            echo "Old identity remains in the final tracked paths."
+            git ls-files | grep -Ei 'soul([ _-]?cord)'
             exit 1
           fi
           if git grep -I -n -Ei 'soul([ _-]?cord)' -- .; then
