@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 521 |
-| Text files scanned | 509 |
+| Persistent tracked files | 520 |
+| Text files scanned | 508 |
 | Binary files classified | 12 |
-| Text lines scanned | 106,538 |
-| Custom Solcord lines | 21,429 |
+| Text lines scanned | 106,500 |
+| Custom Solcord lines | 21,391 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -30,8 +30,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | DOM queries | 50 | 0 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 25 | 1 |
-| Synchronous filesystem calls | 559 | 494 |
-| Console calls | 76 | 58 |
+| Synchronous filesystem calls | 550 | 485 |
+| Console calls | 75 | 57 |
 | Empty catch blocks | 3 | 1 |
 
 ## Largest maintainable files
@@ -72,8 +72,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 7 | `src/betterdiscord/styles/solcord.css` | 748 | 53.8 KiB |
 | 8 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
 | 9 | `tests/solcord/settings.test.ts` | 545 | 29.2 KiB |
-| 10 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
-| 11 | `docs/handoff/CODEX_HANDOFF.md` | 447 | 18.5 KiB |
+| 10 | `docs/handoff/CODEX_HANDOFF.md` | 500 | 21.1 KiB |
+| 11 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
 | 12 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
 | 13 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
 | 14 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 369 | 37.0 KiB |
