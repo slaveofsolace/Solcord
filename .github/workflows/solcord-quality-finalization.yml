@@ -41,7 +41,7 @@ jobs:
             echo "Old identity remains in a tracked path."
             exit 1
           fi
-          if git grep -I -n -Ei 'soul([ _-]?cord)|soul-(dark|light)' -- .; then
+          if git grep -I -n -Ei 'soul([ _-]?cord)|soul-(dark|light)' -- . ':!.github/workflows/solcord-quality-finalization.yml'; then
             echo "Old identity remains in tracked text."
             exit 1
           fi
