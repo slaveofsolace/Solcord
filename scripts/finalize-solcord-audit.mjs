@@ -86,7 +86,7 @@ replaceRequired(
 const cssFile = "src/betterdiscord/styles/solcord.css";
 let css = readFileSync(cssFile, "utf8");
 if (!css.includes("/* Solcord long-list containment */")) {
-    css += `\n\n/* Solcord long-list containment */\n.solcord-module-row,\n.solcord-catalog-row,\n.solcord-curated-row,\n.solcord-people-history article {\n    content-visibility: auto;\n    contain-intrinsic-size: auto 76px;\n}\n\n.solcord-action:disabled,\n.solcord-local-button:disabled {\n    opacity: 0.45;\n    cursor: not-allowed;\n}\n`;
+    css = `${css.trimEnd()}\n\n/* Solcord long-list containment */\n.solcord-module-row,\n.solcord-catalog-row,\n.solcord-curated-row,\n.solcord-people-history article {\n    content-visibility: auto;\n    contain-intrinsic-size: auto 76px;\n}\n\n.solcord-action:disabled,\n.solcord-local-button:disabled {\n    opacity: 0.45;\n    cursor: not-allowed;\n}\n`;
     writeFileSync(cssFile, css, "utf8");
 }
 
