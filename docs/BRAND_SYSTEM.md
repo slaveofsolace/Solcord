@@ -48,7 +48,7 @@ Current production-source hashes:
 
 ## Theme family
 
-The recommended default and four alternatives share a visibly separated workstation layout: bounded server/channel/chat/member regions, compact gutters, distinct composer and search fields, active-row rails, explicit keyboard focus, current Discord visual-refresh tokens, and a `prefers-reduced-motion` fallback. Each remains a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
+The theme family contains the recommended default, four accepted V1 alternatives, and six V2 full-shell alternatives. Every theme covers server/channel/chat/member and activity regions, composer and search fields, settings, popouts, and native dialogs. Each remains a self-contained local CSS file with no `@import`, remote font, remote image, or remote stylesheet.
 
 | Theme | Character | SHA-256 |
 | --- | --- | --- |
@@ -57,10 +57,16 @@ The recommended default and four alternatives share a visibly separated workstat
 | Carbon Ember | Tight charcoal instrumentation with copper interaction rails and burgundy selection signals. | `ab2c74b1ce42720c99bf6d7a33f04befa47dd79d6c5537c8d974c0b555476f9c` |
 | Midnight Glass | Navy-black translucent panels, restrained separation, silver seams, and ice-cyan focus without fragile modal overrides. | `4b605006305b114112c48ce6a89204259343d10d960b2a13a0366655e15c1a00` |
 | Paper Signal | Warm paper, ink, coral, and teal with print-like square seams; it applies even when Discord was previously in dark mode. | `8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d` |
+| Threadline | Compact ruled workspace with indexed navigation and precise message rails. | `8c8283b10e507daabe9af7c30bc3e1e563b6c1cbd44d76bb0eb97c27d1eac1ee` |
+| Signal Block | High-contrast square containment with heavy, state-bearing block boundaries. | `4b648c012f9017cb3334c987e09fc3190b1ce30681d30d792e2860b756a0c071` |
+| Relay Classic | Familiar Discord density with a continuous shell and restrained relay-blue state bars. | `07f3bf94c5bbf3d7fe7c8310ea2a2cf8134da4cc2367038fc9f2710aab036931` |
+| Workshop | Tactile charcoal surfaces, recessed composition areas, and copper fixtures. | `d6e443561148683a556897b7bf0d869705b0521fa9a1204f38083f7c69b6faa3` |
+| Quiet Read | Accessibility-first light surfaces, generous reading measure, large targets, and still interactions. | `0899ac827b8ffc669ba7e7adb27eabce58e0223282d82b97f8e5c94a72ba1643` |
+| Night Transit | Navy shell with distinct route rails for selection, unread state, mentions, and voice. | `416028f03d7111f8b46d3f7608de741d7265ea148771a4dd64c04963089d460d` |
 
-All five remain original implementations. The MIT-licensed `midnight-discord` source at pinned commit `0c6e4b5009df5f13fe33d9b279378378d5212330` was inspected as `REFERENCE ONLY` for general principles: cover current visual-refresh tokens, separate major work regions, expose bounded density tokens, and honor reduced motion. No selector block, hosted import, font, SVG, or asset was copied. The owner’s existing `midnight.theme.css` was read only to confirm its canonical metadata/configuration shape and was not modified, staged, or replaced.
+All eleven remain original implementations. The MIT-licensed `midnight-discord` source at pinned commit `0c6e4b5009df5f13fe33d9b279378378d5212330` was inspected as `REFERENCE ONLY` for general principles: cover current visual-refresh tokens, separate major work regions, expose bounded density tokens, and honor reduced motion. No selector block, hosted import, font, SVG, or asset was copied. The owner's existing `midnight.theme.css` was read only to confirm its canonical metadata/configuration shape and was not modified, staged, or replaced.
 
-Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before **Apply and verify**; skipping the wizard changes no theme state.
+Only one SoulCord theme is selected by the setup transaction. The preview reports declared conflicts before **Apply and verify**; skipping the wizard changes no theme state. The six V2 themes differ in at least three structural axes rather than palette alone; see [V2 theme system](V2_THEME_SYSTEM.md).
 
 ## UI rules
 

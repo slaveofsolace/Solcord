@@ -257,6 +257,229 @@ function StreamShieldControls() {
     </Section>;
 }
 
+function StreamAudienceGuardControls() {
+    const state = useStateFromStores([SoulCordSettings, SoulCordRuntime], () => ({
+        settings: SoulCordSettings.snapshot().modules["stream-audience-guard"],
+        runtime: SoulCordRuntime.audienceGuardStatus(),
+        privateState: SoulCordRuntime.audienceGuardPrivatePolicy()
+    }));
+    const [userId, setUserId] = useState("");
+    const [label, setLabel] = useState("");
+    const [actionStatus, setActionStatus] = useState("");
+    const setMode = (key: "preventStart" | "stopOnJoin" | "stopOnWatch", value: boolean) => {
+        if (key === "stopOnWatch" && value && !window.confirm("Enable Stop on Watch? A denied viewer may receive brief frames before Discord reports them. This is detection and rapid stopping, not per-viewer stream access control.")) return;
+        void SoulCordRuntime.setValue("stream-audience-guard", key, value);
+    };
+    const add = async () => {
+        const normalizedId = userId.trim();
+        if (!/^\d{1,32}$/.test(normalizedId)) {
+            setActionStatus("Enter a Discord user ID containing digits only.");
+            return;
+        }
+        const complete = await SoulCordRuntime.setAudienceGuardEntries([...state.privateState.policy.entries, {userId: normalizedId, label: label.trim()}]);
+        setActionStatus(complete ? "Denied user saved to this account's private policy." : "The private policy is available for this session, but encrypted persistence could not be confirmed.");
+        setUserId("");
+        setLabel("");
+    };
+    const arm = () => {
+        if (!window.confirm("Arm Stream Audience Guard for the current voice call? SoulCord will prevent or stop your own Go Live when a denied user is detected. This cannot make a normal Discord stream invisible to one person or guarantee zero-frame exposure.")) return;
+        setActionStatus(SoulCordRuntime.armAudienceGuard() ? "Audience Guard is armed for this call." : "Audience Guard could not arm. Join a voice channel, add a denied user, enable at least one mode, and confirm the adapter is available.");
+    };
+    const entries = state.privateState.policy.entries;
+    return <Section title="Stream Audience Guard" summary="Prevent or stop your own Go Live when a denied user is detected. This is a truthful client-side guard, not a per-person stream permission.">
+        <div className="soulcord-audience-command">
+            <div>
+                <p className="soulcord-eyebrow">Call-bound protection</p>
+                <strong>Your stream will not start or continue while a denied user is detected in the current call or viewer list.</strong>
+                <p>Only native private-channel permissions are server-enforced. Stop on Watch cannot rule out brief frame exposure.</p>
+            </div>
+            <span className={`soulcord-status soulcord-status-${state.runtime.phase === "armed" ? "active" : state.runtime.phase === "attention" || state.runtime.phase === "unavailable" ? "failed" : "starting"}`}>{state.runtime.phase}</span>
+        </div>
+        <div className="soulcord-control-grid">
+            <label><input type="checkbox" checked={state.settings.enabled} onChange={event => void SoulCordRuntime.setEnabled("stream-audience-guard", event.currentTarget.checked)} /> Enable validated adapter</label>
+            <label><input type="checkbox" checked={state.settings.values.preventStart === true} disabled={!state.settings.enabled || state.runtime.armed} onChange={event => setMode("preventStart", event.currentTarget.checked)} /> Prevent Start</label>
+            <label><input type="checkbox" checked={state.settings.values.stopOnJoin === true} disabled={!state.settings.enabled || state.runtime.armed} onChange={event => setMode("stopOnJoin", event.currentTarget.checked)} /> Stop on Join</label>
+            <label><input type="checkbox" checked={state.settings.values.stopOnWatch === true} disabled={!state.settings.enabled || state.runtime.armed} onChange={event => setMode("stopOnWatch", event.currentTarget.checked)} /> Stop on Watch</label>
+        </div>
+        <div className="soulcord-inline-field soulcord-audience-add">
+            <input value={userId} inputMode="numeric" maxLength={32} placeholder="Discord user ID" aria-label="Denied Discord user ID" onChange={event => setUserId(event.currentTarget.value.replace(/\D/g, ""))} />
+            <input value={label} maxLength={80} placeholder="Private label (optional)" aria-label="Private label for denied user" onChange={event => setLabel(event.currentTarget.value)} />
+            <ActionButton onClick={() => void add()} disabled={!state.settings.enabled || entries.length >= 100 || !userId.trim()}>Add locally</ActionButton>
+        </div>
+        <div className="soulcord-audience-list" aria-label="Denied stream audience">
+            {entries.map(entry => <div key={entry.userId} className="soulcord-audience-row"><div><strong>{entry.label || `Discord user •${entry.userId.slice(-4)}`}</strong><small>Account-private entry · ID ending {entry.userId.slice(-4)}</small></div><ActionButton disabled={state.runtime.armed} onClick={() => void SoulCordRuntime.setAudienceGuardEntries(entries.filter(item => item.userId !== entry.userId))}>Remove</ActionButton></div>)}
+            {!entries.length && <p className="soulcord-empty">No denied users are stored for this Discord account.</p>}
+        </div>
+        <div className="soulcord-actions">
+            {state.runtime.armed ? <ActionButton tone="danger" onClick={() => {SoulCordRuntime.disarmAudienceGuard(); setActionStatus("Audience Guard disarmed.");}}>Disarm</ActionButton> : <ActionButton tone="accent" disabled={!state.runtime.available || !entries.length} onClick={arm}>Arm for this call</ActionButton>}
+            <ActionButton tone="danger" disabled={!entries.length || state.runtime.armed} onClick={() => {if (window.confirm("Clear this account's private Stream Audience Guard denylist?")) void SoulCordRuntime.clearAudienceGuardEntries();}}>Clear private list</ActionButton>
+        </div>
+        <p className="soulcord-key-hint">{state.privateState.persistent ? "Encrypted persistence is active through Electron safeStorage." : "Denylist persistence is unavailable; entries remain session-only."} {state.runtime.detail}</p>
+        {actionStatus && <p role="status" className="soulcord-import-status">{actionStatus}</p>}
+    </Section>;
+}
+
+function NativeSuitePanel() {
+    const state = useStateFromStores([SoulCordRuntime, SoulCordSettings], () => ({statuses: SoulCordRuntime.nativeSuiteStatus(), preferences: SoulCordSettings.snapshot().productPreferences}));
+    const controller = SoulCordRuntime.nativeSuiteController();
+    const [actionStatus, setActionStatus] = useState("");
+    const [audioUserId, setAudioUserId] = useState("");
+    const [audioPercent, setAudioPercent] = useState(100);
+    const [channelId, setChannelId] = useState("");
+    const [serverAlias, setServerAlias] = useState("");
+    const [glance, setGlance] = useState<Array<{id: string; authorLabel: string; text: string; timestamp: number;}>>([]);
+    const [translationText, setTranslationText] = useState("");
+    const [translationResult, setTranslationResult] = useState("");
+    const [translationCredential, setTranslationCredential] = useState("");
+    const [voicePreview, setVoicePreview] = useState<{recordingId: string; durationMs: number; sizeBytes: number; url: string;} | undefined>();
+    const [composerDraft, setComposerDraft] = useState("");
+    const [composerProof, setComposerProof] = useState<{characterCount: number; partCount: number; warnings: string[];} | undefined>();
+    const [timeValue, setTimeValue] = useState("");
+    const [timeStyle, setTimeStyle] = useState<"t" | "T" | "d" | "D" | "f" | "F" | "R">("F");
+    const [timeMarkup, setTimeMarkup] = useState("");
+    const [permissionInput, setPermissionInput] = useState("VIEW_CHANNEL, CONNECT, STREAM");
+    const [permissionResults, setPermissionResults] = useState<Array<{permission: string; explanation: string;}>>([]);
+    const [focusInput, setFocusInput] = useState(state.preferences.nativeSuite.focusChannelIds.join(", "));
+    const [identitySubject, setIdentitySubject] = useState("");
+    const [identityText, setIdentityText] = useState("");
+    const [identityTags, setIdentityTags] = useState("");
+    const [identityNotes, setIdentityNotes] = useState<Array<{subjectId: string; text: string; tags: string[]; updatedAt: number;}>>([]);
+    const [identityPersistent, setIdentityPersistent] = useState(false);
+    const nativePreferences = state.preferences.nativeSuite;
+    const translationEndpoint = nativePreferences.translation.provider === "deepl" ? "https://api-free.deepl.com/v2/translate" : nativePreferences.translation.endpoint;
+    const updateNativePreferences = (next: typeof nativePreferences) => void SoulCordRuntime.setProductPreferences({...state.preferences, nativeSuite: next});
+    const volume = () => {
+        try {
+            const preview = controller?.previewLocalVolume(audioUserId.trim(), 100, audioPercent);
+            if (!preview || !window.confirm(`Set local playback for user •${preview.userId.slice(-4)} from ${preview.currentPercent}% to ${preview.targetPercent}%? This changes only what you hear.`)) return;
+            controller?.applyReviewedLocalVolume();
+            setActionStatus("Reviewed local playback volume applied.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Audio Console stayed unavailable.");}
+    };
+    const reviewChannel = () => {
+        try {
+            setGlance([...(controller?.previewLoadedChannel(channelId.trim()) ?? [])]);
+            setActionStatus("Channel Glance read the already-loaded local store without fetching or marking anything read.");
+        }
+        catch (error) {setGlance([]); setActionStatus(error instanceof Error ? error.message : "Channel Glance stayed unavailable.");}
+    };
+    const translate = async () => {
+        try {
+            const provider = nativePreferences.translation.provider;
+            if (provider === "off") throw new Error("Choose a translation provider first.");
+            const preview = controller?.previewTranslation(provider, nativePreferences.translation.endpoint || undefined, "auto", "EN", translationText);
+            if (!preview || !window.confirm(`${preview.disclosure}\n\nContinue with this reviewed text?`)) return;
+            setTranslationResult(await controller!.executeReviewedTranslation(preview.id, translationCredential));
+            setActionStatus("Translation returned to this local panel. It was not inserted or sent to Discord.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Translation Desk failed closed.");}
+    };
+    const startVoice = async () => {
+        try {await controller?.beginVoiceNoteFromUserGesture(); setVoicePreview(undefined); setActionStatus("Recording locally. Nothing is uploading.");}
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Voice Note Studio stayed unavailable.");}
+    };
+    const stopVoice = async () => {
+        try {const preview = await controller?.stopVoiceNoteForPreview(); setVoicePreview(preview); setActionStatus("Recording stopped. Review it before opening Discord's ordinary upload composer.");}
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "No local recording could be previewed.");}
+    };
+    const prepareVoiceUpload = () => {
+        if (!voicePreview || !window.confirm("Open Discord's normal upload composer with this reviewed voice note? This prepares the file but does not press Send.")) return;
+        try {controller?.prepareReviewedVoiceNoteUpload(channelId.trim()); setVoicePreview(undefined); setActionStatus("The reviewed file was handed to Discord's normal upload composer. You still control Send.");}
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "The native upload composer stayed unavailable.");}
+    };
+    const previewNotifications = (scope: "guild" | "mentions" | "all") => {
+        try {
+            const preview = controller?.previewNotifications(scope);
+            if (!preview || !window.confirm(`Mark ${preview.count} reviewed ${scope} notification item(s) as read? This changes account read state and cannot be undone by SoulCord.`)) return;
+            controller?.applyReviewedNotifications(preview.id);
+            setActionStatus(`${preview.count} reviewed notification item(s) were marked read.`);
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Notification Review stayed unavailable.");}
+    };
+    const addLocalSpaceRule = (kind: "pin" | "hide" | "alias") => {
+        try {
+            if (kind === "pin") controller?.pinDm(channelId.trim());
+            else if (kind === "hide") controller?.hideGuild(channelId.trim());
+            else controller?.aliasGuild(channelId.trim(), serverAlias.trim());
+            setActionStatus("The local People and Spaces preference was saved. No Discord server or profile was edited.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "The local preference was not changed.");}
+    };
+    const reviewComposer = () => {
+        try {setComposerProof(controller?.composerProof(composerDraft)); setActionStatus("Composer Proof reviewed this local draft. Nothing was inserted or sent.");}
+        catch (error) {setComposerProof(undefined); setActionStatus(error instanceof Error ? error.message : "Composer Proof stayed unavailable.");}
+    };
+    const composeTime = () => {
+        try {
+            const parsed = new Date(timeValue).valueOf();
+            const markup = controller?.timeMarkup(parsed, timeStyle) ?? "";
+            setTimeMarkup(markup);
+            setActionStatus("Time Composer generated local Discord timestamp markup. It was not inserted or sent.");
+        }
+        catch (error) {setTimeMarkup(""); setActionStatus(error instanceof Error ? error.message : "Time Composer could not parse that time.");}
+    };
+    const reviewPermissions = () => {
+        try {
+            const names = permissionInput.split(/[\s,]+/).map(value => value.trim()).filter(Boolean);
+            setPermissionResults([...(controller?.explainCachedPermissions(names) ?? [])]);
+            setActionStatus("Permission Lens explained the supplied cached permission names. It did not fetch or edit channel permissions.");
+        }
+        catch (error) {setPermissionResults([]); setActionStatus(error instanceof Error ? error.message : "Permission Lens stayed unavailable.");}
+    };
+    const applyFocus = () => {
+        try {
+            controller?.setFocusChannels(focusInput.split(/[\s,]+/).map(value => value.trim()).filter(Boolean));
+            setActionStatus("Focus Channels dimmed non-selected loaded channel rows locally. Hovered and selected rows remain readable.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Focus Channels stayed unavailable.");}
+    };
+    const loadIdentityNotes = async () => {
+        const [status, result] = await Promise.all([SoulCordRuntime.localIdentityNotesStatus(), SoulCordRuntime.readLocalIdentityNotes()]);
+        setIdentityNotes(result.notes);
+        setIdentityPersistent(status.persistent && result.persistent && result.complete);
+        setActionStatus(result.complete ? `${result.notes.length} account-private note(s) loaded locally.` : "Local Identity Notes stayed unavailable; no private content was exposed.");
+    };
+    const saveIdentityNote = async () => {
+        try {
+            const tags = identityTags.split(",").map(tag => tag.trim()).filter(Boolean);
+            const reviewed = controller?.reviewIdentityNote(identitySubject.trim(), identityText, tags);
+            if (!reviewed || !window.confirm(`Store the reviewed local note for user •${reviewed.subjectId.slice(-4)}? The note never changes that Discord profile and never enters normal settings or exports.`)) return;
+            const intent = controller!.confirmIdentityNote(reviewed.subjectId);
+            const result = await SoulCordRuntime.writeLocalIdentityNote(intent.payload);
+            if (!result.complete) throw new Error("The private note write did not complete.");
+            setIdentityText("");
+            setIdentityTags("");
+            await loadIdentityNotes();
+            setActionStatus(result.persistent ? "Reviewed note encrypted through Electron safeStorage." : "Encryption is unavailable; the reviewed note remains session-only.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "Local Identity Notes stayed unavailable.");}
+    };
+    const removeIdentityNote = async (subjectId: string) => {
+        if (!window.confirm(`Remove the local note for user •${subjectId.slice(-4)}? This does not change the Discord account.`)) return;
+        const result = await SoulCordRuntime.removeLocalIdentityNote(subjectId);
+        if (result.complete) await loadIdentityNotes();
+        else setActionStatus("The private note was preserved because removal did not complete cleanly.");
+    };
+    return <Section title="SoulCord native suite" summary="Community-shaped features are grouped into owned, reversible SoulCord tools. A green row means its current adapter validated; unavailable rows stay inert instead of falling back to a hidden community file.">
+        <div className="soulcord-native-ledger" role="list" aria-label="SoulCord native feature adapters">
+            {state.statuses.map(item => <div key={item.id} role="listitem" className="soulcord-native-row"><div><strong>{item.title}</strong><p>{item.detail}</p>{item.enabledProviders.length > 0 && <small>Replaces: {item.enabledProviders.join(", ")}</small>}</div><span className={`soulcord-maturity soulcord-native-${item.maturity}`}>{item.maturity}</span></div>)}
+            {!state.statuses.length && <p className="soulcord-empty">Complete setup or enable a native tool to load the V2 adapter ledger.</p>}
+        </div>
+        <div className="soulcord-native-tools">
+            <details><summary>Composer Proof and Time Composer</summary><div className="soulcord-composer-lab"><textarea value={composerDraft} maxLength={64000} placeholder="Review a draft locally before sending" onChange={event => setComposerDraft(event.currentTarget.value)} /><div className="soulcord-actions"><ActionButton onClick={reviewComposer}>Review draft</ActionButton></div>{composerProof && <div className="soulcord-native-preview"><p><strong>{composerProof.characterCount.toLocaleString()} characters</strong><span>{composerProof.partCount} guarded part(s)</span></p>{composerProof.warnings.length ? composerProof.warnings.map(warning => <p key={warning}>{warning}</p>) : <p>No broad-mention, length, or unclosed-code-block warnings found.</p>}</div>}<div className="soulcord-catalog-tools"><label>Local date and time<input type="datetime-local" value={timeValue} onChange={event => setTimeValue(event.currentTarget.value)} /></label><label>Discord display style<select value={timeStyle} onChange={event => setTimeStyle(event.currentTarget.value as typeof timeStyle)}><option value="F">Full date and time</option><option value="f">Short date and time</option><option value="R">Relative</option><option value="D">Long date</option><option value="d">Short date</option><option value="T">Time with seconds</option><option value="t">Short time</option></select></label></div><div className="soulcord-inline-field"><ActionButton disabled={!timeValue} onClick={composeTime}>Generate timestamp</ActionButton>{timeMarkup && <><output>{timeMarkup}</output><ActionButton onClick={() => void navigator.clipboard?.writeText(timeMarkup).then(() => setActionStatus("Reviewed timestamp copied. SoulCord did not insert or send it."))}>Copy</ActionButton></>}</div></div></details>
+            <details><summary>Audio Console</summary><div className="soulcord-inline-field"><input value={audioUserId} inputMode="numeric" placeholder="Discord user ID" aria-label="Audio Console user ID" onChange={event => setAudioUserId(event.currentTarget.value.replace(/\D/g, ""))} /><input type="number" min="0" max="200" value={audioPercent} aria-label="Local volume percent" onChange={event => setAudioPercent(Math.max(0, Math.min(200, Number(event.currentTarget.value))))} /><ActionButton disabled={!audioUserId} onClick={volume}>Review and apply</ActionButton></div></details>
+            <details><summary>Channel Glance and People and Spaces</summary><div className="soulcord-inline-field"><input value={channelId} inputMode="numeric" placeholder="Loaded channel, DM, server, or user ID" aria-label="Local Discord object ID" onChange={event => setChannelId(event.currentTarget.value.replace(/\D/g, ""))} /><ActionButton disabled={!channelId} onClick={reviewChannel}>Glance</ActionButton><ActionButton disabled={!channelId} onClick={() => addLocalSpaceRule("pin")}>Pin DM locally</ActionButton><ActionButton disabled={!channelId} onClick={() => addLocalSpaceRule("hide")}>Hide server locally</ActionButton></div><div className="soulcord-inline-field soulcord-alias-field"><input value={serverAlias} maxLength={48} placeholder="Local server alias" aria-label="Local server alias" onChange={event => setServerAlias(event.currentTarget.value)} /><ActionButton disabled={!channelId || !serverAlias.trim()} onClick={() => addLocalSpaceRule("alias")}>Save local alias</ActionButton></div>{glance.length > 0 && <div className="soulcord-native-preview">{glance.map(message => <p key={message.id}><strong>{message.authorLabel}</strong> <span>{message.text || "No text content"}</span><small>{timestamp(message.timestamp)}</small></p>)}</div>}</details>
+            <details><summary>Translation Desk</summary><div className="soulcord-translation-grid"><label>Provider<select value={nativePreferences.translation.provider} onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, provider: event.currentTarget.value as typeof nativePreferences.translation.provider}});}}><option value="off">Off</option><option value="deepl">DeepL Free</option><option value="libretranslate">LibreTranslate</option></select></label><label>HTTPS endpoint<input value={nativePreferences.translation.endpoint} disabled={nativePreferences.translation.provider !== "libretranslate"} placeholder="https://translate.example/translate" onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, endpoint: event.currentTarget.value}});}} /></label><label>Credential<input type="password" autoComplete="off" value={translationCredential} placeholder="Stored only through encrypted private storage" onChange={event => setTranslationCredential(event.currentTarget.value)} /></label><div className="soulcord-actions soulcord-translation-credentials"><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint} onClick={() => void SoulCordRuntime.readTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(result.credential); setActionStatus(result.complete ? (result.credential ? "Credential loaded from account-bound private storage." : "No credential is stored for this provider and endpoint.") : "Credential storage could not be read completely.");})}>Load credential</ActionButton><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint || !translationCredential} onClick={() => void SoulCordRuntime.writeTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint, translationCredential).then(result => setActionStatus(result.complete ? (result.persistent ? "Credential encrypted through Electron safeStorage." : "Encryption is unavailable; the credential remains memory-only for this session.") : "Credential could not be persisted and was not added to normal settings."))}>Save securely</ActionButton><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint} tone="danger" onClick={() => void SoulCordRuntime.clearTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(""); setActionStatus(result.complete ? "Stored credential cleared for this provider and endpoint." : "Credential cleanup needs attention.");})}>Clear credential</ActionButton></div><textarea value={translationText} maxLength={16000} placeholder="Text to review before translation" onChange={event => setTranslationText(event.currentTarget.value)} /><ActionButton disabled={!translationText || nativePreferences.translation.provider === "off"} onClick={() => void translate()}>Review destination and translate</ActionButton>{translationResult && <output>{translationResult}</output>}</div></details>
+            <details><summary>Voice Note Studio</summary><div className="soulcord-actions"><ActionButton onClick={() => void startVoice()}>Record</ActionButton><ActionButton onClick={() => void stopVoice()}>Stop and preview</ActionButton><ActionButton disabled={!voicePreview || !channelId} onClick={prepareVoiceUpload}>Open normal upload composer</ActionButton><ActionButton disabled={!voicePreview} tone="danger" onClick={() => {controller?.cancelVoiceNote(); setVoicePreview(undefined); setActionStatus("Local voice-note preview cleared.");}}>Cancel</ActionButton></div>{voicePreview && <div className="soulcord-native-preview"><audio controls src={voicePreview.url} /><small>{Math.ceil(voicePreview.durationMs / 1000)} seconds · {(voicePreview.sizeBytes / 1024).toFixed(1)} KiB · not uploaded</small></div>}</details>
+            <details><summary>Notification Review</summary><div className="soulcord-actions"><ActionButton onClick={() => previewNotifications("mentions")}>Review mentions</ActionButton><ActionButton onClick={() => previewNotifications("guild")}>Review current server</ActionButton><ActionButton onClick={() => previewNotifications("all")}>Review all</ActionButton></div><p className="soulcord-key-hint">Every action previews a bounded count and asks again before changing read state.</p></details>
+            <details><summary>Permission Lens and Focus Channels</summary><div className="soulcord-catalog-tools"><label>Cached permission names<input value={permissionInput} onChange={event => setPermissionInput(event.currentTarget.value)} /></label><div className="soulcord-actions"><ActionButton disabled={!permissionInput.trim()} onClick={reviewPermissions}>Explain locally</ActionButton></div><label>Focus channel IDs<input value={focusInput} placeholder="Comma-separated loaded channel IDs" onChange={event => setFocusInput(event.currentTarget.value.replace(/[^\d,\s]/g, ""))} /></label><div className="soulcord-actions"><ActionButton onClick={applyFocus}>{focusInput.trim() ? "Apply focus" : "Clear focus"}</ActionButton></div></div>{permissionResults.length > 0 && <div className="soulcord-native-preview">{permissionResults.map(result => <p key={result.permission}><strong>{result.permission}</strong><span>{result.explanation}</span></p>)}</div>}<p className="soulcord-key-hint">Permission Lens uses only supplied cached names. Focus Channels changes only the loaded local channel rail and never mutes or leaves a channel.</p></details>
+            <details><summary>Encrypted Local Identity Notes</summary><div className="soulcord-composer-lab"><p className="soulcord-key-hint">Default-off and account-isolated. Notes never edit profiles, sync to cloud, enter diagnostics, or appear in portable settings exports.</p><div className="soulcord-catalog-tools"><label>Discord user ID<input value={identitySubject} inputMode="numeric" maxLength={32} placeholder="User ID" onChange={event => setIdentitySubject(event.currentTarget.value.replace(/\D/g, ""))} /></label><label>Private tags<input value={identityTags} maxLength={199} placeholder="friend, project" onChange={event => setIdentityTags(event.currentTarget.value)} /></label></div><textarea value={identityText} maxLength={280} placeholder="Private local note" onChange={event => setIdentityText(event.currentTarget.value)} /><div className="soulcord-actions"><ActionButton disabled={!identitySubject || !identityText} onClick={() => void saveIdentityNote()}>Review and store</ActionButton><ActionButton onClick={() => void loadIdentityNotes()}>Load account notes</ActionButton><ActionButton tone="danger" disabled={!identityNotes.length} onClick={() => {if (window.confirm("Clear every Local Identity Note for the current Discord account?")) void SoulCordRuntime.clearLocalIdentityNotes().then(() => loadIdentityNotes());}}>Clear all</ActionButton></div>{identityNotes.length > 0 && <div className="soulcord-native-preview">{identityNotes.map(note => <p key={note.subjectId}><strong>User •{note.subjectId.slice(-4)}</strong><span>{note.text}{note.tags.length ? ` · ${note.tags.join(", ")}` : ""}</span><small>{timestamp(note.updatedAt)} <button type="button" className="soulcord-text-button" onClick={() => void removeIdentityNote(note.subjectId)}>Remove</button></small></p>)}</div>}<p className="soulcord-key-hint">{identityPersistent ? "Encrypted persistence is active." : "No persistence claim: until loaded, or when safeStorage is unavailable, notes are session-only."}</p></div></details>
+        </div>
+        {actionStatus && <p role="status" className="soulcord-import-status">{actionStatus}</p>}
+    </Section>;
+}
+
 function AccessibilityControls() {
     const accessibility = useStateFromStores(SoulCordSettings, () => SoulCordSettings.snapshot().modules["accessibility-toolkit"].values);
     const setting = (key: string, value: unknown) => void SoulCordRuntime.setValue("accessibility-toolkit", key, value);
@@ -681,7 +904,7 @@ export default function SoulCordPanel() {
     return <main className={`soulcord-panel soulcord-density-${appearance.density} soulcord-motion-${appearance.motion}`}>
         <header className="soulcord-header">
             <div className="soulcord-mark" aria-hidden="true"><img src={soulCordMark} alt="" /></div>
-            <div><p className="soulcord-eyebrow">SoulCord V1 · Private desktop control</p><h1>SoulCord Control Center</h1><p>Compatibility, safety, people, appearance, and recovery—organized around what you need now.</p></div>
+            <div><p className="soulcord-eyebrow">SoulCord V2 · Private desktop control</p><h1>SoulCord Control Center</h1><p>Compatibility, safety, people, appearance, and recovery—organized around what you need now.</p></div>
         </header>
         {recoveryMode && <div className="soulcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
@@ -697,7 +920,7 @@ export default function SoulCordPanel() {
                     <ActivityBridge />
                 </>}
                 {workspace === "appearance" && <AppearanceWorkspace />}
-                {workspace === "safety" && <><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /></>}
+                {workspace === "safety" && <><StreamShieldControls /><StreamAudienceGuardControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /></>}
                 {workspace === "people" && <><FriendWatchPanel /><MessageTimelinePanel /><ReturnLaterPanel /></>}
                 {workspace === "tools" && <>
                     <SetupManagement />
@@ -705,6 +928,7 @@ export default function SoulCordPanel() {
                     <PluginRecovery />
                     <PerformanceControls />
                     <ProfilesAndHistory />
+                    <NativeSuitePanel />
                     <CuratedAddonSet />
                     <CatalogBrowser />
                     <PowerLabStatus />

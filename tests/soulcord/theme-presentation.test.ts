@@ -74,7 +74,7 @@ describe("SoulCord theme presentation", () => {
     });
 
     test("embeds the exact parseable files used by the setup transaction", () => {
-        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(THEME_FILES.length);
+        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(THEME_FILES.length + 6);
         for (const theme of SOULCORD_RUNTIME_THEMES) {
             expect(theme.content as string).toBe(readTheme(theme.fileName));
             expect(theme.content.startsWith("/**")).toBeTrue();

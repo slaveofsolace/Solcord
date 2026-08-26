@@ -81,8 +81,8 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain(".soulcord-catalog-table");
         expect(PANEL_SOURCE).toContain("<SetupWizard onReviewPending={openCatalog} />");
         expect(WIZARD_SOURCE).toContain("leaves pending catalog choices uninstalled");
-        expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is preview-only.");
-        expect(WIZARD_SOURCE).toContain("Apply and verify will not enable it until a disposable Discord acceptance receipt exists.");
+        expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is built in.");
+        expect(WIZARD_SOURCE).toContain("review-and-manual-copy flow");
         expect(PANEL_SOURCE).toContain("Optional catalog files absent");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/soulcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
@@ -93,7 +93,7 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).not.toContain("addonModes: {...current.addonModes, SplitLargeMessages: \"guarded\"}");
     });
 
-    test("keeps five theme choices, recommends SoulCord Default, and preserves a no-change exit", () => {
+    test("keeps eleven theme choices, recommends SoulCord Default, and preserves a no-change exit", () => {
         expect(WIZARD_SOURCE).toContain("\"soulcord-default\": \"Recommended");
         expect(WIZARD_SOURCE).toContain("SOULCORD_THEMES.map(theme");
         expect(WIZARD_SOURCE).toContain("No plugin file, theme file, enabled state, or Timeline policy will change");
@@ -116,7 +116,7 @@ describe("SoulCord beginner-first setup UI", () => {
     test("describes the clean-room interaction tools without claiming unavailable choices or automatic sends", () => {
         expect(CATALOG_SOURCE).toContain("Suppresses one validated outgoing typing-start path while the built-in is enabled.");
         expect(CATALOG_SOURCE).not.toContain("Stops typing indicators unless you choose otherwise.");
-        expect(CATALOG_SOURCE).toContain("Guarded preview prepares bounded chunks for manual copy, but setup keeps it off pending Discord modal/clipboard acceptance. Native multi-send remains held.");
+        expect(CATALOG_SOURCE).toContain("Guarded mode previews bounded chunks for manual copy without sending.");
     });
 
     test("keeps Attachment Guard truthful and gives its setup switch a visible effect", () => {
@@ -133,7 +133,7 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("Disarm and resync");
         expect(PANEL_SOURCE).toContain("account risk · preview");
         expect(CATALOG_SOURCE).toContain("Voice Anchor / Anti-AFK");
-        expect(CATALOG_SOURCE).toContain("Unavailable in V1 acceptance.");
+        expect(CATALOG_SOURCE).toContain("Unavailable in the V2 release candidate.");
     });
 
     test("makes appearance choices visible before setup is applied", () => {
@@ -142,5 +142,17 @@ describe("SoulCord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("This preview updates immediately.");
         expect(WIZARD_CSS).toContain(".soulcord-live-preview.soulcord-mode-soul-light");
         expect(WIZARD_CSS).toContain(".soulcord-live-preview.soulcord-preview-shape-seamed");
+    });
+
+    test("ships the V2 native tool surface without browser prompts or hidden account actions", () => {
+        for (const label of ["Composer Proof and Time Composer", "Permission Lens and Focus Channels", "Encrypted Local Identity Notes", "Voice Note Studio", "Notification Review"]) {
+            expect(PANEL_SOURCE).toContain(label);
+        }
+        expect(PANEL_SOURCE).not.toContain("window.prompt(");
+        expect(PANEL_SOURCE).toContain("Open normal upload composer");
+        expect(PANEL_SOURCE).toContain("not uploaded");
+        expect(PANEL_SOURCE).toContain("never edit profiles, sync to cloud, enter diagnostics, or appear in portable settings exports");
+        expect(WIZARD_CSS).toContain("[data-soulcord-focus-muted=\"true\"]");
+        expect(WIZARD_CSS).toContain(".soulcord-call-badge");
     });
 });

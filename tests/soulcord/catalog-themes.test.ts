@@ -64,13 +64,13 @@ describe("SoulCord catalog and theme invariants", () => {
         expect(manifest.candidates.filter((candidate: {targetDisposition: string;}) => candidate.targetDisposition === "POWER_LAB")).toHaveLength(1);
 
         const showPingIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "ShowPing");
-        expect(showPingIndex).toEqual(expect.objectContaining({targetDisposition: "OPTIONAL", securityDisposition: "HOLD", licenseStatus: "UNRESOLVED", codeStatus: "PENDING"}));
+        expect(showPingIndex).toEqual(expect.objectContaining({targetDisposition: "OPTIONAL", securityDisposition: "HOLD", licenseStatus: "FOUND", codeStatus: "STATIC_REVIEWED"}));
         const uncompressedIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "Uncompressed Images");
         expect(uncompressedIndex).toEqual(expect.objectContaining({targetDisposition: "OPTIONAL", securityDisposition: "HOLD", licenseStatus: "FOUND", codeStatus: "STATIC_REVIEWED"}));
         const spotifyIndex = SOULCORD_CATALOG_INDEX.find(candidate => candidate.name === "SpotifyListenAlong");
         expect(spotifyIndex).toEqual(expect.objectContaining({targetDisposition: "POWER_LAB", securityDisposition: "HOLD"}));
-        expect(SOULCORD_REVIEWED_OPTIONALS).toHaveLength(11);
-        expect(SOULCORD_REVIEWED_OPTIONALS.map(candidate => String(candidate.name))).not.toContain("ShowPing");
+        expect(SOULCORD_REVIEWED_OPTIONALS).toHaveLength(12);
+        expect(SOULCORD_REVIEWED_OPTIONALS.map(candidate => String(candidate.name))).toContain("ShowPing");
     });
 
     test("keeps all 36 candidates immutable while deep security dispositions gate staging", () => {
@@ -99,8 +99,8 @@ describe("SoulCord catalog and theme invariants", () => {
         expect(SOULCORD_RUNTIME_DEPENDENCIES.some(dependency => dependency.name === "BDFDB" && !dependency.stageable && !dependency.installable && dependency.reviewStatus === "HOLD")).toBeTrue();
     });
 
-    test("ships a recommended default and four self-contained alternatives whose embedded bytes match disk and manifest hashes", () => {
-        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(5);
+    test("ships the complete self-contained V2 theme family whose embedded bytes match disk and manifest hashes", () => {
+        expect(SOULCORD_RUNTIME_THEMES).toHaveLength(SOULCORD_THEMES.length);
         expect(new Set(SOULCORD_RUNTIME_THEMES.map(theme => theme.id))).toEqual(new Set(SOULCORD_THEMES.map(theme => theme.id)));
 
         for (const theme of SOULCORD_RUNTIME_THEMES) {

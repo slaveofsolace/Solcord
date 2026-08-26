@@ -46,7 +46,7 @@ export const SOULCORD_ADDON_GROUPS: readonly SoulCordAddonGroup[] = [
         summary: "Composer aids that stay visible and user-initiated.",
         addons: [
             {name: "Translator", label: "Translator", summary: "Translates selected text through a disclosed external provider."},
-            {name: "SplitLargeMessages", label: "Split Large Messages", summary: "Guarded preview prepares bounded chunks for manual copy, but setup keeps it off pending Discord modal/clipboard acceptance. Native multi-send remains held."},
+            {name: "SplitLargeMessages", label: "Split Large Messages", summary: "Guarded mode previews bounded chunks for manual copy without sending. The community plugin's native multi-send mode remains held."},
             {name: "CharCounter", label: "Character Counter", summary: "Shows composer length before sending."},
             {name: "SpellCheck", label: "Spell Check", summary: "Adds language-aware spelling tools."},
             {name: "InsertTimestamps", label: "Insert Timestamps", summary: "Builds Discord timestamp markup from a local picker."}
@@ -88,12 +88,12 @@ export const SOULCORD_ADDON_GROUPS: readonly SoulCordAddonGroup[] = [
 export const SOULCORD_ADDON_PRESENTATION = new Map(SOULCORD_ADDON_GROUPS.flatMap(group => group.addons).map(addon => [addon.name, addon]));
 
 export const SOULCORD_POWER_LAB = [
-    {id: "voice-anchor", name: "Voice Anchor / Anti-AFK", summary: "Calibration and pulse research. Unavailable in V1 acceptance."},
-    {id: "expression-relay", name: "Expression Relay", summary: "URL fallback research. Unavailable in V1 acceptance."},
-    {id: "decor", name: "Decor service", summary: "External OAuth and decoration service. Unavailable in V1 acceptance."},
+    {id: "voice-anchor", name: "Voice Anchor / Anti-AFK", summary: "Calibration and pulse research. Unavailable in the V2 release candidate."},
+    {id: "expression-relay", name: "Expression Relay", summary: "URL fallback research. Unavailable in the V2 release candidate."},
+    {id: "decor", name: "Decor service", summary: "External OAuth and decoration service. Unavailable in the V2 release candidate."},
     {id: "fake-deafen", name: "Fake Deafen", summary: "Scoped account-risk experiment with explicit arm, connection binding, drift shutdown, and state restoration. Off by default."},
-    {id: "fake-mute", name: "Fake Mute", summary: "Account-risk local experiment. Unavailable in V1 acceptance."},
-    {id: "stream-rtc", name: "Stream / RTC overrides", summary: "Volatile RTC experiment. Unavailable in V1 acceptance."}
+    {id: "fake-mute", name: "Fake Mute", summary: "Account-risk local experiment. Unavailable in the V2 release candidate."},
+    {id: "stream-rtc", name: "Stream / RTC overrides", summary: "Volatile RTC experiment. Unavailable in the V2 release candidate."}
 ] as const;
 
 export const SOULCORD_OPTIONAL_ADDONS = [

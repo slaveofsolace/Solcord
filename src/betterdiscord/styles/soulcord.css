@@ -592,7 +592,65 @@ html[data-soulcord-motion="reduced"] #app-mount *::after {
     .soulcord-catalog-row > div:last-child { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
 }
 
+.soulcord-audience-command {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--sc-border);
+    border-left: 3px solid var(--soulcord-warning-text, var(--soulcord-amber));
+    background: var(--sc-surface-raised);
+}
+
+.soulcord-audience-command strong { display: block; max-width: 70ch; color: var(--header-primary); }
+.soulcord-audience-command p:last-child { margin: 6px 0 0; max-width: 74ch; color: var(--text-muted); }
+.soulcord-audience-add { margin-top: 14px; }
+.soulcord-audience-add > input { min-width: 150px; }
+.soulcord-audience-list { display: grid; gap: 1px; margin: 12px 0; border: 1px solid var(--sc-border); background: var(--sc-border); }
+.soulcord-audience-row { display: flex; gap: 16px; align-items: center; justify-content: space-between; min-height: 56px; padding: 10px 12px; background: var(--sc-surface); }
+.soulcord-audience-row strong,
+.soulcord-audience-row small { display: block; }
+.soulcord-audience-row small { margin-top: 3px; color: var(--text-muted); }
+
+.soulcord-native-ledger { border-block: 1px solid var(--sc-border); }
+.soulcord-native-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--sc-border); }
+.soulcord-native-row:last-child { border-bottom: 0; }
+.soulcord-native-row p { margin: 3px 0; color: var(--text-muted); }
+.soulcord-native-row small { color: var(--text-muted); }
+.soulcord-native-ready { color: var(--soulcord-success-text, var(--green-360)); }
+.soulcord-native-unavailable { color: var(--soulcord-warning-text, var(--soulcord-amber)); }
+.soulcord-native-tools { display: grid; gap: 6px; margin-top: 14px; }
+.soulcord-native-tools > details { padding: 0 0 8px; border-bottom: 1px solid var(--sc-border); }
+.soulcord-native-tools > details > summary { cursor: pointer; padding: 9px 0; color: var(--header-primary); font-weight: 650; }
+.soulcord-native-preview { display: grid; gap: 7px; margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--sc-accent); background: var(--sc-surface-raised); }
+.soulcord-native-preview p { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 8px; margin: 0; }
+.soulcord-native-preview audio { width: min(100%, 560px); }
+.soulcord-translation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.soulcord-translation-grid label { display: grid; gap: 5px; color: var(--text-muted); }
+.soulcord-translation-grid textarea,
+.soulcord-translation-grid output { grid-column: 1 / -1; min-height: 88px; }
+.soulcord-translation-credentials { grid-column: 1 / -1; }
+.soulcord-translation-grid output { padding: 10px 12px; white-space: pre-wrap; border-left: 3px solid var(--soulcord-success-text, var(--green-360)); background: var(--sc-surface-raised); color: var(--text-normal); }
+.soulcord-composer-count { position: absolute; right: 10px; bottom: 4px; z-index: 1; pointer-events: none; color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.soulcord-composer-count[data-over-limit="true"] { color: var(--status-danger); font-weight: 700; }
+.soulcord-call-badge { margin: 6px 8px 0; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--sc-accent) 52%, var(--sc-border)); border-radius: 4px; color: var(--sc-text); background: var(--sc-surface-raised); font-size: 11px; line-height: 1.35; }
+[data-soulcord-focus-muted="true"] { opacity: 0.24; filter: saturate(0.2); }
+[data-soulcord-focus-muted="true"]:hover,
+[data-soulcord-focus-muted="true"][aria-selected="true"] { opacity: 1; filter: none; }
+.soulcord-composer-lab { display: grid; gap: 10px; }
+.soulcord-composer-lab textarea { min-height: 96px; resize: vertical; }
+.soulcord-catalog-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.soulcord-catalog-tools > label { display: grid; gap: 6px; }
+
 @container soulcord-panel (max-width: 760px) {
+    .soulcord-catalog-tools { grid-template-columns: 1fr; }
+    .soulcord-translation-grid { grid-template-columns: 1fr; }
+    .soulcord-translation-grid textarea,
+    .soulcord-translation-grid output { grid-column: 1; }
+    .soulcord-native-preview p { grid-template-columns: 1fr; }
+    .soulcord-audience-command { grid-template-columns: 1fr; }
     .soulcord-appearance-controls { grid-template-columns: 1fr; }
     .soulcord-section-heading,
     .soulcord-split,
@@ -668,6 +726,7 @@ html[data-soulcord-motion="reduced"] #app-mount *::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    [data-soulcord-focus-muted="true"] { transition: none; }
     .soulcord-panel *,
     .soulcord-local-overlay * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }

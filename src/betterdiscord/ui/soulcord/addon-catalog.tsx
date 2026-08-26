@@ -12,6 +12,7 @@ import {inferSoulCordPermissionCard, type SoulCordPermissionCard} from "@common/
 import {SOULCORD_ADDON_GROUPS, SOULCORD_ADDON_PRESENTATION} from "./catalog";
 
 const {useMemo, useState} = React;
+const OFFICIAL_PLUGIN_STORE = "https://betterdiscord.app/plugins";
 
 function formatBytes(bytes: number): string {
     return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
@@ -115,7 +116,7 @@ export function CatalogBrowser() {
     }, [query, type, disposition]);
     const visible = matches.slice(0, 80);
     return <section className="soulcord-section">
-        <div className="soulcord-section-heading"><h2>Catalog snapshot</h2><p>Browse 323 metadata-indexed BetterDiscord store records. Forty-seven plugin payloads were statically screened, 36 received manual dispositions, and catalog-theme source/license review is still pending. Browsing does not download or enable anything.</p></div>
+        <div className="soulcord-section-heading"><h2>Catalog snapshot</h2><p>Browse 323 metadata-indexed BetterDiscord store records. Forty-seven plugin payloads were statically screened, 36 received manual dispositions, and catalog-theme source/license review is still pending. Browsing does not download or enable anything.</p><div className="soulcord-actions"><button type="button" onClick={() => window.open(OFFICIAL_PLUGIN_STORE, "_blank", "noopener,noreferrer")}>Open official plugin store</button></div></div>
         <dl className="soulcord-facts soulcord-catalog-facts"><div><dt>Plugins</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.pluginCount} · <code>{SOULCORD_CATALOG_SNAPSHOT.pluginSha256.slice(0, 12)}…</code></dd></div><div><dt>Themes</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.themeCount} · <code>{SOULCORD_CATALOG_SNAPSHOT.themeSha256.slice(0, 12)}…</code></dd></div><div><dt>Review date</dt><dd>{SOULCORD_CATALOG_SNAPSHOT.reviewedAt}</dd></div><div><dt>Installed integrity</dt><dd>{integrity.summary.match} verified · {integrity.summary.missing} missing · {integrity.summary.attention + integrity.summary.unavailable} held</dd></div></dl>
         <div className="soulcord-catalog-controls">
             <label>Search<input type="search" value={query} onChange={event => setQuery(event.currentTarget.value)} placeholder="name, author, tag, behavior" /></label>

@@ -22,7 +22,13 @@ const THEME_NOTES: Record<SoulCordThemeId, string> = {
     "obsidian-thread": "Graphite, warm bone, oxidized teal, and restrained ember.",
     "carbon-ember": "Charcoal and ash with copper and burgundy accents.",
     "midnight-glass": "Navy-black, silver, ice cyan, and restrained translucency.",
-    "paper-signal": "Warm paper, ink, coral, and teal for a light workspace."
+    "paper-signal": "Warm paper, ink, coral, and teal for a light workspace.",
+    "threadline": "Compact indexed navigation, ruled regions, and quick-scanning density.",
+    "signal-block": "Square controls, thick containment, and unmistakable press and focus states.",
+    "relay-classic": "A restrained return to classic Discord density and familiar proportions.",
+    "workshop": "Tactile borders, an inset composer, and clear working-state controls.",
+    "quiet-read": "Long-form readability, generous measure, visible focus, and reduced motion.",
+    "night-transit": "A dark route-rail system distinguishing selected, unread, mention, and voice states."
 };
 
 function draftFrom(document: SoulCordSettingsDocument): SoulCordSetupDraft {
@@ -98,7 +104,7 @@ function CurrentStateStep() {
         <dl className="soulcord-facts">
             <div><dt>Catalog files already present</dt><dd>{state.installed}</dd></div>
             <div><dt>Catalog features currently enabled</dt><dd>{state.enabled}</dd></div>
-            <div><dt>SoulCord themes present</dt><dd>{state.soulCordThemes} of 5</dd></div>
+            <div><dt>SoulCord themes present</dt><dd>{state.soulCordThemes} of {SOULCORD_THEMES.length}</dd></div>
             <div><dt>SoulCord themes active</dt><dd>{state.activeSoulCordThemes}</dd></div>
         </dl>
         <p className="soulcord-callout">Existing MessageLogger data, unrelated plugins, themes, custom CSS, settings, and the vanilla Activities launcher are outside this transaction and remain untouched.</p>
@@ -220,7 +226,7 @@ function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPendi
             </fieldset>)}
         </div>
         <div className="soulcord-catalog-handoff">
-            <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOULCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is preview-only.</strong> Its modal/clipboard adapter remains implemented, but Apply and verify will not enable it until a disposable Discord acceptance receipt exists.</p></div>
+            <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOULCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is built in.</strong> Apply and verify can enable its review-and-manual-copy flow; the community plugin&apos;s native multi-send mode remains held.</p></div>
             <button type="button" className="soulcord-action" onClick={onReviewPending}>Review pending</button>
         </div>
     </div>;
@@ -275,9 +281,9 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SoulCordSetupDraft; 
         {activeSkipped.length > 0 && <p className="soulcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SoulCordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. SoulCord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
         {activeUnrequested.length > 0 && <p className="soulcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
         {communityKeeps.length > 0 && <p className="soulcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName})`).join(", ")} remain enabled and owner-managed. Matching SoulCord built-ins stand down.</p>}
-        {communitySwitches.length > 0 && <p className="soulcord-callout soulcord-callout-danger"><strong>Explicit provider migration:</strong> Apply and verify disables only {communitySwitches.map(counterpart => counterpart.fileName).join(", ")} and starts the matching SoulCord built-in(s). The rollback journal stores every exact prior plugin state.</p>}
+        {communitySwitches.length > 0 && <p className="soulcord-callout soulcord-callout-danger"><strong>Explicit provider migration:</strong> Apply and verify disables only {communitySwitches.map(counterpart => counterpart.fileName).join(", ")}, starts the matching SoulCord built-in(s), then moves exact unchanged provider source files into a timestamped rollback archive outside the scanned Plugins folder. Configuration and private databases stay untouched.</p>}
         {liveThemeState.activeThirdPartyNames.length > 0 && <p className="soulcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
-        <div className="soulcord-callout"><strong>Exact theme transaction</strong><p>All five bundled files are included and hash-verified; missing files are staged: {SOULCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
+        <div className="soulcord-callout"><strong>Exact theme transaction</strong><p>All {SOULCORD_RUNTIME_THEMES.length} bundled files are included and hash-verified; missing files are staged: {SOULCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
         <p className="soulcord-callout">Apply and verify changes only the accepted ready set, leaves pending catalog choices uninstalled, verifies accepted hashes and dependencies, activates one SoulCord theme, and keeps a one-click rollback record.</p>
     </div>;
 }
@@ -324,8 +330,8 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
             return;
         }
         const providerMigrations = providerMigrationPlan.entries.map(entry => entry.fileName);
-        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected SoulCord built-in; rollback restores the exact prior state.` : "";
-        if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s), verify or provision the five bundled theme files, and activate ${SOULCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? ${plan.skipped.length} selected optional choice(s) will be skipped without download. Existing differing files will abort without being overwritten.${migrationNotice}`)) return;
+        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected SoulCord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them.` : "";
+        if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s), verify or provision the ${SOULCORD_RUNTIME_THEMES.length} bundled theme files, and activate ${SOULCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? ${plan.skipped.length} selected optional choice(s) will be skipped without download. Existing differing files will abort without being overwritten.${migrationNotice}`)) return;
         setBusy(true);
         setStatus(plan.skipped.length ? `Applying the ready set; ${plan.skipped.length} unavailable choice(s) will be skipped…` : "Applying the ready set and verifying hashes…");
         try {

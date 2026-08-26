@@ -1,0 +1,133 @@
+/**
+ * @name SoulCord — Relay Classic
+ * @author slaveofsolace
+ * @version 2.0.0
+ * @description A calm continuous-shell theme with familiar Discord density and restrained relay-blue states.
+ * @source https://github.com/slaveofsolace/Solcord
+ * @license Apache-2.0
+ */
+
+/* SPDX-License-Identifier: Apache-2.0 */
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */
+
+:root {
+    --scr-canvas: #1D2228;
+    --scr-sidebar: #242A31;
+    --scr-chat: #2B323A;
+    --scr-raised: #343D46;
+    --scr-line: #46515C;
+    --scr-text: #F1F3F5;
+    --scr-muted: #B6C0C8;
+    --scr-blue: #6EB6D8;
+    --scr-blue-strong: #347B9B;
+    --scr-green: #68B89A;
+    --scr-red: #E78272;
+    --scr-focus: #A8DBF1;
+    --scr-on-accent: #071219;
+    --soulcord-graphite: var(--scr-canvas);
+    --soulcord-cream: var(--scr-text);
+    --soulcord-sea: var(--scr-blue);
+    --soulcord-coral: var(--scr-red);
+    --soulcord-focus: var(--scr-focus);
+    --soulcord-on-accent: var(--scr-on-accent);
+    --soulcord-accent-text: #95CDE6;
+    --soulcord-warning-text: #F2C786;
+    --soulcord-danger-text: #F0A699;
+    --soulcord-callout-text: var(--scr-muted);
+    --custom-message-spacing-vertical-container-cozy: 0.42rem;
+    --custom-message-spacing-vertical-container-compact: 0.18rem;
+}
+
+.theme-light,
+.theme-dark,
+.theme-darker,
+.theme-midnight {
+    color-scheme: dark;
+    --background-primary: var(--scr-chat);
+    --background-secondary: var(--scr-sidebar);
+    --background-secondary-alt: #20262C;
+    --background-tertiary: var(--scr-canvas);
+    --background-floating: var(--scr-raised);
+    --background-base-low: var(--scr-chat);
+    --background-base-lower: var(--scr-sidebar);
+    --background-base-lowest: var(--scr-canvas);
+    --background-surface-high: #303840;
+    --background-surface-higher: var(--scr-raised);
+    --background-surface-highest: #3C4650;
+    --background-modifier-hover: rgb(110 182 216 / 9%);
+    --background-modifier-active: rgb(110 182 216 / 14%);
+    --background-modifier-selected: rgb(110 182 216 / 18%);
+    --background-modifier-accent: var(--scr-line);
+    --background-mod-subtle: rgb(110 182 216 / 7%);
+    --background-mod-normal: rgb(110 182 216 / 11%);
+    --background-mod-strong: rgb(110 182 216 / 17%);
+    --bg-surface-overlay-tmp: var(--scr-raised);
+    --bg-surface-raised: var(--scr-raised);
+    --text-normal: var(--scr-text);
+    --text-default: var(--scr-text);
+    --text-muted: var(--scr-muted);
+    --text-link: #8CCDE9;
+    --header-primary: #FFFFFF;
+    --header-secondary: #CCD3D9;
+    --interactive-normal: #C1CBD2;
+    --interactive-hover: #FFFFFF;
+    --interactive-active: var(--scr-blue);
+    --interactive-muted: #8998A3;
+    --interactive-text-default: var(--interactive-normal);
+    --interactive-text-hover: var(--interactive-hover);
+    --interactive-text-active: var(--interactive-active);
+    --brand-500: var(--scr-blue-strong);
+    --brand-560: #2D6C89;
+    --brand-600: #275D76;
+    --button-filled-brand-background: var(--scr-blue);
+    --button-filled-brand-background-hover: #8CCDE9;
+    --button-filled-brand-text: var(--scr-on-accent);
+    --border-subtle: #3B454E;
+    --border-muted: var(--scr-line);
+    --border-normal: var(--scr-line);
+    --border-strong: #687784;
+    --channeltextarea-background: #222930;
+    --chat-background-default: var(--scr-chat);
+    --input-background: #222930;
+    --card-background-default: var(--scr-sidebar);
+    --modal-background: var(--scr-raised);
+    --modal-footer-background: var(--scr-sidebar);
+    --status-positive: var(--scr-green);
+    --status-danger: var(--scr-red);
+    --scrollbar-thin-thumb: #5A6873;
+    --scrollbar-auto-thumb: #5A6873;
+    --scrollbar-auto-track: var(--scr-canvas);
+}
+
+body { background: var(--scr-canvas) !important; font-family: "Segoe UI Variable", "gg sans", sans-serif; }
+#app-mount { background: var(--scr-canvas) !important; }
+::selection { color: var(--scr-on-accent); background: var(--scr-blue); }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scr-focus) !important; outline-offset: 2px; }
+
+/* Signature: familiar continuous regions, separated by quiet relay-blue state bars. */
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="chatContent_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"]) { background: var(--background-primary) !important; }
+#app-mount [class*="guilds_"] { background: var(--scr-canvas) !important; }
+#app-mount [class*="sidebarList_"] { background: var(--scr-sidebar) !important; border-right: 1px solid var(--scr-line); }
+#app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { background: var(--scr-sidebar) !important; border-left: 1px solid var(--scr-line); }
+#app-mount [class*="subtitleContainer_"] { border-bottom: 1px solid var(--scr-line); background: var(--scr-chat) !important; }
+
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) { border-radius: 6px !important; transition: background-color 140ms ease, color 140ms ease; }
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover { background: rgb(110 182 216 / 8%) !important; }
+#app-mount [class*="selected_"] > [class*="link_"] { background: rgb(110 182 216 / 14%) !important; box-shadow: inset 3px 0 0 var(--scr-blue); }
+
+#app-mount li[id^="chat-messages-"] { border-left: 3px solid transparent; border-radius: 4px; }
+#app-mount li[id^="chat-messages-"]:hover { border-left-color: var(--scr-blue-strong); background: rgb(110 182 216 / 6%) !important; }
+#app-mount [class*="mentioned_"] { border-left-color: var(--scr-red) !important; background: rgb(231 130 114 / 10%) !important; }
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"]) { border: 1px solid transparent; border-radius: 7px !important; background: transparent !important; }
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"]):hover { border-color: var(--scr-line); background: #303840 !important; }
+
+#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) { border: 1px solid var(--scr-line) !important; border-radius: 7px !important; background: #222930 !important; box-shadow: none !important; }
+#app-mount :is([class*="menu_"], [class*="modal_"], [role="dialog"], [class*="popout_"]) { border: 1px solid var(--scr-line); border-radius: 8px !important; background: var(--scr-raised) !important; box-shadow: 0 12px 30px rgb(0 0 0 / 28%); }
+#app-mount [class*="standardSidebarView_"] [class*="sidebarRegion_"] { background: var(--scr-sidebar) !important; }
+#app-mount [class*="standardSidebarView_"] [class*="contentRegion_"] { background: var(--scr-chat) !important; }
+#app-mount [class*="embedFull_"] { border: 1px solid var(--scr-line) !important; border-left: 4px solid var(--scr-blue) !important; border-radius: 5px !important; }
+#app-mount [class*="newMessagesBar_"] { color: var(--scr-on-accent) !important; background: var(--scr-blue) !important; border-radius: 5px !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}

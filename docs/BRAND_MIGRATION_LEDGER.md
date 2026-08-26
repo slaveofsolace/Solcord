@@ -19,7 +19,7 @@ Human-facing product branding is **SoulCord**. The GitHub repository slug remain
 | Settings navigation label | Registered as `Panels.soulcord` with literal `SoulCord Suite` fallback. The upstream translation sentinel is never accepted as a rendered product label. |
 | Setup wizard and catalog browser | Authored as SoulCord operating surfaces with concrete staging, risk, provider, and rollback language. |
 | Private Message Timeline | Named and presented as a private, owner-controlled SoulCord feature. It is not labeled as MessageLogger, and it does not claim offline or deleted-message recovery. |
-| Theme family | Added the recommended SoulCord Default plus four original `SoulCord — …` alternatives with one-active-theme transaction behavior and no remote assets. |
+| Theme family | Added SoulCord Default, four accepted V1 alternatives, and six structurally distinct V2 full-shell themes with one-active-theme transaction behavior and no remote assets. |
 | CI display and artifact names | SoulCord-specific workflow added; upstream release mutations are owner-guarded. |
 | Issue/feature templates, contribution/security/release docs | Point to SoulCord and preserve upstream attribution. |
 
@@ -56,4 +56,4 @@ These identifiers remain intentionally. Changing them would break existing insta
 - The GitHub repository name is intentionally `Solcord`; product typography is `SoulCord`.
 - Existing user addon names, theme names, settings keys, and MessageLoggerV2 files are not rebranded. Preserving those names is ownership and compatibility, not an incomplete product migration.
 - Catalog descriptions and author names remain upstream metadata. They are shown as attributed candidate information, not rewritten as SoulCord copy.
-- The new mark and five themes are technically integrated but not called owner-accepted until the installed visual pass is complete.
+- The mark and five V1 themes use the owner's accepted V1 direction. The six new V2 themes are technically integrated but are not called owner-accepted until their installed scaling and state pass is complete.

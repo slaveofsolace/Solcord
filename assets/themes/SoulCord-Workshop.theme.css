@@ -1,0 +1,137 @@
+/**
+ * @name SoulCord — Workshop
+ * @author slaveofsolace
+ * @version 2.0.0
+ * @description Tactile charcoal work surfaces with inset controls, copper fixtures, and practical grouping.
+ * @source https://github.com/slaveofsolace/Solcord
+ * @license Apache-2.0
+ */
+
+/* SPDX-License-Identifier: Apache-2.0 */
+/* stylelint-disable declaration-block-single-line-max-declarations, max-line-length, custom-property-empty-line-before, selector-list-comma-newline-after */
+
+:root {
+    --scw-canvas: #171513;
+    --scw-sidebar: #211E1B;
+    --scw-bench: #292521;
+    --scw-raised: #342F2A;
+    --scw-recess: #12110F;
+    --scw-line: #594E44;
+    --scw-text: #F3E8D8;
+    --scw-muted: #C0B4A5;
+    --scw-copper: #D49458;
+    --scw-copper-strong: #9A5F32;
+    --scw-green: #70AF8C;
+    --scw-red: #E27C66;
+    --scw-focus: #F2BD7E;
+    --scw-on-accent: #201207;
+    --soulcord-graphite: var(--scw-canvas);
+    --soulcord-cream: var(--scw-text);
+    --soulcord-sea: var(--scw-green);
+    --soulcord-coral: var(--scw-red);
+    --soulcord-focus: var(--scw-focus);
+    --soulcord-on-accent: var(--scw-on-accent);
+    --soulcord-accent-text: #E5AD75;
+    --soulcord-warning-text: #F0C28D;
+    --soulcord-danger-text: #F0A08E;
+    --soulcord-callout-text: var(--scw-muted);
+    --custom-message-spacing-vertical-container-cozy: 0.48rem;
+    --custom-message-spacing-vertical-container-compact: 0.18rem;
+}
+
+.theme-light,
+.theme-dark,
+.theme-darker,
+.theme-midnight {
+    color-scheme: dark;
+    --background-primary: var(--scw-bench);
+    --background-secondary: var(--scw-sidebar);
+    --background-secondary-alt: #1B1917;
+    --background-tertiary: var(--scw-canvas);
+    --background-floating: var(--scw-raised);
+    --background-base-low: var(--scw-bench);
+    --background-base-lower: var(--scw-sidebar);
+    --background-base-lowest: var(--scw-canvas);
+    --background-surface-high: #302B27;
+    --background-surface-higher: var(--scw-raised);
+    --background-surface-highest: #3D3731;
+    --background-modifier-hover: rgb(212 148 88 / 9%);
+    --background-modifier-active: rgb(212 148 88 / 15%);
+    --background-modifier-selected: rgb(112 175 140 / 17%);
+    --background-modifier-accent: var(--scw-line);
+    --background-mod-subtle: rgb(212 148 88 / 7%);
+    --background-mod-normal: rgb(212 148 88 / 12%);
+    --background-mod-strong: rgb(112 175 140 / 17%);
+    --bg-surface-overlay-tmp: var(--scw-raised);
+    --bg-surface-raised: var(--scw-raised);
+    --text-normal: var(--scw-text);
+    --text-default: var(--scw-text);
+    --text-muted: var(--scw-muted);
+    --text-link: #E6AD76;
+    --header-primary: #FFF8EE;
+    --header-secondary: #D5CABC;
+    --interactive-normal: #CFC4B6;
+    --interactive-hover: #FFF8EE;
+    --interactive-active: var(--scw-copper);
+    --interactive-muted: #91877B;
+    --interactive-text-default: var(--interactive-normal);
+    --interactive-text-hover: var(--interactive-hover);
+    --interactive-text-active: var(--interactive-active);
+    --brand-500: var(--scw-copper-strong);
+    --brand-560: #86502A;
+    --brand-600: #704322;
+    --button-filled-brand-background: var(--scw-copper);
+    --button-filled-brand-background-hover: #E6AD76;
+    --button-filled-brand-text: var(--scw-on-accent);
+    --border-subtle: #463D36;
+    --border-muted: var(--scw-line);
+    --border-normal: var(--scw-line);
+    --border-strong: #796A5D;
+    --channeltextarea-background: var(--scw-recess);
+    --chat-background-default: var(--scw-bench);
+    --input-background: var(--scw-recess);
+    --card-background-default: var(--scw-sidebar);
+    --modal-background: var(--scw-raised);
+    --modal-footer-background: var(--scw-sidebar);
+    --status-positive: var(--scw-green);
+    --status-danger: var(--scw-red);
+    --scrollbar-thin-thumb: #6D6055;
+    --scrollbar-auto-thumb: #6D6055;
+    --scrollbar-auto-track: var(--scw-canvas);
+}
+
+body { background: var(--scw-canvas) !important; font-family: "Segoe UI Variable", "gg sans", sans-serif; }
+#app-mount { background: var(--scw-canvas) !important; }
+::selection { color: var(--scw-on-accent); background: var(--scw-copper); }
+:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scw-focus) !important; outline-offset: 2px; }
+
+/* Signature: inset work areas and copper fixtures imply pressable, physical controls. */
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="chatContent_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin: 5px; border: 1px solid var(--scw-line); border-radius: 5px !important; background: var(--background-primary) !important; box-shadow: inset 0 1px 0 rgb(255 248 238 / 4%), 0 3px 0 var(--scw-recess); }
+#app-mount [class*="guilds_"] { background: var(--scw-canvas) !important; }
+#app-mount [class*="sidebarList_"] { background: var(--scw-sidebar) !important; }
+#app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { background: var(--scw-sidebar) !important; }
+#app-mount [class*="subtitleContainer_"] { border-bottom: 2px solid var(--scw-copper-strong); background: var(--scw-bench) !important; }
+
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) { margin-block: 3px; border: 1px solid transparent; border-radius: 4px !important; transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease; }
+#app-mount :is([class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover { border-color: var(--scw-line); background: #302B27 !important; box-shadow: inset 3px 0 0 var(--scw-copper-strong); }
+#app-mount [class*="selected_"] > [class*="link_"] { border-color: var(--scw-copper-strong) !important; background: rgb(212 148 88 / 13%) !important; box-shadow: inset 3px 0 0 var(--scw-copper); }
+
+#app-mount li[id^="chat-messages-"] { margin: 2px 6px; border: 1px solid transparent; border-radius: 4px; }
+#app-mount li[id^="chat-messages-"]:hover { border-color: #463D36; background: rgb(212 148 88 / 5%) !important; }
+#app-mount [class*="mentioned_"] { border-color: var(--scw-red) !important; box-shadow: inset 4px 0 0 var(--scw-red); background: rgb(226 124 102 / 9%) !important; }
+#app-mount :is([class*="peopleListItem_"], [class*="itemCard_"]) { border: 1px solid var(--scw-line); border-radius: 5px !important; background: var(--scw-sidebar) !important; box-shadow: inset 0 1px 0 rgb(255 248 238 / 4%); }
+
+#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) { border: 1px solid var(--scw-line) !important; border-radius: 4px !important; background: var(--scw-recess) !important; box-shadow: inset 0 2px 4px rgb(0 0 0 / 45%), 0 1px 0 rgb(255 248 238 / 5%) !important; }
+#app-mount :is([class*="menu_"], [class*="modal_"], [role="dialog"], [class*="popout_"]) { border: 1px solid #796A5D; border-radius: 5px !important; background: var(--scw-raised) !important; box-shadow: 0 10px 24px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(255 248 238 / 5%); }
+#app-mount [class*="standardSidebarView_"] [class*="sidebarRegion_"] { background: var(--scw-sidebar) !important; border-right: 1px solid var(--scw-line); }
+#app-mount [class*="standardSidebarView_"] [class*="contentRegion_"] { background: var(--scw-bench) !important; }
+#app-mount [class*="embedFull_"] { border: 1px solid var(--scw-line) !important; border-left: 5px solid var(--scw-copper) !important; border-radius: 4px !important; background: #211E1B !important; }
+#app-mount [class*="newMessagesBar_"] { color: var(--scw-on-accent) !important; background: var(--scw-copper) !important; border: 1px solid var(--scw-recess); border-radius: 4px !important; box-shadow: 0 3px 0 var(--scw-recess); }
+
+@media (max-width: 900px) {
+    #app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="chatContent_"], [class*="membersWrap_"]) { margin: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+}
