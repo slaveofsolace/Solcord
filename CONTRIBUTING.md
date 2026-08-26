@@ -4,7 +4,7 @@ SoulCord is a focused reliability, privacy, and productivity fork of BetterDisco
 
 ## Before changing code
 
-- Start from the owner branch requested for the work. Do not merge, publish, retag, or change the default branch without explicit authority.
+- Start from `development` unless the owner names another branch. Do not publish, retag, or change the default branch without explicit authority.
 - Read `docs/ACTIVITY_COMPATIBILITY.md`, `docs/SECURITY_AND_PRIVACY.md`, and `docs/BRAND_MIGRATION_LEDGER.md`.
 - Treat Discord Webpack modules as volatile. Use structural filters, validate before patching, cache lookups, fail closed, and own teardown.
 - Add every external source or asset to `docs/PROVENANCE_REGISTRY.md` before acquisition. A public URL is not a license.
@@ -12,7 +12,7 @@ SoulCord is a focused reliability, privacy, and productivity fork of BetterDisco
 
 ## Product boundaries
 
-V1 rejects token access, self-bot behavior, message logging/deleted-message recovery, hidden telemetry, automated sending/joining/uploading, premium/entitlement mutation, and covert microphone traffic. Account-risk or external-service experiments require a separate default-off boundary and are not V1 work.
+SoulCord rejects token access, self-bot behavior, hidden-channel access, hidden telemetry, automated sending/joining/uploading, premium/entitlement mutation, and covert microphone traffic. Private local history observes only events already seen by the running client after opt-in. Account-risk or external-service experiments require a separate default-off boundary and explicit consent.
 
 ## Build and verification
 

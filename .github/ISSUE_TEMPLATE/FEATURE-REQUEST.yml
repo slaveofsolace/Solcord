@@ -1,5 +1,5 @@
-name: Feature Request
-description: Suggest an idea for this project!
+name: SoulCord feature request
+description: Propose a focused addition or improvement with a clear user benefit.
 title: "[Feature]"
 labels: [enhancement]
 body:
@@ -12,16 +12,14 @@ body:
       required: true
 - type: textarea
   attributes:
-    label: Describe the feature you'd like!
-    description: Describe the SoulCord workflow, risk boundary, and concrete result you want.
+    label: What problem should SoulCord solve?
+    description: Describe the current friction, who experiences it, and the result you want.
   validations:
     required: true
 - type: textarea
   attributes:
-    label: Anything else?
+    label: Safety, privacy, or compatibility considerations
     description: |
-      Links? References? Anything that will give us more context about the feature you are requesting!
-
-      Tip: You can attach images by clicking this area to highlight it and then dragging files in.
+      Explain any network access, account action, message/media handling, Discord-internal adapter, or third-party source involved. Include rights-clear references when useful.
   validations:
     required: false
