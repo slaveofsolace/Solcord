@@ -1,0 +1,86 @@
+name: Solcord quality finalization
+
+on:
+  push:
+    branches: ["audit/solcord-foundation"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solcord-quality-finalization
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare pinned Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+
+      - name: Apply audited source changes
+        run: node scripts/finalize-solcord-audit.mjs
+
+      - name: Remove one-time finalizer
+        run: rm -f scripts/finalize-solcord-audit.mjs
+
+      - name: Enforce identity and project wording
+        shell: bash
+        run: |
+          git add -A
+          if git ls-files | grep -Eiq 'soul([ _-]?cord)|soul-(dark|light)'; then
+            echo "Old identity remains in a tracked path."
+            exit 1
+          fi
+          if git grep -I -n -Ei 'soul([ _-]?cord)|soul-(dark|light)' -- .; then
+            echo "Old identity remains in tracked text."
+            exit 1
+          fi
+          if git grep -I -n -Ei '\b(claude|anthropic|chatgpt|copilot|llm|ai-generated)\b' -- AGENTS.md README.md docs/audit/PLUGIN_BASELINE_REVIEW.md docs/roadmap/BASELINE_CAPABILITIES.md src/common/solcord/baseline-capabilities.ts tests/solcord/baseline-capabilities.test.ts tests/solcord/product-identity.test.ts; then
+            echo "Prohibited project wording remains in changed surfaces."
+            exit 1
+          fi
+          git diff --cached --check
+
+      - name: Create unpushed clean source commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "audit: harden Solcord baseline and documentation"
+          echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+      - name: Verify source
+        run: bun run verify
+
+      - name: Build production package
+        run: bun run dist
+        env:
+          BRANCH_NAME: audit/solcord-foundation
+          COMMIT_HASH: ${{env.SOURCE_SHA}}
+
+      - name: Restore workflow subtree for permission-limited push
+        shell: bash
+        run: |
+          rm -rf .github/workflows
+          git checkout origin/audit/solcord-foundation -- .github/workflows
+          git add -A
+          git commit --amend --no-edit
+          test -z "$(git diff --name-only origin/audit/solcord-foundation...HEAD -- .github/workflows)"
+
+      - name: Push verified source commit
+        run: git push origin HEAD:audit/solcord-foundation
