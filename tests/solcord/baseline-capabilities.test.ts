@@ -33,6 +33,22 @@ describe("Solcord baseline capability scaffolds", () => {
         }
     });
 
+    test("pins every inspiration to the reviewed BetterDiscord plugin route", () => {
+        expect(SOLCORD_BASELINE_CAPABILITIES.map(capability => capability.inspiration.name)).toEqual([
+            "CollapsibleUI",
+            "CollapseEmbeds",
+            "AutoScroll",
+            "ImageFolder",
+            "PeekMessageLinks"
+        ]);
+
+        for (const capability of SOLCORD_BASELINE_CAPABILITIES) {
+            const url = new URL(capability.inspiration.url);
+            expect(url.origin).toBe("https://betterdiscord.app");
+            expect(url.pathname).toBe(`/plugins/${capability.inspiration.name}`);
+        }
+    });
+
     test("returns immutable capability metadata", () => {
         const capability = getSolcordBaselineCapability("layout-collapse");
 
