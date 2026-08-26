@@ -1,8 +1,8 @@
-name: SoulCord V2 CI
+name: Solcord V2 CI
 
 on:
   push:
-    branches: ["fork/**", "v2/**"]
+    branches: ["fork/**", "v2/**", "audit/**"]
   pull_request:
     branches: ["development"]
 
@@ -28,8 +28,8 @@ jobs:
         run: bun run test
       - name: Lint TypeScript
         run: bun run lint
-      - name: Lint SoulCord CSS
-        run: bun run lint-css:soulcord
+      - name: Lint Solcord CSS
+        run: bun run lint-css:solcord
       - name: Typecheck
         run: bun run typecheck
       - name: Generate public compatibility types
@@ -44,13 +44,14 @@ jobs:
       - name: Upload review artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: soulcord-review-${{github.sha}}
+          name: solcord-review-${{github.sha}}
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
           path: |
-            dist/soulcord.asar
+            dist/solcord.asar
             dist/checksums.txt
+            dist/solcord-build-manifest.json
 
   windows-policy:
     name: Windows policy, safety, and installer
@@ -71,20 +72,20 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
       - name: Run Windows-sensitive fixtures
-        run: bun test tests/electron/preload-policy.test.ts tests/electron/original-preload.test.ts tests/soulcord/safety.test.ts tests/soulcord/settings.test.ts
+        run: bun test tests/electron/preload-policy.test.ts tests/electron/original-preload.test.ts tests/solcord/safety.test.ts tests/solcord/settings.test.ts
       - name: Typecheck
         run: bun run typecheck
       - name: Build self-contained installer candidate
         shell: pwsh
-        run: bun run installer:candidate -- dist/soulcord.asar "$env:RUNNER_TEMP\soulcord-v2-installer" "$env:GITHUB_SHA"
+        run: bun run installer:candidate -- dist/solcord.asar "$env:RUNNER_TEMP\solcord-v2-installer" "$env:GITHUB_SHA"
         env:
           BRANCH_NAME: ${{github.head_ref || github.ref_name}}
           COMMIT_HASH: ${{github.sha}}
       - name: Upload Windows installer candidate
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: soulcord-v2-installer-${{github.sha}}
+          name: solcord-v2-installer-${{github.sha}}
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
-          path: ${{runner.temp}}/soulcord-v2-installer
+          path: ${{runner.temp}}/solcord-v2-installer
