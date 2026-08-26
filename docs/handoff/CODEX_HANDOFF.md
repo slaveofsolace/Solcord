@@ -6,7 +6,7 @@ Prepared: **2026-08-26**
 
 The repository owner supplied full maintainer authorization for technical inspection, source changes, tests, CI, documentation, branch management, promotion, issue and pull-request maintenance, and release preparation within `slaveofsolace/Solcord`.
 
-Do not place credentials, tokens, private Discord content, account identifiers, or absolute user paths in source, logs, fixtures, issues, releases, or screenshots. Authorization does not replace evidence: never label a live Discord, installer, rollback, accessibility, or performance result as passed without capturing it.
+Do not place credentials, tokens, private Discord content, account identifiers, or absolute user paths in source, logs, fixtures, issues, releases, or screenshots. Authorization does not replace evidence: never describe a live Discord, installer, rollback, accessibility, or performance result as passed without captured proof.
 
 ## Repository state
 
@@ -16,31 +16,28 @@ Do not place credentials, tokens, private Discord content, account identifiers, 
 | Integration branch | `development` |
 | Audit branch | `audit/solcord-foundation` |
 | Fork branch before this pass | `bec561cf10837bacfe587be9be4a08abf9891224` |
-| Validated source parent | `620499c11bbcadce390b27565e7ef9b3f00f2a7e` |
+| Original validated source parent | `620499c11bbcadce390b27565e7ef9b3f00f2a7e` |
 | Current upstream `BetterDiscord/BetterDiscord:development` snapshot | `b2b361ccd1b16b4f8162f3bf016396e5a1fa465d` |
 | Upstream snapshot date | `2026-08-25` |
 | Upstream snapshot change | PR `#2228`, bundle missing site assets |
 | Package version | `2.0.0` |
 | Runtime | Bun `1.4.0` |
 | Primary platform target | Windows desktop |
-| Final branch gate | FINAL_GATE_PENDING |
+| Final branch gate | Use the latest `Solcord V2 CI` run for the exact audit-branch head; both Linux and Windows jobs must pass before promotion |
 
-The audit branch is a fast-forward descendant of the fork's `development` branch. Upstream is newer than the upstream parent used by this fork; treat its asset-bundling merge as a deliberate sync item rather than replaying it blindly over Solcord's packaged assets.
+The audit branch is a fast-forward descendant of `development`. Upstream is newer than the upstream parent used by this fork; treat the site-asset merge as a dedicated synchronization item rather than replaying it blindly over Solcord's packaged editor, theme, and branding assets.
 
-## Evidence captured before this final handoff pass
+## Verified evidence
 
-GitHub Actions run `33013970889` successfully completed:
+### Full source and package gate
 
-1. frozen dependency installation;
-2. full source verification;
-3. production package construction;
-4. a clean commit and push to the audit branch.
+GitHub Actions finalization run `33019240130` completed successfully and recorded:
 
-That run recorded:
-
-- **618 passing tests**
-- **40 skipped tests**
+- **619 passing tests**
+- **40 intentionally skipped tests**
 - **0 failing tests**
+- **3,931 assertions**
+- **659 tests across 61 files**
 - ESLint passed
 - Solcord CSS lint passed
 - TypeScript passed
@@ -48,14 +45,45 @@ That run recorded:
 - circular-dependency analysis completed
 - repository audit freshness passed
 - production `dist` packaging passed
+- `assets/branding/solcord-social-preview.png` rendered at 1200×630
 
-The 40 skipped tests are the opt-in disposable Windows acceptance preparation suite. They are not pass claims. A later final branch gate adds one baseline-capability test and is the authoritative final count.
+The 40 skipped tests are the opt-in disposable Windows acceptance suite. They remain intentionally unclaimed.
+
+### Permanent Linux gate
+
+`Solcord V2 CI` run `33019362556` passed its Linux job on commit `42f9f959a6ad6208e42921ca29d12708fb6c89f7`, including the production package and uploaded review artifact.
+
+### Reproduced Windows installer wiring defect
+
+The same run passed:
+
+- 53 Windows-sensitive fixtures;
+- Windows TypeScript checking;
+- the .NET installer compile and publish stages.
+
+It then failed the executable self-test with:
+
+```text
+embedded-bundle:InvalidDataException
+Installer lifecycle self-test failed with status 1.
+```
+
+Root cause was not the installer verifier. The package command invoked the obsolete `scripts/build-solcord-installer.cjs`, which published before creating the installer manifest and supplied none of the three MSBuild embedded-resource properties. The executable therefore contained no embedded release bundle and failed closed correctly.
+
+Correction made:
+
+- `package.json` now routes `installer:candidate` to `scripts/build-solcord-v2-installer.mjs`;
+- the obsolete sidecar builder was deleted;
+- `tests/solcord/installer-security-contract.test.ts` now asserts the exact package command and rejects restoration of the obsolete builder;
+- the active builder creates private staged inputs, requires the embedded bundle at build time, publishes exactly one executable, and runs self-test from an empty directory.
+
+Treat the latest permanent Windows CI result on the corrected branch head as authoritative.
 
 ## Review scope
 
-This pass performed an exhaustive tracked-text scan and targeted semantic review of the highest-risk surfaces. The generated audit reads every persistent tracked file, classifies binary and generated data, and scans every persistent tracked text line. Manual semantic review concentrated on:
+This pass performed an exhaustive persistent tracked-text scan and targeted semantic review of the highest-risk surfaces. The generated audit reads every persistent tracked file, classifies binary and generated content, and scans every persistent tracked text line. Manual semantic review concentrated on:
 
-- identity and migration;
+- product identity and migration;
 - renderer, preload, and Electron boundaries;
 - Solcord runtime and settings composition;
 - installer and rollback boundaries;
@@ -69,7 +97,7 @@ This is not a claim that every line received equal manual semantic analysis. Exa
 
 ## Completed work
 
-### Complete identity migration
+### 1. Complete product identity migration
 
 The prior product identity was removed from active tracked paths and text. The migration covered:
 
@@ -87,9 +115,9 @@ Current conventions are:
 - `solcord` for package, file, and runtime namespaces;
 - `SOLCORD_*` for environment variables and constants where appropriate.
 
-Repository code search returns no previous product-identity result on the audit branch.
+Repository code search returns no prior product-identity result on the audit branch.
 
-### Bounded compatibility for historical appearance values
+### 2. Bounded compatibility for historical appearance values
 
 `src/common/solcord/product.ts` normalizes the two pre-rename appearance values into:
 
@@ -98,15 +126,15 @@ Repository code search returns no previous product-identity result on the audit 
 
 The historical values are reconstructed only at the migration boundary instead of remaining active identifiers. `tests/solcord/product-identity.test.ts` covers both conversions.
 
-A byte-exact historical theme fixture remains testable through `tests/fixtures/solcord-legacy-default.theme.css.b64`; active filenames and source do not retain the prior product name.
+A byte-exact historical theme fixture remains testable through `tests/fixtures/solcord-legacy-default.theme.css.b64`; active filenames and source do not retain the prior name.
 
-### UI consistency and rendering
+### 3. UI consistency and rendering
 
 Build Web Apps guidance was applied to the existing interface without introducing a competing component library.
 
 Completed changes include:
 
-- preserving the existing Solcord semantic token system as the source of truth;
+- preserving the existing semantic token layer as the source of truth;
 - preserving Discord-compatible controls and layout primitives;
 - explicit listener cleanup in the settings title provider;
 - clearer local naming in `src/betterdiscord/ui/settings.tsx`;
@@ -124,7 +152,7 @@ Current presentation assets include:
 - `assets/branding/icons/solcord-mark-*.png`
 - `docs/evidence/branding/solcord-concept-*.png`
 
-### README and maintainer documentation
+### 4. README and maintainer documentation
 
 `README.md` was rewritten as a user-first project page with:
 
@@ -135,9 +163,9 @@ Current presentation assets include:
 - direct links into audit, security, roadmap, and handoff documents;
 - no broken direct links to historical pre-rename binaries.
 
-`AGENTS.md` records architecture boundaries, Bun commands, generated-file rules, compatibility invariants, UI and performance rules, reproduction requirements, upstream sync, and definition of done.
+`AGENTS.md` records architecture boundaries, Bun commands, generated-file rules, compatibility invariants, UI and performance rules, reproduction requirements, upstream synchronization, and definition of done.
 
-### Repeatable repository audit
+### 5. Repeatable repository audit
 
 Added:
 
@@ -148,9 +176,9 @@ Added:
 
 The scanner inventories persistent tracked files, text lines, large-file hotspots, identity residue, project wording, maintenance markers, timers, observers, DOM queries, module discovery, patches, synchronous filesystem calls, console calls, and empty catches.
 
-It excludes one-time migration/finalization workflows from the persistent inventory and does not count its own pattern definitions as findings.
+It excludes one-time migration/finalization workflows from persistent inventory and does not count its own pattern definitions as findings.
 
-### One verification command
+### 6. One verification command
 
 `bun run verify` runs:
 
@@ -164,9 +192,9 @@ It excludes one-time migration/finalization workflows from the persistent invent
 
 It exits nonzero on a failed gate. `bun run dist` remains the clean production packaging gate.
 
-### CI cleanup
+### 7. CI cleanup
 
-The durable fork workflows are:
+Durable fork workflows are:
 
 - `.github/workflows/ci.yml`
 - `.github/workflows/solcord-ci.yml`
@@ -178,17 +206,33 @@ Changes include:
 - Bun `1.4.0` pinned in verification jobs;
 - frozen dependency installation;
 - Linux source/package verification;
-- Windows policy, safety, and installer-candidate validation;
+- Windows policy, safety, and embedded-installer validation;
 - Solcord-named artifacts and review bundles;
 - upstream-only canary release behavior guarded to `BetterDiscord/BetterDiscord`.
 
 One-time migration and finalization workflows must not remain in the final branch.
 
-### Performance-first plugin-store scaffolds
+### 8. Embedded installer command correction
+
+The repository contained two installer builders:
+
+- the current secure embedded-resource builder, `scripts/build-solcord-v2-installer.mjs`;
+- an obsolete sidecar-oriented builder, `scripts/build-solcord-installer.cjs`.
+
+The package command accidentally invoked the obsolete file while tests inspected the secure file. This created a false split between tested and executed behavior.
+
+Completed correction:
+
+- package command points to the tested builder;
+- obsolete builder removed;
+- package-to-builder wiring covered by regression test;
+- secure builder remains responsible for clean-source rebuild, private input staging, exact embedded hashes, one-file publish, empty-directory self-test, and bounded cleanup.
+
+### 9. Performance-first plugin-store scaffolds
 
 The BetterDiscord plugin store was reviewed on 2026-08-26. Existing native Solcord coverage was preferred over duplicate community-file installation.
 
-Typed, immutable scaffolds were added in `src/common/solcord/baseline-capabilities.ts` for:
+Typed, immutable scaffolds in `src/common/solcord/baseline-capabilities.ts` cover:
 
 1. **Layout Collapse**, inspired by CollapsibleUI;
 2. **Embed Controls**, inspired by CollapseEmbeds;
@@ -238,12 +282,14 @@ git diff --find-renames bec561cf10837bacfe587be9be4a08abf9891224...audit/solcord
 - `tests/solcord/product-identity.test.ts`
 - `src/common/solcord/baseline-capabilities.ts`
 - `tests/solcord/baseline-capabilities.test.ts`
+- `package.json`
+- `tests/solcord/installer-security-contract.test.ts`
+- deleted `scripts/build-solcord-installer.cjs`
 
 ### Build, CI, and audit changes
 
 - `.github/workflows/ci.yml`
 - `.github/workflows/solcord-ci.yml`
-- `package.json`
 - `scripts/audit-solcord-repository.mjs`
 - `docs/audit/FULL_REPOSITORY_AUDIT.md`
 - `docs/audit/PLUGIN_BASELINE_REVIEW.md`
@@ -281,11 +327,11 @@ Capture Discord version, Solcord commit, artifact SHA-256, steps, sanitized logs
 
 The existing `v2.0.0-rc.1` release preserves historical artifact names. Do not rewrite its provenance.
 
-After Windows acceptance:
+After live Windows acceptance:
 
 1. build from a clean signed commit;
-2. generate `solcord.asar`, checksums, manifest, and `SolcordSetup-<version>-win-x64.exe`;
-3. run installer self-test from an empty directory;
+2. generate `solcord.asar`, checksums, manifest, and `SolcordInstaller.exe`;
+3. run embedded-resource self-test from an empty directory;
 4. sign and verify the installer;
 5. publish a new Solcord-named release;
 6. update README release language only after assets exist;
@@ -335,7 +381,7 @@ Refactor without changing visible behavior first. Suggested boundaries:
 - profile/settings actions;
 - pure selectors and view models.
 
-Acceptance criteria: identical visible copy/order/state/focus/narrow-layout behavior, no new eager imports, no duplicated subscriptions or module discovery, component tests for key workspaces, and before/after render and bundle evidence.
+Acceptance criteria: identical visible copy, ordering, state, focus, and narrow-layout behavior; no new eager imports; no duplicated subscriptions or module discovery; component tests for key workspaces; before/after render and bundle evidence.
 
 ### P1 — Circular dependencies
 
@@ -401,15 +447,15 @@ Prioritize runtime, Timeline, setup/recovery, Friend Watch, Audience Guard, and 
 
 Upstream `development` points to `b2b361ccd1b16b4f8162f3bf016396e5a1fa465d`, which merged missing site assets after the fork's upstream parent.
 
-Create a dedicated sync branch. Compare the upstream asset change against Solcord's bundled editor/theme assets and preserve fork identity, updater ownership, packaged assets, preload/Activity boundaries, public `BdApi` behavior, tests, and migration receipts.
+Create a dedicated sync branch. Compare the upstream asset change against Solcord's bundled editor/theme assets and preserve fork identity, updater ownership, packaged assets, preload and Activity boundaries, public `BdApi` behavior, tests, and migration receipts.
 
-Run the complete Linux and Windows matrix after the sync. Do not combine upstream sync with Control Center decomposition or feature implementation.
+Run the complete Linux and Windows matrix after the sync. Do not combine upstream synchronization with Control Center decomposition or feature implementation.
 
 ## Smallest coherent next slice
 
-The next slice is **live Windows acceptance plus release evidence**, not another feature batch:
+The next slice after branch promotion is **live Windows acceptance plus release evidence**, not another feature batch:
 
-1. build the exact final commit;
+1. build the exact promoted commit;
 2. prepare a disposable Discord runtime and isolated data root;
 3. run installer self-test and disposable acceptance;
 4. launch Discord twice and validate Activity Bridge, settings, module lifecycle, and teardown;
@@ -435,12 +481,19 @@ bun run verify
 bun run dist
 ```
 
-7. Do not repeat the identity migration.
-8. Do not replace existing native capabilities with duplicate community files.
-9. Do not claim skipped or live-only tests passed.
-10. Keep disabled optional features at effectively zero runtime cost.
-11. Update this handoff with exact evidence after a deeper slice.
+7. On Windows, run:
+
+```powershell
+bun run installer:candidate -- dist/solcord.asar "$env:TEMP\solcord-installer-candidate" "$(git rev-parse HEAD)"
+```
+
+8. Do not repeat the identity migration.
+9. Do not restore the deleted sidecar installer builder.
+10. Do not replace existing native capabilities with duplicate community files.
+11. Do not claim skipped or live-only tests passed.
+12. Keep disabled optional features at effectively zero runtime cost.
+13. Update this handoff with exact evidence after a deeper slice.
 
 ## Definition of completion
 
-A deeper item is complete only when the failure or cost is reproduced/measured, the smallest coherent change is implemented, adjacent behavior is tested, source gates pass, applicable Windows/live evidence is captured, cleanup is verified, documentation/provenance are updated, the branch is clean, and no unsupported working claim remains.
+A deeper item is complete only when the failure or cost is reproduced or measured, the smallest coherent change is implemented, adjacent behavior is tested, source gates pass, applicable Windows and live evidence is captured, cleanup is verified, documentation and provenance are updated, the branch is clean, and no unsupported working claim remains.
