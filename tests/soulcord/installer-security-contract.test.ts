@@ -5,21 +5,59 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "../..");
-const builder = fs.readFileSync(path.join(root, "scripts/build-soulcord-installer.cjs"), "utf8");
+const builder = fs.readFileSync(path.join(root, "scripts/build-soulcord-v2-installer.mjs"), "utf8");
 const engine = fs.readFileSync(path.join(root, "installer/SoulCord.Installer/InstallerEngine.cs"), "utf8");
+const embeddedBundle = fs.readFileSync(path.join(root, "installer/SoulCord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
 const selfTest = fs.readFileSync(path.join(root, "installer/SoulCord.Installer/Program.cs"), "utf8");
 
 describe("SoulCord installer security contracts", () => {
     test("rebuilds ignored dist output from the exact clean commit before packaging", () => {
         const remove = builder.indexOf("fs.rmSync(dist, {recursive: true})");
         const rebuild = builder.indexOf("spawnSync(process.execPath, [\"run\", \"dist\"]");
-        const publish = builder.indexOf("spawnSync(\"dotnet\", [\"publish\"");
+        const publish = builder.indexOf("const publish = spawnSync(\"dotnet\", [");
         expect(remove).toBeGreaterThan(0);
         expect(rebuild).toBeGreaterThan(remove);
         expect(publish).toBeGreaterThan(rebuild);
         expect(builder).toContain("The ASAR's embedded provenance does not match");
         expect(builder).toContain("The source changed while the installer was being built");
         expect(builder).toContain("Fresh build output changed while the installer was being built");
+        expect(builder).toContain("\"--self-contained\", \"true\"");
+        expect(builder).toContain("\"-p:PublishSingleFile=true\"");
+        expect(builder).toContain("\"-r\", \"win-x64\"");
+    });
+
+    test("embeds the exact manifest-bound resources and publishes no sidecars", () => {
+        expect(builder).toContain("-p:SoulCordRequireEmbeddedBundle=true");
+        expect(builder).toContain("SoulCordEmbeddedArtifact");
+        expect(builder).toContain("SoulCordEmbeddedBuildManifest");
+        expect(builder).toContain("SoulCordEmbeddedInstallerManifest");
+        expect(builder).toContain("entries.length !== 1");
+        expect(builder).toContain("entries[0].name !== \"SoulCordInstaller.exe\"");
+        expect(builder).not.toContain("SHA256SUMS.txt");
+        expect(builder).not.toContain("path.join(output, \"soulcord-installer-manifest.json\")");
+    });
+
+    test("verifies embedded bytes before private extraction and cleans only known files", () => {
+        const verify = embeddedBundle.indexOf("InstallerEngine.VerifyBundleBytes(manifest, artifact, buildManifest)");
+        const extract = embeddedBundle.indexOf("WriteExclusive(Path.Combine(root, \"soulcord.asar\"), artifact)");
+        expect(verify).toBeGreaterThan(0);
+        expect(extract).toBeGreaterThan(verify);
+        expect(embeddedBundle).toContain("SetAccessRuleProtection(isProtected: true, preserveInheritance: false)");
+        expect(embeddedBundle).toContain("FileMode.CreateNew");
+        expect(embeddedBundle).toContain("FileShare.None");
+        expect(embeddedBundle).toContain("FileOptions.WriteThrough");
+        expect(embeddedBundle).toContain("bundle.LockExtractedFiles()");
+        expect(embeddedBundle).toContain("FileAccess.Read, FileShare.Read");
+        expect(embeddedBundle).toContain("foreach (string name in ExtractedFiles)");
+        expect(embeddedBundle).not.toContain("Directory.Delete(root, recursive: true)");
+    });
+
+    test("runs self-test from an empty directory using only embedded resources", () => {
+        expect(builder).toContain("cwd: validationRoot");
+        expect(builder).toContain("fs.readdirSync(validationRoot).length !== 0");
+        expect(selfTest).toContain("EmbeddedInstallerBundle.ExtractVerified()");
+        expect(selfTest).toContain("InstallerSelfTest.Run(bundle.Root)");
+        expect(selfTest).not.toContain("string bundle = Path.Combine(root, \"bundle\")");
     });
 
     test("fails closed for an unsafe existing downgrade receipt", () => {

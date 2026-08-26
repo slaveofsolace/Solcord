@@ -7,21 +7,43 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase)) return InstallerSelfTest.Run();
+        if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using EmbeddedInstallerBundle bundle = EmbeddedInstallerBundle.ExtractVerified();
+                return InstallerSelfTest.Run(bundle.Root);
+            }
+            catch (Exception error)
+            {
+                Console.Error.WriteLine($"embedded-bundle:{error.GetType().Name}");
+                return 1;
+            }
+        }
         ApplicationConfiguration.Initialize();
-        Application.Run(new InstallerForm());
-        return 0;
+        try
+        {
+            using EmbeddedInstallerBundle bundle = EmbeddedInstallerBundle.ExtractVerified();
+            Application.Run(new InstallerForm(bundle.Root));
+            return 0;
+        }
+        catch (Exception error)
+        {
+            MessageBox.Show(error.Message, "SoulCord Installer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 1;
+        }
     }
 }
 
 internal sealed class InstallerForm : Form
 {
-    private readonly InstallerEngine _engine = new(AppContext.BaseDirectory, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+    private readonly InstallerEngine _engine;
     private readonly ComboBox _targets = new() {DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top};
     private readonly Label _status = new() {AutoSize = false, Dock = DockStyle.Fill, Padding = new Padding(0, 14, 0, 0)};
 
-    internal InstallerForm()
+    internal InstallerForm(string bundleRoot)
     {
+        _engine = new InstallerEngine(bundleRoot, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
         Text = "SoulCord Installer";
         Width = 620;
         Height = 340;
@@ -77,16 +99,14 @@ internal sealed class InstallerForm : Form
 
 internal static class InstallerSelfTest
 {
-    internal static int Run()
+    internal static int Run(string embeddedBundleRoot)
     {
         string root = Path.Combine(Path.GetTempPath(), $"soulcord-installer-test-{Guid.NewGuid():N}");
         string stage = "prepare";
         try
         {
-            string bundle = Path.Combine(root, "bundle");
             string local = Path.Combine(root, "local");
             string roaming = Path.Combine(root, "roaming");
-            Directory.CreateDirectory(bundle);
             string discord = Path.Combine(local, "Discord", "app-1.2.3");
             Directory.CreateDirectory(discord);
             File.WriteAllText(Path.Combine(discord, "Discord.exe"), "fixture");
@@ -99,22 +119,12 @@ internal static class InstallerSelfTest
             const string priorPackage = "{\"main\":\"./index.js\",\"name\":\"discord\"}";
             File.WriteAllText(Path.Combine(priorApp, "index.js"), priorIndex);
             File.WriteAllText(Path.Combine(priorApp, "package.json"), priorPackage);
-            string artifact = Path.Combine(bundle, "soulcord.asar");
-            File.WriteAllText(artifact, "soulcord-candidate");
-            string hash = InstallerEngine.HashFile(artifact);
-            string sourceCommit = new string('a', 40);
-            string buildManifest = Path.Combine(bundle, "soulcord-build-manifest.json");
-            File.WriteAllText(buildManifest, System.Text.Json.JsonSerializer.Serialize(new {
-                schemaVersion = 1,
-                kind = "soulcord-post-build-manifest",
-                build = new {product = "SoulCord", version = "1.0.0", mode = "production", source = new {clean = true, commit = sourceCommit}},
-                artifacts = new {asar = new {file = "soulcord.asar", sha256 = hash, bytes = new FileInfo(artifact).Length}}
-            }));
-            File.WriteAllText(Path.Combine(bundle, "soulcord-installer-manifest.json"), System.Text.Json.JsonSerializer.Serialize(new ReleaseManifest("1.0.0", sourceCommit, hash, "soulcord.asar", InstallerEngine.HashFile(buildManifest), 5, "Stable/PTB/Canary", "Self-test")));
             string data = Path.Combine(roaming, "BetterDiscord", "data");
             Directory.CreateDirectory(data);
             File.WriteAllText(Path.Combine(data, "betterdiscord.asar"), "previous-core");
-            var engine = new InstallerEngine(bundle, local, roaming, _ => 0);
+            var engine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0);
+            ReleaseManifest manifest = engine.LoadManifest();
+            string artifact = engine.VerifyBundle(manifest);
             DiscordTarget target = engine.DetectTargets().Single() with {ProcessName = "SoulCordInstallerSelfTestNoProcess"};
             stage = "install";
             InstallReceipt receipt = engine.Install(target);
@@ -128,7 +138,7 @@ internal static class InstallerSelfTest
             catch (InvalidDataException) {/* existing unsafe receipts must fail closed */}
             File.WriteAllText(currentReceipt, currentReceiptText);
             string installedCore = Path.Combine(data, "betterdiscord.asar");
-            var racedEngine = new InstallerEngine(bundle, local, roaming, _ => 0, point =>
+            var racedEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0, point =>
             {
                 if (point == "install-after-core")
                 {
@@ -157,7 +167,7 @@ internal static class InstallerSelfTest
             File.WriteAllText(injectorIndex, originalInjector);
             File.Copy(currentReceipt, pendingReceipt, overwrite: false);
             bool interrupted = false;
-            var interruptingEngine = new InstallerEngine(bundle, local, roaming, _ => 0, point =>
+            var interruptingEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0, point =>
             {
                 if (!interrupted && point == "rollback-after-injector") {interrupted = true; throw new IOException("fixture interruption");}
             });

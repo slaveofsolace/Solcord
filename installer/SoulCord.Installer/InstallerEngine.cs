@@ -35,7 +35,15 @@ internal sealed class InstallerEngine
     {
         string file = Path.Combine(_bundleRoot, "soulcord-installer-manifest.json");
         if (!File.Exists(file) || new FileInfo(file).Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The installer manifest is missing or oversized.");
-        ReleaseManifest? manifest = JsonSerializer.Deserialize<ReleaseManifest>(File.ReadAllText(file), new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+        return ParseManifest(File.ReadAllBytes(file));
+    }
+
+    internal static ReleaseManifest ParseManifest(ReadOnlySpan<byte> json)
+    {
+        if (json.Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The installer manifest is missing or oversized.");
+        ReleaseManifest? manifest;
+        try {manifest = JsonSerializer.Deserialize<ReleaseManifest>(json, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});}
+        catch {throw new InvalidDataException("The installer manifest failed validation.");}
         if (manifest is null || !Sha256Pattern.IsMatch(manifest.ArtifactSha256) || !Sha256Pattern.IsMatch(manifest.BuildManifestSha256) || manifest.SchemaVersion < 1 || !Regex.IsMatch(manifest.Version, "^\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?$") || !Version.TryParse(manifest.Version, out _) || !Regex.IsMatch(manifest.SourceCommit, "^[0-9a-f]{40}$")) throw new InvalidDataException("The installer manifest failed validation.");
         if (Path.GetFileName(manifest.ArtifactFile) != manifest.ArtifactFile || !manifest.ArtifactFile.EndsWith(".asar", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The manifest artifact name is unsafe.");
         return manifest;
@@ -62,14 +70,26 @@ internal sealed class InstallerEngine
     internal string VerifyBundle(ReleaseManifest manifest)
     {
         string artifact = Path.Combine(_bundleRoot, manifest.ArtifactFile);
-        if (!File.Exists(artifact)) throw new FileNotFoundException("The manifest-bound SoulCord ASAR is missing.");
-        string actual = HashFile(artifact);
-        if (!CryptographicOperations.FixedTimeEquals(Convert.FromHexString(actual), Convert.FromHexString(manifest.ArtifactSha256))) throw new InvalidDataException("The SoulCord ASAR hash does not match the manifest.");
         string buildManifest = Path.Combine(_bundleRoot, "soulcord-build-manifest.json");
-        if (!File.Exists(buildManifest) || new FileInfo(buildManifest).Length is <= 0 or > 256 * 1024 || !HashFile(buildManifest).Equals(manifest.BuildManifestSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The authoritative build manifest is missing or does not match the installer manifest.");
+        if (!File.Exists(artifact)) throw new FileNotFoundException("The manifest-bound SoulCord ASAR is missing.");
+        if (!File.Exists(buildManifest) || new FileInfo(buildManifest).Length is <= 0 or > 256 * 1024) throw new InvalidDataException("The authoritative build manifest is missing or does not match the installer manifest.");
+        byte[] artifactBytes = File.ReadAllBytes(artifact);
+        byte[] buildManifestBytes = File.ReadAllBytes(buildManifest);
+        VerifyBundleBytes(manifest, artifactBytes, buildManifestBytes);
+        return artifact;
+    }
+
+    internal static void VerifyBundleBytes(ReleaseManifest manifest, ReadOnlyMemory<byte> artifact, ReadOnlyMemory<byte> buildManifest)
+    {
+        if (artifact.Length <= 0) throw new InvalidDataException("The manifest-bound SoulCord ASAR is missing.");
+        string actual = Convert.ToHexString(SHA256.HashData(artifact.Span)).ToLowerInvariant();
+        if (!CryptographicOperations.FixedTimeEquals(Convert.FromHexString(actual), Convert.FromHexString(manifest.ArtifactSha256))) throw new InvalidDataException("The SoulCord ASAR hash does not match the manifest.");
+        if (buildManifest.Length is <= 0 or > 256 * 1024) throw new InvalidDataException("The authoritative build manifest is missing or does not match the installer manifest.");
+        string buildManifestHash = Convert.ToHexString(SHA256.HashData(buildManifest.Span)).ToLowerInvariant();
+        if (!CryptographicOperations.FixedTimeEquals(Convert.FromHexString(buildManifestHash), Convert.FromHexString(manifest.BuildManifestSha256))) throw new InvalidDataException("The authoritative build manifest is missing or does not match the installer manifest.");
         try
         {
-            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(buildManifest));
+            using JsonDocument document = JsonDocument.Parse(buildManifest);
             JsonElement root = document.RootElement;
             JsonElement build = root.GetProperty("build");
             JsonElement source = build.GetProperty("source");
@@ -84,12 +104,11 @@ internal sealed class InstallerEngine
                 && source.GetProperty("commit").GetString() == manifest.SourceCommit
                 && asar.GetProperty("file").GetString() == manifest.ArtifactFile
                 && asar.GetProperty("sha256").GetString() == manifest.ArtifactSha256
-                && asar.GetProperty("bytes").GetInt64() == new FileInfo(artifact).Length;
+                && asar.GetProperty("bytes").GetInt64() == artifact.Length;
             if (!valid) throw new InvalidDataException("The build manifest does not bind this clean SoulCord artifact and source commit.");
         }
         catch (InvalidDataException) {throw;}
         catch (Exception) {throw new InvalidDataException("The authoritative build manifest failed validation.");}
-        return artifact;
     }
 
     internal InstallReceipt Install(DiscordTarget target, bool repair = false)
@@ -172,6 +191,7 @@ internal sealed class InstallerEngine
     internal bool VerifyInstalled()
     {
         ReleaseManifest manifest = LoadManifest();
+        VerifyBundle(manifest);
         string installed = Path.Combine(_roamingAppData, "BetterDiscord", "data", "betterdiscord.asar");
         return File.Exists(installed) && HashFile(installed).Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase);
     }

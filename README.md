@@ -3,63 +3,59 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/slaveofsolace/Solcord/actions/workflows/soulcord-ci.yml"><img alt="SoulCord CI" src="https://img.shields.io/github/actions/workflow/status/slaveofsolace/Solcord/soulcord-ci.yml?branch=fork%2Fscaffold-baseline&style=flat-square&label=SoulCord%20CI"></a>
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-4ecdc4?style=flat-square">
+  <a href="https://github.com/slaveofsolace/Solcord/actions/workflows/soulcord-ci.yml"><img alt="SoulCord CI" src="https://img.shields.io/github/actions/workflow/status/slaveofsolace/Solcord/soulcord-ci.yml?branch=v2%2Fproduct-suite&style=flat-square&label=SoulCord%20CI"></a>
+  <img alt="Version 2.0.0 release candidate" src="https://img.shields.io/badge/version-2.0.0--rc.1-4ecdc4?style=flat-square">
   <img alt="Apache 2.0" src="https://img.shields.io/badge/license-Apache--2.0-f4b860?style=flat-square">
 </p>
 
 # SoulCord
 
-SoulCord is an owner-controlled Discord desktop power fork built on BetterDiscord. It keeps the established plugin/theme contracts and data paths, then adds a restrained reliability, privacy, and productivity layer around them.
+SoulCord is an owner-controlled Discord desktop power fork based on BetterDiscord. It preserves the public plugin and theme contracts, familiar data paths, and upstream history while adding bounded Activity compatibility, recovery controls, local privacy tools, and a coherent built-in utility suite.
 
-V1 exists for one concrete reason: Discord Activities that work in browser and vanilla desktop must not be broken merely because the client is injected. SoulCord replaces BetterDiscord’s all-or-nothing late-preload behavior with a narrow policy: one later absolute preload may be accepted only when canonical path checks prove it belongs to the same Discord package. The unrestricted compatibility override remains off.
+V2 is a release-candidate branch, not a stable release. Source and deterministic tests establish mechanisms; they do not establish installed Discord compatibility, visual acceptance, or safety after a future Discord update.
 
-This branch is a review build, not a published release. The owner accepted Activities on the previous installed generation; every newly packaged artifact still requires a disposable regression pass before live replacement. Automated checks do not substitute for owner-visible UI acceptance.
+## What V2 contains
 
-## What changes
-
-| Area | V1 behavior | Maturity |
+| Area | V2 behavior | Current claim |
 | --- | --- | --- |
-| Control Center | Five responsive workspaces, semantic appearance modes, eight-step resumable setup, and bounded Session Pulse | Source-implemented; new Human Eye captures pending |
-| Launch identity | `SOLcord` resolves to `SOULcord` over Discord's native splash with reduced-motion, timeout, and failure fallbacks | Source-implemented; cold/warm/update frame acceptance pending |
-| Activity Bridge | Same-package preload policy, bounded sanitized ledger, diagnostics | Mechanism accepted on the prior live generation; exact new artifact regression pending |
-| Plugin Doctor | Failure history, three-in-ten-minute quarantine, explicit retry | Ready |
-| Drift Radar | Structural probes plus adapter-local fail-closed lookup checks | Preview |
-| Performance HUD | Bounded renderer lag, heap-when-available, and owned-resource samples | Ready |
-| Workspace Profiles | Activities, Gaming, Calls, Streaming, Focus, custom profiles, full diff, atomic apply and rollback | Preview; third-party addon sets require an extra warning |
-| Command Deck | Local settings/actions palette at `Ctrl+Alt+K` | Ready |
-| Link Lens | Local host, tracker, declared-redirect, confusable-domain, and invite-code review | Preview; invite metadata is not fetched |
-| Stream Shield | Reversible privacy preview and manual hotkey; structural Go Live detection | Preview |
-| Screenshot Scrubber | Local cover/blur workflow and PNG export; never uploads | Preview |
-| Time Machine | Versioned local snapshots, migration ledger, export and rollback | Ready |
-| Accessibility Toolkit | Reduced motion, focus treatment, contrast aid, reading controls | Preview |
-| Daily interaction built-ins | Clean-room Do Not Track, Double Click to Reply, and Invisible Typing; no automatic send | Three accepted setup defaults; installed Discord adapter acceptance pending |
-| Guarded Split Large Messages | Implemented modal/clipboard preview path; never multi-sends | Preview; not recommended or setup-enabled until a disposable Discord acceptance receipt exists |
-| Setup and catalog | Recommended theme plus four alternatives, three ready clean-room features, optional 36-addon review catalog, immutable-source/hash checks, dependency closure, conflicts, quarantine and rollback | Community candidates and built-in previews remain fail-closed until their individual security/runtime gates pass |
-| Message Timeline | Opt-in observed-message journal, DM-only default, explicit deleted/edited labels, retention/cap controls, AES-256-GCM persistence with a safeStorage-wrapped key | Experimental; media cache unavailable and live acceptance pending |
-| Friend Watch | Opt-in already-loaded relationship reconciliation, encrypted account-isolated history, unknown-cause labels, local export and clear | Source-implemented; disabled by default and disposable runtime pending |
-| Safety and return tools | Expiring exact-host Domain Memory, local Attachment Guard inspection, consolidated Privacy Mode, and internal-route Return Later reminders | Source-implemented; live interception/context adapters remain separately labeled |
-| Windows installer | Stable/PTB/Canary detection, manifest-bound install/verify/repair/update, backup rollback/uninstall, explicit launch | Unsigned internal candidate; signing and lifecycle acceptance pending |
+| Activity Bridge | Accepts at most one verified, same-package Discord-owned late preload while the unrestricted override stays off | Previously owner-confirmed on an installed V1 generation; every new artifact still needs regression acceptance |
+| Stream Audience Guard | Prevent Start, Stop on Join, and separately warned Stop on Watch modes; per-call arming and account-isolated denylist | Client guard, disabled by default; not per-viewer media access control |
+| Plugin Doctor | Bounded failure history, three-in-ten-minute quarantine, explicit retry and recovery | Ready in source |
+| Native Suite | Privacy Controls, Composer Toolkit, Call Context, Audio Console, Voice Note Studio, Translation Desk, People and Spaces, Channel Glance, Notification Review, Motion Studio, Voice Health, Permission Lens | Built-in source exists; each adapter reports ready or unavailable after structural validation |
+| Local records | Message Timeline, Friend Watch, Settings Time Machine, Update Ledger, profiles and rollback | Opt-in, bounded, and account-isolated; installed persistence acceptance remains separate |
+| Creator/privacy tools | Link Lens, Invite Inspector, Stream Shield, Screenshot Scrubber, Attachment Guard | Local and reversible; no automatic upload or navigation |
+| Theme family | SoulCord Default plus ten alternatives, including six structurally distinct V2 full-shell themes | Eleven self-contained local themes; V2 live scaling review remains pending |
+| Provider migration | Hash-bound preview, replacement health check, source-file archive outside the scanned plugin directory, receipt-bound rollback | Never deletes a provider or reads private plugin data |
+| Windows installer | Stable/PTB/Canary detection, exact artifact verification, backup, install, verify, repair/update, rollback/uninstall, explicit launch | Unsigned, self-contained Windows x64 release candidate |
 
-The global `BdApi`, plugin/theme folders, `betterdiscord://` protocol, preload globals, CSS hooks, and existing addon contracts remain unchanged for compatibility. These retained identifiers are documented in [the brand migration ledger](docs/BRAND_MIGRATION_LEDGER.md).
+The Native Suite replaces overlapping community-plugin cards only when the owner chooses the SoulCord provider and the built-in health check passes. It does not rename or claim authorship of community work. Existing configuration and private databases stay where they are. See [V2 built-in migration](docs/V2_PLUGIN_MIGRATION.md).
 
-## Deliberate boundaries
+## Important limits
 
-SoulCord V1 does not extract tokens, fetch deleted messages, backfill history, access hidden channels, automate sending or joining, upload without confirmation, forge premium state, mutate entitlements, bypass account controls, or generate covert microphone traffic. There is no hidden telemetry. The private Message Timeline records only in-scope events already observed by the running client after explicit opt-in.
+- Stream Audience Guard cannot stop Discord's server from forwarding a normal Go Live stream to one selected person. It can refuse to start or stop the owner's stream when a denied person is detected. Stop on Watch may occur after brief frame exposure. Only channel permissions provide server-enforced access control.
+- SoulCord does not extract tokens, fetch deleted messages, backfill history, access hidden channels, automate account actions, forge premium state, or hide telemetry. There is no SoulCord telemetry service.
+- Voice Note Studio requires record, stop, preview, and explicit upload preparation. It never records or uploads on startup.
+- Translation Desk has no active provider by default. It shows the endpoint and text scope before sending text to DeepL or a configured LibreTranslate service. Credentials are encrypted with Electron `safeStorage`; without it, credentials are memory-only.
+- Message Timeline records only events already observed by the running client after opt-in. It does not inspect or import MessageLoggerV2 data.
+- Fake Deafen remains default-off Power Lab work with separate consent and per-call arming. Other account-risk experiments remain outside normal installation acceptance.
+- A catalog hash or static review is not runtime acceptance. Community candidates remain fail-closed until their individual gates pass.
 
-Anti-AFK audio pulses, Fake-Nitro-like expression experiments, Decor/OAuth, stream-quality overrides, and other account-risk or external-service work are outside V1 installation acceptance. If explored later, they must remain separately consented, default-off, licensed, and fail-closed.
+Read [Security and privacy](docs/SECURITY_AND_PRIVACY.md), [Stream Audience Guard](docs/STREAM_AUDIENCE_GUARD.md), and [Install and rollback](docs/INSTALL_AND_ROLLBACK.md) before testing.
 
-## Privacy and recovery
+## About-one-minute install
 
-SoulCord stores settings, profiles, snapshots, quarantine state, expiring domain decisions, local reminders, and—when enabled—encrypted Message Timeline and Friend Watch records in the existing BetterDiscord compatibility data directory. Sanitized diagnostics omit tokens, message content, server names, account identifiers, and absolute local paths. Link/attachment inspection and screenshot redaction run locally. No SoulCord service receives data. Private-history persistence fails closed to session-only when Electron secure storage is unavailable.
+The intended RC path takes about one minute on a typical Windows PC after download. It is not a time guarantee.
 
-After three interrupted SoulCord renderer starts within ten minutes, startup recovery loads only Plugin Doctor. Quarantined addons are never silently re-enabled. The core updater is intentionally disabled until SoulCord has owner-controlled signed integrity metadata, so an upstream BetterDiscord artifact cannot replace the fork.
+1. Download the complete `SoulCord-v2.0.0-rc.1-win-x64` folder and verify `SHA256SUMS.txt`.
+2. Quit Discord completely. The installer refuses to change the shared core while Stable, PTB, or Canary is running.
+3. Run `SoulCordInstaller.exe`, review the detected Discord channel, and choose **Install**.
+4. Choose **Verify**, then **Launch Discord**. Open **User Settings → SoulCord Suite** before enabling optional features.
 
-Read [Security and privacy](docs/SECURITY_AND_PRIVACY.md) and [Install and rollback](docs/INSTALL_AND_ROLLBACK.md) before testing.
+The executable is unsigned. Windows may display an unknown-publisher warning; do not bypass a security prompt unless the file hash matches the release manifest obtained from the owner-controlled repository. The installer preserves plugins, themes, settings, Custom CSS, and private message data. Keep its receipt-bound backup until the RC is accepted. Full recovery steps are in [Install and rollback](docs/INSTALL_AND_ROLLBACK.md).
 
 ## Build
 
-Requirements: Bun `1.4.0` and a standard local Discord install.
+Requirements: Bun `1.4.0`, .NET 8 SDK for installer creation, and a standard local Discord installation for later acceptance.
 
 ```sh
 bun install --frozen-lockfile
@@ -68,25 +64,24 @@ bun run lint
 bun run lint-css:soulcord
 bun run typecheck
 bun run dist
+bun run installer:candidate -- dist/soulcord.asar <new-output-directory> <40-character-source-commit>
 ```
 
-An unsigned framework-dependent installer candidate can be built after `dist` with `bun run installer:candidate -- dist/soulcord.asar <new-output-directory> <40-character-source-commit>`. Its built-in `--self-test` exercises install, exact verification, and rollback only in disposable directories.
+The installer builder accepts only a clean exact commit, rebuilds `dist/soulcord.asar`, verifies embedded provenance, publishes one self-contained `SoulCordInstaller.exe`, runs its disposable lifecycle self-test, and writes the installer manifest and checksums. The production ASAR is installed under the legacy `betterdiscord.asar` filename only because the existing injector requires it.
 
-The production artifact is `dist/soulcord.asar`. The manual live-install procedure first makes and hashes a broader owner-data backup. The one-click installer candidate itself backs up the existing core ASAR and injector entry files, then copies the verified artifact to the legacy `betterdiscord.asar` filename expected by the installed injector. Neither path renames or erases the `%APPDATA%\BetterDiscord` compatibility directory.
-
-## Update and upstream strategy
+## Repository and updates
 
 - Product repository: [`slaveofsolace/Solcord`](https://github.com/slaveofsolace/Solcord)
 - Upstream: [`BetterDiscord/BetterDiscord`](https://github.com/BetterDiscord/BetterDiscord)
-- V1 baseline: upstream `development` commit `b28306898136ee5157f7ecb352d2ae307a646dec`
-- Owner review branch: `fork/scaffold-baseline`
-- Core updates: fail closed until a SoulCord-owned signed feed exists
-- Addon catalog: the upstream BetterDiscord catalog remains available as an explicitly attributed compatibility service
+- Upstream baseline: `development` commit `b28306898136ee5157f7ecb352d2ae307a646dec`
+- V2 review branch: `v2/product-suite`
+- Core updater: disabled until SoulCord has owner-controlled integrity metadata
+- Catalog: attributed BetterDiscord metadata; no blanket reuse or runtime claim
 
-Upstream changes should be reviewed and merged deliberately. Discord-internal adapters must pass structural canaries again after a Discord or Electron update.
+Discord-internal adapters must pass their structural canaries again after a Discord or Electron update. The project does not merge, release, or change the default branch merely because local checks pass.
 
 ## Attribution
 
-SoulCord is based on BetterDiscord and preserves its Git history, contributors, license, public APIs, and fork lineage. BetterDiscord and Discord names are used only for factual compatibility and attribution. SoulCord’s mark and visual system are original and do not use the BetterDiscord or Discord logos.
+SoulCord preserves BetterDiscord's Git history, contributors, Apache-2.0 license, public APIs, and fork lineage. BetterDiscord and Discord names are used only for factual compatibility and attribution. SoulCord's mark and theme family are original and do not use either project's logo.
 
 See [NOTICE](NOTICE), [LICENSE](LICENSE), and [the provenance registry](docs/PROVENANCE_REGISTRY.md).

@@ -148,7 +148,13 @@ function runFixture(acceptance: AcceptanceLedger, candidateDisposition = "SAFE_T
         "SoulCord-ObsidianThread.theme.css",
         "SoulCord-CarbonEmber.theme.css",
         "SoulCord-MidnightGlass.theme.css",
-        "SoulCord-PaperSignal.theme.css"
+        "SoulCord-PaperSignal.theme.css",
+        "SoulCord-Threadline.theme.css",
+        "SoulCord-SignalBlock.theme.css",
+        "SoulCord-RelayClassic.theme.css",
+        "SoulCord-Workshop.theme.css",
+        "SoulCord-QuietRead.theme.css",
+        "SoulCord-NightTransit.theme.css"
     ]) fs.writeFileSync(path.join(themes, fileName), `/** @name ${fileName} */\n:root {}\n`);
 
     const result = Bun.spawnSync({

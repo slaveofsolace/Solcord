@@ -58,7 +58,16 @@ const sourceBuildManifestHash = hashFile(sourceBuildManifest);
 fs.mkdirSync(output, {recursive: true});
 
 const project = path.join(repo, "installer", "SoulCord.Installer", "SoulCord.Installer.csproj");
-const publish = spawnSync("dotnet", ["publish", project, "-c", "Release", "--no-self-contained", "-o", output], {stdio: "inherit", windowsHide: true});
+const publish = spawnSync("dotnet", [
+    "publish", project,
+    "-c", "Release",
+    "-r", "win-x64",
+    "--self-contained", "true",
+    "-p:PublishSingleFile=true",
+    "-p:IncludeNativeLibrariesForSelfExtract=true",
+    "-p:PublishTrimmed=false",
+    "-o", output
+], {stdio: "inherit", windowsHide: true});
 if (publish.status !== 0) throw new Error(`dotnet publish failed with status ${publish.status}.`);
 if (gitText(["rev-parse", "HEAD"]).toLowerCase() !== sourceCommit || gitText(["status", "--porcelain=v1", "--untracked-files=all"])) throw new Error("The source changed while the installer was being built.");
 if (hashFile(artifact) !== artifactHash || hashFile(sourceBuildManifest) !== sourceBuildManifestHash) throw new Error("Fresh build output changed while the installer was being built.");
@@ -76,7 +85,7 @@ const manifest = {
     buildManifestSha256: hashFile(bundledBuildManifest),
     schemaVersion: 5,
     supportedDiscord: "Stable/PTB/Canary; exact installed target shown at runtime",
-    releaseNotes: "Unsigned internal SoulCord V1 acceptance candidate. Explicit install, verify, repair/update, rollback/uninstall, and launch only."
+    releaseNotes: "Unsigned SoulCord V2 release candidate. Explicit install, verify, repair/update, rollback/uninstall, and launch only. Windows may display an unknown-publisher warning."
 };
 fs.writeFileSync(path.join(output, "soulcord-installer-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, {encoding: "utf8", flag: "wx"});
 
