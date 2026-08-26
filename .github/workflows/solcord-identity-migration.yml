@@ -80,6 +80,7 @@ jobs:
       - name: Restore workflow files for the permission-limited push
         shell: bash
         run: |
+          rm -rf .github/workflows
           git checkout origin/audit/solcord-foundation -- .github/workflows
           git add -A
           git commit --amend --no-edit
