@@ -13,5 +13,10 @@ The Solcord signal-S mark and brand assets in assets/branding are original
 project contributions. No BetterDiscord or Discord logo is included as the
 Solcord mark.
 
+Solcord bundles Anybody and Hanken Grotesk from the Google Fonts repository.
+Both are licensed under the SIL Open Font License, Version 1.1. Exact source
+revisions, hashes, and license copies are recorded in
+docs/PROVENANCE_REGISTRY.md and docs/licenses/.
+
 No Vencord, DiscordFreeEmojis, AutoIdleOnAFK, or BetterDiscord catalog plugin
-source or asset is included in Solcord V1. See docs/PROVENANCE_REGISTRY.md.
+source or asset is included in Solcord V2. See docs/PROVENANCE_REGISTRY.md.

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
+import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
@@ -177,13 +178,17 @@ describe("Solcord theme presentation", () => {
 
     test("uses a local, readable editorial type system and a bounded ambient field", () => {
         const css = executableCss(SOLCORD_UI_CSS);
-        expect(css).toContain("--sc-font-body: \"Segoe UI Variable Text\"");
-        expect(css).toContain("--sc-font-display: bahnschrift");
+        expect(css).toContain("--sc-font-body: \"Solcord Hanken\"");
+        expect(css).toContain("--sc-font-display: \"Solcord Anybody\"");
+        expect(css).toContain("--sc-font-editorial: georgia");
         expect(css).toContain("--sc-font-code: \"Cascadia Code\"");
+        expect(css).toContain("url(\"./fonts/HankenGrotesk-variable.ttf\")");
+        expect(css).toContain("url(\"./fonts/Anybody-variable.ttf\")");
         expect(css).toContain("--sc-field-grain: url(\"data:image/svg+xml");
         expect(css).not.toMatch(/url\(["']?https?:/i);
         expect(css).toContain("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode] body::before");
         expect(css).toContain("pointer-events: none");
+        expect(css).toContain("mix-blend-mode: soft-light");
         expect(css).toContain(".solcord-header h1");
         expect(css).toContain("font-family: var(--sc-font-display)");
 
@@ -193,6 +198,19 @@ describe("Solcord theme presentation", () => {
             expect(source, theme.fileName).toContain("[class*=\"title_\"]");
             expect(source, theme.fileName).not.toMatch(/@font-face|https?:\/\//i);
         }
+    });
+
+    test("pins the locally bundled OFL font payloads", () => {
+        const fonts = new Map([
+            ["Anybody-variable.ttf", "b184bd7e6ca8348bbaecec98951565729d7e89b7872d4898a1f9981342b5b64c"],
+            ["HankenGrotesk-variable.ttf", "813b3f8fa0965405669a89b38e51bbefd95eef6b8e20d1cb2d8c10cce062662f"]
+        ]);
+        for (const [fileName, expectedHash] of fonts) {
+            const payload = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styles/fonts", fileName));
+            expect(createHash("sha256").update(payload).digest("hex"), fileName).toBe(expectedHash);
+        }
+        expect(readFileSync(resolve(REPOSITORY_ROOT, "docs/licenses/Anybody-OFL-1.1.txt"), "utf8")).toContain("SIL OPEN FONT LICENSE Version 1.1");
+        expect(readFileSync(resolve(REPOSITORY_ROOT, "docs/licenses/HankenGrotesk-OFL-1.1.txt"), "utf8")).toContain("SIL OPEN FONT LICENSE Version 1.1");
     });
 
     test("uses the default ember only as the warning and critical color", () => {

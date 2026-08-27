@@ -68,7 +68,8 @@ function buildOptions() {
             ".css": "css",
             ".html": "copy",
             ".png": "dataurl",
-            ".svg": "dataurl"
+            ".svg": "dataurl",
+            ".ttf": "dataurl"
         },
         plugins: [styleLoader() as unknown as esbuild.Plugin],
         logLevel: "info",

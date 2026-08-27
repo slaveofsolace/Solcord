@@ -35,8 +35,8 @@
     --solcord-radius: 0;
     --solcord-radius-small: 1px;
     --solcord-avatar-radius: 10px;
-    --solcord-font-body: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
-    --solcord-font-display: bahnschrift, "Arial Narrow", "Segoe UI Variable Display", sans-serif;
+    --solcord-font-body: "Solcord Hanken", "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
+    --solcord-font-display: "Solcord Anybody", "Segoe UI Variable Display", "Segoe UI", sans-serif;
     --custom-message-spacing-vertical-container-cozy: 0.34rem;
     --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
@@ -134,7 +134,7 @@ body::before {
 }
 
 #app-mount { position: relative; z-index: 1; background: transparent !important; }
-#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: var(--solcord-font-display); font-kerning: normal; letter-spacing: -0.018em; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: var(--solcord-font-display); font-kerning: normal; font-stretch: 108%; letter-spacing: -0.024em; }
 
 #app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
     gap: var(--solcord-gap);

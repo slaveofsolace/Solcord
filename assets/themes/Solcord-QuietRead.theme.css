@@ -101,9 +101,9 @@
     --scrollbar-auto-track: #E4EAEC;
 }
 
-body { background: var(--scq-canvas) !important; color: var(--scq-text); font-family: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif; font-size: 16px; font-kerning: normal; }
+body { background: var(--scq-canvas) !important; color: var(--scq-text); font-family: "Solcord Hanken", "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif; font-size: 16px; font-kerning: normal; }
 #app-mount { background: var(--scq-canvas) !important; }
-#app-mount :is(h1, h2, h3, [class*="title_"]) { color: var(--scq-text); font-family: Georgia, "Times New Roman", serif; font-kerning: normal; letter-spacing: -0.016em; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { color: var(--scq-text); font-family: georgia, "Times New Roman", serif; font-kerning: normal; letter-spacing: -0.016em; }
 ::selection { color: #FFFFFF; background: var(--scq-blue); }
 :where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scq-focus) !important; outline-offset: 3px; }
 
