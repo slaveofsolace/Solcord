@@ -576,6 +576,7 @@ class SolcordRuntimeStore extends Store {
         if (JSON.stringify(previous.friendWatch) !== JSON.stringify(next.friendWatch)) affected.add("friend-watch");
         if (previous.safety.linkLens !== next.safety.linkLens) affected.add("link-lens");
         if (affected.size) await this.#synchronizeFeatures([...affected]);
+        this.emitChange();
     }
 
     fakeDeafenStatus(): SolcordFakeDeafenStatus {

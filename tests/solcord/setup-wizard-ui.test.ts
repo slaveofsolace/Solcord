@@ -167,4 +167,11 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("[data-solcord-focus-muted=\"true\"]");
         expect(WIZARD_CSS).toContain(".solcord-call-badge");
     });
+
+    test("keeps baseline adapter settings and runtime status synchronized", () => {
+        expect(PANEL_SOURCE).toContain("const current = SolcordSettings.snapshot().productPreferences;");
+        expect(PANEL_SOURCE).toContain("baseline: {...current.baseline, ...patch}");
+        expect(PANEL_SOURCE).not.toContain("update({...baseline, embedControls:");
+        expect(RUNTIME_SOURCE).toMatch(/if \(affected\.size\) await this\.#synchronizeFeatures\(\[\.\.\.affected\]\);\s*this\.emitChange\(\);/);
+    });
 });
