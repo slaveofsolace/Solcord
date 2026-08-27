@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text.Json;
+
 namespace Solcord.Installer;
 
 internal static class Program
@@ -132,6 +134,20 @@ internal static class InstallerSelfTest
             if (!File.ReadAllText(Path.Combine(resources, "app", "index.js")).Contains("betterdiscord.asar", StringComparison.OrdinalIgnoreCase)) return 4;
             string currentReceipt = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");
             string currentReceiptText = File.ReadAllText(currentReceipt);
+            InstallReceipt installedReceipt = JsonSerializer.Deserialize<InstallReceipt>(currentReceiptText) ?? throw new InvalidDataException("fixture receipt");
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "1.0.0"}));
+            stage = "upgrade-repair";
+            engine.Install(target, repair: true);
+            if (!engine.VerifyInstalled()) return 14;
+            stage = "same-version-repair";
+            engine.Install(target, repair: true);
+            if (!engine.VerifyInstalled()) return 15;
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "999.0.0"}));
+            stage = "downgrade-refusal";
+            try {engine.Install(target, repair: true); return 16;}
+            catch (InvalidOperationException error) when (error.Message.Contains("older than the recorded Solcord install", StringComparison.Ordinal)) {/* expected */}
+            File.WriteAllText(currentReceipt, currentReceiptText);
+            if (!engine.VerifyInstalled()) return 17;
             File.WriteAllText(currentReceipt, new string('x', 65 * 1024));
             stage = "oversized-receipt-refusal";
             try {engine.Install(target, repair: true); return 8;}

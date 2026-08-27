@@ -73,6 +73,10 @@ describe("Solcord installer security contracts", () => {
         expect(engine).toContain("if (!File.Exists(receipt)) return;");
         expect(engine).toContain("receiptInfo.Length is <= 0 or > 64 * 1024");
         expect(engine).toContain("update is held for review");
+        expect(selfTest).toContain("upgrade-repair");
+        expect(selfTest).toContain("same-version-repair");
+        expect(selfTest).toContain("downgrade-refusal");
+        expect(selfTest).toContain("older than the recorded Solcord install");
         expect(selfTest).toContain("oversized-receipt-refusal");
     });
 
