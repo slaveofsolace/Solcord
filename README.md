@@ -18,7 +18,9 @@
 
 ## Current state
 
-Solcord has a working source and packaging foundation, a self-contained Windows installer candidate, a modular native suite, local full-shell themes, recovery tooling, and a compatibility layer for Discord Activities. The project remains a release candidate: Discord adapter behavior and installer rollback still require live desktop evidence after meaningful Discord updates.
+Solcord V2 is a release candidate with a self-contained Windows installer, one task-oriented Control Center, a resumable first run, local full-shell themes, recovery tooling, and a bounded compatibility layer for Discord Activities. Lean, Balanced, and Visual profiles control real sampling and motion policy. Optional tools start only after their current Discord adapter validates.
+
+**New user?** Start with the [one-minute Windows guide](docs/QUICK_START.md). It covers download verification, installation, first setup, and rollback without requiring Git or a development toolchain.
 
 > [!IMPORTANT]
 > The existing release page contains historical pre-rename artifacts. They are retained for provenance, not presented as the current Solcord build. Use the verified source workflow below until a replacement Solcord-named release is published.
@@ -50,7 +52,7 @@ Every Discord-facing built-in starts through a structural adapter. When an expec
 
 ## Performance baseline
 
-The default baseline does not auto-enable newly researched plugin concepts. Five useful gaps are scaffolded as typed, lazy, zero-cost-while-disabled capabilities:
+Five clean-room tools share one lazy lifecycle and are off by default:
 
 - Layout Collapse
 - Embed Controls
@@ -58,11 +60,13 @@ The default baseline does not auto-enable newly researched plugin concepts. Five
 - Media Shelf
 - Message Link Preview
 
-They are architecture and acceptance scaffolds—not working-feature claims. See [the plugin baseline review](docs/audit/PLUGIN_BASELINE_REVIEW.md) and [capability roadmap](docs/roadmap/BASELINE_CAPABILITIES.md).
+When all five are off, they perform no Webpack lookup, patching, observation, timer, storage, or network work. Layout Collapse hides only user-selected regions; Embed Controls changes presentation without changing message data; Autoscroll stops on middle-button release or Escape; Message Link Preview reads only an already-loaded message; Media Shelf stores validated local references rather than downloading media. See [the plugin baseline review](docs/audit/PLUGIN_BASELINE_REVIEW.md) and [capability roadmap](docs/roadmap/BASELINE_CAPABILITIES.md).
 
 ## Interface system
 
-Solcord uses one semantic token layer for surfaces, borders, text, status, focus, spacing, radius, density, and motion. The control center supports narrow containers, visible keyboard focus, reduced motion, and theme-aware states without introducing a second component library.
+The Control Center is organized around Overview, Appearance, Performance, Privacy & Safety, Chat & Composer, Voice & Activities, Friends & Spaces, Extensions, Recovery, and Advanced. Its search narrows those workspaces without hiding the active page. Module status uses explicit states such as off, ready, degraded, unavailable, and quarantined.
+
+Solcord uses one semantic token layer for surfaces, borders, text, status, focus, spacing, radius, density, and motion. The interface supports narrow containers, visible keyboard focus, reduced motion, and high Windows scaling without introducing a second component library.
 
 The repository includes local, dependency-free themes. No remote fonts, images, or CSS imports are required. Only one Solcord base theme is active at a time, and selector drift should fall back to ordinary Discord styling rather than leave a partially themed client.
 

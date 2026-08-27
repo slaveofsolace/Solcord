@@ -1,5 +1,25 @@
 # Solcord Changelog
 
+## 2.0.0-rc.2 — Product workspace candidate
+
+### Added
+
+- One searchable Control Center with ten task-oriented workspaces and a resumable eight-step first run.
+- Real Lean, Balanced, and Visual resource policies with one Full, Subtle, or Reduced motion system.
+- Default-off clean-room adapters for Layout Collapse, Embed Controls, Cross-platform Autoscroll, Media Shelf, and loaded-store-only Message Link Preview.
+
+### Changed
+
+- First-run appearance choices now preview the full Discord shell and restore the saved appearance when the user leaves the step.
+- Settings favor compact operational rows, plain status language, and one shared lifecycle instead of separate plugin-card dashboards.
+- Documentation now distinguishes implemented local adapters from catalog research and points new users to the installer-first guide.
+
+### Verification boundary
+
+- Automated source, package, installer, security, and disposable-runtime evidence is bound to the exact release commit and published manifest.
+- No automated acceptance message, call, Activity, relationship, server, upload, stream, or account action is performed.
+- The Windows executable remains unsigned and may show an unknown-publisher warning.
+
 ## 1.0.0 — V1 review build
 
 ### Added

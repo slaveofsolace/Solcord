@@ -139,7 +139,10 @@ describe("Solcord beginner-first setup UI", () => {
     test("makes appearance choices visible before setup is applied", () => {
         expect(WIZARD_SOURCE).toMatch(/solcord-mode-\$\{appearance\.mode\}/);
         expect(WIZARD_SOURCE).toMatch(/solcord-preview-shape-\$\{appearance\.messageShape\}/);
-        expect(WIZARD_SOURCE).toContain("This preview updates immediately.");
+        expect(WIZARD_SOURCE).toContain("useFullShellAppearancePreview(appearance, performanceProfile)");
+        expect(WIZARD_SOURCE).toContain("root.dataset.solcordMode = appearance.mode");
+        expect(WIZARD_SOURCE).toContain("root.removeAttribute(attribute)");
+        expect(WIZARD_SOURCE).toContain("The whole-shell preview updates immediately.");
         expect(WIZARD_CSS).toContain(".solcord-live-preview.solcord-mode-solcord-light");
         expect(WIZARD_CSS).toContain(".solcord-live-preview.solcord-preview-shape-seamed");
     });

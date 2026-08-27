@@ -148,10 +148,42 @@ function ActivitiesStep() {
     </div>;
 }
 
-function ThemeStep({value, appearance, onChange, onAppearance}: {value: SolcordThemeId; appearance: SolcordAppearancePreferences; onChange(value: SolcordThemeId): void; onAppearance(value: SolcordAppearancePreferences): void;}) {
+const SOLCORD_PRESENTATION_ATTRIBUTES = [
+    "data-solcord-mode",
+    "data-solcord-accent",
+    "data-solcord-density",
+    "data-solcord-motion",
+    "data-solcord-message-shape",
+    "data-solcord-performance",
+    "data-solcord-effective-motion"
+] as const;
+
+function useFullShellAppearancePreview(appearance: SolcordAppearancePreferences, performanceProfile: SolcordPerformanceProfile): void {
+    useEffect(() => {
+        const root = document.documentElement;
+        const previous = new Map(SOLCORD_PRESENTATION_ATTRIBUTES.map(attribute => [attribute, root.getAttribute(attribute)]));
+        const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+        root.dataset.solcordMode = appearance.mode;
+        root.dataset.solcordAccent = appearance.accent;
+        root.dataset.solcordDensity = appearance.density;
+        root.dataset.solcordMotion = appearance.motion;
+        root.dataset.solcordMessageShape = appearance.messageShape;
+        root.dataset.solcordPerformance = performanceProfile;
+        root.dataset.solcordEffectiveMotion = resolveSolcordPerformancePolicy(performanceProfile, appearance.motion, reducedByOs).effectiveMotion;
+        return () => {
+            for (const [attribute, value] of previous) {
+                if (value === null) root.removeAttribute(attribute);
+                else root.setAttribute(attribute, value);
+            }
+        };
+    }, [appearance, performanceProfile]);
+}
+
+function ThemeStep({value, appearance, performanceProfile, onChange, onAppearance}: {value: SolcordThemeId; appearance: SolcordAppearancePreferences; performanceProfile: SolcordPerformanceProfile; onChange(value: SolcordThemeId): void; onAppearance(value: SolcordAppearancePreferences): void;}) {
+    useFullShellAppearancePreview(appearance, performanceProfile);
     return <div className="solcord-wizard-body">
         <h3>Appearance</h3>
-        <p>Choose the product mode first. The compatibility theme files remain available during migration, but one semantic token layer owns Solcord controls.</p>
+        <p>Choose the product mode first. The live preview covers the full Discord shell and restores your saved appearance when you leave this step.</p>
         <div className="solcord-appearance-controls">
             <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
             <label>Accent<select value={appearance.accent} onChange={event => onAppearance({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
@@ -159,7 +191,7 @@ function ThemeStep({value, appearance, onChange, onAppearance}: {value: SolcordT
             <label>Motion<select value={appearance.motion} onChange={event => onAppearance({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Use performance profile</option><option value="full">Full</option><option value="subtle">Subtle</option><option value="reduced">Reduced</option></select></label>
             <label>Message shape<select value={appearance.messageShape} onChange={event => onAppearance({...appearance, messageShape: event.currentTarget.value as SolcordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
         </div>
-        <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent} solcord-preview-density-${appearance.density} solcord-preview-shape-${appearance.messageShape}`} aria-label="Solcord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>This preview updates immediately. Apply saves the mode and installs the selected compatibility theme.</small></div>
+        <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent} solcord-preview-density-${appearance.density} solcord-preview-shape-${appearance.messageShape}`} aria-label="Solcord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>The whole-shell preview updates immediately. Apply saves the mode and installs the selected compatibility theme.</small></div>
         <details className="solcord-legacy-themes"><summary>Compatibility theme package</summary>
         <div className="solcord-theme-options">
             {SOLCORD_THEMES.map(theme => <label key={theme.id} className={`solcord-theme-option solcord-theme-${theme.id}`}>
@@ -381,7 +413,7 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
         {step === 0 && <WelcomeStep />}
         {step === 1 && <><SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} /><PrivateHistoryStep draft={draft} onChange={setDraft} /></>}
         {step === 2 && <PerformanceStep draft={draft} onChange={setDraft} />}
-        {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
+        {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} performanceProfile={draft.productPreferences.performanceProfile} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
         {step === 4 && <><PresetStep value={draft.preset} onChange={setPreset} /><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} onReviewPending={onReviewPending} /></>}
         {step === 5 && <ActivitiesStep />}
         {step === 6 && <CurrentStateStep />}

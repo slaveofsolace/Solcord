@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 520 |
-| Text files scanned | 508 |
+| Persistent tracked files | 522 |
+| Text files scanned | 510 |
 | Binary files classified | 12 |
-| Text lines scanned | 106,790 |
-| Custom Solcord lines | 21,635 |
+| Text lines scanned | 107,111 |
+| Custom Solcord lines | 21,710 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -26,8 +26,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 1 |
 | Timer calls | 41 | 2 |
-| Mutation observers | 11 | 1 |
-| DOM queries | 50 | 0 |
+| Mutation observers | 12 | 1 |
+| DOM queries | 53 | 0 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 25 | 1 |
 | Synchronous filesystem calls | 550 | 485 |
@@ -45,7 +45,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 5 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 56.3 KiB |
 | 6 | `tests/common/i18n.test.ts` | 1,146 | 46.1 KiB |
 | 7 | `src/betterdiscord/modules/solcord/store.ts` | 1,048 | 56.2 KiB |
-| 8 | `CHANGELOG.md` | 992 | 29.9 KiB |
+| 8 | `CHANGELOG.md` | 1,012 | 31.1 KiB |
 | 9 | `src/betterdiscord/ui/solcord/panel.tsx` | 989 | 94.9 KiB |
 | 10 | `src/electron/main/modules/solcord-setup.ts` | 899 | 51.4 KiB |
 | 11 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.9 KiB |
@@ -74,9 +74,9 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 9 | `tests/solcord/settings.test.ts` | 545 | 29.7 KiB |
 | 10 | `docs/handoff/CODEX_HANDOFF.md` | 500 | 21.6 KiB |
 | 11 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.7 KiB |
-| 12 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.4 KiB |
-| 13 | `scripts/helpers/build-provenance.ts` | 399 | 17.0 KiB |
-| 14 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 395 | 40.7 KiB |
+| 12 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 427 | 42.3 KiB |
+| 13 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.4 KiB |
+| 14 | `scripts/helpers/build-provenance.ts` | 399 | 17.0 KiB |
 | 15 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 324 | 16.2 KiB |
 | 16 | `src/common/solcord/product.ts` | 287 | 14.4 KiB |
 | 17 | `scripts/build-solcord-runtime-catalog.cjs` | 281 | 16.9 KiB |

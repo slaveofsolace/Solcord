@@ -23,10 +23,10 @@
 
 | Capability | Model | Discord adapter | Runtime evidence | UI | Release status |
 | --- | --- | --- | --- | --- | --- |
-| Layout Collapse | Scaffolded | Not started | Not captured | Not started | Held |
-| Embed Controls | Scaffolded | Not started | Not captured | Not started | Held |
-| Cross-platform Autoscroll | Scaffolded | Not started | Not captured | Not started | Held |
-| Media Shelf | Scaffolded | Not started | Not captured | Not started | Held |
-| Message Link Preview | Scaffolded | Not started | Not captured | Not started | Held |
+| Layout Collapse | Implemented | Reversible region CSS | Enable/disable teardown captured; region selection pending | Implemented | Preview |
+| Embed Controls | Implemented | Loaded embed containers only | Automated lifecycle green; hands-on embed interaction pending | Implemented | Preview |
+| Cross-platform Autoscroll | Implemented | Pointer gesture and owned animation frame | Automated lifecycle green; hands-on gesture pending | Implemented | Preview |
+| Media Shelf | Implemented | Bounded local references | Automated validation green; hands-on save/remove pending | Implemented | Preview |
+| Message Link Preview | Implemented | Loaded MessageStore only | Automated loaded/missing-link cases green; hands-on link hover pending | Implemented | Preview |
 
-No row should be described as working until its adapter, lifecycle evidence, and live-client acceptance are complete.
+No row is promoted to ready until its adapter, lifecycle evidence, and row-specific live interaction are complete.

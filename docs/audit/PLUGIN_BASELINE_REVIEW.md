@@ -6,7 +6,7 @@ Reviewed: **2026-08-26**
 
 Solcord does not preinstall community plugin files merely because they are popular. A baseline capability must avoid duplicating an existing built-in, have a clear local-only boundary, remain default-off and lazy until enabled, and pass licensing, static, disposable-runtime, teardown, and Discord-adapter review.
 
-Store metadata is a discovery snapshot, not permission to copy code. Source licensing, dependencies, network behavior, account actions, lifecycle cleanup, and current Discord compatibility must be reviewed independently before an implementation advances beyond `scaffold`.
+Store metadata is a discovery snapshot, not permission to copy code. Source licensing, dependencies, network behavior, account actions, lifecycle cleanup, and current Discord compatibility must be reviewed independently before an implementation advances beyond `preview`.
 
 ## Existing coverage
 
@@ -16,15 +16,15 @@ Duplicating these as bundled community files would add extra Webpack scans, patc
 
 ## Current store snapshot
 
-| Priority | Capability | Reviewed inspiration | Store snapshot | Why it remains a scaffold |
+| Priority | Capability | Reviewed inspiration | Store snapshot | V2 implementation boundary |
 | ---: | --- | --- | --- | --- |
-| 1 | Layout Collapse | [CollapsibleUI](https://betterdiscord.app/plugins/CollapsibleUI) | v12.3.5, updated 2026-05-21 | Valuable but broad; requires region-specific adapters, accessibility controls, and measured disabled overhead |
-| 2 | Embed Controls | [CollapseEmbeds](https://betterdiscord.app/plugins/CollapseEmbeds) | v2.2.0, updated 2026-05-05 | Small local feature, but the message/embed render target is volatile |
-| 3 | Cross-platform Autoscroll | [AutoScroll](https://betterdiscord.app/plugins/AutoScroll) | v0.3.0, updated 2025-03-04 | Must own one gesture lifecycle without document polling or orphaned animation frames |
-| 4 | Media Shelf | [ImageFolder](https://betterdiscord.app/plugins/ImageFolder) | v1.7.0, updated 2026-06-28 | Needs bounded local indexing, explicit file ownership, and no background download behavior |
-| 5 | Message Link Preview | [PeekMessageLinks](https://betterdiscord.app/plugins/PeekMessageLinks) | v1.2.9, updated 2026-05-15 | Must use only already-loaded messages and never fetch unseen content or bypass access checks |
+| 1 | Layout Collapse | [CollapsibleUI](https://betterdiscord.app/plugins/CollapsibleUI) | v12.3.5, updated 2026-05-21 | Hides only selected guild, channel, or member regions through reversible local CSS ownership. |
+| 2 | Embed Controls | [CollapseEmbeds](https://betterdiscord.app/plugins/CollapseEmbeds) | v2.2.0, updated 2026-05-05 | Adds local controls to verified loaded embed containers without changing message data. |
+| 3 | Cross-platform Autoscroll | [AutoScroll](https://betterdiscord.app/plugins/AutoScroll) | v0.3.0, updated 2025-03-04 | Owns one middle-button gesture, one animation frame, and Escape/release cleanup; it does not poll. |
+| 4 | Media Shelf | [ImageFolder](https://betterdiscord.app/plugins/ImageFolder) | v1.7.0, updated 2026-06-28 | Stores a bounded list of user-saved local references and performs no background download. |
+| 5 | Message Link Preview | [PeekMessageLinks](https://betterdiscord.app/plugins/PeekMessageLinks) | v1.2.9, updated 2026-05-15 | Resolves only exact Discord message links already present in the loaded MessageStore. |
 
-The typed source of truth is `src/common/solcord/baseline-capabilities.ts`. These entries ship as architecture and acceptance scaffolds, not as working-feature claims.
+The typed source of truth is `src/common/solcord/baseline-capabilities.ts`; the shared lifecycle is `src/betterdiscord/modules/solcord/baseline-suite.ts`. The adapters are implemented and default-off. Each remains labeled preview until its row-specific hands-on interaction is exercised against the release Discord build.
 
 ## Performance boundaries
 
@@ -47,7 +47,7 @@ Every new baseline capability is required to be:
 
 ## Acceptance path
 
-Each scaffold must complete these stages independently:
+Each capability completes these stages independently:
 
 1. structural adapter discovery with cached, multi-signal filters;
 2. pure model and lifecycle tests;
@@ -55,4 +55,4 @@ Each scaffold must complete these stages independently:
 4. disposable runtime acceptance;
 5. live Discord validation on the supported desktop matrix;
 6. accessible settings and recovery behavior;
-7. explicit promotion from `scaffold` to `ready`.
+7. explicit promotion from `preview` to `ready`.
