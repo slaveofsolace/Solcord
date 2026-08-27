@@ -168,6 +168,20 @@ beforeEach(() => {
 });
 
 describe("Solcord Audience Guard storage security", () => {
+    test("reports durable safeStorage capability before a denylist exists and survives restart", async () => {
+        const storage = new SolcordAudienceGuardStorage();
+
+        expect(storage.status()).toEqual({persistent: true, sessionOnly: false});
+        expect(await storage.read("111222333", {})).toEqual({policy: {version: 1, entries: []}, persistent: true, complete: true});
+
+        await storage.write("111222333", {policy: {version: 1, entries: [{userId: "999888777", label: "Private label"}]}});
+        const restarted = new SolcordAudienceGuardStorage();
+
+        expect(restarted.status()).toEqual({persistent: true, sessionOnly: false});
+        expect((await restarted.read("111222333", {})).policy.entries).toEqual([{userId: "999888777", label: "Private label"}]);
+        expect((await restarted.read("444555666", {})).policy.entries).toEqual([]);
+    });
+
     test("uses safeStorage for an account-isolated denylist without identifiers in paths", async () => {
         const storage = new SolcordAudienceGuardStorage();
         const written = await storage.write("111222333", {policy: {version: 1, entries: [{userId: "999888777", label: "Private label"}]}});

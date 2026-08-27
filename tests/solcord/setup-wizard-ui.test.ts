@@ -11,6 +11,7 @@ const WIZARD_CSS = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styl
 const CATALOG_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/catalog.ts"), "utf8");
 const PRODUCT_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/common/solcord/product.ts"), "utf8");
 const PANEL_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/panel.tsx"), "utf8");
+const RUNTIME_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
 
 function stepLabels(): string[] {
     const declaration = PRODUCT_SOURCE.match(/SOLCORD_SETUP_STEPS = Object\.freeze\(\[([^\]]+)] as const\)/s)?.[1];
@@ -136,6 +137,11 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("account risk · preview");
         expect(CATALOG_SOURCE).toContain("Voice Anchor / Anti-AFK");
         expect(CATALOG_SOURCE).toContain("Unavailable in the V2 release candidate.");
+        expect(PANEL_SOURCE).toContain("state.privateState.storage.persistent");
+        expect(PANEL_SOURCE).toContain("Encrypted storage is available. Enable the adapter while signed in to load this account's private list.");
+        expect(PANEL_SOURCE).not.toContain("Denylist persistence is unavailable; entries remain session-only.\"");
+        expect(RUNTIME_SOURCE).toContain("await this.#refreshAudienceGuardStorageStatus()");
+        expect(RUNTIME_SOURCE).not.toContain("Audience Guard policy is unloaded while the adapter is stopped.");
     });
 
     test("makes appearance choices visible before setup is applied", () => {
@@ -157,6 +163,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("Open normal upload composer");
         expect(PANEL_SOURCE).toContain("not uploaded");
         expect(PANEL_SOURCE).toContain("never edit profiles, sync to cloud, enter diagnostics, or appear in portable settings exports");
+        expect(PANEL_SOURCE).toContain("Media Shelf keeps {baseline.mediaShelf.length} local reference(s) and runs no Discord adapter.");
         expect(WIZARD_CSS).toContain("[data-solcord-focus-muted=\"true\"]");
         expect(WIZARD_CSS).toContain(".solcord-call-badge");
     });

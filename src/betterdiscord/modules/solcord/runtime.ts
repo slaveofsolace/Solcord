@@ -54,6 +54,12 @@ export interface AddonIntegrityStatus {
     records: AddonIntegrityRecord[];
 }
 
+interface SolcordPrivateStorageStatus {
+    persistent: boolean;
+    sessionOnly: boolean;
+    reason?: string;
+}
+
 export interface ProfileAddonExecutionPlan {
     enablePlugins: string[];
     disablePlugins: string[];
@@ -288,6 +294,7 @@ class SolcordRuntimeStore extends Store {
     #audiencePolicy: SolcordAudienceGuardPrivatePolicy = {version: 1, entries: []};
     #audiencePolicyAccountId?: string;
     #audiencePersistent = false;
+    #audienceStorageStatus: SolcordPrivateStorageStatus = {persistent: false, sessionOnly: true, reason: "Audience Guard storage has not been checked yet."};
     #audienceLoadGeneration = 0;
 
     initialize(): void {
@@ -323,6 +330,7 @@ class SolcordRuntimeStore extends Store {
         this.#applyProductPresentation();
         this.#synchronizeBaselineSuite();
         await this.#bootstrapPrivateCapability();
+        await this.#refreshAudienceGuardStorageStatus();
         try {
             const transactionIds = SolcordSettings.snapshot().setupTransactions.map(transaction => transaction.id);
             await this.#withPrivateCapability(capability => TIMELINE_IPC.reconcileSetup(capability, transactionIds));
@@ -647,8 +655,13 @@ class SolcordRuntimeStore extends Store {
         catch {return {cleared: 0, persistent: false, complete: false};}
     }
 
-    audienceGuardPrivatePolicy(): {policy: SolcordAudienceGuardPrivatePolicy; persistent: boolean;} {
-        return {policy: structuredClone(this.#audiencePolicy), persistent: this.#audiencePersistent};
+    audienceGuardPrivatePolicy(): {policy: SolcordAudienceGuardPrivatePolicy; persistent: boolean; loaded: boolean; storage: SolcordPrivateStorageStatus;} {
+        return {
+            policy: structuredClone(this.#audiencePolicy),
+            persistent: this.#audiencePersistent,
+            loaded: Boolean(this.#audiencePolicyAccountId),
+            storage: structuredClone(this.#audienceStorageStatus)
+        };
     }
 
     async setAudienceGuardEntries(value: unknown): Promise<boolean> {
@@ -663,6 +676,9 @@ class SolcordRuntimeStore extends Store {
             this.#audiencePolicy = normalizeAudienceGuardPrivatePolicy(result.policy);
             this.#audiencePolicyAccountId = accountId;
             this.#audiencePersistent = result.persistent === true && result.complete === true;
+            this.#audienceStorageStatus = result.persistent === true && result.complete === true
+                ? {persistent: true, sessionOnly: false}
+                : {persistent: false, sessionOnly: true, reason: result.complete === true ? "Electron safeStorage is unavailable; the Audience Guard denylist remains in memory only." : "Audience Guard encrypted persistence failed closed for this write."};
             this.emitChange();
             return result.complete === true;
         }
@@ -671,6 +687,7 @@ class SolcordRuntimeStore extends Store {
                 this.#audiencePolicy = policy;
                 this.#audiencePolicyAccountId = accountId;
                 this.#audiencePersistent = false;
+                this.#audienceStorageStatus = {persistent: false, sessionOnly: true, reason: "Audience Guard encrypted persistence failed closed for this write."};
                 this.emitChange();
             }
             return false;
@@ -688,6 +705,9 @@ class SolcordRuntimeStore extends Store {
             this.#audiencePolicy = {version: 1, entries: []};
             this.#audiencePolicyAccountId = accountId;
             this.#audiencePersistent = result.persistent === true && result.complete === true;
+            this.#audienceStorageStatus = result.persistent === true && result.complete === true
+                ? {persistent: true, sessionOnly: false}
+                : {persistent: false, sessionOnly: true, reason: result.complete === true ? "Electron safeStorage is unavailable; Audience Guard clear completed in memory only." : "Audience Guard encrypted cleanup needs attention."};
             this.emitChange();
             return result.complete === true;
         }
@@ -771,8 +791,7 @@ class SolcordRuntimeStore extends Store {
         const enabled = preferences.layoutCollapse
             || preferences.embedControls
             || preferences.crossPlatformAutoscroll
-            || preferences.messageLinkPreview
-            || preferences.mediaShelf.length > 0;
+            || preferences.messageLinkPreview;
         this.#baselineSuite?.stop();
         this.#baselineSuite = undefined;
         if (!enabled) return;
@@ -2533,9 +2552,14 @@ class SolcordRuntimeStore extends Store {
             clearTimer: handle => globalThis.clearTimeout(handle as ReturnType<typeof setTimeout>)
         }, status => {
             this.#audienceGuardStatus = status;
+            const storageDetail = this.#audiencePersistent
+                ? "The private denylist is encrypted at rest."
+                : this.#audienceStorageStatus.persistent
+                    ? "Encrypted storage is available; a durable account policy will load after setup."
+                    : `The private denylist is session-only on this system.${this.#audienceStorageStatus.reason ? ` ${this.#audienceStorageStatus.reason}` : ""}`;
             this.#setHealth("stream-audience-guard", {
                 maturity: status.available ? "preview" : "unavailable",
-                detail: `${status.detail} ${this.#audiencePersistent ? "The private denylist is encrypted at rest." : "The private denylist is session-only on this system."}`
+                detail: `${status.detail} ${storageDetail}`
             });
             this.emitChange();
         });
@@ -2554,6 +2578,22 @@ class SolcordRuntimeStore extends Store {
         this.#setHealth("stream-audience-guard", {maturity: "preview", detail: "Audience Guard is ready but unarmed. Live start and stop behavior still requires owner acceptance in a designated call."});
     }
 
+    async #refreshAudienceGuardStorageStatus(): Promise<SolcordPrivateStorageStatus> {
+        try {
+            const status = await this.#withPrivateCapability(capability => TIMELINE_IPC.audienceStatus(capability)) as SolcordPrivateStorageStatus;
+            this.#audienceStorageStatus = {
+                persistent: status.persistent === true,
+                sessionOnly: status.sessionOnly !== false,
+                ...(typeof status.reason === "string" && status.reason ? {reason: status.reason.slice(0, 180)} : {})
+            };
+        }
+        catch {
+            this.#audienceStorageStatus = {persistent: false, sessionOnly: true, reason: "Audience Guard private storage capability is unavailable."};
+        }
+        this.emitChange();
+        return structuredClone(this.#audienceStorageStatus);
+    }
+
     async #loadAudienceGuardPolicy(accountId: string): Promise<boolean> {
         const generation = ++this.#audienceLoadGeneration;
         this.#audiencePolicy = {version: 1, entries: []};
@@ -2561,12 +2601,17 @@ class SolcordRuntimeStore extends Store {
         this.#audiencePersistent = false;
         try {
             const opened = await this.#withTimelineAccount(accountId, async capability => ({
-                status: await TIMELINE_IPC.audienceStatus(capability) as {persistent?: boolean;},
+                status: await TIMELINE_IPC.audienceStatus(capability) as SolcordPrivateStorageStatus,
                 read: await TIMELINE_IPC.audienceRead(capability, {}) as {policy?: unknown; persistent?: boolean; complete?: boolean;}
             }), () => accountId === this.#currentTimelineAccountId());
             if (generation !== this.#audienceLoadGeneration || accountId !== this.#currentTimelineAccountId()) return false;
             this.#audiencePolicy = normalizeAudienceGuardPrivatePolicy(opened.read.policy);
             this.#audiencePolicyAccountId = accountId;
+            this.#audienceStorageStatus = {
+                persistent: opened.status.persistent === true,
+                sessionOnly: opened.status.sessionOnly !== false,
+                ...(typeof opened.status.reason === "string" && opened.status.reason ? {reason: opened.status.reason.slice(0, 180)} : {})
+            };
             this.#audiencePersistent = opened.status.persistent === true && opened.read.persistent === true && opened.read.complete === true;
             this.emitChange();
             return opened.read.complete === true;
@@ -2576,6 +2621,7 @@ class SolcordRuntimeStore extends Store {
             this.#audiencePolicy = {version: 1, entries: []};
             this.#audiencePolicyAccountId = accountId;
             this.#audiencePersistent = false;
+            this.#audienceStorageStatus = {persistent: false, sessionOnly: true, reason: "Audience Guard encrypted policy read failed closed."};
             this.emitChange();
             return false;
         }

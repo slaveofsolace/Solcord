@@ -286,6 +286,13 @@ function StreamAudienceGuardControls() {
         setActionStatus(SolcordRuntime.armAudienceGuard() ? "Audience Guard is armed for this call." : "Audience Guard could not arm. Join a voice channel, add a denied user, enable at least one mode, and confirm the adapter is available.");
     };
     const entries = state.privateState.policy.entries;
+    const storageMessage = state.privateState.persistent
+        ? "Encrypted persistence is active through Electron safeStorage."
+        : state.privateState.storage.persistent
+            ? state.privateState.loaded
+                ? "Encrypted storage is available for this account; this list will persist once saved."
+                : "Encrypted storage is available. Enable the adapter while signed in to load this account's private list."
+            : `Denylist persistence is unavailable; entries remain session-only.${state.privateState.storage.reason ? ` ${state.privateState.storage.reason}` : ""}`;
     return <Section title="Stream Audience Guard" summary="Prevent or stop your own Go Live when a denied user is detected. This is a truthful client-side guard, not a per-person stream permission.">
         <div className="solcord-audience-command">
             <div>
@@ -314,7 +321,7 @@ function StreamAudienceGuardControls() {
             {state.runtime.armed ? <ActionButton tone="danger" onClick={() => {SolcordRuntime.disarmAudienceGuard(); setActionStatus("Audience Guard disarmed.");}}>Disarm</ActionButton> : <ActionButton tone="accent" disabled={!state.runtime.available || !entries.length} onClick={arm}>Arm for this call</ActionButton>}
             <ActionButton tone="danger" disabled={!entries.length || state.runtime.armed} onClick={() => {if (window.confirm("Clear this account's private Stream Audience Guard denylist?")) void SolcordRuntime.clearAudienceGuardEntries();}}>Clear private list</ActionButton>
         </div>
-        <p className="solcord-key-hint">{state.privateState.persistent ? "Encrypted persistence is active through Electron safeStorage." : "Denylist persistence is unavailable; entries remain session-only."} {state.runtime.detail}</p>
+        <p className="solcord-key-hint">{storageMessage} {state.runtime.detail}</p>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
@@ -530,7 +537,7 @@ function BaselineToolsPanel() {
         }
         catch {setStatus("Use a valid HTTPS Discord CDN or media.discordapp.net URL. Nothing was saved.");}
     };
-    return <Section title="Layout and message tools" summary="Five clean-room tools share one lazy lifecycle. When every switch is off, they install no observer, listener, style, Webpack lookup, or timer.">
+    return <Section title="Layout and message tools" summary="Four clean-room runtime tools plus a local Media Shelf. When every switch is off, they install no observer, listener, style, Webpack lookup, or timer.">
         <div className="solcord-setting-rows">
             <label><span><strong>Layout Collapse</strong><small>Hide selected Discord regions locally. Every region remains restorable here.</small></span><input type="checkbox" checked={baseline.layoutCollapse} onChange={event => update({...baseline, layoutCollapse: event.currentTarget.checked})} /></label>
             {baseline.layoutCollapse && <div className="solcord-inline-options" aria-label="Layout regions"><label><input type="checkbox" checked={baseline.collapsedRegions.includes("guilds")} onChange={event => toggleRegion("guilds", event.currentTarget.checked)} /> Servers</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("channels")} onChange={event => toggleRegion("channels", event.currentTarget.checked)} /> Channels</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("members")} onChange={event => toggleRegion("members", event.currentTarget.checked)} /> Members</label></div>}
@@ -539,7 +546,7 @@ function BaselineToolsPanel() {
             <label><span><strong>Message Link Preview</strong><small>Preview Discord message links only when the exact message is already loaded. No history fetch.</small></span><input type="checkbox" checked={baseline.messageLinkPreview} onChange={event => update({...baseline, messageLinkPreview: event.currentTarget.checked})} /></label>
         </div>
         <details className="solcord-media-shelf"><summary>Media Shelf <small>{baseline.mediaShelf.length} saved reference(s)</small></summary><p>Keep bounded labels for Discord CDN GIF, sticker, or emoji links. Files are never downloaded in the background.</p><div className="solcord-catalog-tools"><label>Label<input value={mediaLabel} maxLength={64} onChange={event => setMediaLabel(event.currentTarget.value)} /></label><label>Kind<select value={mediaKind} onChange={event => setMediaKind(event.currentTarget.value as SolcordMediaKind)}><option value="gif">GIF</option><option value="sticker">Sticker</option><option value="emoji">Emoji</option></select></label><label>Discord CDN URL<input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.currentTarget.value)} /></label></div><div className="solcord-actions"><ActionButton disabled={!mediaUrl.trim()} onClick={addMedia}>Save local reference</ActionButton></div>{baseline.mediaShelf.length > 0 && <div className="solcord-media-list">{baseline.mediaShelf.map(item => <div key={item.id}><span><strong>{item.label}</strong><small>{item.kind} · {new URL(item.url).hostname}</small></span><ActionButton onClick={() => void navigator.clipboard?.writeText(item.url)}>Copy URL</ActionButton><ActionButton tone="danger" onClick={() => update({...baseline, mediaShelf: baseline.mediaShelf.filter(candidate => candidate.id !== item.id)})}>Remove</ActionButton></div>)}</div>}</details>
-        <p className="solcord-key-hint">Runtime: {state.runtime.active ? `${state.runtime.enabled.join(", ")} active · ${Object.values(state.runtime.resources).reduce((sum, value) => sum + value, 0)} owned resources.` : "all adapters idle."} {state.runtime.unavailable.join(" ")}</p>
+        <p className="solcord-key-hint">Runtime: {state.runtime.active ? `${state.runtime.enabled.join(", ")} active · ${Object.values(state.runtime.resources).reduce((sum, value) => sum + value, 0)} owned resources.` : "all adapters idle."} Media Shelf keeps {baseline.mediaShelf.length} local reference(s) and runs no Discord adapter. {state.runtime.unavailable.join(" ")}</p>
         {status && <p role="status" className="solcord-import-status">{status}</p>}
     </Section>;
 }

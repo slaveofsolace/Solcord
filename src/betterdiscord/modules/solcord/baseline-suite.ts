@@ -75,8 +75,6 @@ export class SolcordBaselineSuite {
             }
             else {unavailable.push("Message Link Preview: loaded message store unavailable");}
         }
-        if (preferences.mediaShelf.length) enabled.push("Media Shelf");
-
         if (!enabled.length && !unavailable.length) {
             scope.dispose();
             this.#scope = undefined;

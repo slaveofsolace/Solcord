@@ -25,6 +25,17 @@ describe("Solcord baseline suite", () => {
         expect(suite.status()).toEqual(status);
     });
 
+    test("keeps Media Shelf as stored references without starting a runtime adapter", () => {
+        const suite = new SolcordBaselineSuite({});
+        const baseline = {
+            ...defaultSolcordProductPreferences().baseline,
+            mediaShelf: [{id: "saved-one", label: "Saved clip", kind: "gif" as const, url: "https://cdn.discordapp.com/attachments/1/2/file.gif"}]
+        };
+
+        expect(suite.start(baseline)).toEqual({active: false, resources: {}, enabled: [], unavailable: []});
+        expect(suite.status()).toEqual({active: false, resources: {}, enabled: [], unavailable: []});
+    });
+
     test("reports a loaded-message adapter drift without installing listeners", () => {
         const suite = new SolcordBaselineSuite({});
         const baseline = {...defaultSolcordProductPreferences().baseline, messageLinkPreview: true};
