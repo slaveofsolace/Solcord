@@ -7,14 +7,26 @@ import {
     inferSolcordPermissionCard,
     normalizeSolcordProductPreferences,
     prioritizeSolcordPulse,
+    resolveSolcordPerformancePolicy,
     SOLCORD_SETUP_STEPS,
     SOLCORD_WORKSPACES
 } from "../../src/common/solcord/product";
 
-describe("Solcord V1 product model", () => {
-    test("owns exactly five stable Control Center workspaces and eight resumable setup steps", () => {
-        expect(SOLCORD_WORKSPACES.map(workspace => workspace.id)).toEqual(["home", "appearance", "safety", "people", "tools"]);
-        expect(SOLCORD_SETUP_STEPS).toEqual(["Welcome", "Preflight", "Preset", "Appearance", "Safety", "Private history", "Review", "Apply"]);
+describe("Solcord V2 product model", () => {
+    test("owns the ten task-oriented Control Center workspaces and eight resumable setup steps", () => {
+        expect(SOLCORD_WORKSPACES.map(workspace => workspace.id)).toEqual([
+            "overview",
+            "appearance",
+            "performance",
+            "privacy",
+            "chat",
+            "voice",
+            "friends",
+            "extensions",
+            "recovery",
+            "advanced"
+        ]);
+        expect(SOLCORD_SETUP_STEPS).toEqual(["Welcome", "Privacy", "Performance", "Appearance", "Features", "Activities", "Import", "Ready"]);
     });
 
     test("normalizes hostile or obsolete preferences to conservative local defaults", () => {
@@ -29,6 +41,39 @@ describe("Solcord V1 product model", () => {
         expect(normalized.safety).toEqual({linkLens: true, domainMemory: "warn-only", attachmentGuard: true, privacyModeReady: true});
         expect(normalized.friendWatch).toEqual({enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"});
         expect(normalized.returnLaterRetentionDays).toBe(30);
+        expect(normalized.performanceProfile).toBe("balanced");
+        expect(normalized.baseline).toEqual({layoutCollapse: false, collapsedRegions: [], embedControls: false, crossPlatformAutoscroll: false, messageLinkPreview: false, mediaShelf: []});
+    });
+
+    test("normalizes baseline tools without accepting arbitrary media hosts or unbounded entries", () => {
+        const normalized = normalizeSolcordProductPreferences({
+            performanceProfile: "visual",
+            baseline: {
+                layoutCollapse: true,
+                collapsedRegions: ["guilds", "guilds", "channels", "invalid"],
+                embedControls: true,
+                crossPlatformAutoscroll: true,
+                messageLinkPreview: true,
+                mediaShelf: [
+                    {id: "one", label: "  reference  ", url: "https://cdn.discordapp.com/attachments/a/b/image.gif", kind: "gif"},
+                    {id: "two", label: "tracker", url: "https://example.com/pixel.gif", kind: "gif"},
+                    {id: "three", label: "wrong protocol", url: "http://media.discordapp.net/a.gif", kind: "gif"}
+                ]
+            }
+        });
+
+        expect(normalized.performanceProfile).toBe("visual");
+        expect(normalized.baseline.collapsedRegions).toEqual(["guilds", "channels"]);
+        expect(normalized.baseline.mediaShelf).toEqual([
+            {id: "one", label: "reference", url: "https://cdn.discordapp.com/attachments/a/b/image.gif", kind: "gif"}
+        ]);
+    });
+
+    test("resolves performance and motion without overriding reduced-motion safety", () => {
+        expect(resolveSolcordPerformancePolicy("lean", "full", false)).toMatchObject({sampleSeconds: 15, effectiveMotion: "subtle", ambientEffects: false});
+        expect(resolveSolcordPerformancePolicy("balanced", "full", false)).toMatchObject({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: false});
+        expect(resolveSolcordPerformancePolicy("visual", "follow-system", false)).toMatchObject({effectiveMotion: "full", ambientEffects: true});
+        expect(resolveSolcordPerformancePolicy("visual", "full", true)).toMatchObject({effectiveMotion: "reduced", ambientEffects: false});
     });
 
     test("keeps Session Pulse bounded, unique, deterministic, and priority ordered", () => {

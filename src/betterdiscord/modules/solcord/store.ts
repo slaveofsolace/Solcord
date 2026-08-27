@@ -460,6 +460,7 @@ function portableProductPreferences(document: SolcordSettingsDocument): SolcordS
     preferences.nativeSuite.guildAliases = {};
     preferences.nativeSuite.focusChannelIds = [];
     preferences.nativeSuite.translation = {...preferences.nativeSuite.translation, endpoint: ""};
+    preferences.baseline.mediaShelf = [];
     return preferences;
 }
 

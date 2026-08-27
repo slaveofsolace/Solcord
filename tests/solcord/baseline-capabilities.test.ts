@@ -5,7 +5,7 @@ import {describe, expect, test} from "bun:test";
 import {getSolcordBaselineCapability, SOLCORD_BASELINE_CAPABILITIES} from "../../src/common/solcord/baseline-capabilities";
 
 
-describe("Solcord baseline capability scaffolds", () => {
+describe("Solcord baseline capabilities", () => {
     test("keeps the reviewed capability list unique and performance ordered", () => {
         const ids = SOLCORD_BASELINE_CAPABILITIES.map(capability => capability.id);
         const orders = SOLCORD_BASELINE_CAPABILITIES.map(capability => capability.performanceOrder);
@@ -21,8 +21,9 @@ describe("Solcord baseline capability scaffolds", () => {
         ]);
     });
 
-    test("makes every scaffold default-off, lazy, and free while disabled", () => {
+    test("marks every reviewed adapter ready, default-off, lazy, and free while disabled", () => {
         for (const capability of SOLCORD_BASELINE_CAPABILITIES) {
+            expect(capability.status).toBe("ready");
             expect(capability.defaultEnabled).toBeFalse();
             expect(capability.loading).toBe("lazy");
             expect(capability.disabledRuntimeCost).toBe("none");

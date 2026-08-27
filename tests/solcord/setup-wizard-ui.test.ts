@@ -19,8 +19,8 @@ function stepLabels(): string[] {
 }
 
 describe("Solcord beginner-first setup UI", () => {
-    test("uses eight resumable steps with separate private-history consent and no Power Lab page", () => {
-        expect(stepLabels()).toEqual(["Welcome", "Preflight", "Preset", "Appearance", "Safety", "Private history", "Review", "Apply"]);
+    test("uses eight resumable novice steps with private-history consent and no Power Lab page", () => {
+        expect(stepLabels()).toEqual(["Welcome", "Privacy", "Performance", "Appearance", "Features", "Activities", "Import", "Ready"]);
         expect(WIZARD_SOURCE).toContain("function PrivateHistoryStep");
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setOnboardingStep(bounded)");
         expect(WIZARD_SOURCE).not.toContain("function PowerLabStep");

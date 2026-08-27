@@ -36,7 +36,9 @@ import {normalizeSolcordReturnRoute, SolcordReturnLaterJournal, type SolcordRetu
 import {audienceGuardIdsFromVoiceStates, normalizeAudienceGuardEntries, normalizeAudienceGuardIds, normalizeAudienceGuardPrivatePolicy, SolcordStreamAudienceGuard, type SolcordAudienceGuardPrivatePolicy, type SolcordAudienceGuardStatus} from "./stream-audience-guard";
 import {SolcordNativeSuiteController, type SolcordNativeSuiteAdapter, type SolcordNativeSuiteStatus} from "./native-suite";
 import {createCachedVoiceHealthReader} from "./voice-health";
+import {SolcordBaselineSuite, type SolcordBaselineSuiteStatus} from "./baseline-suite";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
+import {resolveSolcordPerformancePolicy} from "@common/solcord/product";
 
 interface ActivityCompatibilityHealth {
     status: "idle" | "healthy" | "attention";
@@ -266,6 +268,7 @@ class SolcordRuntimeStore extends Store {
     #curatedCommunitySignature = "";
     #curatedAdapterResults: Record<string, CuratedAdapterResult> = {};
     #nativeSuite?: SolcordNativeSuiteController;
+    #baselineSuite?: SolcordBaselineSuite;
     #splitReviewOpen = false;
     #integrityQueue = Promise.resolve();
     #privateCapability?: string;
@@ -311,12 +314,14 @@ class SolcordRuntimeStore extends Store {
         }
         const markClean = () => JsonStore.set("misc", "solcordCrashGuard", {attempts: [], state: "clean", at: Date.now()} satisfies CrashGuardDocument);
         this.#rootScope.listen(window, "beforeunload", markClean);
+        this.#rootScope.own(() => this.#baselineSuite?.stop(), "other");
     }
 
     async start(): Promise<void> {
         if (this.#started) return;
         this.#started = true;
         this.#applyProductPresentation();
+        this.#synchronizeBaselineSuite();
         await this.#bootstrapPrivateCapability();
         try {
             const transactionIds = SolcordSettings.snapshot().setupTransactions.map(transaction => transaction.id);
@@ -553,9 +558,16 @@ class SolcordRuntimeStore extends Store {
     }
 
     async setProductPreferences(value: unknown): Promise<void> {
+        const previous = SolcordSettings.snapshot().productPreferences;
         SolcordSettings.setProductPreferences(value);
+        const next = SolcordSettings.snapshot().productPreferences;
         this.#applyProductPresentation();
-        await this.#synchronizeFeatures();
+        this.#synchronizeBaselineSuite();
+        const affected = new Set<SolcordModuleId>();
+        if (previous.performanceProfile !== next.performanceProfile) affected.add("performance-hud");
+        if (JSON.stringify(previous.friendWatch) !== JSON.stringify(next.friendWatch)) affected.add("friend-watch");
+        if (previous.safety.linkLens !== next.safety.linkLens) affected.add("link-lens");
+        if (affected.size) await this.#synchronizeFeatures([...affected]);
     }
 
     fakeDeafenStatus(): SolcordFakeDeafenStatus {
@@ -572,6 +584,10 @@ class SolcordRuntimeStore extends Store {
 
     nativeSuiteController(): SolcordNativeSuiteController | undefined {
         return this.#nativeSuite;
+    }
+
+    baselineSuiteStatus(): SolcordBaselineSuiteStatus {
+        return this.#baselineSuite?.status() ?? {active: false, resources: {}, enabled: [], unavailable: []};
     }
 
     async readTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string): Promise<{credential: string; persistent: boolean; complete: boolean;}> {
@@ -737,13 +753,36 @@ class SolcordRuntimeStore extends Store {
     }
 
     #applyProductPresentation(): void {
-        const appearance = SolcordSettings.snapshot().productPreferences.appearance;
+        const preferences = SolcordSettings.snapshot().productPreferences;
+        const appearance = preferences.appearance;
         const root = document.documentElement;
         root.dataset.solcordMode = appearance.mode;
         root.dataset.solcordAccent = appearance.accent;
         root.dataset.solcordDensity = appearance.density;
         root.dataset.solcordMotion = appearance.motion;
         root.dataset.solcordMessageShape = appearance.messageShape;
+        root.dataset.solcordPerformance = preferences.performanceProfile;
+        const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+        root.dataset.solcordEffectiveMotion = resolveSolcordPerformancePolicy(preferences.performanceProfile, appearance.motion, reducedByOs).effectiveMotion;
+    }
+
+    #synchronizeBaselineSuite(): void {
+        const preferences = SolcordSettings.snapshot().productPreferences.baseline;
+        const enabled = preferences.layoutCollapse
+            || preferences.embedControls
+            || preferences.crossPlatformAutoscroll
+            || preferences.messageLinkPreview
+            || preferences.mediaShelf.length > 0;
+        this.#baselineSuite?.stop();
+        this.#baselineSuite = undefined;
+        if (!enabled) return;
+        let messageStore: {getMessage?: (channelId: string, messageId: string) => {id?: string; content?: string; author?: {globalName?: string; username?: string;}; timestamp?: string | number | Date;};} | undefined;
+        if (preferences.messageLinkPreview) messageStore = getStore("MessageStore") as typeof messageStore;
+        const adapter = typeof messageStore?.getMessage === "function"
+            ? {getLoadedMessage: (channelId: string, messageId: string) => messageStore.getMessage?.(channelId, messageId)}
+            : {};
+        this.#baselineSuite = new SolcordBaselineSuite(adapter);
+        this.#baselineSuite.start(preferences);
     }
 
     async clearFriendWatch(): Promise<boolean> {
@@ -2057,12 +2096,13 @@ class SolcordRuntimeStore extends Store {
         }
     }
 
-    async #synchronizeFeatures(): Promise<void> {
+    async #synchronizeFeatures(ids: readonly SolcordModuleId[] = FEATURE_IDS): Promise<void> {
         this.#applyProductPresentation();
+        this.#synchronizeBaselineSuite();
         // Settings import, setup completion, profile apply, and rollback all converge here.
         // Reapply presentation so those atomic paths do not leave the saved controls inert
         // until a restart or a later direct Appearance edit.
-        for (const id of FEATURE_IDS) {
+        for (const id of ids) {
             const shouldRun = !this.#recoveryMode || id === "plugin-doctor";
             const enabled = SolcordSettings.module(id).enabled && shouldRun;
             if (enabled) {
@@ -2271,7 +2311,10 @@ class SolcordRuntimeStore extends Store {
 
     #startPerformanceHud(scope: SolcordDisposalScope): void {
         const settings = SolcordSettings.module("performance-hud");
-        const seconds = Number(settings.values.sampleSeconds) || 5;
+        const preferences = SolcordSettings.snapshot().productPreferences;
+        const configuredSeconds = Number(settings.values.sampleSeconds) || 5;
+        const policy = resolveSolcordPerformancePolicy(preferences.performanceProfile, preferences.appearance.motion, globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
+        const seconds = Math.max(configuredSeconds, policy.sampleSeconds);
         this.#sampler.begin();
         let overlay: HTMLElement | undefined;
         if (settings.values.showOverlay === true) {

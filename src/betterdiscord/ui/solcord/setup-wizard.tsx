@@ -9,7 +9,7 @@ import type {SolcordAddonProvider, SolcordSettingsDocument, SolcordSetupDraft, S
 import {SOLCORD_CATALOG_SNAPSHOT, SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
 import {communityAddonIsEnabled, isSolcordBuiltInAddon, resolveCommunityAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan, type SolcordSetupCandidateDecision} from "@common/solcord/setup-catalog";
-import {SOLCORD_SETUP_STEPS, type SolcordAppearancePreferences, type SolcordSafetyPreferences, type SolcordSetupPreset} from "@common/solcord/product";
+import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_SETUP_STEPS, type SolcordAppearancePreferences, type SolcordPerformanceProfile, type SolcordSafetyPreferences, type SolcordSetupPreset} from "@common/solcord/product";
 
 import {SOLCORD_ADDON_GROUPS} from "./catalog";
 
@@ -125,15 +125,38 @@ function PresetStep({value, onChange}: {value: SolcordSetupPreset; onChange(valu
     </div>;
 }
 
+function PerformanceStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(value: SolcordSetupDraft): void;}) {
+    const profile = draft.productPreferences.performanceProfile;
+    const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const policy = resolveSolcordPerformancePolicy(profile, draft.productPreferences.appearance.motion, reducedByOs);
+    return <div className="solcord-wizard-body">
+        <h3>Choose how Solcord spends resources</h3>
+        <p>This policy is real: it bounds performance sampling and caps motion. Disabled tools remain fully stopped in every profile.</p>
+        <div className="solcord-segmented" role="radiogroup" aria-label="Setup performance profile">{(Object.keys(SOLCORD_PERFORMANCE_POLICIES) as SolcordPerformanceProfile[]).map(id => <button key={id} type="button" role="radio" aria-checked={profile === id} onClick={() => onChange({...draft, productPreferences: {...draft.productPreferences, performanceProfile: id}})}><strong>{id[0].toUpperCase() + id.slice(1)}</strong><small>{SOLCORD_PERFORMANCE_POLICIES[id].description}</small></button>)}</div>
+        <dl className="solcord-facts"><div><dt>Effective motion</dt><dd>{policy.effectiveMotion}</dd></div><div><dt>Sampling interval</dt><dd>at least {policy.sampleSeconds} seconds</dd></div><div><dt>Windows reduced motion</dt><dd>{reducedByOs ? "honored" : "not requested"}</dd></div></dl>
+    </div>;
+}
+
+function ActivitiesStep() {
+    const state = useStateFromStores(SolcordRuntime, () => ({activity: SolcordRuntime.activityHealth(), drift: SolcordRuntime.driftResults()}));
+    const failed = state.drift.filter(item => !item.ok);
+    return <div className="solcord-wizard-body">
+        <h3>Activities compatibility check</h3>
+        <p>Solcord keeps BetterDiscord&apos;s unrestricted preload override off. It permits one later preload only when canonical paths prove that it belongs to the same Discord package.</p>
+        <dl className="solcord-facts"><div><dt>Compatibility policy</dt><dd>{state.activity?.status ?? "starting"}</dd></div><div><dt>Unrestricted override</dt><dd>{state.activity?.unrestrictedOverride ? "on — review required" : "off"}</dd></div><div><dt>Structural checks</dt><dd>{failed.length ? `${failed.length} degraded` : "available"}</dd></div></dl>
+        <p className="solcord-callout">This check does not launch an Activity or act on your account. Codenames and a second Activity remain hands-on acceptance steps after setup.</p>
+    </div>;
+}
+
 function ThemeStep({value, appearance, onChange, onAppearance}: {value: SolcordThemeId; appearance: SolcordAppearancePreferences; onChange(value: SolcordThemeId): void; onAppearance(value: SolcordAppearancePreferences): void;}) {
     return <div className="solcord-wizard-body">
         <h3>Appearance</h3>
         <p>Choose the product mode first. The compatibility theme files remain available during migration, but one semantic token layer owns Solcord controls.</p>
         <div className="solcord-appearance-controls">
-            <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Soul Dark</option><option value="solcord-light">Soul Light</option><option value="oled">OLED</option></select></label>
+            <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
             <label>Accent<select value={appearance.accent} onChange={event => onAppearance({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
             <label>Density<select value={appearance.density} onChange={event => onAppearance({...appearance, density: event.currentTarget.value as SolcordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
-            <label>Motion<select value={appearance.motion} onChange={event => onAppearance({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Follow Discord / Windows</option><option value="full">Full</option><option value="reduced">Reduced</option></select></label>
+            <label>Motion<select value={appearance.motion} onChange={event => onAppearance({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Use performance profile</option><option value="full">Full</option><option value="subtle">Subtle</option><option value="reduced">Reduced</option></select></label>
             <label>Message shape<select value={appearance.messageShape} onChange={event => onAppearance({...appearance, messageShape: event.currentTarget.value as SolcordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
         </div>
         <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent} solcord-preview-density-${appearance.density} solcord-preview-shape-${appearance.messageShape}`} aria-label="Solcord appearance preview"><span>Private thread</span><strong>Clear hierarchy, quiet seams, visible focus.</strong><small>This preview updates immediately. Apply saves the mode and installs the selected compatibility theme.</small></div>
@@ -181,7 +204,7 @@ function ApplyStep({draft}: {draft: SolcordSetupDraft;}) {
     return <div className="solcord-wizard-body">
         <h3>Ready to apply</h3>
         <p>Apply revalidates the reviewed bytes and provider identities, captures a rollback point, performs the transaction, and verifies the result. A failure aborts or rolls back without overwriting a different local file.</p>
-        <dl className="solcord-facts"><div><dt>Preset</dt><dd>{draft.preset}</dd></div><div><dt>Friend Watch</dt><dd>{draft.productPreferences.friendWatch.enabled ? "consented" : "off"}</dd></div><div><dt>Message Timeline</dt><dd>{draft.timelinePolicy.enabled ? "consented" : "off"}</dd></div><div><dt>Power Lab</dt><dd>off</dd></div></dl>
+        <dl className="solcord-facts"><div><dt>Preset</dt><dd>{draft.preset}</dd></div><div><dt>Performance</dt><dd>{draft.productPreferences.performanceProfile}</dd></div><div><dt>Friend Watch</dt><dd>{draft.productPreferences.friendWatch.enabled ? "consented" : "off"}</dd></div><div><dt>Message Timeline</dt><dd>{draft.timelinePolicy.enabled ? "consented" : "off"}</dd></div><div><dt>Power Lab</dt><dd>off</dd></div></dl>
     </div>;
 }
 
@@ -294,6 +317,7 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
     const [draft, setDraftState] = useState<SolcordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState("");
+    const [paused, setPaused] = useState(false);
     const plan = useMemo(() => resolveSolcordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
     const providerMigrationPlan = useStateFromStores([PluginManager], () => SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]);
     useEffect(() => {
@@ -348,20 +372,22 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
         SolcordSettings.skipOnboarding();
     };
 
+    if (paused) return <section className="solcord-wizard solcord-wizard-paused" aria-label="Solcord setup paused"><div><strong>Setup paused</strong><p>Your draft is saved at step {step + 1}. No feature, addon, theme, or account state changed.</p></div><button type="button" className="solcord-action solcord-action-accent" onClick={() => setPaused(false)}>Resume setup</button></section>;
+
     return <section className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
         <div className="solcord-wizard-title"><div><h2 id="solcord-setup-title">Set up Solcord</h2><p>Your choices save as you go. Files and active features change only after the final review.</p></div><span>Step {step + 1} of {WIZARD_STEPS.length}</span></div>
         <div className="solcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
         {step === 0 && <WelcomeStep />}
-        {step === 1 && <CurrentStateStep />}
-        {step === 2 && <PresetStep value={draft.preset} onChange={setPreset} />}
+        {step === 1 && <><SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} /><PrivateHistoryStep draft={draft} onChange={setDraft} /></>}
+        {step === 2 && <PerformanceStep draft={draft} onChange={setDraft} />}
         {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
-        {step === 4 && <SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} />}
-        {step === 5 && <PrivateHistoryStep draft={draft} onChange={setDraft} />}
-        {step === 6 && <><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} onReviewPending={onReviewPending} /><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /></>}
-        {step === 7 && <ApplyStep draft={draft} />}
+        {step === 4 && <><PresetStep value={draft.preset} onChange={setPreset} /><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} onReviewPending={onReviewPending} /></>}
+        {step === 5 && <ActivitiesStep />}
+        {step === 6 && <CurrentStateStep />}
+        {step === 7 && <><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /><ApplyStep draft={draft} /></>}
         <div className="solcord-wizard-footer">
-            <div className="solcord-actions"><button type="button" className="solcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Verifying and applying…" : "Apply and verify"}</button>}<button type="button" className="solcord-action" disabled={busy} onClick={skip}>Skip without changes</button></div>
+            <div className="solcord-actions"><button type="button" className="solcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Verifying and applying…" : "Apply and verify"}</button>}<button type="button" className="solcord-action" disabled={busy} onClick={() => setPaused(true)}>Cancel for now</button><button type="button" className="solcord-action" disabled={busy} onClick={skip}>Skip setup</button></div>
             {status && <p role="status" aria-live="polite" className="solcord-setup-status">{status}</p>}
         </div>
     </section>;

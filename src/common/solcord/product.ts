@@ -1,12 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 
-export type SolcordWorkspaceId = "home" | "appearance" | "safety" | "people" | "tools";
+export type SolcordWorkspaceId =
+    | "overview"
+    | "appearance"
+    | "performance"
+    | "privacy"
+    | "chat"
+    | "voice"
+    | "friends"
+    | "extensions"
+    | "recovery"
+    | "advanced";
 export type SolcordVisualMode = "follow-discord" | "solcord-dark" | "solcord-light" | "oled";
 export type SolcordAccent = "system" | "glacier" | "signal" | "coral" | "forest";
 export type SolcordDensity = "comfortable" | "compact";
-export type SolcordMotion = "follow-system" | "full" | "reduced";
+export type SolcordMotion = "follow-system" | "full" | "subtle" | "reduced";
 export type SolcordMessageShape = "discord" | "seamed";
 export type SolcordSetupPreset = "recommended" | "minimal" | "power-user";
+export type SolcordPerformanceProfile = "lean" | "balanced" | "visual";
+export type SolcordLayoutRegion = "guilds" | "channels" | "members";
+export type SolcordMediaKind = "gif" | "sticker" | "emoji";
+
+export interface SolcordMediaShelfItem {
+    id: string;
+    label: string;
+    url: string;
+    kind: SolcordMediaKind;
+}
+
+export interface SolcordBaselinePreferences {
+    layoutCollapse: boolean;
+    collapsedRegions: SolcordLayoutRegion[];
+    embedControls: boolean;
+    crossPlatformAutoscroll: boolean;
+    messageLinkPreview: boolean;
+    mediaShelf: SolcordMediaShelfItem[];
+}
 
 export interface SolcordAppearancePreferences {
     mode: SolcordVisualMode;
@@ -31,6 +60,7 @@ export interface SolcordFriendWatchPolicy {
 }
 
 export interface SolcordProductPreferences {
+    performanceProfile: SolcordPerformanceProfile;
     appearance: SolcordAppearancePreferences;
     safety: SolcordSafetyPreferences;
     friendWatch: SolcordFriendWatchPolicy;
@@ -42,34 +72,63 @@ export interface SolcordProductPreferences {
         focusChannelIds: string[];
         translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string;};
     };
+    baseline: SolcordBaselinePreferences;
 }
 
 export const SOLCORD_WORKSPACES = Object.freeze([
-    {id: "home", label: "Home", summary: "Session health and the next useful action."},
-    {id: "appearance", label: "Appearance", summary: "One coherent visual system with a live preview."},
-    {id: "safety", label: "Safety", summary: "Links, attachments, privacy, and local review history."},
-    {id: "people", label: "People", summary: "Private relationship history and local reminders."},
-    {id: "tools", label: "Tools", summary: "Profiles, add-ons, recovery, accessibility, and diagnostics."}
+    {id: "overview", label: "Overview", summary: "Setup, session health, Activities, and the next useful action."},
+    {id: "appearance", label: "Appearance", summary: "Theme, density, accent, motion, and accessibility."},
+    {id: "performance", label: "Performance", summary: "Lean, Balanced, or Visual behavior with measured local cost."},
+    {id: "privacy", label: "Privacy & Safety", summary: "Links, attachments, stream privacy, and private history."},
+    {id: "chat", label: "Chat & Composer", summary: "Writing, previews, media references, translation, and reminders."},
+    {id: "voice", label: "Voice & Activities", summary: "Activity health, voice tools, audience safeguards, and call experiments."},
+    {id: "friends", label: "Friends & Spaces", summary: "Local relationship history, private notes, pins, aliases, and focus."},
+    {id: "extensions", label: "Extensions", summary: "Solcord built-ins, reviewed community choices, and the catalog ledger."},
+    {id: "recovery", label: "Recovery", summary: "Plugin Doctor, snapshots, rollback, import, and startup recovery."},
+    {id: "advanced", label: "Advanced", summary: "Diagnostics, Power Lab, provenance, and exact product boundaries."}
 ] satisfies ReadonlyArray<{id: SolcordWorkspaceId; label: string; summary: string;}>);
 
 export const SOLCORD_SETUP_STEPS = Object.freeze([
     "Welcome",
-    "Preflight",
-    "Preset",
+    "Privacy",
+    "Performance",
     "Appearance",
-    "Safety",
-    "Private history",
-    "Review",
-    "Apply"
+    "Features",
+    "Activities",
+    "Import",
+    "Ready"
 ] as const);
+
+export interface SolcordPerformancePolicy {
+    sampleSeconds: number;
+    effectiveMotion: "full" | "subtle" | "reduced";
+    ambientEffects: boolean;
+    description: string;
+}
+
+export const SOLCORD_PERFORMANCE_POLICIES: Readonly<Record<SolcordPerformanceProfile, Readonly<SolcordPerformancePolicy>>> = Object.freeze({
+    lean: Object.freeze({sampleSeconds: 15, effectiveMotion: "reduced", ambientEffects: false, description: "Minimum background work and no ambient motion."}),
+    balanced: Object.freeze({sampleSeconds: 5, effectiveMotion: "subtle", ambientEffects: false, description: "Responsive controls with short interaction-led motion."}),
+    visual: Object.freeze({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: true, description: "Full interaction motion while keeping chat and long lists still."})
+});
+
+export function resolveSolcordPerformancePolicy(profile: SolcordPerformanceProfile, motion: SolcordMotion, reduceMotion: boolean): SolcordPerformancePolicy {
+    const base = SOLCORD_PERFORMANCE_POLICIES[profile];
+    if (reduceMotion || motion === "reduced") return {...base, effectiveMotion: "reduced", ambientEffects: false};
+    if (motion === "full") return {...base, effectiveMotion: profile === "lean" ? "subtle" : "full"};
+    if (motion === "subtle") return {...base, effectiveMotion: "subtle", ambientEffects: false};
+    return {...base};
+}
 
 export function defaultSolcordProductPreferences(): SolcordProductPreferences {
     return {
+        performanceProfile: "balanced",
         appearance: {mode: "follow-discord", accent: "glacier", density: "comfortable", motion: "follow-system", messageShape: "discord"},
         safety: {linkLens: true, domainMemory: "warn-only", attachmentGuard: true, privacyModeReady: true},
         friendWatch: {enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"},
         returnLaterRetentionDays: 30,
-        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], translation: {provider: "off", endpoint: ""}}
+        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], translation: {provider: "off", endpoint: ""}},
+        baseline: {layoutCollapse: false, collapsedRegions: [], embedControls: false, crossPlatformAutoscroll: false, messageLinkPreview: false, mediaShelf: []}
     };
 }
 
@@ -97,6 +156,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     const friendWatch = record(source.friendWatch);
     const nativeSuite = record(source.nativeSuite);
     const translation = record(nativeSuite.translation);
+    const baseline = record(source.baseline);
     const snowflakes = (candidate: unknown, maximum: number) => Array.isArray(candidate) ? [...new Set(candidate.filter((item): item is string => typeof item === "string" && /^\d{1,32}$/.test(item)))].slice(0, maximum) : [];
     const aliases = Object.fromEntries(Object.entries(record(nativeSuite.guildAliases)).flatMap(([id, alias]) => /^\d{1,32}$/.test(id) && typeof alias === "string" && alias.length <= 48 ? [[id, alias] as const] : []).slice(0, 200));
     let endpoint = "";
@@ -108,11 +168,12 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
         catch {/* invalid endpoint stays empty */}
     }
     return {
+        performanceProfile: choice(source.performanceProfile, ["lean", "balanced", "visual"] as const, "balanced"),
         appearance: {
             mode: normalizeVisualMode(appearance.mode),
             accent: choice(appearance.accent, ["system", "glacier", "signal", "coral", "forest"] as const, "glacier"),
             density: choice(appearance.density, ["comfortable", "compact"] as const, "comfortable"),
-            motion: choice(appearance.motion, ["follow-system", "full", "reduced"] as const, "follow-system"),
+            motion: choice(appearance.motion, ["follow-system", "full", "subtle", "reduced"] as const, "follow-system"),
             messageShape: choice(appearance.messageShape, ["discord", "seamed"] as const, "discord")
         },
         safety: {
@@ -134,6 +195,28 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             guildAliases: aliases,
             focusChannelIds: snowflakes(nativeSuite.focusChannelIds, 500),
             translation: {provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"), endpoint}
+        },
+        baseline: {
+            layoutCollapse: baseline.layoutCollapse === true,
+            collapsedRegions: [...new Set((Array.isArray(baseline.collapsedRegions) ? baseline.collapsedRegions : []).filter((region): region is SolcordLayoutRegion => ["guilds", "channels", "members"].includes(String(region))))].slice(0, 3),
+            embedControls: baseline.embedControls === true,
+            crossPlatformAutoscroll: baseline.crossPlatformAutoscroll === true,
+            messageLinkPreview: baseline.messageLinkPreview === true,
+            mediaShelf: (Array.isArray(baseline.mediaShelf) ? baseline.mediaShelf : []).flatMap((candidate, index) => {
+                const item = record(candidate);
+                if (typeof item.url !== "string" || typeof item.label !== "string") return [];
+                try {
+                    const url = new URL(item.url);
+                    if (url.protocol !== "https:" || !["cdn.discordapp.com", "media.discordapp.net"].includes(url.hostname)) return [];
+                    return [{
+                        id: typeof item.id === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(item.id) ? item.id : `media-${index + 1}`,
+                        label: item.label.trim().slice(0, 64) || "Saved media",
+                        url: url.toString(),
+                        kind: choice(item.kind, ["gif", "sticker", "emoji"] as const, "gif")
+                    }];
+                }
+                catch {return [];}
+            }).slice(0, 200)
         }
     };
 }

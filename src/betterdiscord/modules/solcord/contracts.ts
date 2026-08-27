@@ -22,6 +22,8 @@ export type {
     SolcordFriendWatchPolicy,
     SolcordMessageShape,
     SolcordMotion,
+    SolcordPerformanceProfile,
+    SolcordBaselinePreferences,
     SolcordProductPreferences,
     SolcordSafetyPreferences,
     SolcordSetupPreset,

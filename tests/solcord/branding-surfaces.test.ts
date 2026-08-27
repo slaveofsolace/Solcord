@@ -37,7 +37,7 @@ describe("Solcord brand surfaces", () => {
         const runtime = read("src/betterdiscord/modules/solcord/runtime.ts");
         const styles = read("src/betterdiscord/styles/solcord.css");
 
-        expect(runtime).toMatch(/async #synchronizeFeatures\(\): Promise<void> \{\s*this\.#applyProductPresentation\(\);/);
+        expect(runtime).toMatch(/async #synchronizeFeatures\(ids: readonly SolcordModuleId\[] = FEATURE_IDS\): Promise<void> \{\s*this\.#applyProductPresentation\(\);\s*this\.#synchronizeBaselineSuite\(\);/);
         expect(styles).toContain("html[data-solcord-message-shape=\"seamed\"] #app-mount li[id^=\"chat-messages-\"]");
     });
 });

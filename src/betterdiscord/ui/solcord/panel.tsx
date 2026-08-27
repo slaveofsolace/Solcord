@@ -12,7 +12,7 @@ import SetupWizard from "./setup-wizard";
 import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOLCORD_POWER_LAB} from "./catalog";
-import {prioritizeSolcordPulse, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
+import {prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
 import {isSolcordBuiltInAddon} from "@common/solcord/builtin-addons";
 
 const {useEffect, useRef, useState} = React;
@@ -496,6 +496,54 @@ function AccessibilityControls() {
     </Section>;
 }
 
+function PerformanceProfileControls() {
+    const preferences = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().productPreferences);
+    const profile = preferences.performanceProfile;
+    const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const policy = resolveSolcordPerformancePolicy(profile, preferences.appearance.motion, reducedByOs);
+    const setProfile = (performanceProfile: SolcordPerformanceProfile) => void SolcordRuntime.setProductPreferences({...preferences, performanceProfile});
+    return <Section title="Performance profile" summary="One policy controls Solcord sampling and motion. It does not claim to optimize Discord or change account behavior.">
+        <div className="solcord-segmented" role="radiogroup" aria-label="Solcord performance profile">
+            {(Object.keys(SOLCORD_PERFORMANCE_POLICIES) as SolcordPerformanceProfile[]).map(id => <button key={id} type="button" role="radio" aria-checked={profile === id} onClick={() => setProfile(id)}><strong>{id[0].toUpperCase() + id.slice(1)}</strong><small>{SOLCORD_PERFORMANCE_POLICIES[id].description}</small></button>)}
+        </div>
+        <dl className="solcord-facts solcord-policy-facts"><div><dt>Effective motion</dt><dd>{policy.effectiveMotion}</dd></div><div><dt>Performance sampling</dt><dd>no faster than every {policy.sampleSeconds} seconds</dd></div><div><dt>Ambient accents</dt><dd>{policy.ambientEffects ? "available" : "off"}</dd></div><div><dt>Windows reduced motion</dt><dd>{reducedByOs ? "honored" : "not requested"}</dd></div></dl>
+    </Section>;
+}
+
+function BaselineToolsPanel() {
+    const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({preferences: SolcordSettings.snapshot().productPreferences, runtime: SolcordRuntime.baselineSuiteStatus()}));
+    const baseline = state.preferences.baseline;
+    const [mediaLabel, setMediaLabel] = useState("");
+    const [mediaUrl, setMediaUrl] = useState("");
+    const [mediaKind, setMediaKind] = useState<SolcordMediaKind>("gif");
+    const [status, setStatus] = useState("");
+    const update = (next: typeof baseline) => void SolcordRuntime.setProductPreferences({...state.preferences, baseline: next});
+    const toggleRegion = (region: "guilds" | "channels" | "members", hidden: boolean) => update({...baseline, collapsedRegions: hidden ? [...new Set([...baseline.collapsedRegions, region])] : baseline.collapsedRegions.filter(item => item !== region)});
+    const addMedia = () => {
+        try {
+            const url = new URL(mediaUrl.trim());
+            if (url.protocol !== "https:" || !["cdn.discordapp.com", "media.discordapp.net"].includes(url.hostname)) throw new Error();
+            update({...baseline, mediaShelf: [...baseline.mediaShelf, {id: globalThis.crypto?.randomUUID?.() ?? `media-${Date.now().toString(36)}`, label: mediaLabel.trim() || "Saved media", url: url.toString(), kind: mediaKind}].slice(-200)});
+            setMediaLabel("");
+            setMediaUrl("");
+            setStatus("Saved the Discord CDN reference locally. Solcord did not download it.");
+        }
+        catch {setStatus("Use a valid HTTPS Discord CDN or media.discordapp.net URL. Nothing was saved.");}
+    };
+    return <Section title="Layout and message tools" summary="Five clean-room tools share one lazy lifecycle. When every switch is off, they install no observer, listener, style, Webpack lookup, or timer.">
+        <div className="solcord-setting-rows">
+            <label><span><strong>Layout Collapse</strong><small>Hide selected Discord regions locally. Every region remains restorable here.</small></span><input type="checkbox" checked={baseline.layoutCollapse} onChange={event => update({...baseline, layoutCollapse: event.currentTarget.checked})} /></label>
+            {baseline.layoutCollapse && <div className="solcord-inline-options" aria-label="Layout regions"><label><input type="checkbox" checked={baseline.collapsedRegions.includes("guilds")} onChange={event => toggleRegion("guilds", event.currentTarget.checked)} /> Servers</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("channels")} onChange={event => toggleRegion("channels", event.currentTarget.checked)} /> Channels</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("members")} onChange={event => toggleRegion("members", event.currentTarget.checked)} /> Members</label></div>}
+            <label><span><strong>Embed Controls</strong><small>Add local collapse and expand buttons without changing message data.</small></span><input type="checkbox" checked={baseline.embedControls} onChange={event => update({...baseline, embedControls: event.currentTarget.checked})} /></label>
+            <label><span><strong>Cross-platform Autoscroll</strong><small>Middle-click a scrollable Discord region; release the middle button or press Escape to stop.</small></span><input type="checkbox" checked={baseline.crossPlatformAutoscroll} onChange={event => update({...baseline, crossPlatformAutoscroll: event.currentTarget.checked})} /></label>
+            <label><span><strong>Message Link Preview</strong><small>Preview Discord message links only when the exact message is already loaded. No history fetch.</small></span><input type="checkbox" checked={baseline.messageLinkPreview} onChange={event => update({...baseline, messageLinkPreview: event.currentTarget.checked})} /></label>
+        </div>
+        <details className="solcord-media-shelf"><summary>Media Shelf <small>{baseline.mediaShelf.length} saved reference(s)</small></summary><p>Keep bounded labels for Discord CDN GIF, sticker, or emoji links. Files are never downloaded in the background.</p><div className="solcord-catalog-tools"><label>Label<input value={mediaLabel} maxLength={64} onChange={event => setMediaLabel(event.currentTarget.value)} /></label><label>Kind<select value={mediaKind} onChange={event => setMediaKind(event.currentTarget.value as SolcordMediaKind)}><option value="gif">GIF</option><option value="sticker">Sticker</option><option value="emoji">Emoji</option></select></label><label>Discord CDN URL<input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.currentTarget.value)} /></label></div><div className="solcord-actions"><ActionButton disabled={!mediaUrl.trim()} onClick={addMedia}>Save local reference</ActionButton></div>{baseline.mediaShelf.length > 0 && <div className="solcord-media-list">{baseline.mediaShelf.map(item => <div key={item.id}><span><strong>{item.label}</strong><small>{item.kind} · {new URL(item.url).hostname}</small></span><ActionButton onClick={() => void navigator.clipboard?.writeText(item.url)}>Copy URL</ActionButton><ActionButton tone="danger" onClick={() => update({...baseline, mediaShelf: baseline.mediaShelf.filter(candidate => candidate.id !== item.id)})}>Remove</ActionButton></div>)}</div>}</details>
+        <p className="solcord-key-hint">Runtime: {state.runtime.active ? `${state.runtime.enabled.join(", ")} active · ${Object.values(state.runtime.resources).reduce((sum, value) => sum + value, 0)} owned resources.` : "all adapters idle."} {state.runtime.unavailable.join(" ")}</p>
+        {status && <p role="status" className="solcord-import-status">{status}</p>}
+    </Section>;
+}
+
 function PerformanceControls() {
     const values = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["performance-hud"].values);
     return <Section title="Performance HUD" summary="Bounded local samples report observed Solcord startup, memory, event-loop, and owned-resource measurements without claiming to optimize Discord.">
@@ -770,7 +818,7 @@ function SessionPulse({openWorkspace}: {openWorkspace(workspace: SolcordWorkspac
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
     ]);
     return <Section title="Session Pulse" summary="One local startup digest. The three highest-priority items win; lower-priority noise stays out of the way.">
-        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" || signal.id === "activity" ? "home" : signal.id === "return-later" || signal.id === "friend-watch" ? "people" : "tools")}>{signal.action}</ActionButton>}</article>)}</div>
+        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" ? "overview" : signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
     </Section>;
 }
 
@@ -781,10 +829,10 @@ function AppearanceWorkspace() {
     return <>
         <Section title="Appearance" summary="One semantic token system follows Discord or applies a Solcord mode without remote CSS, fonts, or imagery.">
             <div className="solcord-appearance-controls">
-                <label>Mode<select value={appearance.mode} onChange={event => update({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Soul Dark</option><option value="solcord-light">Soul Light</option><option value="oled">OLED</option></select></label>
+                <label>Mode<select value={appearance.mode} onChange={event => update({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
                 <label>Accent<select value={appearance.accent} onChange={event => update({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
                 <label>Density<select value={appearance.density} onChange={event => update({...appearance, density: event.currentTarget.value as SolcordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
-                <label>Motion<select value={appearance.motion} onChange={event => update({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Follow Discord / Windows</option><option value="full">Full</option><option value="reduced">Reduced</option></select></label>
+                <label>Motion<select value={appearance.motion} onChange={event => update({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Use performance profile</option><option value="full">Full</option><option value="subtle">Subtle</option><option value="reduced">Reduced</option></select></label>
                 <label>Message shape<select value={appearance.messageShape} onChange={event => update({...appearance, messageShape: event.currentTarget.value as SolcordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
             </div>
             <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent}`}><span>Appearance preview</span><strong>Reply context stays readable at every density.</strong><small>Focus, warning, success, and danger keep distinct semantic colors.</small><button type="button">Keyboard focus sample</button></div>
@@ -883,11 +931,13 @@ export default function SolcordPanel() {
     const onboarding = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().onboarding);
     const productPreferences = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().productPreferences);
     const appearance = productPreferences.appearance;
-    const [workspace, setWorkspace] = useState<SolcordWorkspaceId>("home");
+    const [workspace, setWorkspace] = useState<SolcordWorkspaceId>("overview");
+    const [workspaceQuery, setWorkspaceQuery] = useState("");
     const [workspaceFocus, setWorkspaceFocus] = useState<"catalog">();
     const selectedWorkspace = SOLCORD_WORKSPACES.find(item => item.id === workspace)!;
+    const visibleWorkspaces = SOLCORD_WORKSPACES.filter(item => `${item.label} ${item.summary}`.toLowerCase().includes(workspaceQuery.trim().toLowerCase()));
     useEffect(() => {
-        if (workspace !== "tools" || workspaceFocus !== "catalog") return;
+        if (workspace !== "extensions" || workspaceFocus !== "catalog") return;
         const frame = requestAnimationFrame(() => {
             const table = document.querySelector<HTMLElement>(".solcord-catalog-table");
             const section = table?.closest<HTMLElement>(".solcord-section");
@@ -899,7 +949,7 @@ export default function SolcordPanel() {
     }, [workspace, workspaceFocus]);
     const openCatalog = () => {
         setWorkspaceFocus("catalog");
-        setWorkspace("tools");
+        setWorkspace("extensions");
     };
     return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
@@ -911,29 +961,27 @@ export default function SolcordPanel() {
             <ActionButton tone="danger" onClick={() => void SolcordRuntime.leaveRecoveryMode()}>Try normal startup</ActionButton>
         </div>}
         <div className="solcord-control-center">
-            <nav className="solcord-workspace-nav" aria-label="Solcord workspaces">{SOLCORD_WORKSPACES.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => setWorkspace(item.id)}><strong>{item.label}</strong><small>{item.summary}</small></button>)}</nav>
+            <nav className="solcord-workspace-nav" aria-label="Solcord workspaces"><label className="solcord-workspace-search"><span className="sr-only">Filter Solcord workspaces</span><input type="search" value={workspaceQuery} placeholder="Find a setting" onChange={event => setWorkspaceQuery(event.currentTarget.value)} /></label>{visibleWorkspaces.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => setWorkspace(item.id)}><strong>{item.label}</strong><small>{item.summary}</small></button>)}{!visibleWorkspaces.length && <p className="solcord-nav-empty">No matching workspace</p>}</nav>
             <div className="solcord-workspace" data-workspace={workspace}>
                 <header className="solcord-workspace-heading"><p className="solcord-eyebrow">Workspace</p><h2>{selectedWorkspace.label}</h2><p>{selectedWorkspace.summary}</p></header>
-                {workspace === "home" && <>
+                {workspace === "overview" && <>
                     {onboarding.status === "pending" && <SetupWizard onReviewPending={openCatalog} />}
                     <SessionPulse openWorkspace={setWorkspace} />
                     <ActivityBridge />
                 </>}
                 {workspace === "appearance" && <AppearanceWorkspace />}
-                {workspace === "safety" && <><StreamShieldControls /><StreamAudienceGuardControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /></>}
-                {workspace === "people" && <><FriendWatchPanel /><MessageTimelinePanel /><ReturnLaterPanel /></>}
-                {workspace === "tools" && <>
-                    <SetupManagement />
+                {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
+                {workspace === "privacy" && <><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
+                {workspace === "chat" && <><BaselineToolsPanel /><NativeSuitePanel /><ReturnLaterPanel /></>}
+                {workspace === "voice" && <><ActivityBridge /><StreamAudienceGuardControls /><PowerLabStatus /></>}
+                {workspace === "friends" && <><FriendWatchPanel /><ReturnLaterPanel /></>}
+                {workspace === "extensions" && <>
                     <Section title="Module status" summary="Ready means an implemented adapter passed its current startup validation. Preview still needs a version-specific or hands-on gate."><ModuleTable /></Section>
-                    <PluginRecovery />
-                    <PerformanceControls />
-                    <ProfilesAndHistory />
-                    <NativeSuitePanel />
                     <CuratedAddonSet />
                     <CatalogBrowser />
-                    <PowerLabStatus />
-                    <AboutSolcord />
                 </>}
+                {workspace === "recovery" && <><SetupManagement /><PluginRecovery /><ProfilesAndHistory /></>}
+                {workspace === "advanced" && <><AccessibilityControls /><AboutSolcord /></>}
             </div>
         </div>
     </main>;
