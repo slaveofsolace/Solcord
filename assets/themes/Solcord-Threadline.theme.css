@@ -100,8 +100,9 @@
     --scrollbar-auto-track: var(--sct-canvas);
 }
 
-body { background: var(--sct-canvas) !important; font-family: "Segoe UI Variable", "gg sans", sans-serif; }
+body { background: var(--sct-canvas) !important; font-family: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif; font-kerning: normal; }
 #app-mount { background: var(--sct-canvas) !important; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: bahnschrift, "Arial Narrow", "Segoe UI Variable Display", sans-serif; font-kerning: normal; letter-spacing: -0.02em; }
 ::selection { color: var(--sct-on-accent); background: var(--sct-accent); }
 :where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--sct-focus) !important; outline-offset: 2px; }
 

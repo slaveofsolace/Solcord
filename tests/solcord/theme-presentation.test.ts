@@ -175,6 +175,26 @@ describe("Solcord theme presentation", () => {
         expect(css).toContain(".solcord-wizard-body > p:not(.solcord-callout)");
     });
 
+    test("uses a local, readable editorial type system and a bounded ambient field", () => {
+        const css = executableCss(SOLCORD_UI_CSS);
+        expect(css).toContain("--sc-font-body: \"Segoe UI Variable Text\"");
+        expect(css).toContain("--sc-font-display: bahnschrift");
+        expect(css).toContain("--sc-font-code: \"Cascadia Code\"");
+        expect(css).toContain("--sc-field-grain: url(\"data:image/svg+xml");
+        expect(css).not.toMatch(/url\(["']?https?:/i);
+        expect(css).toContain("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode] body::before");
+        expect(css).toContain("pointer-events: none");
+        expect(css).toContain(".solcord-header h1");
+        expect(css).toContain("font-family: var(--sc-font-display)");
+
+        for (const theme of SOLCORD_RUNTIME_THEMES) {
+            const source = executableCss(readTheme(theme.fileName));
+            expect(source, theme.fileName).toContain("font-kerning: normal");
+            expect(source, theme.fileName).toContain("[class*=\"title_\"]");
+            expect(source, theme.fileName).not.toMatch(/@font-face|https?:\/\//i);
+        }
+    });
+
     test("uses the default ember only as the warning and critical color", () => {
         const css = executableCss(readTheme("Solcord-Default.theme.css"));
         expect(css).not.toMatch(/gradient\s*\(/i);

@@ -167,10 +167,13 @@
 
 body {
     background: var(--solcord-canvas) !important;
-    font-family: "Segoe UI Variable", "gg sans", sans-serif;
+    color: var(--solcord-ink);
+    font-family: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
+    font-kerning: normal;
 }
 
 #app-mount { background: var(--solcord-canvas) !important; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { color: var(--solcord-ink); font-family: bahnschrift, "Arial Narrow", "Segoe UI Variable Display", sans-serif; font-kerning: normal; letter-spacing: -0.018em; }
 
 #app-mount [class*="standardSidebarView_"] {
     color: var(--text-default);

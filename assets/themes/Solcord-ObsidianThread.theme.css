@@ -21,19 +21,19 @@
     --solcord-ember: #DF6B52;
     --solcord-seam: #343B3E;
     --solcord-focus: #78C4BD;
-    --solcord-canvas: #0D1011;
-    --solcord-surface-0: #131718;
-    --solcord-surface-1: #191E20;
-    --solcord-surface-2: #22282A;
+    --solcord-canvas: #090908;
+    --solcord-surface-0: #11100E;
+    --solcord-surface-1: #171512;
+    --solcord-surface-2: #201D19;
     --solcord-accent: var(--solcord-teal);
     --solcord-accent-strong: #397D77;
     --solcord-on-accent: #07110F;
-    --solcord-panel-shadow: 0 14px 30px rgb(0 0 0 / 30%);
+    --solcord-panel-shadow: none;
     --solcord-panel-filter: none;
     --solcord-message-hover: rgb(75 157 150 / 8%);
-    --solcord-gap: 10px;
-    --solcord-radius: 4px;
-    --solcord-radius-small: 2px;
+    --solcord-gap: 7px;
+    --solcord-radius: 0;
+    --solcord-radius-small: 1px;
     --solcord-avatar-radius: 8px;
     --solcord-cream: var(--solcord-bone);
     --solcord-sea: var(--solcord-teal);
@@ -115,10 +115,27 @@
 
 body {
     background: var(--solcord-canvas) !important;
-    font-family: "Segoe UI Variable", "gg sans", sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
+    font-kerning: normal;
 }
 
-#app-mount { background: var(--solcord-canvas) !important; }
+body::before {
+    position: fixed;
+    z-index: 0;
+    top: 9vh;
+    left: 6vw;
+    width: 1px;
+    height: 1px;
+    content: "";
+    pointer-events: none;
+    color: var(--solcord-teal);
+    background: currentcolor;
+    box-shadow: 12vw 8vh currentcolor, 29vw 22vh currentcolor, 45vw 6vh currentcolor, 59vw 34vh currentcolor, 76vw 15vh currentcolor, 5vw 54vh currentcolor, 25vw 71vh currentcolor, 49vw 61vh currentcolor, 69vw 79vh currentcolor, 86vw 51vh currentcolor;
+    opacity: 0.1;
+}
+
+#app-mount { position: relative; z-index: 1; background: transparent !important; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: bahnschrift, "Arial Narrow", "Segoe UI Variable Display", sans-serif; font-kerning: normal; letter-spacing: -0.018em; }
 
 #app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
     gap: var(--solcord-gap);

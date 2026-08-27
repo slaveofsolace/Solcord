@@ -12,6 +12,8 @@
 
 - First-run appearance choices now preview the full Discord shell and restore the saved appearance when the user leaves the step.
 - Settings favor compact operational rows, plain status language, and one shared lifecycle instead of separate plugin-card dashboards.
+- The default shell now uses a warm-black and paper visual field, system-native editorial typography, thin rules, and a static low-opacity signal texture informed by the owner's public SOL work page.
+- Control Center navigation, section headings, buttons, and theme typography were redrawn to remove the generic rounded-card treatment while keeping Discord's interaction model.
 - Documentation now distinguishes implemented local adapters from catalog research and points new users to the installer-first guide.
 
 ### Fixed

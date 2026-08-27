@@ -13,7 +13,7 @@ The six V2 themes extend Solcord's accepted V1 direction without treating a pale
 
 ## Shared invariants
 
-- Every source is self-contained: no imports, remote fonts, URLs, images, or generated texture.
+- Every theme source is self-contained: no imports, remote fonts, URLs, images, or copied texture. The shared Solcord renderer supplies one original low-opacity procedural grain and a static signal field when a Solcord product mode is active.
 - Every source covers guild navigation, channels, chat, composer, member and activity columns, people lists, popouts, native dialogs, embeds, and settings.
 - Normal and muted text meet WCAG AA against primary and secondary surfaces. Focus indicators meet the 3:1 non-text contrast requirement.
 - Native Discord light, dark, darker, and midnight selections cannot leave a partial mixed theme.
@@ -22,7 +22,7 @@ The six V2 themes extend Solcord's accepted V1 direction without treating a pale
 
 ## Anti-slop decisions
 
-The themes contain no decorative gradients, glowing telemetry, fake coordinates, card-wall ornament, remote imagery, or motion without state meaning. Borders and rails communicate selection, unread state, mentions, voice presence, containment, or focus. Shadows appear only where Workshop represents a raised or recessed control, Relay Classic distinguishes an overlay, or Signal Block makes modal stacking unambiguous.
+The themes contain no decorative gradients, glowing telemetry, fake coordinates, card-wall ornament, remote imagery, or motion without state meaning. The ambient field is static, sparse, non-interactive, and faint enough that chat remains the visual priority. Borders and rails communicate selection, unread state, mentions, voice presence, containment, or focus. Shadows appear only where Workshop represents a raised or recessed control, Relay Classic distinguishes an overlay, or Signal Block makes modal stacking unambiguous.
 
 ## Runtime acceptance still required
 

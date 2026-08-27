@@ -2,7 +2,7 @@
  * @name Solcord — Default
  * @author slaveofsolace
  * @version 1.2.0
- * @description Solcord's graphite theme with warm text, teal interaction, and ember reserved for warnings.
+ * @description Warm-black workbench with paper-white type, signal grain, teal interaction, and restrained ember.
  * @source https://github.com/slaveofsolace/Solcord
  * @license Apache-2.0
  */
@@ -12,29 +12,31 @@
 /* stylelint-disable declaration-block-single-line-max-declarations, max-line-length */
 
 :root {
-    --solcord-graphite: #1B1D20;
-    --solcord-panel: #22252A;
-    --solcord-raised: #2A2E33;
-    --solcord-cream: #ECE7DF;
-    --solcord-muted: #B6AFA7;
+    --solcord-graphite: #11100E;
+    --solcord-panel: #181613;
+    --solcord-raised: #24201C;
+    --solcord-cream: #F3EEE5;
+    --solcord-muted: #BEB4A9;
     --solcord-sea: #5AA9A0;
     --solcord-coral: #D96C57;
-    --solcord-seam: #3B3F45;
+    --solcord-seam: #3B3530;
     --solcord-focus: #7CC8BF;
-    --solcord-canvas: #111416;
-    --solcord-surface-0: #171B1E;
-    --solcord-surface-1: #1D2326;
-    --solcord-surface-2: #252C30;
+    --solcord-canvas: #0C0B0A;
+    --solcord-surface-0: #11100E;
+    --solcord-surface-1: #181613;
+    --solcord-surface-2: #211E1A;
     --solcord-accent: var(--solcord-sea);
     --solcord-accent-strong: #3E8982;
     --solcord-on-accent: #081210;
-    --solcord-panel-shadow: 0 12px 28px rgb(0 0 0 / 22%);
+    --solcord-panel-shadow: none;
     --solcord-panel-filter: none;
     --solcord-message-hover: rgb(90 169 160 / 8%);
-    --solcord-gap: 8px;
-    --solcord-radius: 7px;
-    --solcord-radius-small: 4px;
-    --solcord-avatar-radius: 12px;
+    --solcord-gap: 6px;
+    --solcord-radius: 0;
+    --solcord-radius-small: 1px;
+    --solcord-avatar-radius: 10px;
+    --solcord-font-body: "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
+    --solcord-font-display: bahnschrift, "Arial Narrow", "Segoe UI Variable Display", sans-serif;
     --custom-message-spacing-vertical-container-cozy: 0.34rem;
     --custom-message-spacing-vertical-container-compact: 0.1rem;
 }
@@ -47,18 +49,18 @@
 
     --background-primary: var(--solcord-graphite);
     --background-secondary: var(--solcord-panel);
-    --background-secondary-alt: #1E2125;
-    --background-tertiary: #17191C;
+    --background-secondary-alt: #151310;
+    --background-tertiary: #0F0E0C;
     --background-floating: var(--solcord-raised);
     --background-modifier-hover: rgb(90 169 160 / 11%);
     --background-modifier-active: rgb(90 169 160 / 17%);
     --background-modifier-selected: rgb(90 169 160 / 22%);
     --background-modifier-accent: var(--solcord-seam);
-    --text-normal: #E5DFD7;
+    --text-normal: #E9E2D8;
     --text-muted: var(--solcord-muted);
-    --text-link: #78C7BE;
+    --text-link: #84D0C7;
     --header-primary: var(--solcord-cream);
-    --header-secondary: #C4BDB5;
+    --header-secondary: #CCC1B6;
     --interactive-normal: #C0BAB3;
     --interactive-hover: #F5EFE7;
     --interactive-active: var(--solcord-cream);
@@ -79,7 +81,7 @@
     --channel-text-area-placeholder: #96938F;
     --scrollbar-thin-thumb: #565B60;
     --scrollbar-auto-thumb: #565B60;
-    --scrollbar-auto-track: #17191C;
+    --scrollbar-auto-track: #0F0E0C;
     --app-frame-background: var(--solcord-canvas);
     --app-frame-border: var(--solcord-seam);
     --background-base-low: var(--solcord-surface-1);
@@ -112,10 +114,27 @@
 
 body {
     background: var(--solcord-canvas) !important;
-    font-family: "Segoe UI Variable", "gg sans", sans-serif;
+    font-family: var(--solcord-font-body);
+    font-kerning: normal;
 }
 
-#app-mount { background: var(--solcord-canvas) !important; }
+body::before {
+    position: fixed;
+    z-index: 0;
+    top: 7vh;
+    left: 8vw;
+    width: 1px;
+    height: 1px;
+    content: "";
+    pointer-events: none;
+    color: #7CC8BF;
+    background: currentcolor;
+    box-shadow: 15vw 5vh currentcolor, 33vw 17vh currentcolor, 48vw 4vh currentcolor, 63vw 28vh currentcolor, 79vw 12vh currentcolor, 7vw 49vh currentcolor, 28vw 68vh currentcolor, 55vw 56vh currentcolor, 73vw 75vh currentcolor, 88vw 46vh currentcolor;
+    opacity: 0.12;
+}
+
+#app-mount { position: relative; z-index: 1; background: transparent !important; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: var(--solcord-font-display); font-kerning: normal; letter-spacing: -0.018em; }
 
 #app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
     gap: var(--solcord-gap);
@@ -157,13 +176,12 @@ body {
 #app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]) {
     border: 1px solid transparent;
     border-radius: var(--solcord-radius-small) !important;
-    transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+    transition: background-color 140ms ease, border-color 140ms ease;
 }
 
 #app-mount :is([class*="peopleListItem_"], [class*="itemCard_"], [class*="privateChannels_"] [class*="channel_"], [class*="sidebarList_"] [class*="link_"], [class*="membersWrap_"] [class*="member_"]):hover {
     border-color: var(--solcord-seam);
     background: var(--solcord-surface-2) !important;
-    transform: translateX(2px);
 }
 
 #app-mount [class*="peopleListItem_"] { border-width: 0 0 1px 3px; border-bottom-color: var(--solcord-seam); border-radius: 0 !important; }

@@ -8,13 +8,13 @@ The visual system uses a graphite foundation with three functional accents rathe
 
 | Token | Value | Use |
 | --- | --- | --- |
-| Graphite | `#171a1c` | Mark field, diagnostic surfaces |
-| Panel graphite | `#22272a` | Dense secondary surfaces |
-| Warm bone | `#f0e5d5` | Lower cord, high-emphasis text on graphite |
-| Ember | `#df6b52` | Deliberate break, recovery, causal warnings |
+| Warm black | `#11100e` | Primary shell and quiet gutters |
+| Carbon paper | `#1a1815` | Dense secondary surfaces |
+| Warm bone | `#f3eee5` | High-emphasis text on dark surfaces |
+| Ember | `#ff755f` | Deliberate break, recovery, causal warnings |
 | Oxidized teal | `#4b9d96` | Upper cord, healthy state, focus, primary action |
 
-The graphite, warm-bone, and ember direction was selected after inspecting the owner-controlled public portfolio source already present locally; its active palette uses near-black neutrals, warm paper tones, and coral `#ff755f`. Oxidized teal is an original Solcord functional accent. No private content, portfolio logo, or copied asset was used.
+The warm-black, paper, and coral direction was refined on 2026-08-27 after inspecting the owner-controlled public [SOL work page](https://slaveofsolace.com/work/). The reference established visual principles—warm near-black, paper-white type, coral signals, thin rules, assertive display type, and quiet grain—not reusable assets. Solcord uses original CSS, a different deterministic grain seed, a sparse static signal field, and Windows system-font fallbacks. No portfolio canvas code, font file, logo, image, or private content is copied or bundled. Oxidized teal remains Solcord's separate functional accent.
 
 ## Mark
 
@@ -52,17 +52,17 @@ The theme family contains the recommended default, four accepted V1 alternatives
 
 | Theme | Character | SHA-256 |
 | --- | --- | --- |
-| Solcord Default | Recommended graphite workstation, warm text, oxidized-teal interaction, and ember reserved for warnings. | `a7f47ae4b1a208f69545c9d6ef699e0a2cef831af63dadb4319597067d8329a9` |
-| Obsidian Thread | Wide black gutters, squared graphite panels, warm bone, oxidized teal, and restrained ember. | `da11e6c4070a400cad3d0beb5e2e9284b18d9e9c52f8e57a3a0c022ae0a09c54` |
-| Carbon Ember | Tight charcoal instrumentation with copper interaction rails and burgundy selection signals. | `ab2c74b1ce42720c99bf6d7a33f04befa47dd79d6c5537c8d974c0b555476f9c` |
-| Midnight Glass | Navy-black translucent panels, restrained separation, silver seams, and ice-cyan focus without fragile modal overrides. | `4b605006305b114112c48ce6a89204259343d10d960b2a13a0366655e15c1a00` |
-| Paper Signal | Warm paper, ink, coral, and teal with print-like square seams; it applies even when Discord was previously in dark mode. | `8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d` |
-| Threadline | Compact ruled workspace with indexed navigation and precise message rails. | `8c8283b10e507daabe9af7c30bc3e1e563b6c1cbd44d76bb0eb97c27d1eac1ee` |
-| Signal Block | High-contrast square containment with heavy, state-bearing block boundaries. | `4b648c012f9017cb3334c987e09fc3190b1ce30681d30d792e2860b756a0c071` |
-| Relay Classic | Familiar Discord density with a continuous shell and restrained relay-blue state bars. | `07f3bf94c5bbf3d7fe7c8310ea2a2cf8134da4cc2367038fc9f2710aab036931` |
-| Workshop | Tactile charcoal surfaces, recessed composition areas, and copper fixtures. | `d6e443561148683a556897b7bf0d869705b0521fa9a1204f38083f7c69b6faa3` |
-| Quiet Read | Accessibility-first light surfaces, generous reading measure, large targets, and still interactions. | `0899ac827b8ffc669ba7e7adb27eabce58e0223282d82b97f8e5c94a72ba1643` |
-| Night Transit | Navy shell with distinct route rails for selection, unread state, mentions, and voice. | `416028f03d7111f8b46d3f7608de741d7265ea148771a4dd64c04963089d460d` |
+| Solcord Default | Recommended warm-black workstation with ruled structure, paper-white type, sparse signal texture, teal interaction, and restrained ember. | `6e420bc3439ab00dc157ed41781a7cf72d4da12a849fb56e388f3944d75be705` |
+| Obsidian Thread | Wide black gutters, square warm-carbon panels, condensed display type, oxidized teal, and restrained ember. | `8bee085b2c4c5d394d8b0f8e9b6624853e9ab8787e12b54a2c0f4993b15397ce` |
+| Carbon Ember | Tight charcoal instrumentation with copper interaction rails and burgundy selection signals. | `848b6cf91e54cbc8ea648947a602f91f85a3de9b1e851f678544b5c7695ea9e9` |
+| Midnight Glass | Navy-black translucent panels, restrained separation, silver seams, and ice-cyan focus without fragile modal overrides. | `e1ec9a985679f82738f4e314ef2d23f28e1e07ea22fdf4d79153b71f911a8665` |
+| Paper Signal | Warm paper, readable ink, coral, and teal with print-like square seams; it applies even when Discord was previously in dark mode. | `26ecb1b7011e0a84d78e0769941e4c742d73dcd5bbc065c8699aa6589122f1c7` |
+| Threadline | Compact ruled workspace with indexed navigation, condensed headings, and precise message rails. | `2a1f9029e702633e9a4daa9c265adcd8c1850f49144fa366f161732a51d8de10` |
+| Signal Block | High-contrast square containment with heavy, state-bearing block boundaries and compressed display type. | `8c07bf7aceb6f7c5e2a2d8a10c6668d22944473c36935cdbaf34287462e1859f` |
+| Relay Classic | Familiar Discord density with a continuous shell and restrained relay-blue state bars. | `9bce10cddabb71c25614cd11cfd9e0f6513b7353718952e8163963437574603e` |
+| Workshop | Tactile charcoal surfaces, recessed composition areas, copper fixtures, and compact tool headings. | `99d520779425c157886679e50cd73949ff40b6e98d81fe716f4f51703b4457c0` |
+| Quiet Read | Accessibility-first light surfaces, ink-dark text, generous measure, editorial headings, large targets, and still interactions. | `f753384baece844cede6d8f864c00cf2c588bd80da3e8d94a9c3debe93e9b95d` |
+| Night Transit | Navy shell with condensed wayfinding type and distinct route rails for selection, unread state, mentions, and voice. | `eb6fa5a73a5ba53403bfdda2c53141268f0249e8a73ad7f1e8af0f2b504871a2` |
 
 All eleven remain original implementations. The MIT-licensed `midnight-discord` source at pinned commit `0c6e4b5009df5f13fe33d9b279378378d5212330` was inspected as `REFERENCE ONLY` for general principles: cover current visual-refresh tokens, separate major work regions, expose bounded density tokens, and honor reduced motion. No selector block, hosted import, font, SVG, or asset was copied. The owner's existing `midnight.theme.css` was read only to confirm its canonical metadata/configuration shape and was not modified, staged, or replaced.
 
@@ -80,7 +80,7 @@ Only one Solcord theme is selected by the setup transaction. The preview reports
 
 ## Acceptance status
 
-The owner visually accepted the current Solcord V1 direction on 2026-08-26, including the active mark, settings shell, and current theme treatment. The 16 px and 256 px exports also passed the earlier technical silhouette inspection. This acceptance does not claim exact 100%/125% DPI coverage, every Timeline/recovery state, or V2 theme acceptance; those remain separate runtime checks.
+The owner retained the Solcord mark but rejected the prior V2 typography and generic blue-gray theme treatment on 2026-08-27. The replacement source described above is therefore `REVISE` until it passes fresh installed-shell review at the required Windows scales. Earlier technical contrast or silhouette checks do not grant acceptance to this visual pass.
 
 ## Voice
 

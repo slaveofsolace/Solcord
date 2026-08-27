@@ -37,7 +37,7 @@ describe("Solcord beginner-first setup UI", () => {
 
     test("keys responsive layout to the actual settings content container", () => {
         expect(WIZARD_CSS).toContain("container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
-        expect(WIZARD_CSS).toContain("padding: 0 clamp(18px, 2.4vw, 28px) 48px");
+        expect(WIZARD_CSS).toContain("padding: 0 clamp(20px, 2.8vw, 34px) 52px");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 900px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
@@ -52,7 +52,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("--background-base-lowest: var(--sc-app-surface-0)");
         expect(WIZARD_CSS).toContain("--chat-background-default: var(--sc-app-surface-0)");
         expect(WIZARD_CSS).toContain("--modal-background: var(--sc-app-surface-1)");
-        expect(WIZARD_CSS).toContain("background: var(--sc-app-surface-0) !important");
+        expect(WIZARD_CSS).toContain("background-color: var(--sc-app-surface-0) !important");
+        expect(WIZARD_CSS).toContain("body::before");
+        expect(WIZARD_CSS).toContain("--sc-field-grain: url(\"data:image/svg+xml");
         for (const mode of ["solcord-dark", "solcord-light", "oled"]) {
             const block = WIZARD_CSS.match(new RegExp(`html\\[data-solcord-mode="${mode}"\\] \\{([^}]+)}`, "s"))?.[1];
             expect(block).toBeDefined();
