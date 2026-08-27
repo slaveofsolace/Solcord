@@ -18,12 +18,12 @@
 
 ## Current state
 
-Solcord V2 is a release candidate with a self-contained Windows installer, one task-oriented Control Center, a resumable first run, local full-shell themes, recovery tooling, and a bounded compatibility layer for Discord Activities. Lean, Balanced, and Visual profiles control real sampling and motion policy. Optional tools start only after their current Discord adapter validates.
+Solcord V2 is an unsigned release candidate with a self-contained Windows installer, one task-oriented Control Center, a resumable first run, local full-shell themes, recovery tooling, and a bounded compatibility layer for Discord Activities. Lean, Balanced, and Visual profiles control real sampling and motion policy. Optional tools start only after their current Discord adapter validates.
 
 **New user?** Start with the [one-minute Windows guide](docs/QUICK_START.md). It covers download verification, installation, first setup, and rollback without requiring Git or a development toolchain.
 
 > [!IMPORTANT]
-> The existing release page contains historical pre-rename artifacts. They are retained for provenance, not presented as the current Solcord build. Use the verified source workflow below until a replacement Solcord-named release is published.
+> The release page preserves every published candidate. Use the newest Solcord-named prerelease and verify its SHA-256 manifest before installation. Older candidates remain immutable for provenance and rollback.
 
 ## Why Solcord exists
 
@@ -52,7 +52,7 @@ Every Discord-facing built-in starts through a structural adapter. When an expec
 
 ## Performance baseline
 
-Five clean-room tools share one lazy lifecycle and are off by default:
+Four clean-room runtime tools and one local reference shelf are off by default:
 
 - Layout Collapse
 - Embed Controls
@@ -60,7 +60,7 @@ Five clean-room tools share one lazy lifecycle and are off by default:
 - Media Shelf
 - Message Link Preview
 
-When all five are off, they perform no Webpack lookup, patching, observation, timer, storage, or network work. Layout Collapse hides only user-selected regions; Embed Controls changes presentation without changing message data; Autoscroll stops on middle-button release or Escape; Message Link Preview reads only an already-loaded message; Media Shelf stores validated local references rather than downloading media. See [the plugin baseline review](docs/audit/PLUGIN_BASELINE_REVIEW.md) and [capability roadmap](docs/roadmap/BASELINE_CAPABILITIES.md).
+When the four runtime switches are off, they perform no Webpack lookup, patching, observation, timer, or network work. Layout Collapse hides only user-selected regions; Embed Controls changes presentation without changing message data; Autoscroll stops on middle-button release or Escape; Message Link Preview reads only an already-loaded message. Media Shelf stores a reference only after a user action and owns no Discord adapter or background task. See [the plugin baseline review](docs/audit/PLUGIN_BASELINE_REVIEW.md) and [capability roadmap](docs/roadmap/BASELINE_CAPABILITIES.md).
 
 ## Interface system
 
@@ -106,6 +106,7 @@ The production build writes `dist/solcord.asar`. Installation still targets the 
 - [`AGENTS.md`](AGENTS.md) — maintainer and Codex rules
 - [`docs/QUICK_START.md`](docs/QUICK_START.md) — installation and first setup
 - [`docs/SECURITY_AND_PRIVACY.md`](docs/SECURITY_AND_PRIVACY.md) — local-data and network boundaries
+- [`docs/OWNER_READY_CLOSEOUT.md`](docs/OWNER_READY_CLOSEOUT.md) — current works/on/off/preview/blocked state and final acceptance boundary
 - [`docs/ACTIVITY_COMPATIBILITY.md`](docs/ACTIVITY_COMPATIBILITY.md) — Activities architecture
 - [`docs/audit/FULL_REPOSITORY_AUDIT.md`](docs/audit/FULL_REPOSITORY_AUDIT.md) — repeatable tracked-line audit
 - [`docs/audit/PLUGIN_BASELINE_REVIEW.md`](docs/audit/PLUGIN_BASELINE_REVIEW.md) — plugin-store decisions

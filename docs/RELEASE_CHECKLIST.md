@@ -1,15 +1,16 @@
 # Solcord V2 RC release checklist
 
-This document does not authorize a merge, tag, GitHub release, live-profile installation, or default-branch change.
+This checklist governs the owner-ready unsigned candidate. Historical candidates remain immutable. The exact release manifest is authoritative for hashes and runtime identities.
 
 ## Source and provenance
 
-- [ ] `v2/product-suite` is clean, pushed, and remote SHA verified.
+- [ ] The final source commit is clean, reachable from `development`, pushed, and remote SHA verified.
 - [ ] The exact source/delivery ZIPs and their SHA-256 values are recorded outside the source archive.
 - [ ] The catalog still contains 209 plugins and 114 themes, or drift has been reviewed rather than silently accepted.
 - [ ] Current raw catalog hashes and generated registry hashes match `PROVENANCE_REGISTRY.md`.
 - [ ] VoiceMessages is identified as GPL-3.0, not AGPL; no GPL or unresolved-license implementation was copied into the Apache-2.0 core.
 - [ ] Every adapted source retains its controlling license, header, authorship, pinned revision, file list, and modification note.
+- [ ] `v2.0.0-rc.2` remains byte-for-byte immutable; source changes produce `v2.0.0-rc.3`.
 
 ## Build and security
 
@@ -26,7 +27,9 @@ This document does not authorize a merge, tag, GitHub release, live-profile inst
 - [ ] Native Suite replacements report truthful `ready` or `unavailable` state; no visible card is counted as live without its adapter.
 - [ ] Provider preview/apply/rollback proves exact-byte archive, BDFDB-last ordering, preservation of private data, owner-change refusal, and cleanup.
 - [ ] Translation Desk proves endpoint disclosure, confirmation expiry, response bounds, secure-storage persistence, memory fallback, account isolation, and clear.
-- [ ] Stream Audience Guard proves disarm boundaries, join/watch deduplication, manual-stop warning, disposal, and the explicit per-viewer nonclaim without starting a live owner stream.
+- [ ] Audience Guard distinguishes storage availability from policy-loaded state, proves encrypted restart/account isolation when `safeStorage` is available, and remains visibly session-only and fail-closed otherwise.
+- [ ] Friend Watch proves fixture-driven change classification, encrypted restart/account isolation, no-change reconciliation, export, clear, notification, and truthful unknown-cause handling without mutating a real relationship.
+- [ ] Layout Collapse, Embed Controls, Autoscroll, Message Link Preview, and local Media Shelf prove positive, disabled-zero-work, drift, restart, accessibility, and teardown behavior appropriate to each capability.
 - [ ] A 30-minute disposable soak shows bounded samples/caches and owned listeners, timers, patches, media tracks, and object URLs returning to baseline after disable.
 
 ## Installer and human acceptance
@@ -36,12 +39,12 @@ This document does not authorize a merge, tag, GitHub release, live-profile inst
 - [ ] Six privacy-clean screenshots come from this exact RC: download/hash, Discord closed, target review, installed/verified, first setup, and rollback/recovery.
 - [ ] The quick guide says “about one minute on a typical Windows PC after download,” not a guarantee.
 - [ ] Install, Verify, Repair/Update, Roll Back/Uninstall, and explicit Launch pass against a disposable target.
-- [ ] Settings, About, Activity Bridge, Audience Guard, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery receive Human Eye `ACCEPT`.
+- [ ] Settings, About, Activity Bridge, Audience Guard, Friend Watch, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery receive Human Eye `ACCEPT`.
 - [ ] The owner performs any authenticated Activity, stream, voice-note, translation, notification-read, message, upload, or live-profile action requiring fresh confirmation.
 
 ## Release decision
 
 - [ ] The core updater still fails closed without Solcord-owned integrity metadata.
 - [ ] Exact commit, ASAR hash, installer hash, test summary, runtime nonclaims, backup location, and rollback route are in the external release manifest.
-- [ ] Separate owner authority exists for pushing the RC tag and GitHub prerelease.
+- [ ] The tag, GitHub prerelease, documentation, source, installer, ASAR, and installed About surface identify the same final source SHA.
 - [ ] Stable publication remains blocked until authentic signing or an independently authenticated distribution mechanism and a fresh stable decision exist.

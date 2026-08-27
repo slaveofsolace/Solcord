@@ -1,5 +1,25 @@
 # Solcord Changelog
 
+## 2.0.0-rc.3 - Owner-ready close-out
+
+### Fixed
+
+- Audience Guard now reports encrypted-storage capability independently from whether an account policy has loaded. It remains visibly session-only and fail-closed when Electron `safeStorage` is unavailable or a private operation fails.
+- Audience Guard persistence survives restart and remains account-isolated in the exact storage tests.
+- Media Shelf is described and counted as user-driven local reference storage instead of a live Discord runtime adapter.
+
+### Changed
+
+- Current-state, installation, recovery, privacy, release, and final owner-session guidance now share one owner-ready status source.
+- All eleven circular dependency groups are classified as inherited after an exact comparison with the preserved clean BetterDiscord baseline.
+
+### Verification boundary
+
+- The canonical source matrix passes 672 tests and 4,216 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, and whitespace checks.
+- The complete Codex Security working-tree diff scan reports zero findings across all three changed executable surfaces and their supporting IPC, authority, and storage code.
+- Codenames, a second Discord Activity, signed-in First Setup apply, and passive Friend Watch owner review remain one final owner session on the exact installed candidate.
+- The Windows executable remains unsigned and may show an unknown-publisher warning.
+
 ## 2.0.0-rc.2 — Product workspace candidate
 
 ### Added

@@ -2,6 +2,9 @@
 
 Prepared: **2026-08-26**
 
+> [!NOTE]
+> This is a preserved historical engineering handoff. Current release state, module readiness, inherited-cycle classification, and the final owner-session boundary are maintained in [`docs/OWNER_READY_CLOSEOUT.md`](../OWNER_READY_CLOSEOUT.md).
+
 ## Authorization
 
 The repository owner supplied full maintainer authorization for technical inspection, source changes, tests, CI, documentation, branch management, promotion, issue and pull-request maintenance, and release preparation within `slaveofsolace/Solcord`.
@@ -325,7 +328,7 @@ Capture Discord version, Solcord commit, artifact SHA-256, steps, sanitized logs
 
 ### P0 — Replacement release
 
-The existing `v2.0.0-rc.1` release preserves historical artifact names. Do not rewrite its provenance.
+The existing `v2.0.0-rc.1` and `v2.0.0-rc.2` releases preserve their historical artifacts. Do not rewrite their provenance. Source changes after RC2 produce RC3.
 
 After live Windows acceptance:
 
@@ -399,7 +402,7 @@ Current analysis reports eleven groups:
 10. `settings.tsx -> settings/panel.tsx`
 11. `builtins.ts -> customcss.ts -> settings.tsx`
 
-Do not break public exports merely to reach zero. Move pure filters, types, and constants downward first; add import-boundary tests before changing module ownership.
+An exact run against the preserved clean BetterDiscord baseline reports these same eleven groups with the same paths. They are inherited, not Solcord-introduced. Do not break public exports merely to reach zero. Revisit a group only when profiling or a concrete runtime failure proves risk; add import-boundary tests before changing module ownership.
 
 ### P1 — Measurement-led performance work
 

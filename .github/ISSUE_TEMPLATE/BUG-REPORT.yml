@@ -58,7 +58,7 @@ body:
   attributes:
     label: Solcord Version
     description: This is shown in `Settings > Updater` as the Solcord Core version.
-    placeholder: v2.0.0-rc.1
+    placeholder: v2.0.0-rc.3
   validations:
     required: true
 - type: textarea
