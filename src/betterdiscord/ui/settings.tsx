@@ -26,6 +26,7 @@ import type AddonManager from "@modules/addonmanager";
 import toasts from "@stores/toasts";
 import ContextMenuPatcher from "@api/contextmenu";
 import type {GroupOnChange} from "./settings/group";
+import {normalizeSettingsSearchTerms, resolveAddonDisplayNames} from "./settings/addon-names";
 
 const ContextMenu = new ContextMenuPatcher();
 
@@ -143,10 +144,9 @@ const SettingsRenderer = new class SettingsRenderer {
                         useTitle: item.title,
                         icon: item.icon,
                         usePredicate: () => true,
-                        useSearchTerms: () => [
-                            "betterdiscord", "bd",
-                            ...item.useSearchTerms()
-                        ]
+                        useSearchTerms: () => normalizeSettingsSearchTerms([
+                            "betterdiscord", "bd", item.useSearchTerms()
+                        ])
                     });
 
                     if (typeof item.predicate === "function") {
@@ -253,10 +253,7 @@ const SettingsRenderer = new class SettingsRenderer {
                         icon: Logo.Discord,
                         title: () => collection.name,
                         useMenu: () => useCollectionMenu(collection),
-                        useSearchTerms: () => [
-                            collection.name,
-                            ...items
-                        ]
+                        useSearchTerms: () => normalizeSettingsSearchTerms([collection.name, items])
                     });
                 }
 
@@ -290,10 +287,10 @@ const SettingsRenderer = new class SettingsRenderer {
                         icon,
                         title: () => panel.label,
                         useMenu: panel.type === "addon" ? () => useAddonMenu(panel.manager!) : undefined,
-                        useSearchTerms: () => [
+                        useSearchTerms: () => normalizeSettingsSearchTerms([
                             panel.label,
-                            typeof panel.searchable === "function" ? panel.searchable().filter(m => typeof m === "string") : []
-                        ].flat()
+                            typeof panel.searchable === "function" ? panel.searchable() : []
+                        ])
                     });
                 }
 
@@ -323,9 +320,12 @@ const SettingsRenderer = new class SettingsRenderer {
                 label: string;
                 searchableTitles: string[];
             }) {
+                const label = typeof item.label === "string" && item.label.trim().length > 0 ? item.label : key;
                 res[`BETTERDISCORD_${key}`] = {
                     ...item,
-                    ariaLabel: item.label,
+                    label,
+                    ariaLabel: label,
+                    searchableTitles: normalizeSettingsSearchTerms(item.searchableTitles),
                     section: "betterdiscord"
                 };
             }
@@ -335,22 +335,18 @@ const SettingsRenderer = new class SettingsRenderer {
 
                 insert(collection.id, {
                     label: collection.name,
-                    searchableTitles: [
-                        "betterdiscord",
-                        collection.name,
-                        ...items
-                    ]
+                    searchableTitles: normalizeSettingsSearchTerms(["betterdiscord", collection.name, items])
                 });
             }
 
             for (const panel of Settings.panels.sort((a, b) => a.order > b.order ? 1 : -1)) {
                 const content = {
                     label: panel.label,
-                    searchableTitles: [
+                    searchableTitles: normalizeSettingsSearchTerms([
                         "betterdiscord",
                         panel.label,
-                        typeof panel.searchable === "function" ? panel.searchable().filter(m => typeof m === "string") : []
-                    ].flat()
+                        typeof panel.searchable === "function" ? panel.searchable() : []
+                    ])
                 };
 
                 if (panel.id === "customcss") {
@@ -565,7 +561,7 @@ function useCollectionMenu(collection: SettingsCollection) {
 }
 
 function useAddonMenu(manager: AddonManager) {
-    const addons = useStateFromStores(manager, () => manager.addonList.map(a => a.name || (a as any).getName?.()).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).map((name) => [name as string, manager.resolveAddon(name), manager.isEnabled(name)] as const), [], true);
+    const addons = useStateFromStores(manager, () => resolveAddonDisplayNames(manager.addonList).map((name) => [name, manager.resolveAddon(name), manager.isEnabled(name)] as const), [], true);
     const addonStoreIsEnabled = useStateFromStores(Settings, () => Settings.get("settings", "store", "bdAddonStore"), []);
 
     const toggles = React.useMemo(() => addons.map(([name, addon, enabled]) => (

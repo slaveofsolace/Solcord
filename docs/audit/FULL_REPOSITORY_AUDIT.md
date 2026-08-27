@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 522 |
-| Text files scanned | 510 |
+| Persistent tracked files | 524 |
+| Text files scanned | 512 |
 | Binary files classified | 12 |
-| Text lines scanned | 107,111 |
-| Custom Solcord lines | 21,710 |
+| Text lines scanned | 107,185 |
+| Custom Solcord lines | 21,746 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -45,7 +45,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 5 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 56.3 KiB |
 | 6 | `tests/common/i18n.test.ts` | 1,146 | 46.1 KiB |
 | 7 | `src/betterdiscord/modules/solcord/store.ts` | 1,048 | 56.2 KiB |
-| 8 | `CHANGELOG.md` | 1,012 | 31.1 KiB |
+| 8 | `CHANGELOG.md` | 1,016 | 31.2 KiB |
 | 9 | `src/betterdiscord/ui/solcord/panel.tsx` | 989 | 94.9 KiB |
 | 10 | `src/electron/main/modules/solcord-setup.ts` | 899 | 51.4 KiB |
 | 11 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.9 KiB |
@@ -53,7 +53,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 13 | `src/betterdiscord/modules/addonstore.ts` | 701 | 21.9 KiB |
 | 14 | `src/betterdiscord/api/contextmenu.ts` | 651 | 22.6 KiB |
 | 15 | `src/betterdiscord/modules/solcord/native-suite.ts` | 637 | 34.4 KiB |
-| 16 | `src/betterdiscord/ui/settings.tsx` | 625 | 24.4 KiB |
+| 16 | `src/betterdiscord/ui/settings.tsx` | 621 | 24.5 KiB |
 | 17 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.7 KiB |
 | 18 | `src/betterdiscord/styles/buttons.css` | 579 | 14.6 KiB |
 | 19 | `tests/solcord/settings.test.ts` | 545 | 29.7 KiB |

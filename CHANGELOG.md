@@ -14,6 +14,10 @@
 - Settings favor compact operational rows, plain status language, and one shared lifecycle instead of separate plugin-card dashboards.
 - Documentation now distinguishes implemented local adapters from catalog research and points new users to the installer-first guide.
 
+### Fixed
+
+- Settings search and addon menus now discard incomplete, nested, or throwing third-party metadata before Discord's matcher can crash.
+
 ### Verification boundary
 
 - Automated source, package, installer, security, and disposable-runtime evidence is bound to the exact release commit and published manifest.
