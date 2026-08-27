@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 529 |
 | Text files scanned | 515 |
 | Binary files classified | 14 |
-| Text lines scanned | 107,710 |
-| Custom Solcord lines | 22,151 |
+| Text lines scanned | 107,722 |
+| Custom Solcord lines | 22,159 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 

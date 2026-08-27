@@ -109,6 +109,14 @@ describe("Solcord V2 theme family", () => {
         }
     });
 
+    test("keeps BetterDiscord card titles readable in Quiet Read", () => {
+        const css = executableCss(readTheme("Solcord-QuietRead.theme.css"));
+        const backgrounds = [customProperty(css, "--background-primary"), customProperty(css, "--background-secondary")];
+        const primary = customProperty(css, "--text-primary");
+        expect(primary).toBe(customProperty(css, "--text-normal"));
+        expect(Math.min(...backgrounds.map(background => contrast(primary, background)))).toBeGreaterThanOrEqual(4.5);
+    });
+
     test("uses six materially different structural signatures", () => {
         const fingerprints = new Map<string, readonly string[]>([
             ["Solcord-Threadline.theme.css", ["--sct-radius: 0px", "border-bottom: 1px solid rgb(52 70 81 / 42%)", "box-shadow: inset 3px 0 0"]],

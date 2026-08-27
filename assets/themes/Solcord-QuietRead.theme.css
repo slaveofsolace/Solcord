@@ -65,6 +65,10 @@
     --bg-surface-raised: var(--scq-raised);
     --text-normal: var(--scq-text);
     --text-default: var(--scq-text);
+    --text-primary: var(--scq-text);
+    --text-strong: #151C20;
+    --text-secondary: #3F4B50;
+    --text-tertiary: var(--scq-muted);
     --text-muted: var(--scq-muted);
     --text-link: var(--scq-blue-strong);
     --text-warning: var(--scq-amber);
