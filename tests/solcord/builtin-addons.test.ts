@@ -106,7 +106,10 @@ describe("Solcord clean-room curated built-ins", () => {
             resolveAddon(value: string) {
                 return value === "DoNotTrack.plugin.js" || value === "DoNotTrack" ? {id: "DoNotTrack", filename: "DoNotTrack.plugin.js"} : undefined;
             },
-            isEnabled() {return false;}
+            // AddonManager returns undefined for an installed addon that has no
+            // saved enabled-state entry yet. That is still an exact disabled
+            // state and must not make the provider seal invalid.
+            isEnabled() {return undefined;}
         };
         const plan = createSolcordProviderMigrationPlan(manager, [{name: "DoNotTrack", fileName: "DoNotTrack.plugin.js"}], {
             selectedAddons: ["DoNotTrack"],
@@ -115,6 +118,7 @@ describe("Solcord clean-room curated built-ins", () => {
         });
 
         expect(plan?.entries).toEqual([{name: "DoNotTrack", fileName: "DoNotTrack.plugin.js", enabled: false, provider: "prefer-solcord"}]);
+        expect(captureExactAddonStates(manager)).toEqual({"DoNotTrack.plugin.js": false});
     });
 
     test("canonicalizes a bounded exact plan and rejects path-shaped identities", () => {

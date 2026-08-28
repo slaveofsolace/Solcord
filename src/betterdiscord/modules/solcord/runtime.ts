@@ -918,7 +918,7 @@ class SolcordRuntimeStore extends Store {
             || draft.addonProviders[candidate.name] !== entry.provider
             || !current
             || current.filename !== entry.fileName
-            || PluginManager.isEnabled(current.filename) !== entry.enabled) throw new Error("SetupProviderMigrationConfirmationChanged");
+            || (PluginManager.isEnabled(current.filename) === true) !== entry.enabled) throw new Error("SetupProviderMigrationConfirmationChanged");
     }
 
     async finishSetup(rawDraft: unknown, confirmedProviderMigrationPlan: unknown): Promise<{transactionId: string; enabled: string[]; quarantined: Array<{name: string; reason: string;}>; providerConflicts: Array<{name: string; fileName: string;}>;}> {

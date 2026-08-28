@@ -67,7 +67,7 @@ export function solcordNativeSuiteFeatureForAddon(name: string): SolcordNativeSu
 export interface SolcordAddonLookup {
     addonList?: ReadonlyArray<{filename: string;}>;
     resolveAddon(idOrFile: string): {id: string; filename: string;} | undefined;
-    isEnabled(idOrFile: string): boolean;
+    isEnabled(idOrFile: string): boolean | undefined;
 }
 
 export interface SolcordProviderMigrationCandidate {
@@ -153,7 +153,7 @@ export function createSolcordProviderMigrationPlan(
             || selection.addonProviders[candidate.name] !== "prefer-solcord") return [];
         const addon = resolveCommunityAddon(manager, candidate.name, candidate.fileName);
         if (!addon) return [];
-        return [{name: candidate.name, fileName: addon.filename, enabled: manager.isEnabled(addon.filename), provider: "prefer-solcord" as const}];
+        return [{name: candidate.name, fileName: addon.filename, enabled: manager.isEnabled(addon.filename) === true, provider: "prefer-solcord" as const}];
     });
     return canonicalizeSolcordProviderMigrationPlan({version: 1, entries});
 }
@@ -181,7 +181,7 @@ export function communityAddonIsEnabled(manager: SolcordAddonLookup, name: strin
 }
 
 export function captureExactAddonStates(manager: SolcordAddonLookup): Record<string, boolean> {
-    return Object.fromEntries((manager.addonList ?? []).map(addon => [addon.filename, manager.isEnabled(addon.filename)]));
+    return Object.fromEntries((manager.addonList ?? []).map(addon => [addon.filename, manager.isEnabled(addon.filename) === true]));
 }
 
 export function isSolcordBuiltInAddon(name: string, mode: string | undefined): boolean {
