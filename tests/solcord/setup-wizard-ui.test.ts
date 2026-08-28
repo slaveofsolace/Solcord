@@ -144,6 +144,13 @@ describe("Solcord beginner-first setup UI", () => {
         expect(RUNTIME_SOURCE).not.toContain("Audience Guard policy is unloaded while the adapter is stopped.");
     });
 
+    test("distinguishes disabled Friend Watch storage from an active session-only fallback", () => {
+        expect(PANEL_SOURCE).toContain("unopened while Friend Watch is off.");
+        expect(PANEL_SOURCE).toContain("Enabling negotiates encrypted account-isolated storage");
+        expect(PANEL_SOURCE).toContain("otherwise fails closed to session-only memory.");
+        expect(PANEL_SOURCE).toContain("state.persistent");
+    });
+
     test("makes appearance choices visible before setup is applied", () => {
         expect(WIZARD_SOURCE).toMatch(/solcord-mode-\$\{appearance\.mode\}/);
         expect(WIZARD_SOURCE).toMatch(/solcord-preview-shape-\$\{appearance\.messageShape\}/);

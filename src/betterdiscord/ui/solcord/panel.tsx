@@ -861,6 +861,11 @@ function AppearanceWorkspace() {
 function FriendWatchPanel() {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({preferences: SolcordSettings.snapshot().productPreferences, events: SolcordRuntime.friendWatchEvents(), persistent: SolcordRuntime.friendWatchPersistent()}));
     const policy = state.preferences.friendWatch;
+    const storageDescription = !policy.enabled
+        ? "unopened while Friend Watch is off. Enabling negotiates encrypted account-isolated storage and otherwise fails closed to session-only memory."
+        : state.persistent
+            ? "AES-256-GCM account-isolated persistence; its random key is wrapped by Electron safeStorage."
+            : "session-only fallback; no plaintext persistence.";
     const update = (next: Partial<typeof policy>) => {
         const productPreferences: SolcordProductPreferences = {...state.preferences, friendWatch: {...policy, ...next}};
         void SolcordRuntime.setProductPreferences(productPreferences).then(() => SolcordRuntime.setEnabled("friend-watch", productPreferences.friendWatch.enabled));
@@ -872,7 +877,7 @@ function FriendWatchPanel() {
             <label>Retention<select value={policy.retentionDays} onChange={event => update({retentionDays: Number(event.currentTarget.value) as 7 | 30 | 90})}><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select></label>
             <label>Digest<select value={policy.digest} onChange={event => update({digest: event.currentTarget.value as typeof policy.digest})}><option value="off">Off</option><option value="daily">Daily in-app</option><option value="per-event">Per event, local</option></select></label>
         </div>
-        <p className="solcord-callout">Storage: {state.persistent ? "AES-256-GCM account-isolated persistence; its random key is wrapped by Electron safeStorage." : "session-only fallback; no plaintext persistence."} Disabling or changing accounts clears renderer memory.</p>
+        <p className="solcord-callout">Storage: {storageDescription} Disabling or changing accounts clears renderer memory.</p>
         <div className="solcord-actions"><ActionButton disabled={!state.events.length} onClick={() => void SolcordRuntime.exportFriendWatch("json")}>Export JSON</ActionButton><ActionButton disabled={!state.events.length} onClick={() => void SolcordRuntime.exportFriendWatch("csv")}>Export CSV</ActionButton><ActionButton tone="danger" disabled={!state.events.length} onClick={() => {if (window.confirm("Clear this account's local Friend Watch history?")) void SolcordRuntime.clearFriendWatch();}}>Clear history</ActionButton></div>
         <div className="solcord-people-history" aria-label="Friend Watch relationship history">{state.events.slice(-100).reverse().map(event => <article key={event.eventId}><div><strong>{event.transition === "reconciled" ? "Account scope" : event.displayLabel ?? `Local relationship •${(event.subjectKey ?? event.subjectId).slice(-4)}`}</strong><span>{event.label}</span></div><small>{timestamp(event.observedAt)} · {event.source} · {event.confidence}</small></article>)}{!state.events.length && <p className="solcord-empty">No relationship transition has been observed in this session.</p>}</div>
     </Section>;
