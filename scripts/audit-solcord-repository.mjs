@@ -4,6 +4,8 @@ import {execFileSync} from "node:child_process";
 import {mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import path from "node:path";
 
+import {portableTextByteLength} from "./helpers/portable-text.mjs";
+
 const OUTPUT = "docs/audit/FULL_REPOSITORY_AUDIT.md";
 const AUDIT_SCRIPT = "scripts/audit-solcord-repository.mjs";
 const EPHEMERAL_FILES = new Set([
@@ -95,7 +97,7 @@ for (const file of files) {
         });
     }
 
-    records.push({file, bytes: buffer.length, lines: lineCount, generated, custom, counts});
+    records.push({file, bytes: portableTextByteLength(text), lines: lineCount, generated, custom, counts});
 }
 
 const topFiles = records.filter(record => !record.generated).sort((a, b) => b.lines - a.lines || b.bytes - a.bytes).slice(0, 20);
