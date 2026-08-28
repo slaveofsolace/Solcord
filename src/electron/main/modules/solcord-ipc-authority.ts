@@ -60,7 +60,10 @@ export class SolcordTimelineIpcAuthority {
 
     bootstrap(rawSenderId: unknown): {bootstrapCapability: string;} {
         const id = senderId(rawSenderId);
-        if (this.#bindings.has(id)) throw new Error("Solcord timeline bootstrap already exists.");
+        // Discord can navigate an existing WebContents and run a fresh preload
+        // without destroying its sender id. Revoke every capability from the
+        // previous document before issuing the new document's bootstrap token.
+        this.release(id);
         const bootstrapCapability = crypto.randomBytes(32);
         this.#bindings.set(id, {bootstrapCapability, generation: 0});
         return {bootstrapCapability: bootstrapCapability.toString("base64url")};

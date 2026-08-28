@@ -94,4 +94,19 @@ describe("Solcord private IPC capability authority", () => {
         expect(() => authority.authorize(23, {capability: active.capability}, false)).toThrow("rejected");
         expect(authority.authorize(23, {capability: nextActive.capability}, false).request).toEqual({});
     });
+
+    test("revokes the prior document when the same WebContents bootstraps after navigation", () => {
+        const authority = new SolcordTimelineIpcAuthority();
+        const firstBootstrap = authority.bootstrap(31);
+        const firstActive = authority.activate(31, firstBootstrap);
+        const firstBound = authority.bind(31, {capability: firstActive.capability, accountId: ACCOUNT_A});
+
+        const nextBootstrap = authority.bootstrap(31);
+        expect(nextBootstrap.bootstrapCapability).not.toBe(firstBootstrap.bootstrapCapability);
+        expect(() => authority.authorize(31, {capability: firstBound.capability}, false)).toThrow("not active");
+        expect(() => authority.activate(31, firstBootstrap)).toThrow("rejected");
+
+        const nextActive = authority.activate(31, nextBootstrap);
+        expect(authority.authorize(31, {capability: nextActive.capability}, false).request).toEqual({});
+    });
 });
