@@ -103,6 +103,11 @@ const MESSAGE_LOGGER_PROVIDER = Object.freeze({name: "MessageLoggerV2", fileName
 const FAKE_DEAFEN_PROVIDER = Object.freeze({name: "FakeDeafen", fileName: "FakeDeafen.plugin.js"});
 const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 2;
 
+export function solcordStandaloneProviderFileName(name: string): string | undefined {
+    if (name === MESSAGE_LOGGER_PROVIDER.name) return MESSAGE_LOGGER_PROVIDER.fileName;
+    if (name === FAKE_DEAFEN_PROVIDER.name) return FAKE_DEAFEN_PROVIDER.fileName;
+}
+
 function safeProviderIdentity(value: string, maximumLength: number): boolean {
     return value.length > 0
         && value.length <= maximumLength

@@ -23,7 +23,7 @@ import {boundedTimelineMessageIds, channelIsInTimelineScope, MessageTimelineJour
 import {splitLargeMessage} from "./message-splitter";
 import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {resolveSolcordSetupPlan} from "@common/solcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
@@ -910,12 +910,14 @@ class SolcordRuntimeStore extends Store {
     }
 
     #assertProviderMigrationIdentityCurrent(entry: SolcordProviderMigrationIdentity, draft: ReturnType<typeof normalizeSetupDraft>): void {
-        if (entry.name === "MessageLoggerV2") {
-            const current = resolveCommunityAddon(PluginManager, entry.name, "MessageLoggerV2.plugin.js");
+        const standaloneFileName = solcordStandaloneProviderFileName(entry.name);
+        if (standaloneFileName) {
+            const current = resolveCommunityAddon(PluginManager, entry.name, standaloneFileName);
             if (!current
                 || current.filename !== entry.fileName
                 || (PluginManager.isEnabled(current.filename) === true) !== entry.enabled
-                || (entry.enabled && !draft.timelinePolicy.enabled)) throw new Error("SetupProviderMigrationConfirmationChanged");
+                || (entry.name === "MessageLoggerV2" && entry.enabled && !draft.timelinePolicy.enabled)
+                || (entry.name === "FakeDeafen" && entry.enabled)) throw new Error("SetupProviderMigrationConfirmationChanged");
             return;
         }
         const candidate = SOLCORD_RUNTIME_ADDONS.find(item => item.name === entry.name);
@@ -1016,10 +1018,11 @@ class SolcordRuntimeStore extends Store {
                 this.#assertProviderMigrationIdentityCurrent(migration, draft);
                 if (migration.name === "MessageLoggerV2" && migration.enabled && !timelineReplacementReady) continue;
                 const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === migration.name);
+                const standaloneFileName = solcordStandaloneProviderFileName(migration.name);
                 const current = candidate
                     ? resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName)
-                    : migration.name === "MessageLoggerV2"
-                        ? resolveCommunityAddon(PluginManager, migration.name, "MessageLoggerV2.plugin.js")
+                    : standaloneFileName
+                        ? resolveCommunityAddon(PluginManager, migration.name, standaloneFileName)
                         : undefined;
                 if (!current || current.filename !== migration.fileName) throw new Error("SetupCommunityCounterpartChanged");
                 if (!PluginManager.isEnabled(current.filename)) continue;

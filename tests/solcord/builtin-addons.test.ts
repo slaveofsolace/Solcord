@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
 
 
 describe("Solcord clean-room curated built-ins", () => {
@@ -166,6 +166,9 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(disabled?.entries).toEqual([{name: "FakeDeafen", fileName: "FakeDeafen.plugin.js", enabled: false, provider: "prefer-solcord"}]);
         expect(active?.entries).toEqual([]);
         expect(solcordProviderReplacementIsReady(disabled!.entries[0], undefined, false, false)).toBeTrue();
+        expect(solcordStandaloneProviderFileName("FakeDeafen")).toBe("FakeDeafen.plugin.js");
+        expect(solcordStandaloneProviderFileName("MessageLoggerV2")).toBe("MessageLoggerV2.plugin.js");
+        expect(solcordStandaloneProviderFileName("DoNotTrack")).toBeUndefined();
     });
 
     test("requires a live Timeline adapter before retiring an active logger", () => {

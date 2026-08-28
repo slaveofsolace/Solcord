@@ -115,6 +115,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("the exact source file moves to a rollback archive");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft)");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]");
+        expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(entry.name)");
+        expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(migration.name)");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.finishSetup(draft, providerMigrationPlan)");
         expect(WIZARD_SOURCE).toContain("active community provider changed after review");
         expect(WIZARD_SOURCE).toContain("Replace duplicate cards");
