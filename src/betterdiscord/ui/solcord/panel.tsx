@@ -1133,7 +1133,7 @@ export default function SolcordPanel() {
     useEffect(() => {
         const frame = requestAnimationFrame(() => workspaceRef.current?.scrollIntoView({block: "start"}));
         return () => cancelAnimationFrame(frame);
-    }, [workspace]);
+    }, [onboarding.status, workspace]);
     const openSetup = () => {
         if (SolcordSettings.snapshot().onboarding.status !== "pending") SolcordSettings.reopenOnboarding();
         setWorkspaceFocus("setup");

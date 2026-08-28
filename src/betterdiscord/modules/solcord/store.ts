@@ -326,6 +326,7 @@ function reconcileModulePreferenceBindings(
 
 export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument {
     const record = isRecord(raw) ? raw : {};
+    const hasPersistedState = Object.keys(record).length > 0;
     const rawSchemaVersion = boundedNumber(record.schemaVersion, 0, 0, 10_000);
     const rawModules = isRecord(record.modules) ? record.modules : {};
     const modules = {} as Record<SolcordModuleId, SolcordModuleSettings>;
@@ -386,7 +387,7 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
         }).slice(-MAX_MIGRATION_ENTRIES)
         : [];
 
-    if (rawSchemaVersion !== SOLCORD_SCHEMA_VERSION) {
+    if (hasPersistedState && rawSchemaVersion !== SOLCORD_SCHEMA_VERSION) {
         migrationProvenance.push({
             at: Date.now(),
             fromSchema: rawSchemaVersion,
@@ -416,7 +417,7 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
 
     const productPreferences = normalizeSolcordProductPreferences(record.productPreferences);
     if (rawSchemaVersion < 4) productPreferences.safety.linkLens = false;
-    if (rawSchemaVersion < 7) productPreferences.privacy = legacyPrivacyPreferences();
+    if (hasPersistedState && rawSchemaVersion < 7) productPreferences.privacy = legacyPrivacyPreferences();
     reconcileModulePreferenceBindings(modules, productPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
 
     return {
@@ -679,8 +680,8 @@ class SolcordStore extends Store {
             raw = JsonStore.get("misc", "solcordV1");
         }
         this.#document = normalizeSolcordDocument(raw);
-        if (!isRecord(raw) || raw.schemaVersion !== SOLCORD_SCHEMA_VERSION) {
-            this.#appendLedger("schema", "Migrated Solcord settings atomically to schema 6.");
+        if (isRecord(raw) && Object.keys(raw).length > 0 && raw.schemaVersion !== SOLCORD_SCHEMA_VERSION) {
+            this.#appendLedger("schema", "Migrated Solcord settings atomically to schema 7.");
         }
         this.#save();
     }

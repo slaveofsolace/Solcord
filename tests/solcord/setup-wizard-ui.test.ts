@@ -111,6 +111,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Finish later");
         expect(WIZARD_SOURCE).toContain("SolcordSettings.skipOnboarding()");
         expect(WIZARD_SOURCE).toContain("current.selectedAddons.filter(name => !readyNames.has(name))");
+        expect(PANEL_SOURCE).toContain("[onboarding.status, workspace]");
     });
 
     test("moves reversible provider replacement out of first setup and into Extensions", () => {
