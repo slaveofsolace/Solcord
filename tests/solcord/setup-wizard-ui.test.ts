@@ -76,6 +76,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("html[data-solcord-density=\"compact\"] #app-mount");
         expect(WIZARD_CSS).toContain("html[data-solcord-message-shape=\"seamed\"] #app-mount");
         expect(WIZARD_CSS).toContain("html[data-solcord-motion=\"reduced\"] #app-mount *");
+        expect(WIZARD_CSS).toContain(".solcord-panel select option");
+        expect(WIZARD_CSS).toContain("color: #F2EADF; background: #202528");
+        expect(WIZARD_CSS).toContain("html[data-solcord-mode=\"solcord-light\"] .solcord-panel select option");
+        expect(WIZARD_CSS).toContain("color: #24211F; background: #EBE2D5");
     });
 
     test("renders only accepted ready tools and directs pending work to the catalog", () => {

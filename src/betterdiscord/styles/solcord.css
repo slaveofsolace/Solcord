@@ -376,6 +376,14 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-appearance-controls label { display: grid; gap: 5px; color: var(--sc-muted); font-size: 12px; }
 .solcord-appearance-controls select,
 .solcord-control-strip select { box-sizing: border-box; min-height: 36px; padding: 7px 9px; color: var(--sc-text); background: var(--input-background, var(--sc-surface-2)); border: 1px solid var(--sc-border); border-radius: 4px; }
+.solcord-panel select,
+.solcord-local-overlay select { color-scheme: dark; }
+.solcord-panel select option,
+.solcord-local-overlay select option { color: #F2EADF; background: #202528; }
+html[data-solcord-mode="solcord-light"] .solcord-panel select,
+html[data-solcord-mode="solcord-light"] .solcord-local-overlay select { color-scheme: light; }
+html[data-solcord-mode="solcord-light"] .solcord-panel select option,
+html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { color: #24211F; background: #EBE2D5; }
 .solcord-live-preview { display: grid; gap: 5px; margin-top: var(--sc-space-4); padding: 18px; color: var(--solcord-preview-text, var(--sc-text)); background: var(--solcord-preview-surface, var(--sc-surface-1)); border: 1px solid var(--solcord-preview-border, var(--sc-border)); border-left: 3px solid var(--solcord-preview-accent, var(--sc-accent)); border-radius: var(--sc-radius); transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
 .solcord-live-preview span,
 .solcord-live-preview small { color: var(--solcord-preview-muted, var(--sc-muted)); }
