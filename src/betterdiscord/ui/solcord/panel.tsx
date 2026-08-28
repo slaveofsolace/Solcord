@@ -21,7 +21,7 @@ const WORKSPACE_GROUPS: ReadonlyArray<{label: string; ids: SolcordWorkspaceId[];
     {label: "Start", ids: ["overview"]},
     {label: "Personalize", ids: ["appearance", "performance"]},
     {label: "Features", ids: ["privacy", "chat", "voice", "friends"]},
-    {label: "System", ids: ["extensions", "recovery", "advanced"]}
+    {label: "System", ids: ["extensions", "recovery", "power", "advanced"]}
 ];
 
 function timestamp(value?: number | string): string {
@@ -880,7 +880,7 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
             priority: state.fakeDeafen.phase === "attention" ? 72 : 58,
             tone: state.fakeDeafen.phase === "attention" || state.fakeDeafenProvider === "off" ? "attention" as const : "ok" as const,
             label: state.fakeDeafenProvider === "community" ? "Fake Deafen community provider is on" : state.fakeDeafen.phase === "armed" ? "Fake Deafen is armed" : state.fakeDeafenProvider === "solcord" ? "Fake Deafen is ready" : "Fake Deafen is available",
-            detail: state.fakeDeafenProvider === "community" ? "Solcord is keeping its scoped adapter off so the two providers never stack." : state.fakeDeafenProvider === "off" ? "Enable the scoped built-in from Voice & Activities. It remains unarmed until you explicitly arm it in a call." : state.fakeDeafen.detail,
+            detail: state.fakeDeafenProvider === "community" ? "Solcord is keeping its scoped adapter off so the two providers never stack." : state.fakeDeafenProvider === "off" ? "Enable the scoped built-in from Power Lab. It remains unarmed until you explicitly arm it in a call." : state.fakeDeafen.detail,
             action: "Open Fake Deafen"
         }]),
         ...(state.dueReminders ? [{id: "return-later", priority: 65, tone: "attention" as const, label: "Return Later is due", detail: `${state.dueReminders} local reminder(s) are ready.`, action: "Open People"}] : []),
@@ -888,7 +888,7 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
     ]);
     return <Section title="Session Pulse" summary="The three things that need your attention now.">
-        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup() : openWorkspace(signal.id === "activity" || signal.id === "fake-deafen" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
+        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup() : openWorkspace(signal.id === "fake-deafen" ? "power" : signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
     </Section>;
 }
 
@@ -1072,13 +1072,14 @@ export default function SolcordPanel() {
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
                 {workspace === "privacy" && <><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
                 {workspace === "chat" && <><BaselineToolsPanel /><NativeSuitePanel scope="chat" /><ReturnLaterPanel /></>}
-                {workspace === "voice" && <><PowerLabStatus /><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /></>}
+                {workspace === "voice" && <><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /></>}
                 {workspace === "friends" && <><FriendWatchPanel /><NativeSuitePanel scope="friends" /><ReturnLaterPanel /></>}
                 {workspace === "extensions" && <>
                     <NativeSuitePanel scope="status" />
                     <details className="solcord-extension-disclosure"><summary>Runtime and community catalog</summary><p>Open this only when troubleshooting a module or reviewing optional community software.</p><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
                 </>}
                 {workspace === "recovery" && <><SetupManagement /><PluginRecovery /><ProfilesAndHistory /></>}
+                {workspace === "power" && <><PowerLabStatus /><Section title="How Power Lab works" summary="Risky experiments never turn on as part of setup or a profile."><p className="solcord-key-hint">Fake Deafen requires two deliberate actions: enable the built-in here, then arm it for the current voice connection. It disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></Section></>}
                 {workspace === "advanced" && <><AccessibilityControls /><AboutSolcord /></>}
             </div>
         </div>

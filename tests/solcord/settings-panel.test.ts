@@ -31,7 +31,7 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("{label: \"Start\", ids: [\"overview\"]}");
         expect(panel).toContain("{label: \"Personalize\", ids: [\"appearance\", \"performance\"]}");
         expect(panel).toContain("{label: \"Features\", ids: [\"privacy\", \"chat\", \"voice\", \"friends\"]}");
-        expect(panel).toContain("{label: \"System\", ids: [\"extensions\", \"recovery\", \"advanced\"]}");
+        expect(panel).toContain("{label: \"System\", ids: [\"extensions\", \"recovery\", \"power\", \"advanced\"]}");
         expect(panel).toContain("placeholder=\"Find a setting\"");
     });
 
@@ -54,13 +54,14 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider()");
         expect(panel).toContain("Fake Deafen is ready");
         expect(panel).toContain("Fake Deafen is available");
-        expect(panel).toContain("Enable the scoped built-in from Voice & Activities");
+        expect(panel).toContain("Enable the scoped built-in from Power Lab");
         expect(panel).toContain("action: \"Open Fake Deafen\"");
-        expect(panel).toContain("signal.id === \"activity\" || signal.id === \"fake-deafen\" ? \"voice\"");
+        expect(panel).toContain("signal.id === \"fake-deafen\" ? \"power\"");
     });
 
-    test("puts Fake Deafen first in Voice and Activities instead of burying it below other tools", () => {
-        expect(panel).toContain("{workspace === \"voice\" && <><PowerLabStatus /><ActivityBridge />");
+    test("gives Fake Deafen a dedicated Power Lab workspace instead of burying it below voice tools", () => {
+        expect(panel).toContain("{workspace === \"power\" && <><PowerLabStatus />");
+        expect(panel).toContain("enable the built-in here, then arm it for the current voice connection");
     });
 
     test("scrolls and focuses the setup wizard when Continue setup is used on Overview", () => {

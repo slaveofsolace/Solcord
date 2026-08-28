@@ -7,6 +7,7 @@ export type SolcordWorkspaceId =
     | "privacy"
     | "chat"
     | "voice"
+    | "power"
     | "friends"
     | "extensions"
     | "recovery"
@@ -81,7 +82,8 @@ export const SOLCORD_WORKSPACES = Object.freeze([
     {id: "performance", label: "Performance", summary: "Runtime cost and profiles."},
     {id: "privacy", label: "Privacy & Safety", summary: "Links, uploads, and local history."},
     {id: "chat", label: "Chat & Composer", summary: "Writing and message tools."},
-    {id: "voice", label: "Voice & Activities", summary: "Calls, Fake Deafen, Activities, and streams."},
+    {id: "voice", label: "Voice & Activities", summary: "Calls, Activities, and stream controls."},
+    {id: "power", label: "Power Lab", summary: "Manual experiments that stay off until you enable and arm them."},
     {id: "friends", label: "Friends & Spaces", summary: "People, servers, and local notes."},
     {id: "extensions", label: "Extensions", summary: "Built-ins and plugin migration."},
     {id: "recovery", label: "Recovery", summary: "Repair, rollback, and snapshots."},
