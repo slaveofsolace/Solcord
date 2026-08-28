@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 532 |
 | Text files scanned | 518 |
 | Binary files classified | 14 |
-| Text lines scanned | 108,515 |
-| Custom Solcord lines | 22,893 |
+| Text lines scanned | 108,579 |
+| Custom Solcord lines | 22,938 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -44,11 +44,11 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 4 | `bun.lock` | 1,314 | 141.7 KiB |
 | 5 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
 | 6 | `tests/common/i18n.test.ts` | 1,146 | 45.0 KiB |
-| 7 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,088 | 102.2 KiB |
-| 8 | `src/betterdiscord/modules/solcord/store.ts` | 1,051 | 55.6 KiB |
-| 9 | `CHANGELOG.md` | 1,038 | 32.0 KiB |
-| 10 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 11 | `src/betterdiscord/styles/solcord.css` | 886 | 67.0 KiB |
+| 7 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,119 | 104.6 KiB |
+| 8 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
+| 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,051 | 55.6 KiB |
+| 10 | `src/betterdiscord/styles/solcord.css` | 901 | 68.4 KiB |
+| 11 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 12 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
 | 13 | `src/betterdiscord/modules/addonstore.ts` | 701 | 21.2 KiB |
 | 14 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
@@ -66,9 +66,9 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 1 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 63.9 KiB |
 | 2 | `tests/solcord/storage-security.test.ts` | 1,342 | 76.7 KiB |
 | 3 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 4 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,088 | 102.2 KiB |
-| 5 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 6 | `src/betterdiscord/styles/solcord.css` | 886 | 67.0 KiB |
+| 4 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,119 | 104.6 KiB |
+| 5 | `src/betterdiscord/styles/solcord.css` | 901 | 68.4 KiB |
+| 6 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 7 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
 | 8 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
 | 9 | `tests/solcord/settings.test.ts` | 545 | 29.2 KiB |

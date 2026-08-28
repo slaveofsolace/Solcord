@@ -5,8 +5,8 @@ This page is the current product-status source for the unsigned Solcord V2 relea
 ## Release line
 
 - Integration branch: `development`
-- Preserved release: `v2.0.0-rc.2`
-- Next release after source changes: `v2.0.0-rc.3`
+- Preserved releases: `v2.0.0-rc.2` and `v2.0.0-rc.3`
+- Current source-changing candidate: `v2.0.0-rc.4`
 - Target: Discord Stable on Windows, using the existing BetterDiscord injector and `BdApi` compatibility contracts
 - Distribution: unsigned prerelease with SHA-256 manifests, exact rollback identity, and no SmartScreen-reputation claim
 
@@ -28,7 +28,8 @@ Exact source, ASAR, installer, Discord version, profile type, backup, and rollba
 | Cross-platform Autoscroll | Off | Ready | A current Discord scroller moved under the owned gesture loop and stopped on Escape; restart and teardown passed |
 | Message Link Preview | Off | Ready | A current loaded `MessageStore` record previewed without fetch or read-state mutation; missing records remain inert |
 | Media Shelf | Off | Ready | Exact-client local save/remove passed; references are bounded and the feature owns no Discord adapter or background work |
-| Audience Guard | Off | Preview, fail-closed on current action drift | Storage capability reporting is correct; current Discord stream-action exports do not pass structural validation |
+| Audience Guard | Off | Preview, fail-closed on current action drift | Encrypted persistence is account-bound when available; current Discord stream-action exports do not pass structural validation |
+| Fake Deafen | Off | Ready, consent required | Built-in Power Lab control is visible; requires normal deafen once and explicit per-call arming; never auto-arms |
 | Friend Watch | Off | Ready when consented | Encrypted restart, passive reconciliation, subject-free export, clear, account isolation fixtures, and teardown passed without a relationship mutation |
 | Message Timeline | Off | Preview | Consent-gated local observations; no unseen-message backfill |
 | Link Lens | Off | Preview | Native review modal only; internal Discord routes bypass it |
@@ -75,10 +76,9 @@ They remain measured technical debt. Do not churn public exports or upstream own
 
 ## Final acceptance boundary
 
-Safe source, disposable-runtime, packaging, recovery, accessibility, and documentation work runs without repeated owner pauses. One final owner session covers authenticated or account-affecting interactions:
+Safe source, disposable-runtime, packaging, recovery, accessibility, and documentation work runs without repeated owner pauses. Optional owner validation covers authenticated or account-affecting interactions that automated acceptance deliberately does not perform:
 
-1. Start and leave Codenames on the exact candidate.
-2. Start and leave one second Discord Activity.
+1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. The RC4 hotfix does not alter those accepted mechanisms.
 3. Confirm First Setup's final preview before applying it to the signed-in profile.
 4. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
 
@@ -90,4 +90,4 @@ The release is owner-ready only when the exact candidate survives two clean laun
 - A green build does not prove a Discord interaction until the exact client and candidate complete it.
 - Solcord does not extract tokens, automate accounts, forge entitlements, reveal hidden content, or silently record/upload media.
 - Existing owner plugins, themes, Custom CSS, and private databases are preserved; their presence is not compatibility certification.
-- `v2.0.0-rc.2` remains immutable even after RC3 ships.
+- `v2.0.0-rc.2` and `v2.0.0-rc.3` remain immutable. RC4 is a new artifact line.

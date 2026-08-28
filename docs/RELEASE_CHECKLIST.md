@@ -10,7 +10,7 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 - [ ] Current raw catalog hashes and generated registry hashes match `PROVENANCE_REGISTRY.md`.
 - [ ] VoiceMessages is identified as GPL-3.0, not AGPL; no GPL or unresolved-license implementation was copied into the Apache-2.0 core.
 - [ ] Every adapted source retains its controlling license, header, authorship, pinned revision, file list, and modification note.
-- [ ] `v2.0.0-rc.2` remains byte-for-byte immutable; source changes produce `v2.0.0-rc.3`.
+- [ ] `v2.0.0-rc.2` and `v2.0.0-rc.3` remain byte-for-byte immutable; current source changes produce `v2.0.0-rc.4`.
 
 ## Build and security
 

@@ -6,7 +6,7 @@ Solcord V2 RC is installed only after tests, lint, type checks, production build
 
 `v2.0.0-rc.2` remains the preserved public rollback release. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
 
-The RC3 source line has passed transactional First Setup, the five baseline capabilities, encrypted Friend Watch restart/export/clear, all eleven themes at native 100%/125%/150%/200% zoom, keyboard/reduced-motion/forced-colors review, and the installer self-test's install, upgrade, repair, downgrade refusal, interrupted recovery, rollback, and uninstall cases in disposable targets. Final source freeze, exact-artifact checks, signed-in installation, two clean owner-profile starts, Codenames, and one second Activity remain release-session gates. Audience Guard storage reporting is accepted, but its current Discord stream-action adapter remains visibly unavailable and fail-closed.
+The RC3 source line passed transactional First Setup, the five baseline capabilities, encrypted Friend Watch restart/export/clear, all eleven themes at native 100%/125%/150%/200% zoom, keyboard/reduced-motion/forced-colors review, and the installer self-test's install, upgrade, repair, downgrade refusal, interrupted recovery, rollback, and uninstall cases in disposable targets. RC4 adds the provider-consolidation fixes and restores the built-in Fake Deafen control without changing Activity Bridge or the restricted preload policy. Its exact artifact, installer, signed-in installation, and two-start evidence are recorded in the RC4 manifest. Audience Guard storage reporting is accepted, but its current Discord stream-action adapter remains visibly unavailable and fail-closed.
 
 The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Applying setup to the signed-in owner profile, Message Timeline persistence, and Link Lens's external-link modal remain separate optional choices even though disposable setup acceptance is complete.
 
@@ -67,7 +67,7 @@ The machine-readable install manifest records exact backup and rollback paths af
 
 The normal RC path is designed to take about one minute on a typical Windows PC after download. This is a usability target, not a time guarantee.
 
-1. Download the complete `Solcord-v2.0.0-rc.3-win-x64` directory. Keep `SolcordInstaller.exe`, `solcord.asar`, both JSON manifests, and `SHA256SUMS.txt` together.
+1. Download the complete `Solcord-v2.0.0-rc.4-win-x64` directory. Keep `SolcordInstaller.exe`, `solcord.asar`, both JSON manifests, and `SHA256SUMS.txt` together.
 2. Compare the executable and ASAR hashes with `SHA256SUMS.txt` from the owner-controlled release. Stop on any mismatch.
 3. Quit Discord completely. Run `SolcordInstaller.exe`, confirm the detected Stable/PTB/Canary target, and choose **Install**.
 4. Choose **Verify**, then **Launch Discord**. Open **User Settings → Solcord Suite** and review the setup diff before enabling optional features.
@@ -92,7 +92,7 @@ The setup rollback action restores the recorded prior plugin/theme enabled state
 
 ## Owner Activity acceptance
 
-The owner reported Activities working for the earlier accepted live build. The matrix below is required once for the exact RC3 candidate because its source and package identity differ. No automated test starts an Activity on the owner’s behalf.
+The owner reported Activities working for the accepted live build. RC4 does not change Activity Bridge or preload policy, so that result remains the product acceptance record. Re-run the matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
 
 1. Open Solcord Suite → Activity Bridge and confirm the unrestricted override reads **Off by default**.
 2. In a designated low-risk server/channel, start **Codenames** yourself. Wait for READY and complete one join/leave/rejoin cycle.

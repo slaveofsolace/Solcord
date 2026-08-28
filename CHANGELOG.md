@@ -1,5 +1,24 @@
 # Solcord Changelog
 
+## 2.0.0-rc.4 - Provider consolidation hotfix
+
+### Fixed
+
+- Fake Deafen is visible again in Power Lab whenever the built-in provider is available. It stays off by default and requires explicit per-call arming.
+- First Setup preserves the community FakeDeafen provider until the hash-bound native replacement is ready, then archives the exact file through the reversible provider transaction instead of stacking two implementations.
+- Native select contrast, setup scroll restoration, provider rollback, and disabled-provider migration sealing now match the current Discord client.
+
+### Changed
+
+- The Control Center presents provider migration as one compact recovery action with truthful community-provider state instead of a second plugin dashboard.
+- RC2 and RC3 remain immutable. RC4 is built, verified, and installed as a separate candidate.
+
+### Verification boundary
+
+- The source matrix passes 695 tests and 4,359 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, and whitespace checks before final packaging.
+- Fake Deafen availability and migration use structural validation; the hotfix never auto-deafens, joins voice, or arms Power Lab during acceptance.
+- The Windows executable remains unsigned and may show an unknown-publisher warning.
+
 ## 2.0.0-rc.3 - Owner-ready close-out
 
 ### Fixed
