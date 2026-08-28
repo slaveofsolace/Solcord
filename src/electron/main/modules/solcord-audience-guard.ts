@@ -22,6 +22,8 @@ const STORE_DIRECTORY = /^store-[0-9a-f]{40}$/;
 const MAX_ENTRIES = 100;
 const MAX_POLICY_BYTES = 32 * 1024;
 const MAX_WRAPPED_BYTES = 64 * 1024;
+const POLICY_BACKUP_FILE = /^policy\.scdb\.\d+\.[0-9a-f]{8}\.old$/;
+const POLICY_TEMPORARY_FILE = /^policy\.scdb\.\d+\.[0-9a-f]{8}\.tmp$/;
 
 function normalizeEntries(value: unknown): AudienceEntry[] {
     if (!Array.isArray(value)) return [];
@@ -68,15 +70,12 @@ export class SolcordAudienceGuardStorage {
         return this.#serialized(async () => {
             if (!this.#secureAvailable()) return {policy: structuredClone(this.#session.get(account) ?? {version: 1, entries: []}), persistent: false, complete: true};
             try {
-                const file = this.#policyFile(account, false);
-                if (!file) return {policy: {version: 1, entries: []}, persistent: true, complete: true};
-                const stat = fs.lstatSync(file);
-                if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid Audience Guard policy file.");
-                const wrapped = fs.readFileSync(file);
-                if (wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid Audience Guard policy envelope.");
-                const plaintext = safeStorage.decryptString(wrapped);
-                try {return {policy: normalizePolicy(JSON.parse(plaintext)), persistent: true, complete: true};}
-                finally {/* strings cannot be zeroed; never expose plaintext to diagnostics */}
+                const directory = this.#accountDirectory(account, false);
+                if (!directory) return {policy: {version: 1, entries: []}, persistent: true, complete: true};
+                this.#recoverPolicy(directory);
+                const file = path.join(directory, "policy.scdb");
+                if (!fs.existsSync(file)) return {policy: {version: 1, entries: []}, persistent: true, complete: true};
+                return {policy: this.#readPolicyFile(file), persistent: true, complete: true};
             }
             catch {
                 this.#failed = true;
@@ -95,10 +94,13 @@ export class SolcordAudienceGuardStorage {
         return this.#serialized(async () => {
             if (!this.#secureAvailable()) return {policy: structuredClone(policy), persistent: false, complete: true};
             try {
-                const file = this.#policyFile(account, true)!;
+                const directory = this.#accountDirectory(account, true)!;
+                this.#recoverPolicy(directory);
+                const file = path.join(directory, "policy.scdb");
+                this.#assertWithin(file, directory);
                 const wrapped = safeStorage.encryptString(JSON.stringify(policy));
                 if (!Buffer.isBuffer(wrapped) || wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid Audience Guard encrypted policy.");
-                this.#atomicWrite(file, wrapped);
+                this.#atomicWrite(file, wrapped, true);
                 return {policy: structuredClone(policy), persistent: true, complete: true};
             }
             catch {
@@ -119,7 +121,7 @@ export class SolcordAudienceGuardStorage {
                 if (!directory) return {cleared, persistent: this.#secureAvailable(), complete: true};
                 this.#assertDirectory(directory);
                 for (const name of fs.readdirSync(directory)) {
-                    if (name !== "policy.scdb" && !/^policy\.scdb\.\d+\.[0-9a-f]{8}\.tmp$/.test(name)) continue;
+                    if (name !== "policy.scdb" && !POLICY_TEMPORARY_FILE.test(name) && !POLICY_BACKUP_FILE.test(name)) continue;
                     const file = path.join(directory, name);
                     const stat = fs.lstatSync(file);
                     if (!stat.isFile() || stat.isSymbolicLink()) return {cleared, persistent: false, complete: false};
@@ -219,14 +221,6 @@ export class SolcordAudienceGuardStorage {
         return directory;
     }
 
-    #policyFile(account: string, create: boolean): string | undefined {
-        const directory = this.#accountDirectory(account, create);
-        if (!directory) return;
-        const file = path.join(directory, "policy.scdb");
-        this.#assertWithin(file, directory);
-        return fs.existsSync(file) || create ? file : undefined;
-    }
-
     #assertDirectory(directory: string): void {
         const stat = fs.lstatSync(directory);
         if (!stat.isDirectory() || stat.isSymbolicLink()) throw new TypeError("Audience Guard storage directory is unsafe.");
@@ -240,17 +234,86 @@ export class SolcordAudienceGuardStorage {
         if (resolvedTarget === resolvedRoot || !resolvedTarget.startsWith(`${resolvedRoot}${path.sep}`)) throw new TypeError("Audience Guard storage path escapes its root.");
     }
 
-    #atomicWrite(target: string, content: Buffer): void {
+    #readPolicyFile(file: string): AudiencePolicy {
+        const stat = fs.lstatSync(file);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid Audience Guard policy file.");
+        const wrapped = fs.readFileSync(file);
+        if (wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid Audience Guard policy envelope.");
+        const plaintext = safeStorage.decryptString(wrapped);
+        try {return normalizePolicy(JSON.parse(plaintext));}
+        finally {/* strings cannot be zeroed; never expose plaintext to diagnostics */}
+    }
+
+    #recoverPolicy(directory: string): void {
+        this.#assertDirectory(directory);
+        const target = path.join(directory, "policy.scdb");
+        this.#assertWithin(target, directory);
+        const names = fs.readdirSync(directory);
+        const backups = names.filter(name => POLICY_BACKUP_FILE.test(name));
+        const temporary = names.filter(name => POLICY_TEMPORARY_FILE.test(name));
+        if (backups.length > 1) throw new TypeError("Ambiguous Audience Guard recovery state.");
+        for (const name of [...backups, ...temporary]) {
+            const candidate = path.join(directory, name);
+            this.#assertWithin(candidate, directory);
+            const stat = fs.lstatSync(candidate);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe Audience Guard recovery artifact.");
+        }
+        if (!fs.existsSync(target) && backups.length === 1) fs.renameSync(path.join(directory, backups[0]), target);
+        const remainingBackup = backups.map(name => path.join(directory, name)).find(fs.existsSync);
+        if (fs.existsSync(target) && remainingBackup) {
+            try {
+                this.#readPolicyFile(target);
+                fs.unlinkSync(remainingBackup);
+            }
+            catch {
+                const displaced = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(target, displaced);
+                try {
+                    fs.renameSync(remainingBackup, target);
+                    this.#readPolicyFile(target);
+                    fs.unlinkSync(displaced);
+                }
+                catch (error) {
+                    if (!fs.existsSync(target) && fs.existsSync(displaced)) fs.renameSync(displaced, target);
+                    throw error;
+                }
+            }
+        }
+        for (const name of temporary) fs.unlinkSync(path.join(directory, name));
+    }
+
+    #atomicWrite(target: string, content: Buffer, replace = false): void {
         const directory = path.dirname(target);
         this.#assertDirectory(directory);
         this.#assertWithin(target, directory);
         const temporary = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-        fs.writeFileSync(temporary, content, {flag: "wx", mode: 0o600});
-        try {fs.renameSync(temporary, target);}
-        catch (error) {
+        const descriptor = fs.openSync(temporary, "wx", 0o600);
+        try {
+            fs.writeFileSync(descriptor, content);
+            fs.fsyncSync(descriptor);
+        }
+        finally {fs.closeSync(descriptor);}
+        try {
+            if (replace && fs.existsSync(target)) {
+                const stat = fs.lstatSync(target);
+                if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Audience Guard policy target is unsafe.");
+                const backup = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(target, backup);
+                try {
+                    fs.renameSync(temporary, target);
+                    this.#readPolicyFile(target);
+                    fs.unlinkSync(backup);
+                }
+                catch (error) {
+                    if (!fs.existsSync(target) && fs.existsSync(backup)) fs.renameSync(backup, target);
+                    throw error;
+                }
+            }
+            else {fs.renameSync(temporary, target);}
+        }
+        finally {
             try {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
-            catch {/* preserve ambiguous residue */}
-            throw error;
+            catch {/* preserve primary error */}
         }
     }
 }

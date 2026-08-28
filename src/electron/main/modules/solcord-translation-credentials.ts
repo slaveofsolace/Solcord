@@ -18,6 +18,7 @@ interface CredentialRecord {
 const ACCOUNT_ID = /^\d{1,32}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const MAX_WRAPPED_BYTES = 64 * 1024;
+const TRANSIENT_SUFFIX = /^\.\d+\.[0-9a-f]{8}\.(?:old|tmp)$/;
 
 function hasUnsafeControl(value: string): boolean {
     return [...value].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127);
@@ -57,10 +58,9 @@ export class SolcordTranslationCredentialStorage {
             try {
                 const file = this.#file(account, provider, binding, false);
                 if (!file) return {credential: "", persistent: true, complete: true};
-                const stat = fs.lstatSync(file);
-                if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid translation credential file.");
-                const record = JSON.parse(safeStorage.decryptString(fs.readFileSync(file))) as Partial<CredentialRecord>;
-                if (record.version !== 1 || record.provider !== provider || record.endpointHash !== binding || typeof record.credential !== "string" || record.credential.length < 1 || record.credential.length > 512 || hasUnsafeControl(record.credential)) throw new TypeError("Translation credential binding failed.");
+                this.#recoverFile(file, provider, binding);
+                if (!fs.existsSync(file)) return {credential: "", persistent: true, complete: true};
+                const record = this.#readRecord(file, provider, binding);
                 return {credential: record.credential, persistent: true, complete: true};
             }
             catch {return {credential: this.#session.get(key)?.credential ?? "", persistent: false, complete: false};}
@@ -76,16 +76,10 @@ export class SolcordTranslationCredentialStorage {
             if (!this.#secureAvailable()) return {persistent: false, complete: true};
             try {
                 const file = this.#file(account, record.provider, record.endpointHash, true)!;
+                this.#recoverFile(file, record.provider, record.endpointHash);
                 const wrapped = safeStorage.encryptString(JSON.stringify(record));
                 if (!Buffer.isBuffer(wrapped) || wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid encrypted translation credential.");
-                const temporary = `${file}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-                fs.writeFileSync(temporary, wrapped, {flag: "wx", mode: 0o600});
-                try {fs.renameSync(temporary, file);}
-                catch (error) {
-                    try {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
-                    catch {/* preserve ambiguous residue for manual recovery */}
-                    throw error;
-                }
+                this.#atomicReplace(file, wrapped, record.provider, record.endpointHash);
                 return {persistent: true, complete: true};
             }
             catch {return {persistent: false, complete: false};}
@@ -104,7 +98,17 @@ export class SolcordTranslationCredentialStorage {
         return this.#serialized(async () => {
             try {
                 const file = this.#file(account, provider, binding, false);
-                if (file) fs.unlinkSync(file);
+                if (file) {
+                    const directory = path.dirname(file);
+                    const base = path.basename(file);
+                    for (const name of fs.readdirSync(directory)) {
+                        if (name !== base && !(name.startsWith(base) && TRANSIENT_SUFFIX.test(name.slice(base.length)))) continue;
+                        const candidate = path.join(directory, name);
+                        const stat = fs.lstatSync(candidate);
+                        if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe translation credential residue.");
+                        fs.unlinkSync(candidate);
+                    }
+                }
                 return {persistent: this.#secureAvailable(), complete: true};
             }
             catch {return {persistent: false, complete: false};}
@@ -140,7 +144,9 @@ export class SolcordTranslationCredentialStorage {
         const file = path.join(directory, `${provider}-${binding.slice(0, 32)}.scdb`);
         const relative = path.relative(directory, file);
         if (relative.startsWith("..") || path.isAbsolute(relative)) throw new TypeError("Translation credential path escaped its store.");
-        return fs.existsSync(file) || create ? file : undefined;
+        const base = path.basename(file);
+        const hasTransient = fs.readdirSync(directory).some(name => name.startsWith(base) && TRANSIENT_SUFFIX.test(name.slice(base.length)));
+        return fs.existsSync(file) || hasTransient || create ? file : undefined;
     }
 
     #root(create: boolean): string | undefined {
@@ -177,6 +183,69 @@ export class SolcordTranslationCredentialStorage {
         if (identity.length !== 32) throw new TypeError("Invalid translation identity key.");
         this.#identity = Buffer.from(identity);
         return identity;
+    }
+
+    #readRecord(file: string, provider: CredentialRecord["provider"], binding: string): CredentialRecord {
+        const stat = fs.lstatSync(file);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid translation credential file.");
+        const record = JSON.parse(safeStorage.decryptString(fs.readFileSync(file))) as Partial<CredentialRecord>;
+        if (record.version !== 1 || record.provider !== provider || record.endpointHash !== binding || typeof record.credential !== "string" || record.credential.length < 1 || record.credential.length > 512 || hasUnsafeControl(record.credential)) throw new TypeError("Translation credential binding failed.");
+        return record as CredentialRecord;
+    }
+
+    #recoverFile(file: string, provider: CredentialRecord["provider"], binding: string): void {
+        const directory = path.dirname(file);
+        const base = path.basename(file);
+        const names = fs.readdirSync(directory);
+        const backups = names.filter(name => name.startsWith(base) && /^\.\d+\.[0-9a-f]{8}\.old$/.test(name.slice(base.length)));
+        const temporary = names.filter(name => name.startsWith(base) && /^\.\d+\.[0-9a-f]{8}\.tmp$/.test(name.slice(base.length)));
+        if (backups.length > 1) throw new TypeError("Ambiguous translation credential recovery state.");
+        for (const name of [...backups, ...temporary]) {
+            const candidate = path.join(directory, name);
+            const stat = fs.lstatSync(candidate);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe translation credential recovery artifact.");
+        }
+        if (!fs.existsSync(file) && backups.length === 1) fs.renameSync(path.join(directory, backups[0]), file);
+        const backup = backups.map(name => path.join(directory, name)).find(fs.existsSync);
+        if (fs.existsSync(file) && backup) {
+            try {this.#readRecord(file, provider, binding); fs.unlinkSync(backup);}
+            catch {
+                const displaced = `${file}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(file, displaced);
+                try {fs.renameSync(backup, file); this.#readRecord(file, provider, binding); fs.unlinkSync(displaced);}
+                catch (error) {if (!fs.existsSync(file) && fs.existsSync(displaced)) fs.renameSync(displaced, file); throw error;}
+            }
+        }
+        for (const name of temporary) fs.unlinkSync(path.join(directory, name));
+    }
+
+    #atomicReplace(file: string, wrapped: Buffer, provider: CredentialRecord["provider"], binding: string): void {
+        const temporary = `${file}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+        const descriptor = fs.openSync(temporary, "wx", 0o600);
+        try {fs.writeFileSync(descriptor, wrapped); fs.fsyncSync(descriptor);}
+        finally {fs.closeSync(descriptor);}
+        try {
+            if (fs.existsSync(file)) {
+                const stat = fs.lstatSync(file);
+                if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Translation credential target is unsafe.");
+                const backup = `${file}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(file, backup);
+                try {
+                    fs.renameSync(temporary, file);
+                    this.#readRecord(file, provider, binding);
+                    fs.unlinkSync(backup);
+                }
+                catch (error) {
+                    if (!fs.existsSync(file) && fs.existsSync(backup)) fs.renameSync(backup, file);
+                    throw error;
+                }
+            }
+            else {fs.renameSync(temporary, file); this.#readRecord(file, provider, binding);}
+        }
+        finally {
+            try {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
+            catch {/* preserve primary error */}
+        }
     }
 
     #serialized<T>(operation: () => Promise<T>): Promise<T> {

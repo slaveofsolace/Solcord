@@ -26,6 +26,8 @@ const MAX_NOTES = 500;
 const MAX_DOCUMENT_BYTES = 512 * 1024;
 const MAX_WRAPPED_BYTES = 1024 * 1024;
 const EMPTY_DOCUMENT: IdentityNoteDocument = {version: 1, notes: []};
+const NOTES_BACKUP_FILE = /^notes\.scdb\.\d+\.[0-9a-f]{8}\.old$/;
+const NOTES_TEMPORARY_FILE = /^notes\.scdb\.\d+\.[0-9a-f]{8}\.tmp$/;
 
 function printableText(value: unknown, maximumLength: number, label: string): string {
     if (typeof value !== "string" || value.length > maximumLength || [...value].some(character => {
@@ -160,7 +162,7 @@ export class SolcordLocalIdentityNotesStorage {
                 const directory = this.#accountDirectory(account, false);
                 if (!directory) return {cleared, persistent: this.#secureAvailable(), complete: true};
                 for (const name of fs.readdirSync(directory)) {
-                    if (name !== "notes.scdb" && !/^notes\.scdb\.\d+\.[0-9a-f]{8}\.tmp$/.test(name)) continue;
+                    if (name !== "notes.scdb" && !NOTES_TEMPORARY_FILE.test(name) && !NOTES_BACKUP_FILE.test(name)) continue;
                     const file = path.join(directory, name);
                     const stat = fs.lstatSync(file);
                     if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe identity note residue.");
@@ -179,9 +181,10 @@ export class SolcordLocalIdentityNotesStorage {
         try {
             const file = this.#notesFile(account, false);
             if (!file) return {document: fallback, persistent: true, complete: true};
-            const stat = fs.lstatSync(file);
-            if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid identity note file.");
-            const document = normalizeDocument(JSON.parse(safeStorage.decryptString(fs.readFileSync(file))));
+            const directory = path.dirname(file);
+            this.#recoverNotes(directory);
+            if (!fs.existsSync(file)) return {document: fallback, persistent: true, complete: true};
+            const document = this.#readNotesFile(file);
             this.#session.set(account, cloneDocument(document));
             return {document, persistent: true, complete: true};
         }
@@ -193,9 +196,10 @@ export class SolcordLocalIdentityNotesStorage {
 
     #writeDocument(account: string, document: IdentityNoteDocument): void {
         const file = this.#notesFile(account, true)!;
+        this.#recoverNotes(path.dirname(file));
         const wrapped = safeStorage.encryptString(JSON.stringify(document));
         if (!Buffer.isBuffer(wrapped) || wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid encrypted identity note document.");
-        this.#atomicWrite(file, wrapped);
+        this.#atomicWrite(file, wrapped, true);
     }
 
     #serialized<T>(operation: () => Promise<T>): Promise<T> {
@@ -291,7 +295,8 @@ export class SolcordLocalIdentityNotesStorage {
         if (!directory) return;
         const file = path.join(directory, "notes.scdb");
         this.#assertWithin(file, directory);
-        return fs.existsSync(file) || create ? file : undefined;
+        const hasTransient = fs.readdirSync(directory).some(name => NOTES_BACKUP_FILE.test(name) || NOTES_TEMPORARY_FILE.test(name));
+        return fs.existsSync(file) || hasTransient || create ? file : undefined;
     }
 
     #assertDirectory(directory: string): void {
@@ -305,17 +310,68 @@ export class SolcordLocalIdentityNotesStorage {
         if (resolvedTarget === resolvedRoot || !resolvedTarget.startsWith(`${resolvedRoot}${path.sep}`)) throw new TypeError("Identity note storage path escaped its root.");
     }
 
-    #atomicWrite(target: string, content: Buffer): void {
+    #readNotesFile(file: string): IdentityNoteDocument {
+        const stat = fs.lstatSync(file);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_WRAPPED_BYTES) throw new TypeError("Invalid identity note file.");
+        return normalizeDocument(JSON.parse(safeStorage.decryptString(fs.readFileSync(file))));
+    }
+
+    #recoverNotes(directory: string): void {
+        this.#assertDirectory(directory);
+        const target = path.join(directory, "notes.scdb");
+        this.#assertWithin(target, directory);
+        const names = fs.readdirSync(directory);
+        const backups = names.filter(name => NOTES_BACKUP_FILE.test(name));
+        const temporary = names.filter(name => NOTES_TEMPORARY_FILE.test(name));
+        if (backups.length > 1) throw new TypeError("Ambiguous identity note recovery state.");
+        for (const name of [...backups, ...temporary]) {
+            const candidate = path.join(directory, name);
+            const stat = fs.lstatSync(candidate);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe identity note recovery artifact.");
+        }
+        if (!fs.existsSync(target) && backups.length === 1) fs.renameSync(path.join(directory, backups[0]), target);
+        const backup = backups.map(name => path.join(directory, name)).find(fs.existsSync);
+        if (fs.existsSync(target) && backup) {
+            try {this.#readNotesFile(target); fs.unlinkSync(backup);}
+            catch {
+                const displaced = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(target, displaced);
+                try {fs.renameSync(backup, target); this.#readNotesFile(target); fs.unlinkSync(displaced);}
+                catch (error) {if (!fs.existsSync(target) && fs.existsSync(displaced)) fs.renameSync(displaced, target); throw error;}
+            }
+        }
+        for (const name of temporary) fs.unlinkSync(path.join(directory, name));
+    }
+
+    #atomicWrite(target: string, content: Buffer, replace = false): void {
         const directory = path.dirname(target);
         this.#assertDirectory(directory);
         this.#assertWithin(target, directory);
         const temporary = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-        fs.writeFileSync(temporary, content, {flag: "wx", mode: 0o600});
-        try {fs.renameSync(temporary, target);}
-        catch (error) {
+        const descriptor = fs.openSync(temporary, "wx", 0o600);
+        try {fs.writeFileSync(descriptor, content); fs.fsyncSync(descriptor);}
+        finally {fs.closeSync(descriptor);}
+        try {
+            if (replace && fs.existsSync(target)) {
+                const stat = fs.lstatSync(target);
+                if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Identity note target is unsafe.");
+                const backup = `${target}.${process.pid}.${crypto.randomBytes(4).toString("hex")}.old`;
+                fs.renameSync(target, backup);
+                try {
+                    fs.renameSync(temporary, target);
+                    this.#readNotesFile(target);
+                    fs.unlinkSync(backup);
+                }
+                catch (error) {
+                    if (!fs.existsSync(target) && fs.existsSync(backup)) fs.renameSync(backup, target);
+                    throw error;
+                }
+            }
+            else {fs.renameSync(temporary, target);}
+        }
+        finally {
             try {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
-            catch {/* preserve ambiguous residue */}
-            throw error;
+            catch {/* preserve primary error */}
         }
     }
 }
