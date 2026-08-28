@@ -81,7 +81,7 @@ function ActivityBridge() {
     const events = activity?.events.slice(-8).reverse() ?? [];
     const healthy = activity?.status === "healthy" && !activity.unrestrictedOverride;
     return <Section title="Activities" summary="A bounded compatibility fix for Discord's embedded games.">
-        <div className={healthy ? "solcord-all-clear" : "solcord-callout solcord-callout-danger"} role="status"><strong>{healthy ? "Ready" : "Needs review"}</strong><span>{healthy ? "Same-package preload protection is active; the unrestricted override is off." : "The compatibility policy is not fully healthy on this Discord build."}</span></div>
+        <div className={healthy ? "solcord-all-clear" : "solcord-callout solcord-callout-danger"} role="status"><strong>{healthy ? "Ready" : "Needs review"}</strong>{" "}<span>{healthy ? "Same-package preload protection is active; the unrestricted override is off." : "The compatibility policy is not fully healthy on this Discord build."}</span></div>
         <details className="solcord-secondary-tools"><summary>Technical details</summary>
             <dl className="solcord-facts"><div><dt>Policy</dt><dd>{activity?.status ?? "waiting"}</dd></div><div><dt>Accepted assignments</dt><dd>{activity?.counters?.discordPreloadsAccepted ?? 0}</dd></div><div><dt>Rejected assignments</dt><dd>{activity?.counters?.assignmentsRejected ?? 0}</dd></div><div><dt>Unrestricted override</dt><dd>{activity?.unrestrictedOverride ? "On" : "Off"}</dd></div></dl>
             <div className="solcord-ledger" aria-label="Recent Activity compatibility events">
