@@ -4,9 +4,11 @@ Solcord V2 RC is installed only after tests, lint, type checks, production build
 
 ## Current live checkpoint
 
-The signed-in Discord profile currently has the exact `v2.0.0-rc.2` build installed with a preserved rollback identity. Two clean startups, core Control Center surfaces, and a 30-minute disposable soak passed for that exact candidate. Those results do not transfer automatically to RC3. Audience Guard persistence reporting, First Setup, the five baseline capabilities, Friend Watch, two exact-build Activities, all-theme/scaling review, and the full installer lifecycle remain RC3 acceptance gates.
+`v2.0.0-rc.2` remains the preserved public rollback release. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
 
-The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Setup **Apply and verify**, theme activation, Message Timeline persistence, and Link Lens’s external-link modal remain separate optional gates.
+The RC3 source line has passed transactional First Setup, the five baseline capabilities, encrypted Friend Watch restart/export/clear, all eleven themes at native 100%/125%/150%/200% zoom, keyboard/reduced-motion/forced-colors review, and the installer self-test's install, upgrade, repair, downgrade refusal, interrupted recovery, rollback, and uninstall cases in disposable targets. Final source freeze, exact-artifact checks, signed-in installation, two clean owner-profile starts, Codenames, and one second Activity remain release-session gates. Audience Guard storage reporting is accepted, but its current Discord stream-action adapter remains visibly unavailable and fail-closed.
+
+The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Applying setup to the signed-in owner profile, Message Timeline persistence, and Link Lens's external-link modal remain separate optional choices even though disposable setup acceptance is complete.
 
 ## Compatibility paths
 

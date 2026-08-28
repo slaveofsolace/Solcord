@@ -23,20 +23,29 @@ Exact source, ASAR, installer, Discord version, profile type, backup, and rollba
 | Settings Time Machine | On | Ready | Receipt-bound local snapshots and rollback previews |
 | Module Drift Radar | On | Preview | Reports drift without broadening compatibility |
 | Workspace Profiles | On | Preview | Local profile switching with reversible settings |
-| Layout Collapse | Off | Exact-client acceptance pending | One structural adapter; zero runtime work while disabled |
-| Embed Controls | Off | Exact-client acceptance pending | Presentation only; message data is unchanged |
-| Cross-platform Autoscroll | Off | Exact-client acceptance pending | Stops on release, Escape, disable, route loss, or drift |
-| Message Link Preview | Off | Exact-client acceptance pending | Reads only messages already loaded by Discord |
-| Media Shelf | Off | Ready as local storage | Stores validated local references; owns no Discord adapter or background work |
-| Audience Guard | Off | Preview | Encrypted persistence when Electron `safeStorage` is available; otherwise visibly session-only and fail-closed |
-| Friend Watch | Off | Preview, acceptance pending | Consent-gated, account-scoped, local change log; no automated relationship mutations |
+| Layout Collapse | Off | Ready | Exact-client hide/restore and restart passed; one structural adapter and zero runtime work while disabled |
+| Embed Controls | Off | Ready | Exact-client controlled embed interaction, restart, teardown, and disabled-zero-work passed; message data is unchanged |
+| Cross-platform Autoscroll | Off | Ready | A current Discord scroller moved under the owned gesture loop and stopped on Escape; restart and teardown passed |
+| Message Link Preview | Off | Ready | A current loaded `MessageStore` record previewed without fetch or read-state mutation; missing records remain inert |
+| Media Shelf | Off | Ready | Exact-client local save/remove passed; references are bounded and the feature owns no Discord adapter or background work |
+| Audience Guard | Off | Preview, fail-closed on current action drift | Storage capability reporting is correct; current Discord stream-action exports do not pass structural validation |
+| Friend Watch | Off | Ready when consented | Encrypted restart, passive reconciliation, subject-free export, clear, account isolation fixtures, and teardown passed without a relationship mutation |
 | Message Timeline | Off | Preview | Consent-gated local observations; no unseen-message backfill |
 | Link Lens | Off | Preview | Native review modal only; internal Discord routes bypass it |
 | Stream Shield | Off | Preview | No silent recording or upload |
 | Accessibility Toolkit | Off | Preview | User-selected local presentation controls |
 | Curated addons | Off | Held | `0/36` enabled; a catalog entry is not an installable or accepted addon |
 
-First Setup is transactional and resumable. Skipping changes only the onboarding marker. Apply must show the complete planned diff, preserve owner-managed files, and roll back atomically on failure.
+First Setup is transactional and resumable. The exact disposable client passed forward/back navigation, pause/resume, final preview, Apply and verify, eleven-theme installation, restart persistence, and private-default behavior. Automated malformed-state, interrupted-recovery, and rollback coverage remains green. Skipping changes only the onboarding marker.
+
+## Exact-client acceptance now complete
+
+- The current Discord Stable client loaded the exact candidate in a filesystem-isolated acceptance root with the expected source/ASAR identity and no duplicate bootstrap.
+- All four baseline runtime adapters survived restart together, then returned to zero styles, elements, classes, observers, listeners, timers, and previews after disable.
+- Friend Watch used Electron `safeStorage`, created only opaque encrypted account storage, survived restart, exported JSON and CSV without raw subject IDs or display labels, and cleared explicitly.
+- All eleven themes rendered at native Electron 100%, 125%, 150%, and 200% zoom. The 44-capture matrix had no horizontal overflow and every workspace remained reachable by ordinary scrolling.
+- Keyboard traversal reached every workspace with visible focus. Reduced motion collapsed sampled transitions and animations to near-zero duration. Forced-colors rendered the Control Center with system black, white, borders, and focus treatment.
+- Setup and baseline acceptance performed no message, relationship, notification-read, voice, stream, upload, OAuth, or Activity mutation.
 
 ## Privacy and storage truth
 
@@ -44,7 +53,7 @@ Lifecycle state, readiness, consent, and storage durability are separate propert
 
 Audience Guard checks encrypted-storage capability before a denylist exists. A missing account policy does not imply missing `safeStorage`. Reads, writes, clear operations, account changes, and restarts fail closed and never expose account identifiers in filenames or logs.
 
-Friend Watch and Message Timeline remain opt-in, account-scoped, local, and bounded. Automated acceptance may use fixtures and passive no-change observation. It must not add, remove, block, message, or otherwise mutate a real relationship.
+Friend Watch and Message Timeline remain opt-in, account-scoped, local, and bounded. Friend Watch has exact-client passive no-change evidence plus controlled fixture coverage for change classification and notifications. Acceptance must not add, remove, block, message, or otherwise mutate a real relationship.
 
 ## Circular dependency verdict
 
@@ -71,7 +80,7 @@ Safe source, disposable-runtime, packaging, recovery, accessibility, and documen
 1. Start and leave Codenames on the exact candidate.
 2. Start and leave one second Discord Activity.
 3. Confirm First Setup's final preview before applying it to the signed-in profile.
-4. Confirm any live-profile Friend Watch notification/export/clear check without changing a relationship.
+4. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
 
 The release is owner-ready only when the exact candidate survives two clean launches without an addon dialog, JavaScript error, sentinel translation, stale owned process, or rollback mismatch. No private feature may activate without consent.
 
