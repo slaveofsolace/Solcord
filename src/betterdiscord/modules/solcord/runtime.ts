@@ -23,7 +23,7 @@ import {boundedTimelineMessageIds, channelIsInTimelineScope, MessageTimelineJour
 import {splitLargeMessage} from "./message-splitter";
 import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {resolveSolcordSetupPlan} from "@common/solcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
@@ -910,6 +910,14 @@ class SolcordRuntimeStore extends Store {
     }
 
     #assertProviderMigrationIdentityCurrent(entry: SolcordProviderMigrationIdentity, draft: ReturnType<typeof normalizeSetupDraft>): void {
+        if (entry.name === "MessageLoggerV2") {
+            const current = resolveCommunityAddon(PluginManager, entry.name, "MessageLoggerV2.plugin.js");
+            if (!current
+                || current.filename !== entry.fileName
+                || (PluginManager.isEnabled(current.filename) === true) !== entry.enabled
+                || (entry.enabled && !draft.timelinePolicy.enabled)) throw new Error("SetupProviderMigrationConfirmationChanged");
+            return;
+        }
         const candidate = SOLCORD_RUNTIME_ADDONS.find(item => item.name === entry.name);
         const current = candidate ? resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName) : undefined;
         if (!candidate
@@ -1003,10 +1011,16 @@ class SolcordRuntimeStore extends Store {
             if (!ThemeManager.isEnabled(selectedTheme.fileName) && ThemeManager.enableAddon(selectedTheme.fileName) !== true && !ThemeManager.isEnabled(selectedTheme.fileName)) throw new Error("SelectedThemeStartFailed");
 
             providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+            const timelineReplacementReady = this.#health.get("message-timeline")?.status === "active";
             for (const migration of providerMigrations) {
                 this.#assertProviderMigrationIdentityCurrent(migration, draft);
-                const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === migration.name)!;
-                const current = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
+                if (migration.name === "MessageLoggerV2" && migration.enabled && !timelineReplacementReady) continue;
+                const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === migration.name);
+                const current = candidate
+                    ? resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName)
+                    : migration.name === "MessageLoggerV2"
+                        ? resolveCommunityAddon(PluginManager, migration.name, "MessageLoggerV2.plugin.js")
+                        : undefined;
                 if (!current || current.filename !== migration.fileName) throw new Error("SetupCommunityCounterpartChanged");
                 if (!PluginManager.isEnabled(current.filename)) continue;
                 PluginManager.disableAddon(current.filename);
@@ -1037,8 +1051,9 @@ class SolcordRuntimeStore extends Store {
 
             const replacementFiles = new Set(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName));
             const replacementReadyFiles = providerMigrations
-                .filter(migration => adapterResults[migration.name]?.enabled === true && adapterResults[migration.name]?.provider === "solcord" && replacementFiles.has(migration.fileName))
+                .filter(migration => replacementFiles.has(migration.fileName) && solcordProviderReplacementIsReady(migration, adapterResults[migration.name], draft.timelinePolicy.enabled, timelineReplacementReady))
                 .map(migration => migration.fileName);
+            if (resolveCommunityAddon(PluginManager, "BDFDB", "0BDFDB.plugin.js")) replacementReadyFiles.push("0BDFDB.plugin.js");
             if (replacementReadyFiles.length) {
                 const retainedBdfdbConsumers = PluginManager.addonList
                     .filter(addon => PluginManager.isEnabled(addon.filename) && !replacementFiles.has(addon.filename))

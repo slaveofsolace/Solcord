@@ -79,6 +79,7 @@ export interface SolcordProviderMigrationSelection {
     selectedAddons: readonly string[];
     addonModes: Readonly<Record<string, string | undefined>>;
     addonProviders: Readonly<Record<string, string | undefined>>;
+    timelinePolicy?: Readonly<{enabled?: boolean;}>;
 }
 
 export interface SolcordProviderMigrationIdentity {
@@ -93,7 +94,13 @@ export interface SolcordProviderMigrationPlan {
     entries: readonly SolcordProviderMigrationIdentity[];
 }
 
-const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length;
+export interface SolcordProviderAdapterResult {
+    enabled?: boolean;
+    provider?: string;
+}
+
+const MESSAGE_LOGGER_PROVIDER = Object.freeze({name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js"});
+const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 1;
 
 function safeProviderIdentity(value: string, maximumLength: number): boolean {
     return value.length > 0
@@ -155,7 +162,29 @@ export function createSolcordProviderMigrationPlan(
         if (!addon) return [];
         return [{name: candidate.name, fileName: addon.filename, enabled: manager.isEnabled(addon.filename) === true, provider: "prefer-solcord" as const}];
     });
+    const messageLogger = resolveCommunityAddon(manager, MESSAGE_LOGGER_PROVIDER.name, MESSAGE_LOGGER_PROVIDER.fileName);
+    if (messageLogger?.filename === MESSAGE_LOGGER_PROVIDER.fileName) {
+        const enabled = manager.isEnabled(messageLogger.filename) === true;
+        if (!enabled || selection.timelinePolicy?.enabled === true) {
+            entries.push({
+                name: MESSAGE_LOGGER_PROVIDER.name,
+                fileName: messageLogger.filename,
+                enabled,
+                provider: "prefer-solcord"
+            });
+        }
+    }
     return canonicalizeSolcordProviderMigrationPlan({version: 1, entries});
+}
+
+export function solcordProviderReplacementIsReady(
+    migration: SolcordProviderMigrationIdentity,
+    adapter: SolcordProviderAdapterResult | undefined,
+    timelineEnabled: boolean,
+    timelineRuntimeReady: boolean
+): boolean {
+    if (migration.name === MESSAGE_LOGGER_PROVIDER.name) return !migration.enabled || timelineEnabled && timelineRuntimeReady;
+    return adapter?.enabled === true && adapter.provider === "solcord";
 }
 
 export function solcordProviderMigrationPlansMatch(left: unknown, right: unknown): boolean {

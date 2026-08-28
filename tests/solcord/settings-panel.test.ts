@@ -53,7 +53,7 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("puts Fake Deafen first in Voice and Activities instead of burying it below other tools", () => {
-        expect(panel).toContain('{workspace === "voice" && <><PowerLabStatus /><ActivityBridge />');
+        expect(panel).toContain("{workspace === \"voice\" && <><PowerLabStatus /><ActivityBridge />");
     });
 
     test("scrolls and focuses the setup wizard when Continue setup is used on Overview", () => {

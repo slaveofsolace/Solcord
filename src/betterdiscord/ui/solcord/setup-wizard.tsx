@@ -389,7 +389,7 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
             return;
         }
         const providerMigrations = providerMigrationPlan.entries.map(entry => entry.fileName);
-        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected Solcord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them.` : "";
+        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected Solcord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them. BDFDB retires last only when no retained enabled addon still needs it.` : "";
         if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s), verify or provision the ${SOLCORD_RUNTIME_THEMES.length} bundled theme files, and activate ${SOLCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? ${plan.skipped.length} selected optional choice(s) will be skipped without download. Existing differing files will abort without being overwritten.${migrationNotice}`)) return;
         setBusy(true);
         setStatus(plan.skipped.length ? `Applying the ready set; ${plan.skipped.length} unavailable choice(s) will be skipped…` : "Applying the ready set and verifying hashes…");
