@@ -1866,7 +1866,7 @@ class SolcordRuntimeStore extends Store {
         type Message = {id?: string; timestamp?: {valueOf?(): number;} | number; content?: string; author?: {username?: string; globalName?: string;};};
         type Channel = {id?: string;};
         type GuildChannelBucket = {channel?: Channel;};
-        const selectedChannelStore = getStore("SelectedChannelStore") as FluxStore & {getVoiceChannelId?(): string | undefined;} | undefined;
+        const selectedChannelStore = getStore("SelectedChannelStore") as FluxStore & {getChannelId?(): string | undefined; getVoiceChannelId?(): string | undefined;} | undefined;
         const selectedGuildStore = getStore("SelectedGuildStore") as {getGuildId?(): string | undefined;} | undefined;
         const voiceStateStore = getStore("VoiceStateStore") as FluxStore & {getVoiceStatesForChannel?(channelId: string): unknown;} | undefined;
         const speakingStore = getStore("SpeakingStore") as FluxStore & {getSpeakingUsers?(): unknown;} | undefined;
@@ -1945,6 +1945,7 @@ class SolcordRuntimeStore extends Store {
             && typeof DiscordModules.Dispatcher?.dispatch === "function";
         return {
             currentCall,
+            currentChannelId: typeof selectedChannelStore?.getChannelId === "function" ? () => normalizeTimelineAccountId(selectedChannelStore.getChannelId?.()) : undefined,
             subscribeCall: listener => {
                 const stores = [selectedChannelStore, voiceStateStore, speakingStore, streamingStore].filter((store): store is Required<FluxStore> => typeof store?.addChangeListener === "function" && typeof store.removeChangeListener === "function");
                 for (const store of stores) store.addChangeListener(listener);

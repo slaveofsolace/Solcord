@@ -76,16 +76,16 @@ export interface SolcordProductPreferences {
 }
 
 export const SOLCORD_WORKSPACES = Object.freeze([
-    {id: "overview", label: "Overview", summary: "Setup, session health, Activities, and the next useful action."},
-    {id: "appearance", label: "Appearance", summary: "Theme, density, accent, motion, and accessibility."},
-    {id: "performance", label: "Performance", summary: "Lean, Balanced, or Visual behavior with measured local cost."},
-    {id: "privacy", label: "Privacy & Safety", summary: "Links, attachments, stream privacy, and private history."},
-    {id: "chat", label: "Chat & Composer", summary: "Writing, previews, media references, translation, and reminders."},
-    {id: "voice", label: "Voice & Activities", summary: "Activity health, voice tools, audience safeguards, and call experiments."},
-    {id: "friends", label: "Friends & Spaces", summary: "Local relationship history, private notes, pins, aliases, and focus."},
-    {id: "extensions", label: "Extensions", summary: "Solcord built-ins, reviewed community choices, and the catalog ledger."},
-    {id: "recovery", label: "Recovery", summary: "Plugin Doctor, snapshots, rollback, import, and startup recovery."},
-    {id: "advanced", label: "Advanced", summary: "Diagnostics, Power Lab, provenance, and exact product boundaries."}
+    {id: "overview", label: "Overview", summary: "Setup and current health."},
+    {id: "appearance", label: "Appearance", summary: "Theme, density, and motion."},
+    {id: "performance", label: "Performance", summary: "Runtime cost and profiles."},
+    {id: "privacy", label: "Privacy & Safety", summary: "Links, uploads, and local history."},
+    {id: "chat", label: "Chat & Composer", summary: "Writing and message tools."},
+    {id: "voice", label: "Voice & Activities", summary: "Calls, Activities, and streams."},
+    {id: "friends", label: "Friends & Spaces", summary: "People, servers, and local notes."},
+    {id: "extensions", label: "Extensions", summary: "Built-ins and plugin migration."},
+    {id: "recovery", label: "Recovery", summary: "Repair, rollback, and snapshots."},
+    {id: "advanced", label: "Advanced", summary: "Diagnostics and experiments."}
 ] satisfies ReadonlyArray<{id: SolcordWorkspaceId; label: string; summary: string;}>);
 
 export const SOLCORD_SETUP_STEPS = Object.freeze([

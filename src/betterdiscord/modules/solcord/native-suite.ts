@@ -26,7 +26,7 @@ import {solcordNativeSuiteFeatureForAddon, type SolcordNativeSuiteFeature} from 
 import {SolcordDisposalScope} from "./disposal";
 
 
-export type SolcordNativeSuiteMaturity = "ready" | "unavailable";
+export type SolcordNativeSuiteMaturity = "off" | "needs-setup" | "ready" | "degraded" | "unsupported";
 
 export interface SolcordNativeSuiteStatus {
     id: SolcordNativeSuiteFeature | "permission-lens" | "voice-health" | "local-identity-notes";
@@ -38,6 +38,7 @@ export interface SolcordNativeSuiteStatus {
 
 export interface SolcordNativeSuiteAdapter {
     currentCall?(): SolcordCallSnapshot | undefined;
+    currentChannelId?(): string | undefined;
     subscribeCall?(listener: () => void): () => void;
     setLocalVolume?(userId: string, percent: number): void;
     loadedChannelMessages?(channelId: string): SolcordGlanceMessage[] | undefined;
@@ -194,7 +195,7 @@ export class SolcordNativeSuiteController {
         this.#setStatus("permission-lens", "ready", "Explains cached Discord permission names without editing or fetching permission state.", []);
         this.#startFocusChannels();
         this.#identityNotes = new SolcordLocalIdentityNotesController();
-        this.#setStatus("local-identity-notes", this.#adapter.identityNotesAvailable ? "ready" : "unavailable", this.#adapter.identityNotesAvailable ? "Account-private notes are written only after review through encrypted storage or an explicit session-only fallback." : "Encrypted Local Identity Notes remain off until the private storage adapter validates.", []);
+        this.#setStatus("local-identity-notes", this.#adapter.identityNotesAvailable ? "ready" : "needs-setup", this.#adapter.identityNotesAvailable ? "Account-private notes are stored only after review through encrypted storage or an explicit session-only fallback." : "Open private storage before using Local Identity Notes.", []);
     }
 
     statuses(): SolcordNativeSuiteStatus[] {
@@ -203,7 +204,12 @@ export class SolcordNativeSuiteController {
 
     providerReady(name: string): boolean {
         const feature = solcordNativeSuiteFeatureForAddon(name);
-        return Boolean(feature && this.#status.get(feature)?.maturity === "ready");
+        const maturity = feature ? this.#status.get(feature)?.maturity : undefined;
+        return maturity === "ready" || maturity === "needs-setup" || maturity === "degraded";
+    }
+
+    currentChannelId(): string | undefined {
+        return this.#adapter.currentChannelId?.();
     }
 
     callSummary() {
@@ -482,7 +488,7 @@ export class SolcordNativeSuiteController {
 
     #startComposer(): void {
         const providers = this.#enabled.get("composer-toolkit") ?? [];
-        if (!providers.length) return this.#setStatus("composer-toolkit", "ready", "Composer Toolkit is off until one of its built-in controls is selected.", []);
+        if (!providers.length) return this.#setStatus("composer-toolkit", "off", "Turn on a Composer Toolkit feature to load its local controls.", []);
         this.#composer = new SolcordComposerToolkitController();
         const sync = () => {
             const editors = document.querySelectorAll<HTMLElement>("[role='textbox'][contenteditable='true']");
@@ -528,7 +534,7 @@ export class SolcordNativeSuiteController {
         const unsubscribe = this.#adapter.subscribeCall?.(sync);
         if (unsubscribe) this.#scope.own(unsubscribe, "listener");
         sync();
-        this.#setStatus("call-context", providers.length && this.#adapter.currentCall ? "ready" : "unavailable", providers.length ? "Call duration, participant/speaker counts, and exposed stream-viewer counts use current loaded stores only." : "Call Context is off.", providers);
+        this.#setStatus("call-context", !providers.length ? "off" : this.#adapter.currentCall ? "ready" : "unsupported", !providers.length ? "Turn on a Call Context feature to load it." : this.#adapter.currentCall ? "Call duration, speaker counts, and exposed stream-viewer counts use loaded stores only." : "This Discord build did not expose the required call store.", providers);
     }
 
     #renderCallBadge(connected: boolean): void {
@@ -549,20 +555,20 @@ export class SolcordNativeSuiteController {
     #startAudioConsole(): void {
         const providers = this.#enabled.get("audio-console") ?? [];
         this.#audio = new SolcordAudioConsoleController();
-        this.#setStatus("audio-console", providers.length && this.#adapter.setLocalVolume ? "ready" : "unavailable", providers.length ? "Bounded 0–200% local playback changes require a reviewed explicit action." : "Audio Console is off.", providers);
+        this.#setStatus("audio-console", !providers.length ? "off" : this.#adapter.setLocalVolume ? "ready" : "unsupported", !providers.length ? "Turn on Audio Console to load local volume controls." : this.#adapter.setLocalVolume ? "Local playback changes stay between 0 and 200 percent and require confirmation." : "This Discord build did not expose a validated local-volume action.", providers);
     }
 
     #startVoiceNoteStudio(): void {
         const providers = this.#enabled.get("voice-note-studio") ?? [];
         this.#voiceNote = new SolcordVoiceNoteStudioController();
         const available = typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder === "function";
-        this.#setStatus("voice-note-studio", providers.length && available ? "ready" : "unavailable", providers.length ? "Record, stop, preview, cancel, and reviewed file handoff are available only from explicit controls." : "Voice Note Studio is off.", providers);
+        this.#setStatus("voice-note-studio", !providers.length ? "off" : available ? "ready" : "unsupported", !providers.length ? "Turn on Voice Note Studio to load recording controls." : available ? "Record, preview, cancel, and hand off a reviewed file from explicit controls." : "This runtime does not expose the recording APIs Voice Note Studio needs.", providers);
     }
 
     #startTranslationDesk(): void {
         const providers = this.#enabled.get("translation-desk") ?? [];
         this.#translation = new SolcordTranslationDeskController();
-        this.#setStatus("translation-desk", providers.length ? "ready" : "unavailable", providers.length ? "No provider is active by default. Text leaves Discord only after endpoint disclosure and confirmation." : "Translation Desk is off.", providers);
+        this.#setStatus("translation-desk", providers.length ? "needs-setup" : "off", providers.length ? "Choose a provider before translating. Every request shows where the text will go." : "Turn on Translation Desk to configure a provider.", providers);
     }
 
     #startPeopleAndSpaces(): void {
@@ -571,7 +577,7 @@ export class SolcordNativeSuiteController {
         for (const id of this.#adapter.peopleState?.pinnedDmIds ?? []) this.#people.pinDm(id);
         for (const id of this.#adapter.peopleState?.hiddenGuildIds ?? []) this.#people.hideGuild(id);
         for (const [id, alias] of Object.entries(this.#adapter.peopleState?.guildAliases ?? {})) this.#people.aliasGuild(id, alias);
-        this.#setStatus("people-and-spaces", providers.length ? "ready" : "unavailable", providers.length ? "Pins, hidden-server choices, sorting, and aliases are local-only; no server profile is edited." : "People and Spaces is off.", providers);
+        this.#setStatus("people-and-spaces", providers.length ? "ready" : "off", providers.length ? "Pins, hidden servers, and aliases stay local to this Discord profile." : "Turn on a People and Spaces feature to load it.", providers);
     }
 
     #savePeople(): void {
@@ -582,14 +588,14 @@ export class SolcordNativeSuiteController {
     #startChannelGlance(): void {
         const providers = this.#enabled.get("channel-glance") ?? [];
         this.#glance = new SolcordChannelGlanceController();
-        this.#setStatus("channel-glance", providers.length && this.#adapter.loadedChannelMessages ? "ready" : "unavailable", providers.length ? "Shows at most five already-loaded messages and never fetches history or marks read." : "Channel Glance is off.", providers);
+        this.#setStatus("channel-glance", !providers.length ? "off" : this.#adapter.loadedChannelMessages ? "ready" : "unsupported", !providers.length ? "Turn on Channel Glance to load it." : this.#adapter.loadedChannelMessages ? "Shows up to five already-loaded messages without fetching or marking read." : "This Discord build did not expose a validated loaded-message store.", providers);
     }
 
     #startNotificationReview(): void {
         const providers = this.#enabled.get("notification-review") ?? [];
         this.#notifications = new SolcordNotificationReviewController();
         const available = Boolean(this.#adapter.notificationIds && this.#adapter.markNotificationsRead);
-        this.#setStatus("notification-review", providers.length && available ? "ready" : "unavailable", providers.length ? "Scope and item count are previewed before one explicit mark-read action." : "Notification Review is off.", providers);
+        this.#setStatus("notification-review", !providers.length ? "off" : available ? "ready" : "unsupported", !providers.length ? "Turn on Notification Review to load it." : available ? "Preview the scope and count before one explicit mark-read action." : "This Discord build did not expose a complete read-state action.", providers);
     }
 
     #startMotionStudio(): void {
@@ -598,13 +604,13 @@ export class SolcordNativeSuiteController {
         const reduced = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
         const settings = this.#motion.configure({reducedMotion: reduced, intensity: 0.45, durationMs: 160, effectsEnabled: providers.includes("DiscordEffects")});
         if (providers.length && !settings.reducedMotion) this.#scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms} #app-mount [role="dialog"],#app-mount [class*="menu_"]{animation:solcord-native-enter var(--solcord-native-motion) ease-out}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}`);
-        this.#setStatus("motion-studio", providers.length ? "ready" : "unavailable", settings.reducedMotion ? "Windows or Discord reduced motion is active; optional effects are suppressed." : "Bounded local transitions are active and fully removed on disable.", providers);
+        this.#setStatus("motion-studio", !providers.length ? "off" : "ready", !providers.length ? "Turn on Motion Studio to load it." : settings.reducedMotion ? "Reduced motion is active, so optional effects are suppressed." : "Short local transitions are active and removed on disable.", providers);
     }
 
     #startVoiceHealth(): void {
         this.#voiceHealth = new SolcordVoiceHealthController();
         if (this.#adapter.voiceHealthSample) this.#scope.interval(() => {const sample = this.#adapter.voiceHealthSample?.(); if (sample) this.#voiceHealth?.add(sample);}, 5_000);
-        this.#setStatus("voice-health", this.#adapter.voiceHealthSample ? "ready" : "unavailable", "Keeps at most 120 connection-quality samples and never records audio.", []);
+        this.#setStatus("voice-health", this.#adapter.voiceHealthSample ? "ready" : "unsupported", this.#adapter.voiceHealthSample ? "Keeps at most 120 connection-quality samples and never records audio." : "This Discord build did not expose a validated connection-quality sample.", []);
     }
 
     #startFocusChannels(): void {

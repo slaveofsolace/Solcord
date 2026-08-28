@@ -84,7 +84,7 @@ export interface SolcordProviderMigrationSelection {
 export interface SolcordProviderMigrationIdentity {
     name: string;
     fileName: string;
-    enabled: true;
+    enabled: boolean;
     provider: "prefer-solcord";
 }
 
@@ -133,10 +133,10 @@ export function canonicalizeSolcordProviderMigrationPlan(value: unknown): Solcor
         const entry = valueEntry as Partial<SolcordProviderMigrationIdentity>;
         if (typeof entry.name !== "string" || !safeProviderIdentity(entry.name, 120) || names.has(entry.name)) return;
         if (typeof entry.fileName !== "string" || !safeProviderFileName(entry.fileName) || fileNames.has(entry.fileName)) return;
-        if (entry.enabled !== true || entry.provider !== "prefer-solcord") return;
+        if (typeof entry.enabled !== "boolean" || entry.provider !== "prefer-solcord") return;
         names.add(entry.name);
         fileNames.add(entry.fileName);
-        entries.push({name: entry.name, fileName: entry.fileName, enabled: true, provider: "prefer-solcord"});
+        entries.push({name: entry.name, fileName: entry.fileName, enabled: entry.enabled, provider: "prefer-solcord"});
     }
     return freezeProviderMigrationPlan(entries);
 }
@@ -152,8 +152,8 @@ export function createSolcordProviderMigrationPlan(
             || !isSolcordBuiltInAddon(candidate.name, selection.addonModes[candidate.name])
             || selection.addonProviders[candidate.name] !== "prefer-solcord") return [];
         const addon = resolveCommunityAddon(manager, candidate.name, candidate.fileName);
-        if (!addon || !manager.isEnabled(addon.filename)) return [];
-        return [{name: candidate.name, fileName: addon.filename, enabled: true as const, provider: "prefer-solcord" as const}];
+        if (!addon) return [];
+        return [{name: candidate.name, fileName: addon.filename, enabled: manager.isEnabled(addon.filename), provider: "prefer-solcord" as const}];
     });
     return canonicalizeSolcordProviderMigrationPlan({version: 1, entries});
 }

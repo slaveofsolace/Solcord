@@ -204,6 +204,40 @@ describe("Solcord Audience Guard storage security", () => {
         expect((await storage.read("111222333", {})).policy.entries).toEqual([]);
     });
 
+    test("replaces an existing Windows policy transactionally and survives another restart", async () => {
+        const storage = new SolcordAudienceGuardStorage();
+        await storage.write("111222333", {policy: {version: 1, entries: [{userId: "999888777", label: "First"}]}});
+
+        const updated = await storage.write("111222333", {policy: {version: 1, entries: [{userId: "222333444", label: "Updated"}]}});
+        const restarted = new SolcordAudienceGuardStorage();
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-audience-guard-v1");
+        const accountStore = path.join(root, fs.readdirSync(root).find(entry => entry.startsWith("store-"))!);
+
+        expect(updated).toMatchObject({persistent: true, complete: true});
+        expect((await restarted.read("111222333", {})).policy.entries).toEqual([{userId: "222333444", label: "Updated"}]);
+        expect(fs.readdirSync(accountStore).filter(name => name.endsWith(".old") || name.endsWith(".tmp"))).toEqual([]);
+    });
+
+    test("recovers a known-good policy after an interrupted Windows replacement", async () => {
+        const storage = new SolcordAudienceGuardStorage();
+        await storage.write("111222333", {policy: {version: 1, entries: [{userId: "999888777", label: "Known good"}]}});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-audience-guard-v1");
+        const accountStore = path.join(root, fs.readdirSync(root).find(entry => entry.startsWith("store-"))!);
+        const target = path.join(accountStore, "policy.scdb");
+        const backup = `${target}.1234.abcdef12.old`;
+        const temporary = `${target}.1234.1234abcd.tmp`;
+        fs.renameSync(target, backup);
+        fs.writeFileSync(temporary, "interrupted-new-envelope", "utf8");
+
+        const recovered = await new SolcordAudienceGuardStorage().read("111222333", {});
+
+        expect(recovered).toMatchObject({persistent: true, complete: true});
+        expect(recovered.policy.entries).toEqual([{userId: "999888777", label: "Known good"}]);
+        expect(fs.existsSync(target)).toBeTrue();
+        expect(fs.existsSync(backup)).toBeFalse();
+        expect(fs.existsSync(temporary)).toBeFalse();
+    });
+
     test("uses an account-isolated memory fallback and rejects renderer-selected authority", async () => {
         encryptionAvailable = false;
         const storage = new SolcordAudienceGuardStorage();
@@ -239,6 +273,19 @@ describe("Solcord translation credential security", () => {
         expect(await storage.write("111222333", {provider: "deepl", endpoint, credential: "memory-key"})).toEqual({persistent: false, complete: true});
         expect((await storage.read("111222333", {provider: "deepl", endpoint})).credential).toBe("memory-key");
         expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "solcord-translation-credentials-v1"))).toBeFalse();
+    });
+
+    test("replaces an encrypted credential atomically on Windows and survives restart", async () => {
+        const endpoint = "https://translate.example/translate";
+        const storage = new SolcordTranslationCredentialStorage();
+
+        expect(await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "first-key"})).toEqual({persistent: true, complete: true});
+        expect(await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "rotated-key"})).toEqual({persistent: true, complete: true});
+
+        const restarted = new SolcordTranslationCredentialStorage();
+        expect(await restarted.read("111222333", {provider: "libretranslate", endpoint})).toEqual({credential: "rotated-key", persistent: true, complete: true});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-translation-credentials-v1");
+        expect(fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).some(name => /\.(?:old|tmp)$/.test(name))).toBeFalse();
     });
 });
 
@@ -280,6 +327,21 @@ describe("Solcord Local Identity Notes storage security", () => {
         expect(() => storage.write("111222333", {subjectId: "999888777", note: "blocked", tags: [], storage: "ordinary-local"})).toThrow();
         expect((await storage.clear("111222333", {})).cleared).toBe(1);
         expect((await storage.read("111222333", {})).notes).toEqual([]);
+    });
+
+    test("replaces encrypted notes atomically on Windows and survives restart", async () => {
+        const storage = new SolcordLocalIdentityNotesStorage();
+        expect((await storage.write("111222333", {subjectId: "999888777", note: "First note", tags: ["local"], storage: "secure-only"})).persistent).toBeTrue();
+        expect((await storage.write("111222333", {subjectId: "999888777", note: "Updated note", tags: ["trusted"], storage: "secure-only"})).persistent).toBeTrue();
+
+        const restarted = new SolcordLocalIdentityNotesStorage();
+        expect(await restarted.read("111222333", {})).toEqual({
+            notes: [expect.objectContaining({subjectId: "999888777", text: "Updated note", tags: ["trusted"]})],
+            persistent: true,
+            complete: true
+        });
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-local-identity-notes-v1");
+        expect(fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).some(name => /\.(?:old|tmp)$/.test(name))).toBeFalse();
     });
 });
 
