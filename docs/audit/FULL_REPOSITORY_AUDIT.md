@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 537 |
 | Text files scanned | 523 |
 | Binary files classified | 14 |
-| Text lines scanned | 109,458 |
-| Custom Solcord lines | 23,355 |
+| Text lines scanned | 109,483 |
+| Custom Solcord lines | 23,371 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -45,8 +45,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,185 | 112.2 KiB |
 | 6 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
 | 7 | `tests/common/i18n.test.ts` | 1,146 | 45.0 KiB |
-| 8 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
-| 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,054 | 55.9 KiB |
+| 8 | `src/betterdiscord/modules/solcord/store.ts` | 1,063 | 56.2 KiB |
+| 9 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
 | 10 | `src/betterdiscord/styles/solcord.css` | 956 | 73.4 KiB |
 | 11 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 12 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
@@ -55,8 +55,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 15 | `src/betterdiscord/modules/solcord/native-suite.ts` | 643 | 34.7 KiB |
 | 16 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
 | 17 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
-| 18 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
-| 19 | `tests/solcord/settings.test.ts` | 569 | 30.1 KiB |
+| 18 | `tests/solcord/settings.test.ts` | 585 | 30.8 KiB |
+| 19 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
 | 20 | `installer/Solcord.Installer/InstallerEngine.cs` | 509 | 35.3 KiB |
 
 ## Largest custom Solcord files
@@ -71,7 +71,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 6 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 7 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
 | 8 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
-| 9 | `tests/solcord/settings.test.ts` | 569 | 30.1 KiB |
+| 9 | `tests/solcord/settings.test.ts` | 585 | 30.8 KiB |
 | 10 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
 | 11 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
 | 12 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
