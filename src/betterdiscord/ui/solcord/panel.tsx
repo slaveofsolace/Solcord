@@ -860,6 +860,8 @@ function SessionPulse({openWorkspace}: {openWorkspace(workspace: SolcordWorkspac
         recovery: SolcordRuntime.recoveryMode,
         quarantined: PluginDoctor.snapshot().filter(record => record.quarantinedAt).length,
         activity: SolcordRuntime.activityHealth(),
+        fakeDeafen: SolcordRuntime.fakeDeafenStatus(),
+        fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider(),
         relationshipChanges: SolcordRuntime.friendWatchEvents().length,
         dueReminders: SolcordRuntime.returnLaterItems().filter(item => item.dueAt <= Date.now()).length
     }));
@@ -871,12 +873,20 @@ function SessionPulse({openWorkspace}: {openWorkspace(workspace: SolcordWorkspac
         ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
         ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
         ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Setup is unfinished", detail: `Resume at step ${state.document.onboarding.lastStep + 1} without reapplying earlier choices.`, action: "Continue setup"}] : []),
+        ...(state.fakeDeafenProvider !== "off" ? [{
+            id: "fake-deafen",
+            priority: state.fakeDeafen.phase === "attention" ? 72 : 58,
+            tone: state.fakeDeafen.phase === "attention" ? "attention" as const : "ok" as const,
+            label: state.fakeDeafenProvider === "community" ? "Fake Deafen community provider is on" : state.fakeDeafen.phase === "armed" ? "Fake Deafen is armed" : "Fake Deafen is ready",
+            detail: state.fakeDeafenProvider === "community" ? "Solcord is keeping its scoped adapter off so the two providers never stack." : state.fakeDeafen.detail,
+            action: "Open Fake Deafen"
+        }] : []),
         ...(state.dueReminders ? [{id: "return-later", priority: 65, tone: "attention" as const, label: "Return Later is due", detail: `${state.dueReminders} local reminder(s) are ready.`, action: "Open People"}] : []),
         ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} relationship transition(s) are available in this session.`, action: "Open People"}] : []),
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
     ]);
     return <Section title="Session Pulse" summary="The three things that need your attention now.">
-        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" ? "overview" : signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
+        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" ? "overview" : signal.id === "activity" || signal.id === "fake-deafen" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
     </Section>;
 }
 

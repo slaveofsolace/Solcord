@@ -44,4 +44,11 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("className=\"solcord-secondary-tools\"");
         expect(panel).toContain("Import, export, or create a profile");
     });
+
+    test("keeps an enabled Fake Deafen provider discoverable from Overview", () => {
+        expect(panel).toContain("fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider()");
+        expect(panel).toContain("Fake Deafen is ready");
+        expect(panel).toContain("action: \"Open Fake Deafen\"");
+        expect(panel).toContain("signal.id === \"fake-deafen\" ? \"voice\"");
+    });
 });
