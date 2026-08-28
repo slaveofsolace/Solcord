@@ -132,12 +132,15 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />");
     });
 
-    test("uses honest optional-file language and exposes only the scoped Fake Deafen Power Lab adapter", () => {
+    test("keeps Fake Deafen visible and preserves an active community provider", () => {
         expect(PANEL_SOURCE).toContain("Optional catalog files absent");
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
         expect(PANEL_SOURCE).toContain("Disarm and resync");
-        expect(PANEL_SOURCE).toContain("account risk · preview");
+        expect(PANEL_SOURCE).toContain("account risk · manual");
+        expect(PANEL_SOURCE).toContain("community plugin active");
+        expect(PANEL_SOURCE).toContain("Solcord leaves it untouched");
+        expect(RUNTIME_SOURCE).toContain("fakeDeafenProvider()");
         expect(CATALOG_SOURCE).toContain("Voice Anchor / Anti-AFK");
         expect(CATALOG_SOURCE).toContain("Unavailable in the V2 release candidate.");
         expect(PANEL_SOURCE).toContain("state.privateState.storage.persistent");

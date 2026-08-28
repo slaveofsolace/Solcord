@@ -583,6 +583,12 @@ class SolcordRuntimeStore extends Store {
         return structuredClone(this.#fakeDeafenStatus);
     }
 
+    fakeDeafenProvider(): "community" | "solcord" | "off" {
+        const communityAddon = PluginManager.resolveAddon("FakeDeafen") ?? PluginManager.resolveAddon("FakeDeafen.plugin.js");
+        if (communityAddon && PluginManager.isEnabled(communityAddon.filename)) return "community";
+        return SolcordSettings.snapshot().powerLab["fake-deafen"].enabled ? "solcord" : "off";
+    }
+
     audienceGuardStatus(): SolcordAudienceGuardStatus {
         return structuredClone(this.#audienceGuardStatus);
     }

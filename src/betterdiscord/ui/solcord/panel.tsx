@@ -957,7 +957,11 @@ function SetupManagement() {
 }
 
 function PowerLabStatus() {
-    const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({consent: SolcordSettings.snapshot().powerLab["fake-deafen"], status: SolcordRuntime.fakeDeafenStatus()}));
+    const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
+        consent: SolcordSettings.snapshot().powerLab["fake-deafen"],
+        status: SolcordRuntime.fakeDeafenStatus(),
+        provider: SolcordRuntime.fakeDeafenProvider()
+    }));
     const [actionStatus, setActionStatus] = useState("");
     const toggleFakeDeafen = (enabled: boolean) => {
         if (enabled && !window.confirm("Enable the Fake Deafen experiment? It intentionally makes your server-visible voice state differ from your local audio state. Discord can change this behavior at any time. The adapter stays unarmed until you separately arm it in a voice channel.")) return;
@@ -975,8 +979,10 @@ function PowerLabStatus() {
         setActionStatus(SolcordRuntime.armFakeDeafen() ? "Fake Deafen is armed for this voice connection." : SolcordRuntime.fakeDeafenStatus().detail);
     };
     const disarm = () => setActionStatus(SolcordRuntime.disarmFakeDeafen() ? "Fake Deafen disarmed and server-visible state was resynchronized." : SolcordRuntime.fakeDeafenStatus().detail);
-    return <Section title="Power Lab" summary="Private experiments stay outside the daily set. Every available experiment is off by default, separately consented, visible while active, and designed to fail closed when Discord changes.">
-        <div className="solcord-power-list">{SOLCORD_POWER_LAB.map(experiment => experiment.id === "fake-deafen" ? <div key={experiment.id} className="solcord-curated-row solcord-power-available"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className="solcord-maturity">account risk · preview</span><span className={`solcord-status solcord-status-${state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{state.status.phase}</span></div><p>{experiment.summary}</p><small>{state.status.detail}</small>{state.consent.enabled && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm in current voice channel</ActionButton>}</div>}</div><label className="solcord-toggle"><input type="checkbox" checked={state.consent.enabled} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{state.consent.enabled ? "On" : "Off"}</span></label></div> : <div key={experiment.id} className="solcord-curated-row solcord-unavailable"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className="solcord-maturity">unavailable</span></div><p>{experiment.summary}</p></div><label className="solcord-toggle"><input type="checkbox" checked={false} disabled /><span>Off</span></label></div>)}</div>
+    const experiment = SOLCORD_POWER_LAB.find(candidate => candidate.id === "fake-deafen")!;
+    const communityProvider = state.provider === "community";
+    return <Section title="Fake Deafen" summary="Keep local call audio available while Discord sees you as deafened. It is always visible here in Voice & Activities and never activates without your action.">
+        <div className="solcord-power-list"><div className="solcord-curated-row solcord-power-available"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className="solcord-maturity">account risk · manual</span><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span></div><p>{communityProvider ? "Your existing FakeDeafen plugin is installed and enabled. Solcord leaves it untouched and keeps the scoped built-in off so the two implementations never stack." : experiment.summary}</p><small>{communityProvider ? "To use Solcord's scoped provider later, disable the community plugin first, then enable and arm the built-in here." : state.status.detail}</small>{state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm in current voice channel</ActionButton>}</div>}</div><label className="solcord-toggle"><input type="checkbox" checked={state.consent.enabled} disabled={communityProvider} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{communityProvider ? "Plugin on" : state.consent.enabled ? "Built-in on" : "Off"}</span></label></div></div>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
