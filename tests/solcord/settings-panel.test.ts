@@ -49,6 +49,13 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider()");
         expect(panel).toContain("Fake Deafen is ready");
         expect(panel).toContain("action: \"Open Fake Deafen\"");
-        expect(panel).toContain("signal.id === \"fake-deafen\" ? \"voice\"");
+        expect(panel).toContain("signal.id === \"activity\" || signal.id === \"fake-deafen\" ? \"voice\"");
+    });
+
+    test("scrolls and focuses the setup wizard when Continue setup is used on Overview", () => {
+        expect(panel).toContain("const focusSetup = workspace === \"overview\" && workspaceFocus === \"setup\"");
+        expect(panel).toContain("document.querySelector<HTMLElement>(\".solcord-wizard\")");
+        expect(panel).toContain("onClick={openSetup}>Continue setup</ActionButton>");
+        expect(panel).toContain("<SessionPulse openWorkspace={setWorkspace} openSetup={openSetup} />");
     });
 });

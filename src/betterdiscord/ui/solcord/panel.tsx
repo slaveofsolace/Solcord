@@ -853,7 +853,7 @@ function AboutSolcord() {
     </Section>;
 }
 
-function SessionPulse({openWorkspace}: {openWorkspace(workspace: SolcordWorkspaceId): void;}) {
+function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: SolcordWorkspaceId): void; openSetup(): void;}) {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime, PluginDoctor], () => ({
         document: SolcordSettings.snapshot(),
         health: SolcordRuntime.health(),
@@ -886,7 +886,7 @@ function SessionPulse({openWorkspace}: {openWorkspace(workspace: SolcordWorkspac
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
     ]);
     return <Section title="Session Pulse" summary="The three things that need your attention now.">
-        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => openWorkspace(signal.id === "setup" ? "overview" : signal.id === "activity" || signal.id === "fake-deafen" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
+        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup() : openWorkspace(signal.id === "activity" || signal.id === "fake-deafen" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
     </Section>;
 }
 
@@ -1012,16 +1012,19 @@ export default function SolcordPanel() {
     const appearance = productPreferences.appearance;
     const [workspace, setWorkspace] = useState<SolcordWorkspaceId>("overview");
     const [workspaceQuery, setWorkspaceQuery] = useState("");
-    const [workspaceFocus, setWorkspaceFocus] = useState<"catalog">();
+    const [workspaceFocus, setWorkspaceFocus] = useState<"catalog" | "setup">();
     const selectedWorkspace = SOLCORD_WORKSPACES.find(item => item.id === workspace)!;
     const visibleWorkspaces = SOLCORD_WORKSPACES.filter(item => `${item.label} ${item.summary}`.toLowerCase().includes(workspaceQuery.trim().toLowerCase()));
     useEffect(() => {
-        if (workspace !== "extensions" || workspaceFocus !== "catalog") return;
+        const focusCatalog = workspace === "extensions" && workspaceFocus === "catalog";
+        const focusSetup = workspace === "overview" && workspaceFocus === "setup";
+        if (!focusCatalog && !focusSetup) return;
         const frame = requestAnimationFrame(() => {
-            const table = document.querySelector<HTMLElement>(".solcord-catalog-table");
-            const section = table?.closest<HTMLElement>(".solcord-section");
-            section?.scrollIntoView({block: "start"});
-            section?.querySelector<HTMLElement>("input, select, button, [href]")?.focus({preventScroll: true});
+            const target = focusCatalog
+                ? document.querySelector<HTMLElement>(".solcord-catalog-table")?.closest<HTMLElement>(".solcord-section")
+                : document.querySelector<HTMLElement>(".solcord-wizard");
+            target?.scrollIntoView({block: "start"});
+            target?.querySelector<HTMLElement>("input, select, button, [href]")?.focus({preventScroll: true});
             setWorkspaceFocus(undefined);
         });
         return () => cancelAnimationFrame(frame);
@@ -1029,6 +1032,10 @@ export default function SolcordPanel() {
     const openCatalog = () => {
         setWorkspaceFocus("catalog");
         setWorkspace("extensions");
+    };
+    const openSetup = () => {
+        setWorkspaceFocus("setup");
+        setWorkspace("overview");
     };
     return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
@@ -1041,7 +1048,7 @@ export default function SolcordPanel() {
         </div>}
         {onboarding.status === "pending" && workspace !== "overview" && <div className="solcord-setup-banner" role="status">
             <div><strong>Finish setup to replace duplicate plugins.</strong><p>Your choices are saved, but built-ins stay off and community files stay untouched until you review and apply the transaction.</p></div>
-            <ActionButton tone="accent" onClick={() => setWorkspace("overview")}>Continue setup</ActionButton>
+            <ActionButton tone="accent" onClick={openSetup}>Continue setup</ActionButton>
         </div>}
         <div className="solcord-control-center">
             <nav className="solcord-workspace-nav" aria-label="Solcord settings">
@@ -1056,7 +1063,7 @@ export default function SolcordPanel() {
                 <header className="solcord-workspace-heading"><h2>{selectedWorkspace.label}</h2><p>{selectedWorkspace.summary}</p></header>
                 {workspace === "overview" && <>
                     {onboarding.status === "pending" && <SetupWizard onReviewPending={openCatalog} />}
-                    <SessionPulse openWorkspace={setWorkspace} />
+                    <SessionPulse openWorkspace={setWorkspace} openSetup={openSetup} />
                     <ActivityBridge />
                 </>}
                 {workspace === "appearance" && <AppearanceWorkspace />}
