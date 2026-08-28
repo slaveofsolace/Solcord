@@ -12,6 +12,7 @@ import {
     parseSolcordImport,
     previewSolcordImportChanges,
     previewSetupChanges,
+    reopenOnboardingState,
     restoreSnapshotState,
     serializeSolcordSettingsExport,
     SOLCORD_PRESET_ADDONS,
@@ -439,6 +440,21 @@ describe("Solcord settings schema", () => {
         expect(document.onboarding.draft?.selectedTheme).toBe("paper-signal");
         expect(document.onboarding.draft?.selectedAddons).toEqual(["DoNotTrack"]);
         expect(document.onboarding.draft?.addonProviders.DoNotTrack).toBe("prefer-solcord");
+    });
+
+    test("resumes a deferred setup at the saved step and restarts completed setup from Welcome", () => {
+        const draft = normalizeSetupDraft({selectedTheme: "paper-signal"});
+        expect(reopenOnboardingState({version: 5, status: "skipped", lastStep: 2, completedAt: 10, draft})).toEqual({
+            version: 5,
+            status: "pending",
+            lastStep: 2,
+            draft
+        });
+        expect(reopenOnboardingState({version: 5, status: "complete", lastStep: 4, completedAt: 10})).toEqual({
+            version: 5,
+            status: "pending",
+            lastStep: 0
+        });
     });
 
     test("normalizes a setup draft to the 36 known addons and safe defaults", () => {

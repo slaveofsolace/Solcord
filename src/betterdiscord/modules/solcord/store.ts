@@ -61,6 +61,15 @@ export const SOLCORD_PRESET_ADDONS = [
 
 export const SOLCORD_POWER_EXPERIMENTS: SolcordPowerExperimentId[] = ["voice-anchor", "expression-relay", "decor", "fake-deafen", "fake-mute", "stream-rtc"];
 
+export function reopenOnboardingState(current: SolcordOnboardingState): SolcordOnboardingState {
+    return {
+        version: SOLCORD_ONBOARDING_VERSION,
+        status: "pending",
+        lastStep: current.status === "skipped" ? current.lastStep : 0,
+        ...(current.status === "skipped" && current.draft ? {draft: clone(current.draft)} : {})
+    };
+}
+
 export const MODULE_DEFAULTS: Record<SolcordModuleId, SolcordModuleSettings> = {
     "activity-bridge": {enabled: true, values: {}},
     "plugin-doctor": {enabled: true, values: {failureThreshold: 3, failureWindowMinutes: 10}},
@@ -987,7 +996,7 @@ class SolcordStore extends Store {
     }
 
     reopenOnboarding(): void {
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 0};
+        this.#document.onboarding = reopenOnboardingState(this.#document.onboarding);
         this.#appendLedger("schema", "Reopened Solcord setup.");
         this.#save();
     }
