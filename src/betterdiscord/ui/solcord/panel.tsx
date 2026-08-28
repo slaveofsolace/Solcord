@@ -2,6 +2,7 @@ import React from "react";
 import solcordMark from "@assets/branding/solcord-mark.svg";
 
 import {useStateFromStores} from "@ui/hooks";
+import PluginManager from "@modules/pluginmanager";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings from "@modules/solcord/store";
 import PluginDoctor from "@modules/solcord/doctor";
@@ -14,6 +15,7 @@ import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOLCORD_POWER_LAB} from "./catalog";
 import {prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
 import {isSolcordBuiltInAddon} from "@common/solcord/builtin-addons";
+import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
 
 const {useEffect, useRef, useState} = React;
 
@@ -30,11 +32,11 @@ function timestamp(value?: number | string): string {
     return Number.isNaN(date.valueOf()) ? "unknown" : date.toLocaleString();
 }
 
-function Section({title, summary, children}: {title: string; summary: string; children: React.ReactNode;}) {
+function Section({title, summary, children}: {title: string; summary?: string; children: React.ReactNode;}) {
     return <section className="solcord-section">
         <div className="solcord-section-heading">
             <h2>{title}</h2>
-            <p>{summary}</p>
+            {summary && <p>{summary}</p>}
         </div>
         {children}
     </section>;
@@ -855,8 +857,8 @@ function AboutSolcord() {
     </Section>;
 }
 
-function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: SolcordWorkspaceId): void; openSetup(): void;}) {
-    const state = useStateFromStores([SolcordSettings, SolcordRuntime, PluginDoctor], () => ({
+function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: SolcordWorkspaceId): void; openSetup(reviewReplacement?: boolean): void;}) {
+    const state = useStateFromStores([SolcordSettings, SolcordRuntime, PluginDoctor, PluginManager], () => ({
         document: SolcordSettings.snapshot(),
         health: SolcordRuntime.health(),
         recovery: SolcordRuntime.recoveryMode,
@@ -865,7 +867,8 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         fakeDeafen: SolcordRuntime.fakeDeafenStatus(),
         fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider(),
         relationshipChanges: SolcordRuntime.friendWatchEvents().length,
-        dueReminders: SolcordRuntime.returnLaterItems().filter(item => item.dueAt <= Date.now()).length
+        dueReminders: SolcordRuntime.returnLaterItems().filter(item => item.dueAt <= Date.now()).length,
+        duplicateProviders: SOLCORD_V2_REPLACEMENT_MANIFEST.entries.filter(entry => Boolean(PluginManager.resolveAddon(entry.fileName))).length
     }));
     const failed = state.health.filter(item => item.status === "failed" || item.status === "quarantined").length;
     const drift = state.health.find(item => item.id === "drift-radar");
@@ -874,7 +877,7 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         ...(failed || state.quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} module failure(s), ${state.quarantined} quarantined add-on(s).`, action: "Review add-ons"}] : []),
         ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
         ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
-        ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Setup is unfinished", detail: `Resume at step ${state.document.onboarding.lastStep + 1} without reapplying earlier choices.`, action: "Continue setup"}] : []),
+        ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Replace duplicate plugins", detail: `${state.duplicateProviders} reviewed plugin file(s) are still outside the suite. Review one transaction; unchanged files move to a rollback archive.`, action: "Review replacement"}] : []),
         ...([{
             id: "fake-deafen",
             priority: state.fakeDeafen.phase === "attention" ? 72 : 58,
@@ -887,8 +890,29 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} relationship transition(s) are available in this session.`, action: "Open People"}] : []),
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
     ]);
-    return <Section title="Session Pulse" summary="The three things that need your attention now.">
-        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup() : openWorkspace(signal.id === "fake-deafen" ? "power" : signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
+    return <Section title="Session Pulse" summary="What needs attention now.">
+        <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup(true) : openWorkspace(signal.id === "fake-deafen" ? "power" : signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
+    </Section>;
+}
+
+function ProviderMigrationStatus({openReview}: {openReview(): void;}) {
+    const state = useStateFromStores([PluginManager, SolcordSettings], () => {
+        const installed = SOLCORD_V2_REPLACEMENT_MANIFEST.entries.flatMap(entry => {
+            const addon = PluginManager.resolveAddon(entry.fileName);
+            return addon ? [{...entry, enabled: PluginManager.isEnabled(addon.filename) === true}] : [];
+        });
+        return {installed, onboarding: SolcordSettings.snapshot().onboarding};
+    });
+    const enabled = state.installed.filter(item => item.enabled);
+    return <Section title="Plugin replacement" summary={state.installed.length ? "Move reviewed duplicates out of Plugins after their built-ins pass." : "Community duplicates have been cleared from the scanned plugin folder."}>
+        <div className="solcord-provider-summary">
+            <div><strong>{state.installed.length}</strong><span>duplicate files</span></div>
+            <div><strong>{enabled.length}</strong><span>currently active</span></div>
+            <div><strong>{state.onboarding.status === "complete" ? "Done" : "Pending"}</strong><span>migration</span></div>
+            {state.installed.length > 0 && <ActionButton tone="accent" onClick={openReview}>Review and replace</ActionButton>}
+        </div>
+        {state.installed.length > 0 && <details className="solcord-secondary-tools solcord-provider-files"><summary>Files in the reviewed set</summary><p>{state.installed.map(item => item.fileName).join(", ")}</p><small>MessageLoggerV2 data and every plugin setting remain untouched. Only hash-verified source files move, and rollback can restore them.</small></details>}
+        {!state.installed.length && <p className="solcord-empty">No replacement action is needed.</p>}
     </Section>;
 }
 
@@ -1001,8 +1025,10 @@ function PowerLabStatus() {
     const disarm = () => setActionStatus(SolcordRuntime.disarmFakeDeafen() ? "Fake Deafen disarmed and server-visible state was resynchronized." : SolcordRuntime.fakeDeafenStatus().detail);
     const experiment = SOLCORD_POWER_LAB.find(candidate => candidate.id === "fake-deafen")!;
     const communityProvider = state.provider === "community";
-    return <Section title="Fake Deafen" summary="Keep local audio while Discord shows you as deafened.">
-        <div className="solcord-power-list"><div className="solcord-curated-row solcord-power-available"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className="solcord-maturity">account risk · manual</span><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span></div><p>{communityProvider ? "Your existing FakeDeafen plugin is installed and enabled. Solcord leaves it untouched and keeps the scoped built-in off so the two implementations never stack." : experiment.summary}</p><small>{communityProvider ? "To use Solcord's scoped provider later, disable the community plugin first, then enable and arm the built-in here." : state.status.detail}</small>{state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm in current voice channel</ActionButton>}</div>}</div><label className="solcord-toggle"><input type="checkbox" checked={state.consent.enabled} disabled={communityProvider} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{communityProvider ? "Plugin on" : state.consent.enabled ? "Built-in on" : "Off"}</span></label></div></div>
+    return <Section title="Fake Deafen" summary="Manual, call-bound, and off by default.">
+        <div className="solcord-power-control"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community provider" : state.status.phase}</span></div><p>{communityProvider ? "The community provider is active, so Solcord's adapter is standing down." : state.status.detail}</p></div><label className="solcord-toggle"><input type="checkbox" checked={state.consent.enabled} disabled={communityProvider} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{communityProvider ? "Plugin on" : state.consent.enabled ? "Built-in on" : "Off"}</span></label></div>
+        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm for this call</ActionButton>}</div>}
+        <details className="solcord-secondary-tools"><summary>Risk and automatic disarm rules</summary><p>{experiment.summary} Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
@@ -1035,7 +1061,11 @@ export default function SolcordPanel() {
         setWorkspaceFocus("catalog");
         setWorkspace("extensions");
     };
-    const openSetup = () => {
+    const openSetup = (reviewReplacement = false) => {
+        if (reviewReplacement) {
+            if (SolcordSettings.snapshot().onboarding.status !== "pending") SolcordSettings.reopenOnboarding();
+            SolcordSettings.setOnboardingStep(7);
+        }
         setWorkspaceFocus("setup");
         setWorkspace("overview");
     };
@@ -1075,6 +1105,7 @@ export default function SolcordPanel() {
                 {workspace === "voice" && <><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /></>}
                 {workspace === "friends" && <><FriendWatchPanel /><NativeSuitePanel scope="friends" /><ReturnLaterPanel /></>}
                 {workspace === "extensions" && <>
+                    <ProviderMigrationStatus openReview={() => openSetup(true)} />
                     <NativeSuitePanel scope="status" />
                     <details className="solcord-extension-disclosure"><summary>Runtime and community catalog</summary><p>Open this only when troubleshooting a module or reviewing optional community software.</p><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
                 </>}

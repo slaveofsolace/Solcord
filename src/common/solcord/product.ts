@@ -83,7 +83,7 @@ export const SOLCORD_WORKSPACES = Object.freeze([
     {id: "privacy", label: "Privacy & Safety", summary: "Links, uploads, and local history."},
     {id: "chat", label: "Chat & Composer", summary: "Writing and message tools."},
     {id: "voice", label: "Voice & Activities", summary: "Calls, Activities, and stream controls."},
-    {id: "power", label: "Power Lab", summary: "Manual experiments that stay off until you enable and arm them."},
+    {id: "power", label: "Fake Deafen", summary: "A manual, call-bound Power Lab control that stays off until you enable and arm it."},
     {id: "friends", label: "Friends & Spaces", summary: "People, servers, and local notes."},
     {id: "extensions", label: "Extensions", summary: "Built-ins and plugin migration."},
     {id: "recovery", label: "Recovery", summary: "Repair, rollback, and snapshots."},
