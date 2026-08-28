@@ -93,7 +93,7 @@ export interface SolcordProviderMigrationPlan {
     entries: readonly SolcordProviderMigrationIdentity[];
 }
 
-const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 1;
+const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length;
 
 function safeProviderIdentity(value: string, maximumLength: number): boolean {
     return value.length > 0
