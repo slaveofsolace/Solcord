@@ -73,7 +73,7 @@ export interface SolcordPowerConsent {
 export type SolcordPowerExperimentId = "voice-anchor" | "expression-relay" | "decor" | "fake-deafen" | "fake-mute" | "stream-rtc";
 
 export interface SolcordOnboardingState {
-    version: 3;
+    version: 4;
     status: SolcordOnboardingStatus;
     lastStep: number;
     draft?: SolcordSetupDraft;

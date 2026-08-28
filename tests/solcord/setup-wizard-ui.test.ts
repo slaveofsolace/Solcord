@@ -30,9 +30,12 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setSetupDraft(draft)");
         expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
+        expect(WIZARD_SOURCE).toContain("wizardRef.current?.scrollIntoView({behavior: \"auto\", block: \"start\"})");
+        expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))");
-        expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).toContain("overflow-x: auto");
+        expect(WIZARD_CSS).not.toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
         expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
     });
 
@@ -73,6 +76,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("html[data-solcord-density=\"compact\"] #app-mount");
         expect(WIZARD_CSS).toContain("html[data-solcord-message-shape=\"seamed\"] #app-mount");
         expect(WIZARD_CSS).toContain("html[data-solcord-motion=\"reduced\"] #app-mount *");
+        expect(WIZARD_CSS).toContain(".solcord-panel select option");
+        expect(WIZARD_CSS).toContain("color: #F2EADF; background: #202528");
+        expect(WIZARD_CSS).toContain("html[data-solcord-mode=\"solcord-light\"] .solcord-panel select option");
+        expect(WIZARD_CSS).toContain("color: #24211F; background: #EBE2D5");
     });
 
     test("renders only accepted ready tools and directs pending work to the catalog", () => {
@@ -85,10 +92,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("setWorkspaceFocus(\"catalog\")");
         expect(PANEL_SOURCE).toContain(".solcord-catalog-table");
         expect(PANEL_SOURCE).toContain("<SetupWizard onReviewPending={openCatalog} />");
-        expect(WIZARD_SOURCE).toContain("leaves pending catalog choices uninstalled");
+        expect(WIZARD_SOURCE).toContain("remain pending and are not downloaded here");
         expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is built in.");
         expect(WIZARD_SOURCE).toContain("review-and-manual-copy flow");
-        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
@@ -114,6 +121,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("the exact source file moves to a rollback archive");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft)");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]");
+        expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(entry.name)");
+        expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(migration.name)");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.finishSetup(draft, providerMigrationPlan)");
         expect(WIZARD_SOURCE).toContain("active community provider changed after review");
         expect(WIZARD_SOURCE).toContain("Replace duplicate cards");
@@ -133,7 +142,7 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("keeps Fake Deafen visible and preserves an active community provider", () => {
-        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
         expect(PANEL_SOURCE).toContain("Disarm and resync");

@@ -16,7 +16,7 @@ The visual system uses a graphite foundation with three functional accents rathe
 
 The warm-black, paper, and coral direction was refined on 2026-08-27 after inspecting the owner-controlled public [SOL work page](https://slaveofsolace.com/work/). The reference established visual principles—warm near-black, paper-white type, coral signals, thin rules, assertive display type, and quiet grain—not reusable assets. Solcord uses original CSS, a different deterministic grain seed, and a sparse static signal field. No portfolio canvas code, logo, image, or private content is copied. Oxidized teal remains Solcord's separate functional accent.
 
-The runtime bundles Hanken Grotesk for interface text and Anybody for display type from the official Google Fonts repository at pinned revision `ade3d1533e06b2b1462ffcde8e08b129627ca360`. Both are SIL Open Font License 1.1 fonts and are compiled into the local Solcord payload; no font request leaves Discord. Georgia remains the local editorial fallback for selected workspace and reading-theme headings.
+The runtime bundles Hanken Grotesk for interface text from the official Google Fonts repository at pinned revision `ade3d1533e06b2b1462ffcde8e08b129627ca360`. It is SIL Open Font License 1.1 and is compiled into the local Solcord payload, so no font request leaves Discord. Discord's own `gg sans` leads display hierarchy for a more native, readable Control Center. The previously evaluated Anybody font remains in source provenance but is no longer referenced by runtime CSS or shipped themes. Georgia remains the local editorial fallback for selected reading surfaces.
 
 ## Mark
 

@@ -12,7 +12,8 @@ export type SolcordV2ReplacementTarget =
     | "channel-glance"
     | "notification-review"
     | "motion-studio"
-    | "message-timeline";
+    | "message-timeline"
+    | "power-lab";
 
 export interface SolcordV2ReplacementEntry {
     cardName: string;
@@ -53,6 +54,7 @@ const ENTRIES: ReadonlyArray<Readonly<SolcordV2ReplacementEntry>> = [
     entry("DoNotTrack", "DoNotTrack.plugin.js", [], "privacy-controls", "existing-clean-room"),
     entry("DoubleClickToReply", "DoubleClickToReply.plugin.js", [], "composer-toolkit", "existing-clean-room"),
     entry("EditServers", "EditServers.plugin.js", ["BDFDB"], "people-and-spaces", "new-clean-room"),
+    entry("FakeDeafen", "FakeDeafen.plugin.js", [], "power-lab", "existing-clean-room"),
     entry("InvisibleTyping", "InvisibleTyping.plugin.js", [], "privacy-controls", "existing-clean-room"),
     entry("MessageLoggerV2", "MessageLoggerV2.plugin.js", [], "message-timeline", "existing-clean-room", "leave-untouched"),
     entry("MessagePeek", "MessagePeek.plugin.js", [], "channel-glance", "new-clean-room"),

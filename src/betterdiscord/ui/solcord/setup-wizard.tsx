@@ -13,7 +13,7 @@ import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_S
 
 import {SOLCORD_ADDON_GROUPS} from "./catalog";
 
-const {useEffect, useMemo, useState} = React;
+const {useEffect, useMemo, useRef, useState} = React;
 
 const WIZARD_STEPS = SOLCORD_SETUP_STEPS;
 
@@ -328,23 +328,27 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
             <div><dt>Bundled theme files in transaction</dt><dd>{SOLCORD_RUNTIME_THEMES.length}</dd></div>
             <div><dt>Maximum staged disk use</dt><dd>{bytesLabel(diskBytes)}</dd></div>
         </dl>
-        <div className="solcord-review-columns">
-            <div><strong>Settings diff</strong>{changes.length ? <ul>{changes.map(change => <li key={change}>{change}</li>)}</ul> : <p>No stored-selection difference; Apply and verify still checks selected files.</p>}</div>
-            <div><strong>Known conflict checks</strong>{conflicts.length ? <ul>{conflicts.map(conflict => <li key={conflict}>{conflict}</li>)}</ul> : <p>No catalog-declared conflicts in this selection.</p>}</div>
-        </div>
-        {plan.skipped.length > 0 && <p className="solcord-callout"><strong>Pending stays pending:</strong> {plan.skipped.length} saved catalog request(s) remain uninstalled. Review their individual evidence and status in the catalog after setup.</p>}
-        {activeSkipped.length > 0 && <p className="solcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SolcordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. Solcord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
-        {activeUnrequested.length > 0 && <p className="solcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
-        {communityKeeps.length > 0 && <p className="solcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName}, ${counterpart.enabled ? "on" : "off"})`).join(", ")} stay owner-managed. Matching Solcord built-ins stand down.</p>}
         {communitySwitches.length > 0 && <p className="solcord-callout solcord-callout-danger"><strong>Replace duplicate cards:</strong> Apply and verify stops active files in this reviewed set, starts each matching Solcord built-in, then moves the exact unchanged source files into a timestamped rollback archive outside Plugins: {communitySwitches.map(counterpart => counterpart.fileName).join(", ")}. Settings and private databases stay untouched.</p>}
-        {liveThemeState.activeThirdPartyNames.length > 0 && <p className="solcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
-        <div className="solcord-callout"><strong>Exact theme transaction</strong><p>All {SOLCORD_RUNTIME_THEMES.length} bundled files are included and hash-verified; missing files are staged: {SOLCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
-        <p className="solcord-callout">Apply and verify changes only the accepted ready set, leaves pending catalog choices uninstalled, verifies accepted hashes and dependencies, activates one Solcord theme, and keeps a one-click rollback record.</p>
+        <details className="solcord-review-details">
+            <summary>Review every setting, conflict, and file</summary>
+            <div className="solcord-review-columns">
+                <div><strong>Settings diff</strong>{changes.length ? <ul>{changes.map(change => <li key={change}>{change}</li>)}</ul> : <p>No stored-selection difference; Apply and verify still checks selected files.</p>}</div>
+                <div><strong>Known conflict checks</strong>{conflicts.length ? <ul>{conflicts.map(conflict => <li key={conflict}>{conflict}</li>)}</ul> : <p>No catalog-declared conflicts in this selection.</p>}</div>
+            </div>
+            {plan.skipped.length > 0 && <p className="solcord-callout"><strong>Pending stays pending:</strong> {plan.skipped.length} saved catalog request(s) remain uninstalled. Review their individual evidence and status in the catalog after setup.</p>}
+            {activeSkipped.length > 0 && <p className="solcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SolcordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. Solcord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
+            {activeUnrequested.length > 0 && <p className="solcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
+            {communityKeeps.length > 0 && <p className="solcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName}, ${counterpart.enabled ? "on" : "off"})`).join(", ")} stay owner-managed. Matching Solcord built-ins stand down.</p>}
+            {liveThemeState.activeThirdPartyNames.length > 0 && <p className="solcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
+            <div className="solcord-callout"><strong>Theme files</strong><p>All {SOLCORD_RUNTIME_THEMES.length} bundled files are included and hash-verified. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior state.</p></div>
+        </details>
+        <p className="solcord-callout">Only the ready set changes. Pending tools stay uninstalled, exact hashes are verified, and rollback is kept.</p>
     </div>;
 }
 
 export default function SetupWizard({onReviewPending}: {onReviewPending(): void;}) {
     const document = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot());
+    const wizardRef = useRef<HTMLElement | null>(null);
     const [step, setStepState] = useState(document.onboarding.lastStep);
     const [draft, setDraftState] = useState<SolcordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
@@ -356,6 +360,9 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
         try {SolcordSettings.setSetupDraft(draft);}
         catch {setStatus("Your setup choices could not be saved. The durable draft was left unchanged; check disk access and retry before applying.");}
     }, [draft]);
+    useEffect(() => {
+        wizardRef.current?.scrollIntoView({behavior: "auto", block: "start"});
+    }, [step]);
     const setDraft = (update: SolcordSetupDraft | ((current: SolcordSetupDraft) => SolcordSetupDraft)) => setDraftState(current => typeof update === "function" ? update(current) : update);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setProvider = (name: string, provider: SolcordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
@@ -386,7 +393,7 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
             return;
         }
         const providerMigrations = providerMigrationPlan.entries.map(entry => entry.fileName);
-        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected Solcord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them.` : "";
+        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected Solcord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them. BDFDB retires last only when no retained enabled addon still needs it.` : "";
         if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s), verify or provision the ${SOLCORD_RUNTIME_THEMES.length} bundled theme files, and activate ${SOLCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? ${plan.skipped.length} selected optional choice(s) will be skipped without download. Existing differing files will abort without being overwritten.${migrationNotice}`)) return;
         setBusy(true);
         setStatus(plan.skipped.length ? `Applying the ready set; ${plan.skipped.length} unavailable choice(s) will be skipped…` : "Applying the ready set and verifying hashes…");
@@ -406,8 +413,8 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
 
     if (paused) return <section className="solcord-wizard solcord-wizard-paused" aria-label="Solcord setup paused"><div><strong>Setup paused</strong><p>Your draft is saved at step {step + 1}. No feature, addon, theme, or account state changed.</p></div><button type="button" className="solcord-action solcord-action-accent" onClick={() => setPaused(false)}>Resume setup</button></section>;
 
-    return <section className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
-        <div className="solcord-wizard-title"><div><h2 id="solcord-setup-title">Set up Solcord</h2><p>Your choices save as you go. Files and active features change only after the final review.</p></div><span>Step {step + 1} of {WIZARD_STEPS.length}</span></div>
+    return <section ref={wizardRef} className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
+        <div className="solcord-wizard-title"><div><h2 id="solcord-setup-title">Set up Solcord</h2><p>Your draft saves as you go. Nothing changes before Apply and verify.</p></div><div className="solcord-wizard-title-actions"><span>Step {step + 1} of {WIZARD_STEPS.length}</span>{step < WIZARD_STEPS.length - 1 && <button type="button" className="solcord-text-button" disabled={busy} onClick={() => setStep(WIZARD_STEPS.length - 1)}>Review changes</button>}</div></div>
         <div className="solcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
         {step === 0 && <WelcomeStep />}

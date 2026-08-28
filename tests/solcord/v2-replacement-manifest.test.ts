@@ -16,6 +16,7 @@ const EXPECTED_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
     "DoNotTrack.plugin.js": [],
     "DoubleClickToReply.plugin.js": [],
     "EditServers.plugin.js": ["BDFDB"],
+    "FakeDeafen.plugin.js": [],
     "InvisibleTyping.plugin.js": [],
     "MessageLoggerV2.plugin.js": [],
     "MessagePeek.plugin.js": [],
@@ -31,13 +32,13 @@ const EXPECTED_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
 };
 
 describe("Solcord V2 provider replacement manifest", () => {
-    test("maps the 23 parity-validated community providers and never auto-archives FakeDeafen", () => {
+    test("maps all 24 replaced community cards and limits retirement to exact source files", () => {
         expect(SOLCORD_V2_REPLACEMENT_MANIFEST.version).toBe(2);
-        expect(SOLCORD_V2_REPLACEMENT_MANIFEST.entries).toHaveLength(23);
+        expect(SOLCORD_V2_REPLACEMENT_MANIFEST.entries).toHaveLength(24);
         expect(Object.fromEntries(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => [entry.fileName, entry.dependencies]))).toEqual(EXPECTED_DEPENDENCIES);
-        expect(new Set(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName)).size).toBe(23);
+        expect(new Set(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName)).size).toBe(24);
         expect(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.every(entry => entry.requiresHashBinding && entry.archiveScope === "source-file-only")).toBeTrue();
-        expect(findSolcordV2Replacement("FakeDeafen.plugin.js")).toBeUndefined();
+        expect(findSolcordV2Replacement("FakeDeafen.plugin.js")).toMatchObject({replacement: "power-lab", archiveScope: "source-file-only"});
     });
 
     test("keeps private MessageLoggerV2 data explicitly untouched", () => {
@@ -49,8 +50,8 @@ describe("Solcord V2 provider replacement manifest", () => {
         const presentFiles = Object.keys(EXPECTED_DEPENDENCIES);
         const plan = planSolcordV2ProviderRetirement({presentFiles, replacementReadyFiles: presentFiles});
         expect(plan.blockers).toEqual([]);
-        expect(plan.steps).toHaveLength(23);
-        expect(plan.steps.at(-1)).toMatchObject({fileName: "0BDFDB.plugin.js", action: "retire-bdfdb-after-all-consumers", order: 23});
+        expect(plan.steps).toHaveLength(24);
+        expect(plan.steps.at(-1)).toMatchObject({fileName: "0BDFDB.plugin.js", action: "retire-bdfdb-after-all-consumers", order: 24});
         expect(plan.steps.find(step => step.fileName === "MessageLoggerV2.plugin.js")?.preservePrivateData).toBeTrue();
         expect(plan.steps.slice(0, -1).some(step => step.fileName === "0BDFDB.plugin.js")).toBeFalse();
     });

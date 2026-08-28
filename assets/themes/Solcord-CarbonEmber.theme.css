@@ -121,7 +121,7 @@ body {
 }
 
 #app-mount { background: var(--solcord-canvas) !important; }
-#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: "Solcord Anybody", "Segoe UI Variable Display", "Segoe UI", sans-serif; font-kerning: normal; font-stretch: 104%; letter-spacing: -0.022em; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: "gg sans", "Solcord Hanken", "Segoe UI Variable Display", "Segoe UI", sans-serif; font-kerning: normal; letter-spacing: -0.016em; }
 
 #app-mount [class*="sidebar_"]:has(> [class*="guilds_"]) {
     gap: var(--solcord-gap);

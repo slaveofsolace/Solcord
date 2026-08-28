@@ -13,7 +13,7 @@ import {
 } from "../../src/common/solcord/product";
 
 describe("Solcord V2 product model", () => {
-    test("owns the ten task-oriented Control Center workspaces and eight resumable setup steps", () => {
+    test("owns the eleven task-oriented Control Center workspaces and eight resumable setup steps", () => {
         expect(SOLCORD_WORKSPACES.map(workspace => workspace.id)).toEqual([
             "overview",
             "appearance",
@@ -21,6 +21,7 @@ describe("Solcord V2 product model", () => {
             "privacy",
             "chat",
             "voice",
+            "power",
             "friends",
             "extensions",
             "recovery",

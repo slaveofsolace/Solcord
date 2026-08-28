@@ -410,7 +410,7 @@ describe("Solcord settings schema", () => {
             }
         });
 
-        expect(document.onboarding.version).toBe(3);
+        expect(document.onboarding.version).toBe(4);
         expect(document.onboarding.lastStep).toBe(4);
         expect(document.onboarding.draft?.selectedTheme).toBe("paper-signal");
         expect(document.onboarding.draft?.selectedAddons).toEqual(["DoNotTrack"]);
@@ -467,7 +467,7 @@ describe("Solcord settings schema", () => {
         expect(stalePreview.curatedAddons.SplitLargeMessages).toEqual(expect.objectContaining({selected: true, enabled: true, mode: "guarded"}));
     });
 
-    test("previews staged setup intent while preserving skipped onboarding and current state", () => {
+    test("reopens an older completed setup once for the full provider-consolidation review", () => {
         const document = normalizeSolcordDocument({schemaVersion: 3, onboarding: {status: "skipped", completedAt: 10}});
         const before = structuredClone(document);
         const noChangeDraft = {
@@ -479,7 +479,7 @@ describe("Solcord settings schema", () => {
             productPreferences: document.productPreferences
         };
 
-        expect(document.onboarding).toEqual({version: 3, status: "skipped", lastStep: 0, completedAt: 10});
+        expect(document.onboarding).toEqual({version: 4, status: "pending", lastStep: 0});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
         const recommended = recommendedSolcordSetupAddons();
         expect(enablePreview).toHaveLength(recommended.length);

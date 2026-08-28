@@ -120,7 +120,7 @@ describe("Solcord V2 theme family", () => {
     test("uses six materially different structural signatures", () => {
         const fingerprints = new Map<string, readonly string[]>([
             ["Solcord-Threadline.theme.css", ["--sct-radius: 0px", "border-bottom: 1px solid rgb(52 70 81 / 42%)", "box-shadow: inset 3px 0 0"]],
-            ["Solcord-SignalBlock.theme.css", ["border: 2px solid var(--scb-line)", "box-shadow: 8px 8px 0", "font-stretch: 82%"]],
+            ["Solcord-SignalBlock.theme.css", ["border: 2px solid var(--scb-line)", "box-shadow: 8px 8px 0", "font-family: \"Arial Narrow\""]],
             ["Solcord-RelayClassic.theme.css", ["border-radius: 7px", "box-shadow: inset 3px 0 0 var(--scr-blue)", "border-right: 1px solid var(--scr-line)"]],
             ["Solcord-Workshop.theme.css", ["box-shadow: inset 0 2px 4px", "margin: 5px", "background: var(--scw-recess)"]],
             ["Solcord-QuietRead.theme.css", ["max-width: 78ch", "min-height: 44px", "transition-duration: 0s"]],

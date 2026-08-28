@@ -5,6 +5,7 @@ import os from "os";
 import path from "path";
 
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_THEMES} from "../../src/common/solcord/addon-catalog.generated";
+import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "../../src/common/solcord/v2-replacement-manifest";
 
 
 let appDataPath = "";
@@ -390,6 +391,40 @@ describe("Solcord V2 provider archive", () => {
         const restored = await archive.rollback(applied.transactionId);
         expect(restored.complete).toBeTrue();
         expect(fs.readFileSync(path.join(pluginRoot, "DoNotTrack.plugin.js"), "utf8")).toContain("exact owner");
+    });
+
+    test("archives the complete 24-file provider set, keeps MessageLogger data, retires BDFDB last, and restores every byte", async () => {
+        const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
+        fs.mkdirSync(pluginRoot, {recursive: true});
+        const originals = new Map(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map((entry, index) => {
+            const bytes = `// exact provider ${index}: ${entry.fileName}\n`;
+            fs.writeFileSync(path.join(pluginRoot, entry.fileName), bytes, "utf8");
+            return [entry.fileName, bytes];
+        }));
+        fs.writeFileSync(path.join(pluginRoot, "MessageLoggerV2.config.json"), "private-config-sentinel", "utf8");
+        fs.writeFileSync(path.join(pluginRoot, "MessageLoggerV2Data.config.json"), "private-data-sentinel", "utf8");
+        fs.mkdirSync(path.join(pluginRoot, "MLV2_IMAGE_CACHE"));
+        fs.writeFileSync(path.join(pluginRoot, "MLV2_IMAGE_CACHE", "private-media-sentinel.bin"), "private-media-sentinel", "utf8");
+
+        const archive = attestedArchive();
+        const replacementReadyFiles = SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName);
+        const preview = await archive.preview({replacementReadyFiles, retainedBdfdbConsumers: []});
+
+        expect(preview.records).toHaveLength(24);
+        expect(preview.plan.blockers).toEqual([]);
+        expect(preview.plan.steps.at(-1)?.fileName).toBe("0BDFDB.plugin.js");
+        expect(preview.plan.steps.find(step => step.fileName === "MessageLoggerV2.plugin.js")?.preservePrivateData).toBeTrue();
+
+        const applied = await archive.apply(preview.previewId);
+        expect(replacementReadyFiles.every(fileName => !fs.existsSync(path.join(pluginRoot, fileName)))).toBeTrue();
+        expect(fs.readFileSync(path.join(pluginRoot, "MessageLoggerV2.config.json"), "utf8")).toBe("private-config-sentinel");
+        expect(fs.readFileSync(path.join(pluginRoot, "MessageLoggerV2Data.config.json"), "utf8")).toBe("private-data-sentinel");
+        expect(fs.readFileSync(path.join(pluginRoot, "MLV2_IMAGE_CACHE", "private-media-sentinel.bin"), "utf8")).toBe("private-media-sentinel");
+
+        const restored = await archive.rollback(applied.transactionId);
+        expect(restored.complete).toBeTrue();
+        for (const [fileName, bytes] of originals) expect(fs.readFileSync(path.join(pluginRoot, fileName), "utf8")).toBe(bytes);
+        expect(fs.readFileSync(path.join(pluginRoot, "MessageLoggerV2Data.config.json"), "utf8")).toBe("private-data-sentinel");
     });
 
     test("rejects a provider that changes after preview without moving it", async () => {
