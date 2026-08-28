@@ -100,6 +100,23 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(enabled.has("Other.plugin.js")).toBeFalse();
     });
 
+    test("captures installed disabled providers so setup can archive duplicate cards after parity", () => {
+        const manager = {
+            addonList: [{filename: "DoNotTrack.plugin.js"}],
+            resolveAddon(value: string) {
+                return value === "DoNotTrack.plugin.js" || value === "DoNotTrack" ? {id: "DoNotTrack", filename: "DoNotTrack.plugin.js"} : undefined;
+            },
+            isEnabled() {return false;}
+        };
+        const plan = createSolcordProviderMigrationPlan(manager, [{name: "DoNotTrack", fileName: "DoNotTrack.plugin.js"}], {
+            selectedAddons: ["DoNotTrack"],
+            addonModes: {DoNotTrack: "default"},
+            addonProviders: {DoNotTrack: "prefer-solcord"}
+        });
+
+        expect(plan?.entries).toEqual([{name: "DoNotTrack", fileName: "DoNotTrack.plugin.js", enabled: false, provider: "prefer-solcord"}]);
+    });
+
     test("canonicalizes a bounded exact plan and rejects path-shaped identities", () => {
         const plan = canonicalizeSolcordProviderMigrationPlan({
             version: 1,
@@ -111,6 +128,10 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(canonicalizeSolcordProviderMigrationPlan({
             version: 1,
             entries: [{name: "DoNotTrack", fileName: "..\\A.plugin.js", enabled: true, provider: "prefer-solcord"}]
+        })).toBeUndefined();
+        expect(canonicalizeSolcordProviderMigrationPlan({
+            version: 1,
+            entries: [{name: "DoNotTrack", fileName: "A.plugin.js", enabled: "false", provider: "prefer-solcord"}]
         })).toBeUndefined();
     });
 });

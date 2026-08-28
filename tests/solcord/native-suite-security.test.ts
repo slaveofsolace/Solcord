@@ -87,6 +87,33 @@ afterEach(() => {
 });
 
 describe("Solcord native-suite security boundaries", () => {
+    test("distinguishes disabled, setup-required, ready, and unsupported adapters", () => {
+        const idleScope = new SolcordDisposalScope();
+        const idle = new SolcordNativeSuiteController(idleScope, {}, {});
+        idle.start();
+        controllers.push({controller: idle, scope: idleScope});
+        const idleStatus = Object.fromEntries(idle.statuses().map(item => [item.id, item.maturity]));
+        expect(idleStatus["audio-console"]).toBe("off");
+        expect(idleStatus["voice-health"]).toBe("unsupported");
+        expect(idleStatus["permission-lens"]).toBe("ready");
+        expect(idleStatus["local-identity-notes"]).toBe("needs-setup");
+        expect(idle.providerReady("BetterVolume")).toBeFalse();
+
+        const activeScope = new SolcordDisposalScope();
+        const active = new SolcordNativeSuiteController(activeScope, {BetterVolume: true, Translator: true}, {
+            currentChannelId: () => "123456",
+            setLocalVolume: () => {}
+        });
+        active.start();
+        controllers.push({controller: active, scope: activeScope});
+        const activeStatus = Object.fromEntries(active.statuses().map(item => [item.id, item.maturity]));
+        expect(activeStatus["audio-console"]).toBe("ready");
+        expect(activeStatus["translation-desk"]).toBe("needs-setup");
+        expect(active.providerReady("BetterVolume")).toBeTrue();
+        expect(active.providerReady("Translator")).toBeTrue();
+        expect(active.currentChannelId()).toBe("123456");
+    });
+
     test("consumes translation JSON through a hard streamed-byte limit", async () => {
         const encoder = new TextEncoder();
         const body = new ReadableStream<Uint8Array>({

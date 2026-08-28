@@ -39,7 +39,9 @@ describe("Solcord beginner-first setup UI", () => {
     test("keys responsive layout to the actual settings content container", () => {
         expect(WIZARD_CSS).toContain("container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
         expect(WIZARD_CSS).toContain("padding: 0 clamp(20px, 2.8vw, 34px) 52px");
-        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 900px)");
+        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
@@ -104,16 +106,17 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("current.selectedAddons.filter(name => !readyNames.has(name))");
     });
 
-    test("shows an explicit reversible provider choice only for an active community counterpart", () => {
+    test("shows an explicit reversible provider choice for an installed community counterpart", () => {
         expect(WIZARD_SOURCE).toContain("showProviderChoice = selected.has(addon.name) && Boolean(communityFile) && isSolcordBuiltInAddon");
-        expect(WIZARD_SOURCE).toContain("Keep community addon (recommended)");
-        expect(WIZARD_SOURCE).toContain("Use Solcord built-in");
-        expect(WIZARD_SOURCE).toContain("Apply and verify disables this exact community file. Rollback restores its exact prior state.");
+        expect(WIZARD_SOURCE).toContain("installedCommunityFiles");
+        expect(WIZARD_SOURCE).toContain("Use Solcord built-in (recommended)");
+        expect(WIZARD_SOURCE).toContain("Keep community addon");
+        expect(WIZARD_SOURCE).toContain("the exact source file moves to a rollback archive");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft)");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]");
         expect(WIZARD_SOURCE).toContain("SolcordRuntime.finishSetup(draft, providerMigrationPlan)");
         expect(WIZARD_SOURCE).toContain("active community provider changed after review");
-        expect(WIZARD_SOURCE).toContain("This explicitly disables");
+        expect(WIZARD_SOURCE).toContain("Replace duplicate cards");
     });
 
     test("describes the clean-room interaction tools without claiming unavailable choices or automatic sends", () => {

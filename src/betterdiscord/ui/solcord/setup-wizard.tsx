@@ -252,10 +252,10 @@ function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPendi
     const pendingDecisions = useMemo(() => plan.decisions.filter(decision => !isReadyDecision(decision)), [plan.decisions]);
     const selectedReadyCount = readyDecisions.filter(decision => selected.has(decision.name)).length;
     const selectedPendingCount = pendingDecisions.filter(decision => selected.has(decision.name)).length;
-    const activeCommunityFiles = useStateFromStores([PluginManager], () => Object.fromEntries(SOLCORD_RUNTIME_ADDONS.flatMap(candidate => {
+    const installedCommunityFiles = useStateFromStores([PluginManager], () => Object.fromEntries(SOLCORD_RUNTIME_ADDONS.flatMap(candidate => {
         const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
-        return addon && PluginManager.isEnabled(addon.filename) ? [[candidate.name, addon.filename]] : [];
-    })) as Record<string, string>);
+        return addon ? [[candidate.name, {fileName: addon.filename, enabled: PluginManager.isEnabled(addon.filename)}]] : [];
+    })) as Record<string, {fileName: string; enabled: boolean;}>);
     return <div className="solcord-wizard-body">
         <div className="solcord-wizard-inline-heading"><div><h3>Ready local tools</h3><p>{selectedReadyCount} of {readyDecisions.length} selected. Each tool starts only after its Discord adapter validates.</p></div><div className="solcord-actions"><button type="button" className="solcord-action" onClick={selectRecommended}>Use recommended</button><button type="button" className="solcord-action" onClick={() => readyDecisions.forEach(decision => toggle(decision.name, false))}>Clear ready choices</button></div></div>
         <div className="solcord-addon-groups">
@@ -263,7 +263,7 @@ function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPendi
                 <legend>{group.title} <small>{group.summary}</small></legend>
                 {group.addons.map(addon => {
                     const decision = decisions.get(addon.name)!;
-                    const communityFile = activeCommunityFiles[addon.name];
+                    const communityFile = installedCommunityFiles[addon.name];
                     const showProviderChoice = selected.has(addon.name) && Boolean(communityFile) && isSolcordBuiltInAddon(addon.name, draft.addonModes[addon.name]);
                     return <React.Fragment key={addon.name}>
                         <label className="solcord-addon-choice">
@@ -272,9 +272,9 @@ function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPendi
                             <span className="solcord-review-chip">{decision.statusLabel}</span>
                         </label>
                         {showProviderChoice && <fieldset className="solcord-provider-choice">
-                        <legend>Provider for <code>{communityFile}</code></legend>
-                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-community"} onChange={() => setProvider(addon.name, "prefer-community")} /><span><strong>Keep community addon (recommended)</strong><small>The owner file stays enabled and Solcord’s matching built-in stands down.</small></span></label>
-                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-solcord"} onChange={() => setProvider(addon.name, "prefer-solcord")} /><span><strong>Use Solcord built-in</strong><small>Apply and verify disables this exact community file. Rollback restores its exact prior state.</small></span></label>
+                        <legend>Existing file: <code>{communityFile.fileName}</code> · {communityFile.enabled ? "on" : "off"}</legend>
+                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-solcord"} onChange={() => setProvider(addon.name, "prefer-solcord")} /><span><strong>Use Solcord built-in (recommended)</strong><small>After the replacement validates, the exact source file moves to a rollback archive. Its settings and data stay untouched.</small></span></label>
+                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-community"} onChange={() => setProvider(addon.name, "prefer-community")} /><span><strong>Keep community addon</strong><small>This file stays in Plugins and Solcord’s matching built-in stands down.</small></span></label>
                         </fieldset>}
                     </React.Fragment>;
                 })}
@@ -303,14 +303,14 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
         const requested = new Set(plan.requestedAddons);
         return SOLCORD_RUNTIME_ADDONS.filter(candidate => !requested.has(candidate.name) && communityAddonIsEnabled(PluginManager, candidate.name, candidate.fileName)).map(candidate => candidate.name);
     });
-    const activeBuiltInCounterparts = useStateFromStores([PluginManager], () => plan.executableAddons.flatMap(name => {
+    const installedBuiltInCounterparts = useStateFromStores([PluginManager], () => plan.executableAddons.flatMap(name => {
         const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === name);
         if (!candidate || !isSolcordBuiltInAddon(name, draft.addonModes[name])) return [];
         const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
-        return addon && PluginManager.isEnabled(addon.filename) ? [{name, fileName: addon.filename}] : [];
+        return addon ? [{name, fileName: addon.filename, enabled: PluginManager.isEnabled(addon.filename)}] : [];
     }));
     const communitySwitches = providerMigrationPlan?.entries ?? [];
-    const communityKeeps = activeBuiltInCounterparts.filter(counterpart => draft.addonProviders[counterpart.name] !== "prefer-solcord");
+    const communityKeeps = installedBuiltInCounterparts.filter(counterpart => draft.addonProviders[counterpart.name] !== "prefer-solcord");
     const liveThemeState = useStateFromStores([ThemeManager], () => ({
         selectedEnabled: ThemeManager.isEnabled(selectedTheme.fileName),
         activeOtherNames: SOLCORD_THEMES.filter(theme => theme.id !== selectedTheme.id && ThemeManager.isEnabled(theme.fileName)).map(theme => theme.name),
@@ -335,8 +335,8 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
         {plan.skipped.length > 0 && <p className="solcord-callout"><strong>Pending stays pending:</strong> {plan.skipped.length} saved catalog request(s) remain uninstalled. Review their individual evidence and status in the catalog after setup.</p>}
         {activeSkipped.length > 0 && <p className="solcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SolcordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. Solcord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
         {activeUnrequested.length > 0 && <p className="solcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
-        {communityKeeps.length > 0 && <p className="solcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName})`).join(", ")} remain enabled and owner-managed. Matching Solcord built-ins stand down.</p>}
-        {communitySwitches.length > 0 && <p className="solcord-callout solcord-callout-danger"><strong>Explicit provider migration:</strong> Apply and verify disables only {communitySwitches.map(counterpart => counterpart.fileName).join(", ")}, starts the matching Solcord built-in(s), then moves exact unchanged provider source files into a timestamped rollback archive outside the scanned Plugins folder. Configuration and private databases stay untouched.</p>}
+        {communityKeeps.length > 0 && <p className="solcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName}, ${counterpart.enabled ? "on" : "off"})`).join(", ")} stay owner-managed. Matching Solcord built-ins stand down.</p>}
+        {communitySwitches.length > 0 && <p className="solcord-callout solcord-callout-danger"><strong>Replace duplicate cards:</strong> Apply and verify stops active files in this reviewed set, starts each matching Solcord built-in, then moves the exact unchanged source files into a timestamped rollback archive outside Plugins: {communitySwitches.map(counterpart => counterpart.fileName).join(", ")}. Settings and private databases stay untouched.</p>}
         {liveThemeState.activeThirdPartyNames.length > 0 && <p className="solcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
         <div className="solcord-callout"><strong>Exact theme transaction</strong><p>All {SOLCORD_RUNTIME_THEMES.length} bundled files are included and hash-verified; missing files are staged: {SOLCORD_RUNTIME_THEMES.map(theme => theme.fileName).join(", ")}. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior enabled states and removes only unchanged files added by this transaction.</p></div>
         <p className="solcord-callout">Apply and verify changes only the accepted ready set, leaves pending catalog choices uninstalled, verifies accepted hashes and dependencies, activates one Solcord theme, and keeps a one-click rollback record.</p>
