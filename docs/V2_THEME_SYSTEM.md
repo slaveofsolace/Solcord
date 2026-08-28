@@ -5,7 +5,7 @@ The six V2 themes extend Solcord's accepted V1 direction without treating a pale
 | Theme | Structural character | Signature behavior |
 | --- | --- | --- |
 | Threadline | Square, compact, ruled, index-like | A continuous left rail and row rules connect navigation to message state. |
-| Signal Block | Heavy square containment, wider rhythm, deliberately compressed Anybody display type | Hover, selected, warning, and focus states change the physical block boundary. |
+| Signal Block | Heavy square containment, wider rhythm, and a restrained system condensed heading stack | Hover, selected, warning, and focus states change the physical block boundary. |
 | Relay Classic | Familiar density, modest radii, continuous shell | Quiet blue state bars preserve Discord's normal reading rhythm. |
 | Workshop | Tactile gaps, inset inputs, raised work surfaces | Copper fixtures distinguish pressable controls from recessed composition areas. |
 | Quiet Read | Light, spacious, 78-character message measure, large targets | Motion stays off and state changes remain visible through border and contrast. |

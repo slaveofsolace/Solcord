@@ -100,7 +100,8 @@ export interface SolcordProviderAdapterResult {
 }
 
 const MESSAGE_LOGGER_PROVIDER = Object.freeze({name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js"});
-const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 1;
+const FAKE_DEAFEN_PROVIDER = Object.freeze({name: "FakeDeafen", fileName: "FakeDeafen.plugin.js"});
+const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 2;
 
 function safeProviderIdentity(value: string, maximumLength: number): boolean {
     return value.length > 0
@@ -174,6 +175,15 @@ export function createSolcordProviderMigrationPlan(
             });
         }
     }
+    const fakeDeafen = resolveCommunityAddon(manager, FAKE_DEAFEN_PROVIDER.name, FAKE_DEAFEN_PROVIDER.fileName);
+    if (fakeDeafen?.filename === FAKE_DEAFEN_PROVIDER.fileName && manager.isEnabled(fakeDeafen.filename) !== true) {
+        entries.push({
+            name: FAKE_DEAFEN_PROVIDER.name,
+            fileName: fakeDeafen.filename,
+            enabled: false,
+            provider: "prefer-solcord"
+        });
+    }
     return canonicalizeSolcordProviderMigrationPlan({version: 1, entries});
 }
 
@@ -184,6 +194,7 @@ export function solcordProviderReplacementIsReady(
     timelineRuntimeReady: boolean
 ): boolean {
     if (migration.name === MESSAGE_LOGGER_PROVIDER.name) return !migration.enabled || timelineEnabled && timelineRuntimeReady;
+    if (migration.name === FAKE_DEAFEN_PROVIDER.name) return !migration.enabled;
     return adapter?.enabled === true && adapter.provider === "solcord";
 }
 

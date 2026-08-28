@@ -393,7 +393,7 @@ describe("Solcord V2 provider archive", () => {
         expect(fs.readFileSync(path.join(pluginRoot, "DoNotTrack.plugin.js"), "utf8")).toContain("exact owner");
     });
 
-    test("archives the complete 23-file provider set, keeps MessageLogger data, retires BDFDB last, and restores every byte", async () => {
+    test("archives the complete 24-file provider set, keeps MessageLogger data, retires BDFDB last, and restores every byte", async () => {
         const pluginRoot = path.join(appDataPath, "BetterDiscord", "plugins");
         fs.mkdirSync(pluginRoot, {recursive: true});
         const originals = new Map(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map((entry, index) => {
@@ -410,7 +410,7 @@ describe("Solcord V2 provider archive", () => {
         const replacementReadyFiles = SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName);
         const preview = await archive.preview({replacementReadyFiles, retainedBdfdbConsumers: []});
 
-        expect(preview.records).toHaveLength(23);
+        expect(preview.records).toHaveLength(24);
         expect(preview.plan.blockers).toEqual([]);
         expect(preview.plan.steps.at(-1)?.fileName).toBe("0BDFDB.plugin.js");
         expect(preview.plan.steps.find(step => step.fileName === "MessageLoggerV2.plugin.js")?.preservePrivateData).toBeTrue();

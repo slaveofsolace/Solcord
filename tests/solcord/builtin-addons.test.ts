@@ -149,6 +149,25 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(consented?.entries).toEqual([{name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js", enabled: true, provider: "prefer-solcord"}]);
     });
 
+    test("seals only an already-disabled standalone FakeDeafen source", () => {
+        let enabled = false;
+        const manager = {
+            addonList: [{filename: "FakeDeafen.plugin.js"}],
+            resolveAddon(value: string) {
+                return value === "FakeDeafen.plugin.js" || value === "FakeDeafen" ? {id: "FakeDeafen", filename: "FakeDeafen.plugin.js"} : undefined;
+            },
+            isEnabled() {return enabled;}
+        };
+
+        const disabled = createSolcordProviderMigrationPlan(manager, [], {selectedAddons: [], addonModes: {}, addonProviders: {}});
+        enabled = true;
+        const active = createSolcordProviderMigrationPlan(manager, [], {selectedAddons: [], addonModes: {}, addonProviders: {}});
+
+        expect(disabled?.entries).toEqual([{name: "FakeDeafen", fileName: "FakeDeafen.plugin.js", enabled: false, provider: "prefer-solcord"}]);
+        expect(active?.entries).toEqual([]);
+        expect(solcordProviderReplacementIsReady(disabled!.entries[0], undefined, false, false)).toBeTrue();
+    });
+
     test("requires a live Timeline adapter before retiring an active logger", () => {
         const disabledLogger = {name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js", enabled: false, provider: "prefer-solcord" as const};
         const activeLogger = {...disabledLogger, enabled: true};

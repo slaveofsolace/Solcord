@@ -29,7 +29,7 @@ import type {
 
 export const SOLCORD_SCHEMA_VERSION = 6;
 export const SOLCORD_CONSENT_VERSION = 3;
-export const SOLCORD_ONBOARDING_VERSION = 3;
+export const SOLCORD_ONBOARDING_VERSION = 4;
 const MAX_SNAPSHOTS = 20;
 const MAX_LEDGER_ENTRIES = 100;
 const MAX_PROFILES = 50;
@@ -182,12 +182,15 @@ function normalizePowerLab(value: unknown): Record<SolcordPowerExperimentId, Sol
 
 function normalizeOnboarding(value: unknown): SolcordOnboardingState {
     const record = isRecord(value) ? value : {};
+    const priorVersion = boundedNumber(record.version, 0, 0, SOLCORD_ONBOARDING_VERSION);
+    const priorStatus = stringChoice(record.status, ["pending", "complete", "skipped"] as const, "pending");
+    const requiresProviderReview = priorVersion < SOLCORD_ONBOARDING_VERSION && priorStatus !== "pending";
     return {
-        version: 3,
-        status: stringChoice(record.status, ["pending", "complete", "skipped"] as const, "pending"),
-        lastStep: boundedNumber(record.lastStep, 0, 0, 7),
+        version: SOLCORD_ONBOARDING_VERSION,
+        status: requiresProviderReview ? "pending" : priorStatus,
+        lastStep: requiresProviderReview ? 0 : boundedNumber(record.lastStep, 0, 0, 7),
         ...(isRecord(record.draft) ? {draft: normalizeSetupDraft(record.draft)} : {}),
-        ...(typeof record.completedAt === "number" ? {completedAt: boundedNumber(record.completedAt, 0, 0, Number.MAX_SAFE_INTEGER)} : {})
+        ...(!requiresProviderReview && typeof record.completedAt === "number" ? {completedAt: boundedNumber(record.completedAt, 0, 0, Number.MAX_SAFE_INTEGER)} : {})
     };
 }
 
@@ -935,7 +938,7 @@ class SolcordStore extends Store {
                 ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
             };
         }
-        this.#document.onboarding = {version: 3, status: "complete", lastStep: 7, completedAt: Date.now()};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "complete", lastStep: 7, completedAt: Date.now()};
         const record: SolcordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates, ...(transaction.providerArchiveTransactionId ? {providerArchiveTransactionId: transaction.providerArchiveTransactionId} : {})};
         this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
@@ -961,7 +964,7 @@ class SolcordStore extends Store {
         this.#document.timelinePolicy = restored.timelinePolicy;
         this.#document.productPreferences = restored.productPreferences;
         applyModulePreferenceBindings(this.#document);
-        this.#document.onboarding = {version: 3, status: "pending", lastStep: 6};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 6};
         this.#document.setupTransactions.pop();
         this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
         this.#appendLedger("rollback", "Aborted an unacknowledged Solcord setup transaction.");
@@ -975,13 +978,13 @@ class SolcordStore extends Store {
 
     skipOnboarding(): void {
         if (this.#document.onboarding.status !== "pending") return;
-        this.#document.onboarding = {version: 3, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
         this.#appendLedger("schema", "Skipped Solcord setup; addon and theme state was not changed.");
         this.#save();
     }
 
     reopenOnboarding(): void {
-        this.#document.onboarding = {version: 3, status: "pending", lastStep: 0};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 0};
         this.#appendLedger("schema", "Reopened Solcord setup.");
         this.#save();
     }

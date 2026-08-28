@@ -36,7 +36,7 @@
     --solcord-radius-small: 1px;
     --solcord-avatar-radius: 10px;
     --solcord-font-body: "Solcord Hanken", "Segoe UI Variable Text", "Segoe UI", "gg sans", sans-serif;
-    --solcord-font-display: "Solcord Anybody", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+    --solcord-font-display: "gg sans", "Solcord Hanken", "Segoe UI Variable Display", "Segoe UI", sans-serif;
     --custom-message-spacing-vertical-container-cozy: 0.34rem;
     --custom-message-spacing-vertical-container-compact: 0.1rem;
 }

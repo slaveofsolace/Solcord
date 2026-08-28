@@ -28,16 +28,16 @@ describe("Solcord Control Center clarity", () => {
     const panel = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/ui/solcord/panel.tsx"), "utf8");
 
     test("uses a stable vertical information architecture", () => {
-        expect(panel).toContain("{label: \"Home\", ids: [\"overview\"]}");
-        expect(panel).toContain("{label: \"Tune\", ids: [\"appearance\", \"performance\"]}");
-        expect(panel).toContain("{label: \"Use\", ids: [\"privacy\", \"chat\", \"voice\", \"friends\"]}");
-        expect(panel).toContain("{label: \"Maintain\", ids: [\"extensions\", \"recovery\", \"advanced\"]}");
+        expect(panel).toContain("{label: \"Start\", ids: [\"overview\"]}");
+        expect(panel).toContain("{label: \"Personalize\", ids: [\"appearance\", \"performance\"]}");
+        expect(panel).toContain("{label: \"Features\", ids: [\"privacy\", \"chat\", \"voice\", \"friends\"]}");
+        expect(panel).toContain("{label: \"System\", ids: [\"extensions\", \"recovery\", \"advanced\"]}");
         expect(panel).toContain("placeholder=\"Find a setting\"");
     });
 
     test("keeps unsupported adapters out of the primary tool status strip", () => {
         expect(panel).toContain("const usableScopeStatus = scopeStatus.filter(item => item.maturity !== \"unsupported\" && item.maturity !== \"off\")");
-        expect(panel).toContain("No tool in this section passed adapter validation on the current Discord build. Solcord left each one off.");
+        expect(panel).toContain("These tools are unavailable on this Discord build, so no inactive controls are shown.");
     });
 
     test("moves infrequent profile operations behind progressive disclosure", () => {
@@ -45,9 +45,16 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("Import, export, or create a profile");
     });
 
-    test("keeps an enabled Fake Deafen provider discoverable from Overview", () => {
+    test("keeps runtime diagnostics and the community catalog out of the primary path", () => {
+        expect(panel).toContain("className=\"solcord-extension-disclosure\"");
+        expect(panel).toContain("Runtime and community catalog");
+    });
+
+    test("keeps Fake Deafen discoverable from Overview even before it is enabled", () => {
         expect(panel).toContain("fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider()");
         expect(panel).toContain("Fake Deafen is ready");
+        expect(panel).toContain("Fake Deafen is available");
+        expect(panel).toContain("Enable the scoped built-in from Voice & Activities");
         expect(panel).toContain("action: \"Open Fake Deafen\"");
         expect(panel).toContain("signal.id === \"activity\" || signal.id === \"fake-deafen\" ? \"voice\"");
     });

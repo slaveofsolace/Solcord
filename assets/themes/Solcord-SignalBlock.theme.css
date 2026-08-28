@@ -98,7 +98,7 @@
 
 body { background: var(--scb-black) !important; font-family: "Solcord Hanken", "Segoe UI Variable Text", "Segoe UI", sans-serif; font-kerning: normal; }
 #app-mount { background: var(--scb-black) !important; }
-#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: "Solcord Anybody", "Arial Narrow", "Segoe UI Variable Display", sans-serif; font-kerning: normal; font-stretch: 82%; letter-spacing: 0.015em; text-transform: uppercase; }
+#app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: "Arial Narrow", "Solcord Hanken", "gg sans", "Segoe UI Variable Display", sans-serif; font-kerning: normal; letter-spacing: 0.012em; text-transform: uppercase; }
 ::selection { color: var(--scb-on-accent); background: var(--scb-yellow); }
 :where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--scb-focus) !important; outline-offset: 3px; }
 

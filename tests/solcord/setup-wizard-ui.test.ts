@@ -89,7 +89,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("remain pending and are not downloaded here");
         expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is built in.");
         expect(WIZARD_SOURCE).toContain("review-and-manual-copy flow");
-        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
         expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
@@ -134,7 +134,7 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("keeps Fake Deafen visible and preserves an active community provider", () => {
-        expect(PANEL_SOURCE).toContain("Optional catalog files absent");
+        expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
         expect(PANEL_SOURCE).toContain("Disarm and resync");

@@ -7,15 +7,6 @@
     src: url("./fonts/HankenGrotesk-variable.ttf") format("truetype-variations");
 }
 
-@font-face {
-    font-family: "Solcord Anybody";
-    font-style: normal;
-    font-weight: 100 900;
-    font-stretch: 50% 150%;
-    font-display: swap;
-    src: url("./fonts/Anybody-variable.ttf") format("truetype-variations");
-}
-
 :root {
     --solcord-graphite: #11100E;
     --solcord-panel: #1A1815;
@@ -25,7 +16,7 @@
     --solcord-amber: #F4B860;
     --solcord-focus: var(--solcord-sea);
     --sc-font-body: "Solcord Hanken", "gg sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
-    --sc-font-display: "Solcord Anybody", "gg sans", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+    --sc-font-display: "gg sans", "Solcord Hanken", "Segoe UI Variable Display", "Segoe UI", sans-serif;
     --sc-font-editorial: "Solcord Hanken", "gg sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
     --sc-font-code: "Cascadia Code", consolas, monospace;
     --sc-field-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.73' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.72'/%3E%3C/svg%3E");
@@ -47,9 +38,8 @@
     --sc-danger: var(--solcord-coral);
 }
 
-.solcord-panel { position: relative; isolation: isolate; box-sizing: border-box; container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 clamp(20px, 2.8vw, 34px) 52px; color: var(--header-primary, var(--text-normal)); background: var(--sc-surface-0); overflow-x: clip; font-family: var(--sc-font-body); font-kerning: normal; font-synthesis: none; text-rendering: optimizelegibility; --sc-text: var(--header-primary, var(--text-normal)); --sc-muted: color-mix(in srgb, var(--header-primary, var(--text-normal)) 78%, var(--background-primary)); --sc-border: color-mix(in srgb, var(--header-primary, var(--text-normal)) 18%, transparent); --sc-border-strong: color-mix(in srgb, var(--header-primary, var(--text-normal)) 34%, transparent); }
+.solcord-panel { position: relative; isolation: isolate; box-sizing: border-box; container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 clamp(20px, 2.8vw, 34px) 52px; color: var(--header-primary, var(--text-normal)); background: var(--sc-surface-0); overflow-x: clip; font-family: var(--sc-font-body); font-kerning: normal; font-synthesis: none; text-rendering: optimizelegibility; --sc-text: var(--header-primary, var(--text-normal)); --sc-muted: color-mix(in srgb, var(--header-primary, var(--text-normal)) 78%, var(--background-primary)); --sc-border: color-mix(in srgb, var(--header-primary, var(--text-normal)) 18%, transparent); --sc-border-strong: color-mix(in srgb, var(--header-primary, var(--text-normal)) 34%, transparent); --text-muted: var(--sc-muted); }
 .solcord-panel::before { position: absolute; z-index: -2; inset: 0; content: ""; pointer-events: none; background-image: var(--sc-field-grain); background-size: 180px 180px; opacity: 0.026; }
-.solcord-panel::after { position: absolute; z-index: -1; top: 0; right: 0; width: min(72%, 760px); height: 270px; content: ""; pointer-events: none; background-image: radial-gradient(circle, currentcolor 0 0.7px, transparent 0.9px); background-position: 9px 7px; background-size: 15px 18px; color: var(--sc-accent); opacity: 0.055; mask-image: linear-gradient(108deg, transparent 7%, #000000 48%, transparent 92%); }
 .solcord-panel.solcord-density-compact { --sc-space-3: 9px; --sc-space-4: 12px; --sc-space-5: 18px; }
 
 /* Product appearance is applied to the whole Discord renderer. The data
@@ -354,8 +344,8 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-workspace-switcher { display: none; }
 .solcord-workspace { min-width: 0; }
 .solcord-workspace-heading { padding: 3px 0 var(--sc-space-4); border-bottom: 1px solid var(--sc-border); }
-.solcord-workspace-heading h2 { margin: 0 0 5px; font-family: var(--sc-font-editorial); font-size: clamp(23px, 3vw, 29px); font-weight: 720; line-height: 1.08; letter-spacing: -0.03em; }
-.solcord-workspace-heading p { margin: 0; color: var(--sc-muted); }
+.solcord-workspace-heading h2 { margin: 0 0 4px; font-family: var(--font-primary, var(--sc-font-body)); font-size: clamp(20px, 2.4vw, 24px); font-weight: 700; line-height: 1.15; letter-spacing: -0.015em; }
+.solcord-workspace-heading p { max-width: 64ch; margin: 0; color: var(--sc-muted); font-size: 13px; }
 .solcord-segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--sc-space-3) 0; overflow: hidden; border-block: 1px solid var(--sc-border-strong); }
 .solcord-segmented button { display: grid; gap: 4px; min-height: 76px; padding: 12px; color: var(--sc-text); background: var(--sc-surface-1); border: 0; border-right: 1px solid var(--sc-border); text-align: left; cursor: pointer; }
 .solcord-segmented button:last-child { border-right: 0; }
@@ -420,7 +410,7 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-people-history article + article { border-top: 1px solid var(--sc-border); }
 .solcord-people-history article > div { display: flex; justify-content: space-between; gap: 12px; }
 .solcord-people-history small { color: var(--sc-muted); }
-.solcord-header { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 13px; min-height: 78px; padding: 13px 0 16px; border-bottom: 1px solid var(--sc-border); }
+.solcord-header { position: relative; display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 11px; min-height: 66px; padding: 10px 0 13px; border-bottom: 1px solid var(--sc-border); }
 .solcord-header::after { position: absolute; bottom: -1px; left: 0; width: 48px; height: 2px; content: ""; background: var(--sc-accent); }
 .solcord-header > div:last-child,
 .solcord-section,
@@ -428,15 +418,15 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-module-primary,
 .solcord-curated-row > div,
 .solcord-catalog-row > * { min-width: 0; }
-.solcord-header h1 { margin: 1px 0 2px; font-family: var(--sc-font-display); font-size: clamp(24px, 3vw, 30px); font-stretch: 84%; font-variation-settings: "wdth" 84, "wght" 720; font-weight: 720; line-height: 1.02; letter-spacing: -0.045em; }
-.solcord-header p { margin: 0; color: var(--sc-muted); overflow-wrap: anywhere; }
+.solcord-header h1 { margin: 0; font-family: var(--font-primary, var(--sc-font-body)); font-size: 20px; font-weight: 720; line-height: 1.1; letter-spacing: -0.018em; }
+.solcord-header p { margin: 2px 0 0; color: var(--sc-muted); font-size: 12px; overflow-wrap: anywhere; }
 .solcord-eyebrow { color: var(--solcord-accent-text, var(--solcord-sea)) !important; font: 650 10px/1.2 var(--sc-font-code); text-transform: uppercase; letter-spacing: 0.15em; }
-.solcord-mark { display: grid; place-items: center; width: 44px; height: 44px; padding: 4px; background: color-mix(in srgb, var(--sc-surface-1) 88%, transparent); border: 1px solid color-mix(in srgb, var(--solcord-sea) 58%, var(--sc-border)); border-radius: 3px; overflow: hidden; }
+.solcord-mark { display: grid; place-items: center; width: 38px; height: 38px; padding: 4px; background: color-mix(in srgb, var(--sc-surface-1) 88%, transparent); border: 1px solid color-mix(in srgb, var(--solcord-sea) 58%, var(--sc-border)); border-radius: 4px; overflow: hidden; }
 .solcord-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.solcord-section { padding: 20px 0 24px; border-bottom: 1px solid var(--sc-border); }
-.solcord-section-heading { display: grid; grid-template-columns: minmax(160px, 0.42fr) minmax(220px, 1fr); gap: 18px; align-items: baseline; margin-bottom: 14px; }
-.solcord-section-heading h2 { margin: 0; font-family: var(--sc-font-editorial); font-size: 16px; font-weight: 720; line-height: 1.2; letter-spacing: -0.015em; }
-.solcord-section-heading p { max-width: 58ch; margin: 0; color: var(--sc-muted); line-height: 1.38; }
+.solcord-section { padding: 18px 0 21px; border-bottom: 1px solid var(--sc-border); }
+.solcord-section-heading { display: block; margin-bottom: 13px; }
+.solcord-section-heading h2 { margin: 0; font-family: var(--font-primary, var(--sc-font-body)); font-size: 15px; font-weight: 700; line-height: 1.25; letter-spacing: -0.008em; }
+.solcord-section-heading p { max-width: 64ch; margin: 3px 0 0; color: var(--sc-muted); font-size: 13px; line-height: 1.38; }
 .solcord-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .solcord-facts { display: grid; gap: 6px; margin: 0; }
 .solcord-facts div { display: grid; grid-template-columns: minmax(140px, 0.7fr) 1fr; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border-subtle); }
@@ -719,6 +709,10 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 
 .solcord-native-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 10px; color: var(--sc-muted); font-size: 12px; }
 .solcord-native-summary strong { color: var(--sc-text); }
+.solcord-health-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; border-block: 1px solid var(--sc-border); }
+.solcord-health-strip span { padding: 9px 10px; color: var(--sc-muted); font-size: 12px; }
+.solcord-health-strip span + span { border-left: 1px solid var(--sc-border); }
+.solcord-health-strip strong { display: block; color: var(--sc-text); font-size: 16px; font-variant-numeric: tabular-nums; }
 .solcord-state-help { margin: 0 0 10px; color: var(--sc-muted); font-size: 12px; }
 .solcord-state-help summary { width: fit-content; cursor: pointer; font-weight: 650; }
 .solcord-state-help p { max-width: 72ch; margin: 7px 0 0; line-height: 1.4; }
@@ -773,6 +767,10 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-secondary-tools { margin-top: 14px; border-block: 1px solid var(--sc-border); }
 .solcord-secondary-tools > summary { min-height: 42px; display: flex; align-items: center; color: var(--sc-text); font-weight: 650; cursor: pointer; }
 .solcord-secondary-tools[open] { padding-bottom: 12px; }
+.solcord-extension-disclosure { margin-top: 14px; border-block: 1px solid var(--sc-border); }
+.solcord-extension-disclosure > summary { min-height: 46px; display: flex; align-items: center; color: var(--sc-text); font-weight: 680; cursor: pointer; }
+.solcord-extension-disclosure > p { max-width: 68ch; margin: -5px 0 8px; color: var(--sc-muted); font-size: 12px; }
+.solcord-extension-disclosure > .solcord-section { padding-inline: 0; }
 
 @container solcord-panel (max-width: 760px) {
     .solcord-segmented { grid-template-columns: 1fr; }

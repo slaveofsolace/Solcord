@@ -18,10 +18,10 @@ import {isSolcordBuiltInAddon} from "@common/solcord/builtin-addons";
 const {useEffect, useRef, useState} = React;
 
 const WORKSPACE_GROUPS: ReadonlyArray<{label: string; ids: SolcordWorkspaceId[];}> = [
-    {label: "Home", ids: ["overview"]},
-    {label: "Tune", ids: ["appearance", "performance"]},
-    {label: "Use", ids: ["privacy", "chat", "voice", "friends"]},
-    {label: "Maintain", ids: ["extensions", "recovery", "advanced"]}
+    {label: "Start", ids: ["overview"]},
+    {label: "Personalize", ids: ["appearance", "performance"]},
+    {label: "Features", ids: ["privacy", "chat", "voice", "friends"]},
+    {label: "System", ids: ["extensions", "recovery", "advanced"]}
 ];
 
 function timestamp(value?: number | string): string {
@@ -113,8 +113,9 @@ function PluginRecovery() {
         setRetryStatus(succeeded ? `${id} passed a fresh integrity audit and started.` : `${id} stayed quarantined because integrity or startup validation did not pass.`);
         setRetrying(undefined);
     };
-    return <Section title="Plugin Doctor" summary="Integrity, crash recovery, and quarantined add-ons.">
-        <dl className="solcord-facts"><div><dt>Hash verified</dt><dd>{state.integrity.summary.match}</dd></div><div><dt>Optional catalog files absent</dt><dd>{state.integrity.summary.missing}</dd></div><div><dt>Integrity attention</dt><dd>{state.integrity.summary.attention}</dd></div><div><dt>Audit unavailable</dt><dd>{state.integrity.summary.unavailable}</dd></div></dl>
+    const needsReview = state.integrity.summary.attention + state.integrity.summary.unavailable;
+    return <Section title="Plugin Doctor" summary="Installed files, failures, and recovery.">
+        <div className="solcord-health-strip" aria-label="Plugin Doctor summary"><span><strong>{state.integrity.summary.match}</strong> verified</span><span><strong>{needsReview}</strong> need review</span><span><strong>{quarantined.length}</strong> quarantined</span></div>
         {requestedUnavailable.length > 0 && <p className="solcord-callout"><strong>{requestedUnavailable.length} saved catalog request(s) are not installed.</strong> They remain optional and off because their review or dependency gate is incomplete. Solcord built-ins do not require community plugin files.</p>}
         {quarantined.length ? <div className="solcord-recovery-list">
             {quarantined.map(record => <div className="solcord-recovery-row" key={record.addonId}>
@@ -123,10 +124,11 @@ function PluginRecovery() {
             </div>)}
         </div> : <p className="solcord-empty">No addon is quarantined.</p>}
         {retryStatus && <p role="status" className="solcord-import-status">{retryStatus}</p>}
-        {visibleIntegrity.length ? <div className="solcord-ledger" aria-label="Curated addon integrity status">
+        {visibleIntegrity.length ? <div className="solcord-ledger" aria-label="Add-on integrity requiring review">
             {visibleIntegrity.map(record => <div className="solcord-ledger-row" key={`${record.kind}-${record.name}`}><strong>{record.name}</strong><span>{record.kind} · {record.status}</span><code>{record.reviewedSha256.slice(0, 12)}…{record.installedSha256 ? ` / ${record.installedSha256.slice(0, 12)}…` : ""}</code></div>)}
             {state.integrity.records.filter(record => record.status !== "match" && record.status !== "missing").length > visibleIntegrity.length && <p className="solcord-empty">Showing the first {visibleIntegrity.length} path-free attention records. Sanitized diagnostics contain the complete bounded status list.</p>}
-        </div> : <p className="solcord-empty">Every reviewed installed file matches its pinned hash.</p>}
+        </div> : <p className="solcord-empty">Every installed reviewed file matches.</p>}
+        <details className="solcord-secondary-tools"><summary>Integrity details</summary><dl className="solcord-facts"><div><dt>Optional files not installed</dt><dd>{state.integrity.summary.missing}</dd></div><div><dt>Audit unavailable</dt><dd>{state.integrity.summary.unavailable}</dd></div></dl></details>
     </Section>;
 }
 
@@ -367,7 +369,7 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const [identityNotes, setIdentityNotes] = useState<Array<{subjectId: string; text: string; tags: string[]; updatedAt: number;}>>([]);
     const [identityPersistent, setIdentityPersistent] = useState(false);
     const nativePreferences = state.preferences.nativeSuite;
-    const stateLabel = {"off": "Off", "needs-setup": "Needs setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unsupported"} as const;
+    const stateLabel = {"off": "Off", "needs-setup": "Needs setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unavailable"} as const;
     const statusById = new Map(state.statuses.map(item => [item.id, item]));
     const visibleStatuses = state.statuses.filter(item => item.maturity !== "off");
     const unavailableStatuses = state.statuses.filter(item => item.maturity === "unsupported");
@@ -498,13 +500,13 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const usableScopeStatus = scopeStatus.filter(item => item.maturity !== "unsupported" && item.maturity !== "off");
     const unsupportedScopeStatus = scopeStatus.filter(item => item.maturity === "unsupported");
     const sectionTitle = scope === "status" ? "Built-in features" : scope === "chat" ? "Message tools" : scope === "voice" ? "Voice tools" : "People and spaces";
-    const sectionSummary = scope === "status" ? "Working replacements and their current adapter state." : "Controls verified for this Discord build.";
+    const sectionSummary = scope === "status" ? "Built-ins replacing the old plugin cards." : "Only validated controls appear below.";
     return <Section title={sectionTitle} summary={sectionSummary}>
         {scope === "status" && <>
             <div className="solcord-native-summary" aria-label="Built-in feature summary"><strong>{visibleStatuses.filter(item => item.maturity === "ready").length} ready</strong><span>{visibleStatuses.filter(item => item.maturity === "needs-setup").length} need setup</span><span>{unavailableStatuses.length} unsupported on this build</span></div>
             <details className="solcord-state-help"><summary>What these states mean</summary><p>Ready means an implemented adapter passed its current startup validation. Off means it does no Discord lookup or patch work. Unsupported means the current Discord build did not expose a verified adapter.</p></details>
             <div className="solcord-native-ledger" role="list" aria-label="Solcord built-in features">
-                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row"><div><strong>{item.title}</strong>{item.maturity !== "off" && <p>{item.detail}</p>}{item.enabledProviders.length > 0 && <small>Replaces {item.enabledProviders.join(", ")}</small>}</div><span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
+                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row"><div><strong>{item.title}</strong>{item.enabledProviders.length > 0 && <small>Replaces {item.enabledProviders.join(", ")}</small>}</div><span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
                 {!scopeStatus.length && <p className="solcord-empty">No built-in feature has been selected yet. Finish setup to choose the replacements you want.</p>}
             </div>
             {unavailableStatuses.length > 0 && <details className="solcord-native-unavailable-list"><summary>{unavailableStatuses.length} unavailable on this Discord build</summary>{unavailableStatuses.map(item => <div key={item.id}><strong>{item.title}</strong><span>{item.detail}</span></div>)}</details>}
@@ -512,7 +514,7 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
         {scope !== "status" && <>
             {usableScopeStatus.length > 0 && <div className="solcord-native-context-status" role="list" aria-label={`${sectionTitle} availability`}>{usableScopeStatus.map(item => <div role="listitem" key={item.id}><span>{item.title}</span><strong className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</strong></div>)}</div>}
             {scopeStatus.every(item => item.maturity === "off") && <p className="solcord-empty">Finish setup to turn on these built-in tools and archive the matching community files.</p>}
-            {!usableScopeStatus.length && unsupportedScopeStatus.length > 0 && <p className="solcord-empty">No tool in this section passed adapter validation on the current Discord build. Solcord left each one off.</p>}
+            {!usableScopeStatus.length && unsupportedScopeStatus.length > 0 && <p className="solcord-empty">These tools are unavailable on this Discord build, so no inactive controls are shown.</p>}
             <div className={`solcord-native-tools solcord-native-tools-${scope} ${available("composer-toolkit") ? "has-composer" : ""} ${available("audio-console") ? "has-audio" : ""} ${available("channel-glance") || available("people-and-spaces") ? "has-spaces" : ""} ${available("translation-desk") ? "has-translation" : ""} ${available("voice-note-studio") ? "has-voice-note" : ""} ${available("notification-review") ? "has-notifications" : ""} ${available("permission-lens") ? "has-permissions" : ""} ${available("local-identity-notes") ? "has-notes" : ""}`}>
             <details><summary>Composer Proof and Time Composer</summary><div className="solcord-composer-lab"><textarea value={composerDraft} maxLength={64000} placeholder="Review a draft locally before sending" onChange={event => setComposerDraft(event.currentTarget.value)} /><div className="solcord-actions"><ActionButton onClick={reviewComposer}>Review draft</ActionButton></div>{composerProof && <div className="solcord-native-preview"><p><strong>{composerProof.characterCount.toLocaleString()} characters</strong><span>{composerProof.partCount} guarded part(s)</span></p>{composerProof.warnings.length ? composerProof.warnings.map(warning => <p key={warning}>{warning}</p>) : <p>No broad-mention, length, or unclosed-code-block warnings found.</p>}</div>}<div className="solcord-catalog-tools"><label>Local date and time<input type="datetime-local" value={timeValue} onChange={event => setTimeValue(event.currentTarget.value)} /></label><label>Discord display style<select value={timeStyle} onChange={event => setTimeStyle(event.currentTarget.value as typeof timeStyle)}><option value="F">Full date and time</option><option value="f">Short date and time</option><option value="R">Relative</option><option value="D">Long date</option><option value="d">Short date</option><option value="T">Time with seconds</option><option value="t">Short time</option></select></label></div><div className="solcord-inline-field"><ActionButton disabled={!timeValue} onClick={composeTime}>Generate timestamp</ActionButton>{timeMarkup && <><output>{timeMarkup}</output><ActionButton onClick={() => void navigator.clipboard?.writeText(timeMarkup).then(() => setActionStatus("Reviewed timestamp copied. Solcord did not insert or send it."))}>Copy</ActionButton></>}</div></div></details>
             <details><summary>Audio Console</summary><div className="solcord-inline-field"><input value={audioUserId} inputMode="numeric" placeholder="Discord user ID" aria-label="Audio Console user ID" onChange={event => setAudioUserId(event.currentTarget.value.replace(/\D/g, ""))} /><input type="number" min="0" max="200" value={audioPercent} aria-label="Local volume percent" onChange={event => setAudioPercent(Math.max(0, Math.min(200, Number(event.currentTarget.value))))} /><ActionButton disabled={!audioUserId} onClick={volume}>Review and apply</ActionButton></div></details>
@@ -873,14 +875,14 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
         ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
         ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Setup is unfinished", detail: `Resume at step ${state.document.onboarding.lastStep + 1} without reapplying earlier choices.`, action: "Continue setup"}] : []),
-        ...(state.fakeDeafenProvider !== "off" ? [{
+        ...([{
             id: "fake-deafen",
             priority: state.fakeDeafen.phase === "attention" ? 72 : 58,
-            tone: state.fakeDeafen.phase === "attention" ? "attention" as const : "ok" as const,
-            label: state.fakeDeafenProvider === "community" ? "Fake Deafen community provider is on" : state.fakeDeafen.phase === "armed" ? "Fake Deafen is armed" : "Fake Deafen is ready",
-            detail: state.fakeDeafenProvider === "community" ? "Solcord is keeping its scoped adapter off so the two providers never stack." : state.fakeDeafen.detail,
+            tone: state.fakeDeafen.phase === "attention" || state.fakeDeafenProvider === "off" ? "attention" as const : "ok" as const,
+            label: state.fakeDeafenProvider === "community" ? "Fake Deafen community provider is on" : state.fakeDeafen.phase === "armed" ? "Fake Deafen is armed" : state.fakeDeafenProvider === "solcord" ? "Fake Deafen is ready" : "Fake Deafen is available",
+            detail: state.fakeDeafenProvider === "community" ? "Solcord is keeping its scoped adapter off so the two providers never stack." : state.fakeDeafenProvider === "off" ? "Enable the scoped built-in from Voice & Activities. It remains unarmed until you explicitly arm it in a call." : state.fakeDeafen.detail,
             action: "Open Fake Deafen"
-        }] : []),
+        }]),
         ...(state.dueReminders ? [{id: "return-later", priority: 65, tone: "attention" as const, label: "Return Later is due", detail: `${state.dueReminders} local reminder(s) are ready.`, action: "Open People"}] : []),
         ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} relationship transition(s) are available in this session.`, action: "Open People"}] : []),
         {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
@@ -1040,7 +1042,7 @@ export default function SolcordPanel() {
     return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
             <div className="solcord-mark" aria-hidden="true"><img src={solcordMark} alt="" /></div>
-            <div><p className="solcord-eyebrow">Solcord 2</p><h1>Control Center</h1><p>Set up, tune, and recover Solcord.</p></div>
+            <div><h1>Solcord</h1><p>Control Center</p></div>
         </header>
         {recoveryMode && <div className="solcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
@@ -1074,9 +1076,7 @@ export default function SolcordPanel() {
                 {workspace === "friends" && <><FriendWatchPanel /><NativeSuitePanel scope="friends" /><ReturnLaterPanel /></>}
                 {workspace === "extensions" && <>
                     <NativeSuitePanel scope="status" />
-                    <Section title="Core modules" summary="Solcord services and their current lifecycle state."><ModuleTable /></Section>
-                    <CuratedAddonSet />
-                    <CatalogBrowser />
+                    <details className="solcord-extension-disclosure"><summary>Runtime and community catalog</summary><p>Open this only when troubleshooting a module or reviewing optional community software.</p><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
                 </>}
                 {workspace === "recovery" && <><SetupManagement /><PluginRecovery /><ProfilesAndHistory /></>}
                 {workspace === "advanced" && <><AccessibilityControls /><AboutSolcord /></>}
