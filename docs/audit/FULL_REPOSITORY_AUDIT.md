@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 529 |
 | Text files scanned | 515 |
 | Binary files classified | 14 |
-| Text lines scanned | 107,778 |
-| Custom Solcord lines | 22,198 |
+| Text lines scanned | 107,797 |
+| Custom Solcord lines | 22,211 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -38,7 +38,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 3,039 | 185.8 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 3,045 | 186.1 KiB |
 | 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 65.3 KiB |
 | 3 | `bun.lock` | 1,314 | 143.0 KiB |
 | 4 | `tests/solcord/storage-security.test.ts` | 1,245 | 71.1 KiB |

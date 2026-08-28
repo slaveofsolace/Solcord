@@ -2646,6 +2646,7 @@ class SolcordRuntimeStore extends Store {
     async #startFriendWatch(scope: SolcordDisposalScope): Promise<void> {
         type RelationshipStore = {
             getRelationships?: () => unknown;
+            getMutableRelationships?: () => unknown;
             addChangeListener?: (callback: () => void) => void;
             removeChangeListener?: (callback: () => void) => void;
         };
@@ -2658,8 +2659,13 @@ class SolcordRuntimeStore extends Store {
         type RelationshipActions = Record<"removeRelationship" | "blockUser" | "unblockUser", (...args: unknown[]) => unknown>;
         const relationships = getStore("RelationshipStore") as RelationshipStore | undefined;
         const users = getStore("UserStore") as UserStore | undefined;
-        if (typeof relationships?.getRelationships !== "function" || typeof relationships.addChangeListener !== "function" || typeof relationships.removeChangeListener !== "function") throw new Error("FriendWatchRelationshipStoreUnavailable");
-        const getRelationships = relationships.getRelationships.bind(relationships);
+        const readRelationships = typeof relationships?.getRelationships === "function"
+            ? relationships.getRelationships.bind(relationships)
+            : typeof relationships?.getMutableRelationships === "function"
+                ? relationships.getMutableRelationships.bind(relationships)
+                : undefined;
+        if (!readRelationships || typeof relationships?.addChangeListener !== "function" || typeof relationships.removeChangeListener !== "function") throw new Error("FriendWatchRelationshipStoreUnavailable");
+        const getRelationships = () => readRelationships();
 
         let accountId: string | undefined;
         let accountGeneration = -1;

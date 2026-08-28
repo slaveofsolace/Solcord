@@ -86,10 +86,15 @@ export class SolcordFriendWatchAccountBarrier {
 const VALID_SUBJECT = /^\d{1,32}$/;
 
 export function normalizeDiscordRelationships(value: unknown): Map<string, SolcordRelationshipSnapshot> {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return new Map();
     const states: Record<number, SolcordRelationshipState | undefined> = {0: "none", 1: "friend", 2: "blocked", 3: "incoming", 4: "outgoing"};
     const result = new Map<string, SolcordRelationshipSnapshot>();
-    for (const [subjectId, rawState] of Object.entries(value as Record<string, unknown>)) {
+    const entries = value instanceof Map
+        ? value.entries()
+        : value && typeof value === "object" && !Array.isArray(value)
+            ? Object.entries(value as Record<string, unknown>)
+            : [];
+    for (const [rawSubjectId, rawState] of entries) {
+        const subjectId = typeof rawSubjectId === "string" ? rawSubjectId : "";
         if (!VALID_SUBJECT.test(subjectId) || typeof rawState !== "number" || !states[rawState] || states[rawState] === "none") continue;
         result.set(subjectId, {subjectId, state: states[rawState]!});
         if (result.size === 25_000) break;

@@ -122,6 +122,8 @@ describe("Solcord renderer security contracts", () => {
 
         const startFriend = runtime.slice(runtime.indexOf("async #startFriendWatch"), runtime.indexOf("async #startMessageTimeline"));
         expect(startFriend).toContain("type RelationshipActions = Record<\"removeRelationship\" | \"blockUser\" | \"unblockUser\"");
+        expect(startFriend).toContain("getMutableRelationships?: () => unknown");
+        expect(startFriend).toContain("typeof relationships?.getMutableRelationships === \"function\"");
         expect(startFriend).toContain("getByKeys<RelationshipActions>");
         expect(startFriend).toContain("Patcher.before(\"Solcord~FriendWatch\"");
         expect(startFriend).toContain("scope.own(unpatch, \"patch\")");
