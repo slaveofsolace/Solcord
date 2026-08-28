@@ -52,6 +52,10 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("signal.id === \"activity\" || signal.id === \"fake-deafen\" ? \"voice\"");
     });
 
+    test("puts Fake Deafen first in Voice and Activities instead of burying it below other tools", () => {
+        expect(panel).toContain('{workspace === "voice" && <><PowerLabStatus /><ActivityBridge />');
+    });
+
     test("scrolls and focuses the setup wizard when Continue setup is used on Overview", () => {
         expect(panel).toContain("const focusSetup = workspace === \"overview\" && workspaceFocus === \"setup\"");
         expect(panel).toContain("document.querySelector<HTMLElement>(\".solcord-wizard\")");

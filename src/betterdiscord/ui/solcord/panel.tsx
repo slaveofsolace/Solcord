@@ -1070,7 +1070,7 @@ export default function SolcordPanel() {
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
                 {workspace === "privacy" && <><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
                 {workspace === "chat" && <><BaselineToolsPanel /><NativeSuitePanel scope="chat" /><ReturnLaterPanel /></>}
-                {workspace === "voice" && <><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /><PowerLabStatus /></>}
+                {workspace === "voice" && <><PowerLabStatus /><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /></>}
                 {workspace === "friends" && <><FriendWatchPanel /><NativeSuitePanel scope="friends" /><ReturnLaterPanel /></>}
                 {workspace === "extensions" && <>
                     <NativeSuitePanel scope="status" />
