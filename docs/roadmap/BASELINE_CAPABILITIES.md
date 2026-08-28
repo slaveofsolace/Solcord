@@ -23,10 +23,10 @@
 
 | Capability | Model | Discord adapter | Runtime evidence | UI | Release status |
 | --- | --- | --- | --- | --- | --- |
-| Layout Collapse | Implemented | Reversible region CSS | Enable/disable teardown captured; region selection pending | Implemented | Preview |
-| Embed Controls | Implemented | Loaded embed containers only | Automated lifecycle green; hands-on embed interaction pending | Implemented | Preview |
-| Cross-platform Autoscroll | Implemented | Pointer gesture and owned animation frame | Automated lifecycle green; hands-on gesture pending | Implemented | Preview |
-| Media Shelf | Implemented | Bounded local references | Automated validation green; hands-on save/remove pending | Implemented | Preview |
-| Message Link Preview | Implemented | Loaded MessageStore only | Automated loaded/missing-link cases green; hands-on link hover pending | Implemented | Preview |
+| Layout Collapse | Implemented | Reversible region CSS | Exact-client server/channel hide and restore, restart, and zero-work teardown passed; no member rail was present on the observed `@me` route | Implemented | Ready |
+| Embed Controls | Implemented | Loaded embed containers only | Exact-client controlled embed collapse/expand, restart, selector cleanup, and zero-work teardown passed; no organic embed was loaded in the observed route | Implemented | Ready |
+| Cross-platform Autoscroll | Implemented | Pointer gesture and owned animation frame | A current Discord scroller moved under the owned loop and stopped on Escape; restart and zero-work teardown passed | Implemented | Ready |
+| Media Shelf | Implemented | Bounded local references | Exact-client validated Discord-CDN reference save/remove passed with no navigation or background fetch | Implemented | Ready |
+| Message Link Preview | Implemented | Loaded MessageStore only | Exact-client hover against a real loaded store record opened and closed a status preview; no fetch or read-state mutation occurred | Implemented | Ready |
 
-No row is promoted to ready until its adapter, lifecycle evidence, and row-specific live interaction are complete.
+The five rows are promoted on the exact-client evidence above plus their automated positive, missing/drift, restart, accessibility, and teardown coverage. Controlled DOM fixtures are identified explicitly and are not represented as organic message content.

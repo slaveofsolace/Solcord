@@ -22,6 +22,12 @@ describe("Solcord Friend Watch domain", () => {
             ["3", {subjectId: "3", state: "incoming"}],
             ["4", {subjectId: "4", state: "outgoing"}]
         ]);
+        expect([...normalizeDiscordRelationships(new Map<unknown, unknown>([["1", 1], ["2", 2], ["3", 3], ["4", 4], [5, 1]])).entries()]).toEqual([
+            ["1", {subjectId: "1", state: "friend"}],
+            ["2", {subjectId: "2", state: "blocked"}],
+            ["3", {subjectId: "3", state: "incoming"}],
+            ["4", {subjectId: "4", state: "outgoing"}]
+        ]);
     });
 
     test("plans bounded local notices without replaying hydration or exposing identifiers", () => {
