@@ -31,8 +31,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))");
-        expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).toContain("overflow-x: auto");
+        expect(WIZARD_CSS).not.toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
         expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
     });
 
@@ -85,7 +86,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("setWorkspaceFocus(\"catalog\")");
         expect(PANEL_SOURCE).toContain(".solcord-catalog-table");
         expect(PANEL_SOURCE).toContain("<SetupWizard onReviewPending={openCatalog} />");
-        expect(WIZARD_SOURCE).toContain("leaves pending catalog choices uninstalled");
+        expect(WIZARD_SOURCE).toContain("remain pending and are not downloaded here");
         expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is built in.");
         expect(WIZARD_SOURCE).toContain("review-and-manual-copy flow");
         expect(PANEL_SOURCE).toContain("Optional catalog files absent");

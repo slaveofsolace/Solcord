@@ -178,9 +178,9 @@ describe("Solcord theme presentation", () => {
 
     test("uses Discord-native readable typography and a bounded texture without decorative signal dots", () => {
         const css = executableCss(SOLCORD_UI_CSS);
-        expect(css).toContain("--sc-font-body: \"gg sans\"");
-        expect(css).toContain("--sc-font-display: \"gg sans\"");
-        expect(css).toContain("--sc-font-editorial: var(--sc-font-display)");
+        expect(css).toContain("--sc-font-body: \"Solcord Hanken\"");
+        expect(css).toContain("--sc-font-display: \"Solcord Anybody\"");
+        expect(css).toContain("--sc-font-editorial: \"Solcord Hanken\"");
         expect(css).toContain("--sc-font-code: \"Cascadia Code\"");
         expect(css).toContain("url(\"./fonts/HankenGrotesk-variable.ttf\")");
         expect(css).toContain("url(\"./fonts/Anybody-variable.ttf\")");
@@ -190,6 +190,7 @@ describe("Solcord theme presentation", () => {
         expect(css).toContain("pointer-events: none");
         expect(css).not.toContain("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode] body::after");
         expect(css).toContain("mix-blend-mode: soft-light");
+        expect(css).toContain("radial-gradient(circle, currentcolor 0 0.7px, transparent 0.9px)");
         expect(css).toContain(".solcord-header h1");
         expect(css).toContain("font-family: var(--sc-font-display)");
 
