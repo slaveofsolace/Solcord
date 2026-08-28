@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import {defaultStrictPrivacyPreferences, normalizePrivacyPreferences, type SolcordPrivacyPreferences} from "./privacy";
+
 export type SolcordWorkspaceId =
     | "overview"
     | "appearance"
@@ -7,11 +9,9 @@ export type SolcordWorkspaceId =
     | "privacy"
     | "chat"
     | "voice"
-    | "power"
     | "friends"
     | "extensions"
-    | "recovery"
-    | "advanced";
+    | "recovery";
 export type SolcordVisualMode = "follow-discord" | "solcord-dark" | "solcord-light" | "oled";
 export type SolcordAccent = "system" | "glacier" | "signal" | "coral" | "forest";
 export type SolcordDensity = "comfortable" | "compact";
@@ -64,6 +64,7 @@ export interface SolcordProductPreferences {
     performanceProfile: SolcordPerformanceProfile;
     appearance: SolcordAppearancePreferences;
     safety: SolcordSafetyPreferences;
+    privacy: SolcordPrivacyPreferences;
     friendWatch: SolcordFriendWatchPolicy;
     returnLaterRetentionDays: 7 | 30 | 90;
     nativeSuite: {
@@ -77,28 +78,23 @@ export interface SolcordProductPreferences {
 }
 
 export const SOLCORD_WORKSPACES = Object.freeze([
-    {id: "overview", label: "Overview", summary: "Setup and current health."},
-    {id: "appearance", label: "Appearance", summary: "Theme, density, and motion."},
-    {id: "performance", label: "Performance", summary: "Runtime cost and profiles."},
-    {id: "privacy", label: "Privacy & Safety", summary: "Links, uploads, and local history."},
-    {id: "chat", label: "Chat & Composer", summary: "Writing and message tools."},
-    {id: "voice", label: "Voice & Activities", summary: "Calls, Activities, and stream controls."},
-    {id: "power", label: "Fake Deafen", summary: "A manual, call-bound Power Lab control that stays off until you enable and arm it."},
-    {id: "friends", label: "Friends & Spaces", summary: "People, servers, and local notes."},
-    {id: "extensions", label: "Extensions", summary: "Built-ins and plugin migration."},
-    {id: "recovery", label: "Recovery", summary: "Repair, rollback, and snapshots."},
-    {id: "advanced", label: "Advanced", summary: "Diagnostics and experiments."}
+    {id: "overview", label: "Overview", summary: "Current state and the next useful action."},
+    {id: "appearance", label: "Appearance & Accessibility", summary: "Theme, density, motion, and reading aids."},
+    {id: "performance", label: "Performance", summary: "Choose a resource profile and inspect local cost."},
+    {id: "privacy", label: "Privacy & Safety", summary: "Tracking protection, private data, links, and uploads."},
+    {id: "chat", label: "Chat & Composer", summary: "Writing, drafts, and message tools."},
+    {id: "voice", label: "Voice & Activities", summary: "Calls, Activities, streams, and experiments."},
+    {id: "friends", label: "Friends & Spaces", summary: "People, servers, notes, and reminders."},
+    {id: "extensions", label: "Extensions", summary: "Built-ins, community software, and optional migration."},
+    {id: "recovery", label: "Recovery", summary: "Repair, rollback, snapshots, and technical details."}
 ] satisfies ReadonlyArray<{id: SolcordWorkspaceId; label: string; summary: string;}>);
 
 export const SOLCORD_SETUP_STEPS = Object.freeze([
     "Welcome",
     "Privacy",
-    "Performance",
     "Appearance",
     "Features",
-    "Activities",
-    "Import",
-    "Ready"
+    "Review and Apply"
 ] as const);
 
 export interface SolcordPerformancePolicy {
@@ -127,6 +123,7 @@ export function defaultSolcordProductPreferences(): SolcordProductPreferences {
         performanceProfile: "balanced",
         appearance: {mode: "follow-discord", accent: "glacier", density: "comfortable", motion: "follow-system", messageShape: "discord"},
         safety: {linkLens: true, domainMemory: "warn-only", attachmentGuard: true, privacyModeReady: true},
+        privacy: defaultStrictPrivacyPreferences(),
         friendWatch: {enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"},
         returnLaterRetentionDays: 30,
         nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], translation: {provider: "off", endpoint: ""}},
@@ -155,6 +152,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     const source = record(value);
     const appearance = record(source.appearance);
     const safety = record(source.safety);
+    const privacy = record(source.privacy);
     const friendWatch = record(source.friendWatch);
     const nativeSuite = record(source.nativeSuite);
     const translation = record(nativeSuite.translation);
@@ -184,6 +182,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             attachmentGuard: safety.attachmentGuard !== false,
             privacyModeReady: safety.privacyModeReady !== false
         },
+        privacy: normalizePrivacyPreferences(privacy),
         friendWatch: {
             enabled: friendWatch.enabled === true,
             retentionDays: choice(friendWatch.retentionDays, [7, 30, 90] as const, 30),

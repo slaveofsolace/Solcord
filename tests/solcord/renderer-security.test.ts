@@ -156,6 +156,7 @@ describe("Solcord renderer security contracts", () => {
     test("journals exact addon filenames and binds provider migration to the sealed Finish plan", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const wizard = source("src/betterdiscord/ui/solcord/setup-wizard.tsx");
+        const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
         const finish = runtime.slice(runtime.indexOf("async finishSetup"), runtime.indexOf("async rollbackLatestSetup"));
         expect(finish).toContain("const priorAddonStates = captureExactAddonStates(PluginManager)");
         expect(finish).toContain("const priorThemeStates = captureExactAddonStates(ThemeManager)");
@@ -170,7 +171,9 @@ describe("Solcord renderer security contracts", () => {
         expect(finish.lastIndexOf("#requireProviderMigrationPlan")).toBeLessThan(finish.indexOf("PluginManager.disableAddon(current.filename)"));
         expect(finish.indexOf("TIMELINE_IPC.applySetup")).toBeLessThan(finish.indexOf("PluginManager.disableAddon(current.filename)"));
         expect(finish.indexOf("PluginManager.disableAddon(current.filename)")).toBeLessThan(finish.indexOf("SolcordSettings.completeSetup"));
-        expect(wizard).toContain("SolcordRuntime.finishSetup(draft, providerMigrationPlan)");
+        expect(wizard).toContain("SolcordRuntime.finishSetup(draft, undefined, {migrateProviders: false})");
+        expect(panel).toContain("SolcordRuntime.prepareProviderMigrationPlan(state.draft)");
+        expect(panel).toContain("SolcordRuntime.finishSetup(state.draft, confirmedPlan)");
         expect(wizard).toContain("active community provider changed after review");
         const restore = runtime.slice(runtime.indexOf("async #restoreAddonStates"), runtime.indexOf("#communityAddonEnabled"));
         expect(restore).toContain("for (const [fileName, desired] of Object.entries(priorAddonStates))");

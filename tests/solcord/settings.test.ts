@@ -359,19 +359,19 @@ describe("Solcord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v6 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v7 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSolcordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(6);
+        expect(document.schemaVersion).toBe(7);
         expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 6}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 7}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -395,7 +395,7 @@ describe("Solcord settings schema", () => {
             powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
         });
 
-        expect(document.schemaVersion).toBe(6);
+        expect(document.schemaVersion).toBe(7);
         expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-solcord");
         expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
     });
@@ -410,7 +410,7 @@ describe("Solcord settings schema", () => {
             }
         });
 
-        expect(document.onboarding.version).toBe(4);
+        expect(document.onboarding.version).toBe(5);
         expect(document.onboarding.lastStep).toBe(4);
         expect(document.onboarding.draft?.selectedTheme).toBe("paper-signal");
         expect(document.onboarding.draft?.selectedAddons).toEqual(["DoNotTrack"]);
@@ -479,7 +479,7 @@ describe("Solcord settings schema", () => {
             productPreferences: document.productPreferences
         };
 
-        expect(document.onboarding).toEqual({version: 4, status: "pending", lastStep: 0});
+        expect(document.onboarding).toEqual({version: 5, status: "pending", lastStep: 0});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
         const recommended = recommendedSolcordSetupAddons();
         expect(enablePreview).toHaveLength(recommended.length);

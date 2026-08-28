@@ -11,7 +11,7 @@ import Modals from "@ui/modals";
 import DiscordModules from "@modules/discordmodules";
 import {getByKeys, getLazyByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
 
-import type {SolcordCuratedAddonState, SolcordMaturity, SolcordModuleHealth, SolcordModuleId, SolcordPowerExperimentId} from "./contracts";
+import type {PrivacyCapabilityRecord, PrivacyDecisionReceipt, PrivacyProfile, SolcordCuratedAddonState, SolcordMaturity, SolcordModuleHealth, SolcordModuleId, SolcordPowerExperimentId} from "./contracts";
 import {SolcordDisposalScope} from "./disposal";
 import SolcordSettings, {normalizeSetupDraft, SOLCORD_THEMES, type SolcordImportPreview} from "./store";
 import PluginDoctor from "./doctor";
@@ -22,7 +22,7 @@ import {evaluateCrashGuard, type CrashGuardDocument} from "./crash-guard";
 import {boundedTimelineMessageIds, channelIsInTimelineScope, MessageTimelineJournal, normalizeTimelineAccountId, TimelineAccountGuard, timelineEventAccountMatches, type TimelineAccountIdentity, type TimelineAttachmentMetadata, type TimelineEvent, type TimelineMessageState} from "./message-timeline";
 import {splitLargeMessage} from "./message-splitter";
 import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
-import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
+import {SOLCORD_CATALOG_INDEX, SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
 import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {resolveSolcordSetupPlan} from "@common/solcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
@@ -39,6 +39,10 @@ import {createCachedVoiceHealthReader} from "./voice-health";
 import {SolcordBaselineSuite, type SolcordBaselineSuiteStatus} from "./baseline-suite";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
 import {resolveSolcordPerformancePolicy} from "@common/solcord/product";
+import {applyPrivacyProfile, boundPrivacyReceipts, createPrivacyDecisionReceipt} from "@common/solcord/privacy";
+import {resolvePrivacyMethodTarget, SolcordPrivacyPolicyAdapter} from "./privacy-policy";
+import {setSolcordAutomaticUpdatesAllowed} from "./privacy-runtime-state";
+import {planStrictCommunityAddonPolicy} from "./addon-outbound-policy";
 
 interface ActivityCompatibilityHealth {
     status: "idle" | "healthy" | "attention";
@@ -296,11 +300,19 @@ class SolcordRuntimeStore extends Store {
     #audiencePersistent = false;
     #audienceStorageStatus: SolcordPrivateStorageStatus = {persistent: false, sessionOnly: true, reason: "Audience Guard storage has not been checked yet."};
     #audienceLoadGeneration = 0;
+    #privacyScope = new SolcordDisposalScope();
+    #privacyCapabilities: PrivacyCapabilityRecord[] = [];
+    #privacyReceipts: PrivacyDecisionReceipt[] = [];
+    #privacySequence = 0;
+    #strictCommunityPolicyBusy = false;
 
     initialize(): void {
         if (this.#initialized) return;
         this.#initialized = true;
         SolcordSettings.initialize();
+        this.#privacyReceipts = boundPrivacyReceipts(JsonStore.get("misc", "solcordPrivacyReceipts"));
+        this.#privacySequence = this.#privacyReceipts.at(-1)?.sequence ?? 0;
+        setSolcordAutomaticUpdatesAllowed(SolcordSettings.snapshot().productPreferences.privacy.updates === "automatic");
         this.#domainMemory = new SolcordDomainMemory(JsonStore.get("misc", "solcordDomainMemory"));
         this.#returnLater = new SolcordReturnLaterJournal(JsonStore.get("misc", "solcordReturnLater"));
         this.#refreshReviewedExecutionOwnership();
@@ -322,6 +334,7 @@ class SolcordRuntimeStore extends Store {
         const markClean = () => JsonStore.set("misc", "solcordCrashGuard", {attempts: [], state: "clean", at: Date.now()} satisfies CrashGuardDocument);
         this.#rootScope.listen(window, "beforeunload", markClean);
         this.#rootScope.own(() => this.#baselineSuite?.stop(), "other");
+        this.#rootScope.own(() => this.#privacyScope.dispose(), "other");
     }
 
     async start(): Promise<void> {
@@ -329,6 +342,7 @@ class SolcordRuntimeStore extends Store {
         this.#started = true;
         this.#applyProductPresentation();
         this.#synchronizeBaselineSuite();
+        this.#synchronizePrivacyPolicy();
         await this.#bootstrapPrivateCapability();
         await this.#refreshAudienceGuardStorageStatus();
         try {
@@ -352,10 +366,14 @@ class SolcordRuntimeStore extends Store {
         const synchronizeCuratedAdapters = () => {
             const nextSignature = this.#communityAddonSignature();
             if (nextSignature !== this.#curatedCommunitySignature) this.#synchronizeCuratedAdapters();
+            this.#synchronizePrivacyPolicy();
+            void this.#enforceStrictCommunityAddonPolicy().catch(error => Logger.error("Solcord", `Strict Privacy addon enforcement failed closed (${errorName(error)}).`));
             void this.#synchronizePowerLab();
         };
         PluginManager.addChangeListener(synchronizeCuratedAdapters);
         this.#rootScope.own(() => PluginManager.removeChangeListener(synchronizeCuratedAdapters), "listener");
+        try {await this.#enforceStrictCommunityAddonPolicy();}
+        catch (error) {Logger.error("Solcord", `Strict Privacy could not quarantine an undeclared community addon; the previous addon states were restored (${errorName(error)}).`);}
         this.#rootScope.timeout(() => {
             JsonStore.set("misc", "solcordCrashGuard", {attempts: [], state: "stable", at: Date.now()} satisfies CrashGuardDocument);
         }, 30_000);
@@ -571,12 +589,120 @@ class SolcordRuntimeStore extends Store {
         const next = SolcordSettings.snapshot().productPreferences;
         this.#applyProductPresentation();
         this.#synchronizeBaselineSuite();
+        if (JSON.stringify(previous.privacy) !== JSON.stringify(next.privacy)) this.#synchronizePrivacyPolicy();
         const affected = new Set<SolcordModuleId>();
         if (previous.performanceProfile !== next.performanceProfile) affected.add("performance-hud");
         if (JSON.stringify(previous.friendWatch) !== JSON.stringify(next.friendWatch)) affected.add("friend-watch");
         if (previous.safety.linkLens !== next.safety.linkLens) affected.add("link-lens");
         if (affected.size) await this.#synchronizeFeatures([...affected]);
         this.emitChange();
+    }
+
+    privacyCapabilities(): PrivacyCapabilityRecord[] {
+        return structuredClone(this.#privacyCapabilities);
+    }
+
+    privacyDecisionReceipts(): PrivacyDecisionReceipt[] {
+        return structuredClone(this.#privacyReceipts);
+    }
+
+    #communityAddonPolicy() {
+        const enabled = PluginManager.addonList.filter(addon => PluginManager.isEnabled(addon.filename));
+        const decisions = planStrictCommunityAddonPolicy(enabled.map(addon => {
+            const candidate = SOLCORD_RUNTIME_ADDONS.find(item => item.fileName.toLocaleLowerCase("en-US") === addon.filename.toLocaleLowerCase("en-US"));
+            return {
+                fileName: addon.filename,
+                integrityMatched: Boolean(candidate && this.#integrity.records.find(record => record.kind === "addon" && record.name === candidate.name)?.status === "match")
+            };
+        }), SOLCORD_CATALOG_INDEX);
+        return {enabled, decisions};
+    }
+
+    async #enforceStrictCommunityAddonPolicy(): Promise<void> {
+        if (this.#strictCommunityPolicyBusy || SolcordSettings.snapshot().productPreferences.privacy.profile !== "strict") return;
+        const {enabled, decisions} = this.#communityAddonPolicy();
+        const blocked = decisions.filter(item => item.action === "disable");
+        if (!blocked.length) return;
+        this.#strictCommunityPolicyBusy = true;
+        const snapshot = SolcordSettings.capture("Before enforcing Strict Privacy for community addons", {
+            plugins: this.#enabledAddonFiles(PluginManager),
+            themes: this.#enabledAddonFiles(ThemeManager)
+        });
+        const changed: Array<{fileName: string; doctorId: string; newlyQuarantined: boolean;}> = [];
+        try {
+            for (const decision of blocked) {
+                const addon = enabled.find(item => item.filename === decision.fileName);
+                if (!addon || !PluginManager.isEnabled(addon.filename)) continue;
+                PluginManager.disableAddon(addon.filename);
+                if (PluginManager.isEnabled(addon.filename)) throw new Error("StrictPrivacyAddonDisableFailed");
+                const doctorId = addon.name || addon.filename;
+                const newlyQuarantined = !PluginDoctor.isQuarantined(doctorId);
+                PluginDoctor.quarantine(doctorId, decision.reason);
+                changed.push({fileName: addon.filename, doctorId, newlyQuarantined});
+            }
+        }
+        catch (error) {
+            for (const entry of changed) {
+                try {PluginManager.enableAddon(entry.fileName);}
+                catch {/* continue recovery */}
+                if (entry.newlyQuarantined) PluginDoctor.clearQuarantine(entry.doctorId);
+            }
+            try {SolcordSettings.rollback(snapshot.id);}
+            catch {/* the recovery snapshot remains available */}
+            throw error;
+        }
+        finally {
+            this.#strictCommunityPolicyBusy = false;
+            this.#synchronizePrivacyPolicy();
+        }
+    }
+
+    async setPrivacyProfile(profile: PrivacyProfile): Promise<string | undefined> {
+        const current = SolcordSettings.snapshot().productPreferences;
+        if (current.privacy.profile === profile && !current.privacy.migrationPending) return;
+        const snapshot = SolcordSettings.capture(`Before applying ${profile} privacy`, {
+            plugins: this.#enabledAddonFiles(PluginManager),
+            themes: this.#enabledAddonFiles(ThemeManager)
+        });
+        const disabledCommunity: Array<{fileName: string; doctorId: string; newlyQuarantined: boolean;}> = [];
+        if (profile === "strict") this.#strictCommunityPolicyBusy = true;
+        try {
+            SolcordSettings.setProductPreferences({...current, privacy: applyPrivacyProfile(current.privacy, profile)});
+            if (profile === "strict") {
+                const enabled = PluginManager.addonList.filter(addon => PluginManager.isEnabled(addon.filename));
+                const policy = planStrictCommunityAddonPolicy(enabled.map(addon => {
+                    const candidate = SOLCORD_RUNTIME_ADDONS.find(item => item.fileName.toLocaleLowerCase("en-US") === addon.filename.toLocaleLowerCase("en-US"));
+                    const integrityMatched = Boolean(candidate && this.#integrity.records.find(record => record.kind === "addon" && record.name === candidate.name)?.status === "match");
+                    return {fileName: addon.filename, integrityMatched};
+                }), SOLCORD_CATALOG_INDEX);
+                for (const decision of policy.filter(item => item.action === "disable")) {
+                    const addon = enabled.find(item => item.filename === decision.fileName);
+                    if (!addon) continue;
+                    PluginManager.disableAddon(addon.filename);
+                    if (PluginManager.isEnabled(addon.filename)) throw new Error("StrictPrivacyAddonDisableFailed");
+                    const doctorId = addon.name || addon.filename;
+                    const newlyQuarantined = !PluginDoctor.isQuarantined(doctorId);
+                    PluginDoctor.quarantine(doctorId, decision.reason);
+                    disabledCommunity.push({fileName: addon.filename, doctorId, newlyQuarantined});
+                }
+            }
+            this.#strictCommunityPolicyBusy = false;
+            this.#synchronizePrivacyPolicy();
+            this.emitChange();
+            return snapshot.id;
+        }
+        catch (error) {
+            for (const entry of disabledCommunity) {
+                try {PluginManager.enableAddon(entry.fileName);}
+                catch {/* rollback continues for every entry */}
+                if (entry.newlyQuarantined) PluginDoctor.clearQuarantine(entry.doctorId);
+            }
+            try {SolcordSettings.rollback(snapshot.id);}
+            catch {/* original state remains the authoritative recovery target */}
+            this.#strictCommunityPolicyBusy = false;
+            this.#synchronizePrivacyPolicy();
+            throw error;
+        }
     }
 
     fakeDeafenStatus(): SolcordFakeDeafenStatus {
@@ -931,9 +1057,10 @@ class SolcordRuntimeStore extends Store {
             || (PluginManager.isEnabled(current.filename) === true) !== entry.enabled) throw new Error("SetupProviderMigrationConfirmationChanged");
     }
 
-    async finishSetup(rawDraft: unknown, confirmedProviderMigrationPlan: unknown): Promise<{transactionId: string; enabled: string[]; quarantined: Array<{name: string; reason: string;}>; providerConflicts: Array<{name: string; fileName: string;}>;}> {
+    async finishSetup(rawDraft: unknown, confirmedProviderMigrationPlan: unknown, options: {migrateProviders?: boolean;} = {}): Promise<{transactionId: string; enabled: string[]; quarantined: Array<{name: string; reason: string;}>; providerConflicts: Array<{name: string; fileName: string;}>;}> {
         const draft = normalizeSetupDraft(rawDraft);
-        let providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+        const migrateProviders = options.migrateProviders !== false;
+        let providerMigrations = migrateProviders ? this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan) : [];
         await this.#refreshAddonIntegrity("pre-setup");
         const plan = resolveSolcordSetupPlan(draft.selectedAddons, draft.addonModes);
         const executableAddons = new Set(plan.executableAddons);
@@ -943,7 +1070,7 @@ class SolcordRuntimeStore extends Store {
         const priorAddonStates = captureExactAddonStates(PluginManager);
         const priorThemeStates = captureExactAddonStates(ThemeManager);
         this.#refreshReviewedExecutionOwnership([...stagedAddons, ...requiredDependencies], true);
-        providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+        providerMigrations = migrateProviders ? this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan) : [];
         let transaction: {transactionId: string;};
         try {
             transaction = await this.#withPrivateCapability(capability => TIMELINE_IPC.applySetup(capability, {selectedAddons: stagedAddons, selectedTheme: draft.selectedTheme})) as {transactionId: string;};
@@ -1012,7 +1139,7 @@ class SolcordRuntimeStore extends Store {
             if (!await this.#waitForAddon(ThemeManager, selectedTheme.fileName)) throw new Error("SelectedThemeLoadTimeout");
             if (!ThemeManager.isEnabled(selectedTheme.fileName) && ThemeManager.enableAddon(selectedTheme.fileName) !== true && !ThemeManager.isEnabled(selectedTheme.fileName)) throw new Error("SelectedThemeStartFailed");
 
-            providerMigrations = this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan);
+            providerMigrations = migrateProviders ? this.#requireProviderMigrationPlan(draft, confirmedProviderMigrationPlan) : [];
             const timelineReplacementReady = this.#health.get("message-timeline")?.status === "active";
             for (const migration of providerMigrations) {
                 this.#assertProviderMigrationIdentityCurrent(migration, draft);
@@ -1783,6 +1910,10 @@ class SolcordRuntimeStore extends Store {
         if (!curated.DoNotTrack?.enabled) {
             results.DoNotTrack = {enabled: false, provider: "off"};
         }
+        else if (SolcordSettings.snapshot().productPreferences.privacy.telemetry === "block" && this.#privacyCapabilities.find(capability => capability.dataClass === "telemetry")?.state === "Protected") {
+            results.DoNotTrack = {enabled: true, provider: "solcord"};
+            PluginDoctor.recordSuccessfulStart("DoNotTrack");
+        }
         else if (this.#communityAddonEnabled("DoNotTrack")) {
             results.DoNotTrack = communityResult("DoNotTrack");
         }
@@ -2144,6 +2275,7 @@ class SolcordRuntimeStore extends Store {
     async #synchronizeFeatures(ids: readonly SolcordModuleId[] = FEATURE_IDS): Promise<void> {
         this.#applyProductPresentation();
         this.#synchronizeBaselineSuite();
+        this.#synchronizePrivacyPolicy();
         // Settings import, setup completion, profile apply, and rollback all converge here.
         // Reapply presentation so those atomic paths do not leave the saved controls inert
         // until a restart or a later direct Appearance edit.
@@ -2210,6 +2342,99 @@ class SolcordRuntimeStore extends Store {
         scope.interval(() => controller.validateOwnership(), 5_000);
         this.#fakeDeafenStatus = controller.snapshot();
         this.emitChange();
+    }
+
+    #recordPrivacyDecision(receipt: PrivacyDecisionReceipt): void {
+        const latest = [...this.#privacyReceipts].reverse().find(item => item.dataClass === receipt.dataClass);
+        if (latest
+            && latest.timeBucket === receipt.timeBucket
+            && latest.decision === receipt.decision
+            && latest.result === receipt.result) return;
+        const next = {...receipt, sequence: ++this.#privacySequence};
+        this.#privacyReceipts.push(next);
+        this.#privacyReceipts.splice(0, Math.max(0, this.#privacyReceipts.length - 100));
+        JsonStore.set("misc", "solcordPrivacyReceipts", this.#privacyReceipts);
+    }
+
+    #synchronizePrivacyPolicy(): void {
+        try {this.#privacyScope.dispose();}
+        catch (error) {Logger.warn("Solcord", `Privacy policy cleanup reported ${errorName(error)}.`);}
+        this.#privacyScope = new SolcordDisposalScope();
+
+        const preferences = SolcordSettings.snapshot().productPreferences.privacy;
+        setSolcordAutomaticUpdatesAllowed(preferences.updates === "automatic");
+        const analyticsContainer = getByKeys<Record<string, unknown>>(["AnalyticEventConfigs"]);
+        const analyticsTarget = resolveDiscordAnalyticsTrack(analyticsContainer);
+        const crashModule = getByKeys<Record<string, unknown>>(["captureException", "captureMessage"]);
+        const nativeProcessUtils = (globalThis as typeof globalThis & {DiscordNative?: {processUtils?: Record<string, unknown>;};}).DiscordNative?.processUtils;
+        const adapter = new SolcordPrivacyPolicyAdapter({
+            scope: this.#privacyScope,
+            patcher: Patcher,
+            preferences: () => SolcordSettings.snapshot().productPreferences.privacy,
+            receipt: receipt => this.#recordPrivacyDecision(receipt),
+            specs: [
+                {
+                    id: "discord-analytics-track",
+                    dataClass: "telemetry",
+                    key: "track",
+                    lookup: () => analyticsTarget?.module,
+                    validate: candidate => candidate.module === analyticsTarget?.module && candidate.key === "track" && validateDiscordAnalyticsTrack(analyticsContainer, candidate),
+                    blockedValue: () => undefined
+                },
+                {
+                    id: "optional-crash-exception",
+                    dataClass: "crash-reporting",
+                    key: "captureException",
+                    lookup: () => crashModule,
+                    validate: candidate => candidate.module === crashModule && Boolean(resolvePrivacyMethodTarget(crashModule, "captureMessage")),
+                    blockedValue: () => undefined
+                },
+                {
+                    id: "optional-crash-message",
+                    dataClass: "crash-reporting",
+                    key: "captureMessage",
+                    lookup: () => crashModule,
+                    validate: candidate => candidate.module === crashModule && Boolean(resolvePrivacyMethodTarget(crashModule, "captureException")),
+                    blockedValue: () => undefined
+                },
+                {
+                    id: "native-process-discovery",
+                    dataClass: "activity-discovery",
+                    key: "getProcesses",
+                    lookup: () => nativeProcessUtils,
+                    validate: candidate => candidate.module === nativeProcessUtils && candidate.key === "getProcesses",
+                    blockedValue: () => Promise.resolve([])
+                }
+            ]
+        });
+        const optional = adapter.start();
+        const core: PrivacyCapabilityRecord = {dataClass: "core-discord", state: "Protected", summary: "Authentication, chat, voice, media, moderation, safety, and client security updates remain allowed."};
+        const updates: PrivacyCapabilityRecord = preferences.updates === "manual"
+            ? {dataClass: "solcord-updates", state: "Protected", summary: "Automatic Solcord, plugin, and theme checks are paused. Check for updates remains available on demand."}
+            : {dataClass: "solcord-updates", state: "NeedsReview", summary: "Automatic update checks are allowed by this profile."};
+        const enabledCommunity = PluginManager.addonList?.filter(addon => PluginManager.isEnabled(addon.filename)) ?? [];
+        const communityPolicy = planStrictCommunityAddonPolicy(enabledCommunity.map(addon => {
+            const candidate = SOLCORD_RUNTIME_ADDONS.find(item => item.fileName.toLocaleLowerCase("en-US") === addon.filename.toLocaleLowerCase("en-US"));
+            return {
+                fileName: addon.filename,
+                integrityMatched: Boolean(candidate && this.#integrity.records.find(record => record.kind === "addon" && record.name === candidate.name)?.status === "match")
+            };
+        }), SOLCORD_CATALOG_INDEX);
+        const communityAttention = communityPolicy.filter(item => item.action === "disable");
+        const community: PrivacyCapabilityRecord = enabledCommunity.length === 0
+            ? {dataClass: "community-addons", state: "Protected", summary: "No enabled community addon requires an outbound declaration."}
+            : communityAttention.length === 0
+                ? {dataClass: "community-addons", state: "Protected", summary: `${enabledCommunity.length} exact reviewed local-only addon${enabledCommunity.length === 1 ? "" : "s"} may continue.`}
+                : {dataClass: "community-addons", state: "NeedsReview", summary: `${communityAttention.length} enabled addon${communityAttention.length === 1 ? "" : "s"} lack an approved local-only declaration.`};
+        const provider = SolcordSettings.snapshot().productPreferences.nativeSuite.translation.provider;
+        const external: PrivacyCapabilityRecord = provider === "off"
+            ? {dataClass: "external-providers", state: "Protected", summary: "No external provider is active."}
+            : {dataClass: "external-providers", state: "NeedsReview", summary: "Translation is configured; its provider and transmitted text remain action-visible."};
+        this.#privacyCapabilities = [core, ...optional, updates, community, external];
+        this.#recordPrivacyDecision(createPrivacyDecisionReceipt(0, Date.now(), "core-discord", "allow", "applied"));
+        this.#recordPrivacyDecision(createPrivacyDecisionReceipt(0, Date.now(), "solcord-updates", preferences.updates === "manual" ? "block" : "allow", "applied"));
+        this.#recordPrivacyDecision(createPrivacyDecisionReceipt(0, Date.now(), "community-addons", communityAttention.length ? "hold" : "allow", communityAttention.length ? "declaration-required" : "not-applicable"));
+        this.#recordPrivacyDecision(createPrivacyDecisionReceipt(0, Date.now(), "external-providers", provider === "off" ? "block" : "hold", provider === "off" ? "not-applicable" : "declaration-required"));
     }
 
     #stopFakeDeafen(): void {

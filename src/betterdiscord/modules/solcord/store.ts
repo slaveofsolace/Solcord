@@ -7,6 +7,7 @@ import path from "path";
 import {isSolcordBuiltInAddon} from "@common/solcord/builtin-addons";
 import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan, SOLCORD_RECOMMENDED_SETUP_ADDONS} from "@common/solcord/setup-catalog";
 import {normalizeSolcordProductPreferences} from "@common/solcord/product";
+import {legacyPrivacyPreferences} from "@common/solcord/privacy";
 
 import type {
     SolcordAddonMode,
@@ -27,9 +28,9 @@ import type {
 } from "./contracts";
 
 
-export const SOLCORD_SCHEMA_VERSION = 6;
+export const SOLCORD_SCHEMA_VERSION = 7;
 export const SOLCORD_CONSENT_VERSION = 3;
-export const SOLCORD_ONBOARDING_VERSION = 4;
+export const SOLCORD_ONBOARDING_VERSION = 5;
 const MAX_SNAPSHOTS = 20;
 const MAX_LEDGER_ENTRIES = 100;
 const MAX_PROFILES = 50;
@@ -188,7 +189,7 @@ function normalizeOnboarding(value: unknown): SolcordOnboardingState {
     return {
         version: SOLCORD_ONBOARDING_VERSION,
         status: requiresProviderReview ? "pending" : priorStatus,
-        lastStep: requiresProviderReview ? 0 : boundedNumber(record.lastStep, 0, 0, 7),
+        lastStep: requiresProviderReview ? 0 : boundedNumber(record.lastStep, 0, 0, 4),
         ...(isRecord(record.draft) ? {draft: normalizeSetupDraft(record.draft)} : {}),
         ...(!requiresProviderReview && typeof record.completedAt === "number" ? {completedAt: boundedNumber(record.completedAt, 0, 0, Number.MAX_SAFE_INTEGER)} : {})
     };
@@ -390,7 +391,7 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
             at: Date.now(),
             fromSchema: rawSchemaVersion,
             toSchema: SOLCORD_SCHEMA_VERSION,
-            detail: "Added Stream Audience Guard settings while keeping its account-bound denylist outside portable settings and exports."
+            detail: "Added the privacy-first profile, five-step setup, and content-free privacy capability state."
         });
         migrationProvenance.splice(0, Math.max(0, migrationProvenance.length - MAX_MIGRATION_ENTRIES));
     }
@@ -415,10 +416,11 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
 
     const productPreferences = normalizeSolcordProductPreferences(record.productPreferences);
     if (rawSchemaVersion < 4) productPreferences.safety.linkLens = false;
+    if (rawSchemaVersion < 7) productPreferences.privacy = legacyPrivacyPreferences();
     reconcileModulePreferenceBindings(modules, productPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
 
     return {
-        schemaVersion: 6,
+        schemaVersion: 7,
         consentVersion: SOLCORD_CONSENT_VERSION,
         onboarding: normalizeOnboarding(record.onboarding),
         selectedTheme: stringChoice(record.selectedTheme, SOLCORD_THEMES.map(theme => theme.id), "solcord-default"),
@@ -938,7 +940,7 @@ class SolcordStore extends Store {
                 ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
             };
         }
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "complete", lastStep: 7, completedAt: Date.now()};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "complete", lastStep: 4, completedAt: Date.now()};
         const record: SolcordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates, ...(transaction.providerArchiveTransactionId ? {providerArchiveTransactionId: transaction.providerArchiveTransactionId} : {})};
         this.#document.setupTransactions.push(record);
         this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
@@ -964,7 +966,7 @@ class SolcordStore extends Store {
         this.#document.timelinePolicy = restored.timelinePolicy;
         this.#document.productPreferences = restored.productPreferences;
         applyModulePreferenceBindings(this.#document);
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 6};
+        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 4};
         this.#document.setupTransactions.pop();
         this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
         this.#appendLedger("rollback", "Aborted an unacknowledged Solcord setup transaction.");

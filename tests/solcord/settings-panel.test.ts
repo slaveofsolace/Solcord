@@ -31,7 +31,7 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("{label: \"Start\", ids: [\"overview\"]}");
         expect(panel).toContain("{label: \"Personalize\", ids: [\"appearance\", \"performance\"]}");
         expect(panel).toContain("{label: \"Features\", ids: [\"privacy\", \"chat\", \"voice\", \"friends\"]}");
-        expect(panel).toContain("{label: \"System\", ids: [\"extensions\", \"recovery\", \"power\", \"advanced\"]}");
+        expect(panel).toContain("{label: \"System\", ids: [\"extensions\", \"recovery\"]}");
         expect(panel).toContain("placeholder=\"Find a setting\"");
     });
 
@@ -47,27 +47,58 @@ describe("Solcord Control Center clarity", () => {
 
     test("keeps runtime diagnostics and the community catalog out of the primary path", () => {
         expect(panel).toContain("className=\"solcord-extension-disclosure\"");
-        expect(panel).toContain("Runtime and community catalog");
+        expect(panel).toContain("Community software and technical state");
     });
 
-    test("keeps Fake Deafen discoverable from Overview even before it is enabled", () => {
-        expect(panel).toContain("fakeDeafenProvider: SolcordRuntime.fakeDeafenProvider()");
-        expect(panel).toContain("Fake Deafen is ready");
-        expect(panel).toContain("Fake Deafen is available");
-        expect(panel).toContain("Enable the scoped built-in from Power Lab");
-        expect(panel).toContain("action: \"Open Fake Deafen\"");
-        expect(panel).toContain("signal.id === \"fake-deafen\" ? \"power\"");
+    test("keeps idle Fake Deafen out of Overview attention signals", () => {
+        const pulse = panel.slice(panel.indexOf("function SessionPulse"), panel.indexOf("function ProviderMigrationStatus"));
+        expect(pulse).not.toContain("fakeDeafen");
+        expect(pulse).not.toContain("Fake Deafen");
     });
 
-    test("gives Fake Deafen a dedicated Power Lab workspace instead of burying it below voice tools", () => {
-        expect(panel).toContain("{workspace === \"power\" && <><PowerLabStatus />");
-        expect(panel).toContain("enable the built-in here, then arm it for the current voice connection");
+    test("places Fake Deafen under a collapsed Voice experimental disclosure", () => {
+        expect(panel).toContain("<details className=\"solcord-experimental\"><summary>Experimental</summary><PowerLabStatus /></details>");
+        expect(panel).not.toContain("workspace === \"power\"");
     });
 
-    test("scrolls and focuses the setup wizard when Continue setup is used on Overview", () => {
+    test("uses a dedicated setup workspace and only a compact reminder after deferral", () => {
         expect(panel).toContain("const focusSetup = workspace === \"overview\" && workspaceFocus === \"setup\"");
         expect(panel).toContain("document.querySelector<HTMLElement>(\".solcord-wizard\")");
-        expect(panel).toContain("onClick={openSetup}>Continue setup</ActionButton>");
-        expect(panel).toContain("<SessionPulse openWorkspace={setWorkspace} openSetup={openSetup} />");
+        expect(panel).toContain("onboarding.status === \"pending\" ? <SetupWizard />");
+        expect(panel).toContain("className=\"solcord-setup-reminder\"");
+        expect(panel).not.toContain("className=\"solcord-setup-banner\"");
+    });
+
+    test("leads Privacy with the explicit profile and content-free capability report", () => {
+        expect(panel).toContain("<PrivacyProtectionPanel /><StreamShieldControls />");
+        expect(panel).toContain("Use Strict Privacy");
+        expect(panel).toContain("Check for updates");
+        expect(panel).toContain("never URLs, payloads, account IDs, messages, attachments, or file paths");
+    });
+});
+
+describe("Solcord five-step setup", () => {
+    const wizard = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/ui/solcord/setup-wizard.tsx"), "utf8");
+
+    test("offers one clear footer path and a quiet reversible deferral", () => {
+        const footer = wizard.slice(wizard.indexOf("<div className=\"solcord-wizard-footer\">"));
+        expect(footer).toContain(">Back</button>");
+        expect(footer).toContain(">Continue</button>");
+        expect(footer).toContain("{busy ? \"Applying…\" : \"Apply\"}");
+        expect(footer).toContain(">Finish later</button>");
+        expect(footer).not.toContain("Cancel for now");
+        expect(footer).not.toContain("Skip setup");
+    });
+
+    test("does not replace community plugin files during initial setup", () => {
+        expect(wizard).toContain("{migrateProviders: false}");
+        expect(wizard).not.toContain("solcord-provider-choice");
+        expect(wizard).not.toContain("Replace duplicate cards");
+    });
+
+    test("starts with Strict Privacy and keeps private history optional", () => {
+        expect(wizard).toContain("Choose your privacy baseline");
+        expect(wizard).toContain("Strict Privacy");
+        expect(wizard).toContain("Optional private history");
     });
 });
