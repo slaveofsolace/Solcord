@@ -13,7 +13,7 @@ import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_S
 
 import {SOLCORD_ADDON_GROUPS} from "./catalog";
 
-const {useEffect, useMemo, useState} = React;
+const {useEffect, useMemo, useRef, useState} = React;
 
 const WIZARD_STEPS = SOLCORD_SETUP_STEPS;
 
@@ -348,6 +348,7 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
 
 export default function SetupWizard({onReviewPending}: {onReviewPending(): void;}) {
     const document = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot());
+    const wizardRef = useRef<HTMLElement | null>(null);
     const [step, setStepState] = useState(document.onboarding.lastStep);
     const [draft, setDraftState] = useState<SolcordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
@@ -359,6 +360,9 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
         try {SolcordSettings.setSetupDraft(draft);}
         catch {setStatus("Your setup choices could not be saved. The durable draft was left unchanged; check disk access and retry before applying.");}
     }, [draft]);
+    useEffect(() => {
+        wizardRef.current?.scrollIntoView({behavior: "auto", block: "start"});
+    }, [step]);
     const setDraft = (update: SolcordSetupDraft | ((current: SolcordSetupDraft) => SolcordSetupDraft)) => setDraftState(current => typeof update === "function" ? update(current) : update);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setProvider = (name: string, provider: SolcordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
@@ -409,7 +413,7 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
 
     if (paused) return <section className="solcord-wizard solcord-wizard-paused" aria-label="Solcord setup paused"><div><strong>Setup paused</strong><p>Your draft is saved at step {step + 1}. No feature, addon, theme, or account state changed.</p></div><button type="button" className="solcord-action solcord-action-accent" onClick={() => setPaused(false)}>Resume setup</button></section>;
 
-    return <section className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
+    return <section ref={wizardRef} className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
         <div className="solcord-wizard-title"><div><h2 id="solcord-setup-title">Set up Solcord</h2><p>Your draft saves as you go. Nothing changes before Apply and verify.</p></div><div className="solcord-wizard-title-actions"><span>Step {step + 1} of {WIZARD_STEPS.length}</span>{step < WIZARD_STEPS.length - 1 && <button type="button" className="solcord-text-button" disabled={busy} onClick={() => setStep(WIZARD_STEPS.length - 1)}>Review changes</button>}</div></div>
         <div className="solcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />

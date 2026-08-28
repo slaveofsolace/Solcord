@@ -30,6 +30,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setSetupDraft(draft)");
         expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
+        expect(WIZARD_SOURCE).toContain("wizardRef.current?.scrollIntoView({behavior: \"auto\", block: \"start\"})");
+        expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
         expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: flex");
         expect(WIZARD_CSS).toContain("overflow-x: auto");
