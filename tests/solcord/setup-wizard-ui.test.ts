@@ -139,6 +139,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(entry.name)");
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(migration.name)");
         expect(RUNTIME_SOURCE).toContain("SetupProviderMigrationConfirmationChanged");
+        expect(RUNTIME_SOURCE).toContain("solcordV2ArchiveReceiptMatchesPreview(archived.archived, preview.records)");
+        expect(RUNTIME_SOURCE).toContain("providerArchiveFiles = archivedRecords.map(record => record.fileName)");
+        expect(RUNTIME_SOURCE).not.toContain("providerArchiveFiles = [...new Set(replacementReadyFiles)]");
         expect(RUNTIME_SOURCE).toContain("solcordV2QuarantineIdsForArchivedFiles(providerArchiveFiles)");
     });
 
