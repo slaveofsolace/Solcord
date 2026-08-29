@@ -2,6 +2,7 @@ import React from "react";
 import solcordMark from "@assets/branding/solcord-mark.svg";
 
 import {useStateFromStores} from "@ui/hooks";
+import Toasts from "@stores/toasts";
 import PluginManager from "@modules/pluginmanager";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings, {SOLCORD_PRESET_ADDONS} from "@modules/solcord/store";
@@ -1117,12 +1118,23 @@ function SetupManagement({openSetup}: {openSetup: () => void}) {
         <div><strong>Setup {document.onboarding.status}</strong><span>{document.onboarding.completedAt ? ` · ${timestamp(document.onboarding.completedAt)}` : ""}</span><p>Reopen the complete preview or roll back the latest staged setup transaction.</p></div>
         <div className="solcord-actions"><ActionButton onClick={openSetup}>Reopen setup</ActionButton><ActionButton tone="danger" disabled={!document.setupTransactions.length} onClick={() => {
             if (!window.confirm("Roll back the latest Solcord setup transaction? Files added by that transaction are removed only when their hashes are unchanged, and previous enabled states are restored.")) return;
-            void SolcordRuntime.rollbackLatestSetup().then(result => setStatus({
-                complete: `Latest setup transaction rolled back; ${result.removed} unchanged staged file(s) were removed and none were preserved.`,
-                partial: `Rollback is incomplete: ${result.removed} unchanged file(s) removed and ${result.preserved} locally changed file(s) preserved, or an addon state remained held.`,
-                unavailable: "No complete setup transaction was available to roll back.",
-                failed: "Rollback could not be confirmed. No locally changed file was overwritten; review Plugin Doctor and the setup journal."
-            }[result.status])).catch(() => setStatus("Rollback failed closed before completion. Review Plugin Doctor and the setup journal."));
+            void SolcordRuntime.rollbackLatestSetup().then(result => {
+                const message = {
+                    complete: `Latest setup transaction rolled back; ${result.removed} unchanged staged file(s) were removed and none were preserved.`,
+                    partial: `Rollback is incomplete: ${result.removed} unchanged file(s) removed and ${result.preserved} locally changed file(s) preserved, or an addon state remained held.`,
+                    unavailable: "No complete setup transaction was available to roll back.",
+                    failed: "Rollback could not be confirmed. No locally changed file was overwritten; review Plugin Doctor and the setup journal."
+                }[result.status];
+                setStatus(message);
+                const options = {forceShow: true, timeout: 6_000, group: "solcord-setup-rollback"};
+                if (result.status === "complete") Toasts.success(message, options);
+                else if (result.status === "unavailable") Toasts.info(message, options);
+                else Toasts.warning(message, options);
+            }).catch(() => {
+                const message = "Rollback failed closed before completion. Review Plugin Doctor and the setup journal.";
+                setStatus(message);
+                Toasts.error(message, {forceShow: true, timeout: 6_000, group: "solcord-setup-rollback"});
+            });
         }}>Roll back latest setup</ActionButton></div>
         {status && <p role="status">{status}</p>}
     </section>;

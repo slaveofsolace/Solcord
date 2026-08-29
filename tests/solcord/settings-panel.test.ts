@@ -139,6 +139,13 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).not.toContain("className=\"solcord-setup-banner\"");
     });
 
+    test("keeps setup rollback feedback visible after onboarding state unmounts its Recovery row", () => {
+        expect(panel).toContain("group: \"solcord-setup-rollback\"");
+        expect(panel).toContain("Toasts.success(message, options)");
+        expect(panel).toContain("Toasts.warning(message, options)");
+        expect(panel).toContain("forceShow: true");
+    });
+
     test("leads Privacy with the explicit profile and content-free capability report", () => {
         expect(panel).toContain("<PrivacyProtectionPanel /><StreamShieldControls />");
         expect(panel).toContain("Use Strict Privacy");
