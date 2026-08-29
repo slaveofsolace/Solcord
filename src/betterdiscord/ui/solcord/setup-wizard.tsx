@@ -5,11 +5,11 @@ import PluginManager from "@modules/pluginmanager";
 import ThemeManager from "@modules/thememanager";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings, {SOLCORD_PRESET_ADDONS, SOLCORD_THEMES} from "@modules/solcord/store";
-import type {SolcordAddonProvider, SolcordSettingsDocument, SolcordSetupDraft, SolcordThemeId} from "@modules/solcord/contracts";
-import {SOLCORD_CATALOG_SNAPSHOT, SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {communityAddonIsEnabled, isSolcordBuiltInAddon, resolveCommunityAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import type {SolcordSettingsDocument, SolcordSetupDraft, SolcordThemeId} from "@modules/solcord/contracts";
+import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
+import {communityAddonIsEnabled, isSolcordBuiltInAddon, resolveCommunityAddon} from "@common/solcord/builtin-addons";
 import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan, type SolcordSetupCandidateDecision} from "@common/solcord/setup-catalog";
-import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_SETUP_STEPS, type SolcordAppearancePreferences, type SolcordPerformanceProfile, type SolcordSafetyPreferences, type SolcordSetupPreset} from "@common/solcord/product";
+import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_SETUP_STEPS, type SolcordAppearancePreferences, type SolcordPerformanceProfile, type SolcordSetupPreset} from "@common/solcord/product";
 
 import {SOLCORD_ADDON_GROUPS} from "./catalog";
 
@@ -91,27 +91,6 @@ function WelcomeStep() {
     </div>;
 }
 
-function CurrentStateStep() {
-    const state = useStateFromStores([PluginManager, ThemeManager], () => ({
-        installed: SOLCORD_RUNTIME_ADDONS.filter(addon => Boolean(PluginManager.resolveAddon(addon.fileName))).length,
-        enabled: SOLCORD_RUNTIME_ADDONS.filter(addon => communityAddonIsEnabled(PluginManager, addon.name, addon.fileName)).length,
-        solcordThemes: SOLCORD_THEMES.filter(theme => Boolean(ThemeManager.resolveAddon(theme.fileName))).length,
-        activeSolcordThemes: SOLCORD_THEMES.filter(theme => ThemeManager.isEnabled(theme.fileName)).length
-    }));
-    return <div className="solcord-wizard-body">
-        <h3>Protected starting point</h3>
-        <p>Your complete draft is saved while you move through setup. Apply records a rollback transaction, validates ready adapters, and stops without overwriting a different local file.</p>
-        <dl className="solcord-facts">
-            <div><dt>Catalog files already present</dt><dd>{state.installed}</dd></div>
-            <div><dt>Catalog features currently enabled</dt><dd>{state.enabled}</dd></div>
-            <div><dt>Solcord themes present</dt><dd>{state.solcordThemes} of {SOLCORD_THEMES.length}</dd></div>
-            <div><dt>Solcord themes active</dt><dd>{state.activeSolcordThemes}</dd></div>
-        </dl>
-        <p className="solcord-callout">Existing MessageLogger data, unrelated plugins, themes, custom CSS, settings, and the vanilla Activities launcher are outside this transaction and remain untouched.</p>
-        <p className="solcord-callout">On a new setup, Message Timeline starts off. You may opt in during the Private history step; skipping setup leaves its policy unchanged.</p>
-    </div>;
-}
-
 function PresetStep({value, onChange}: {value: SolcordSetupPreset; onChange(value: SolcordSetupPreset): void;}) {
     const options: Array<{id: SolcordSetupPreset; title: string; detail: string;}> = [
         {id: "recommended", title: "Recommended", detail: "Activity safety, recovery, and the three accepted local interaction tools."},
@@ -133,7 +112,7 @@ function PerformanceStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(
         <h3>Choose how Solcord spends resources</h3>
         <p>This policy is real: it bounds performance sampling and caps motion. Disabled tools remain fully stopped in every profile.</p>
         <div className="solcord-segmented" role="radiogroup" aria-label="Setup performance profile">{(Object.keys(SOLCORD_PERFORMANCE_POLICIES) as SolcordPerformanceProfile[]).map(id => <button key={id} type="button" role="radio" aria-checked={profile === id} onClick={() => onChange({...draft, productPreferences: {...draft.productPreferences, performanceProfile: id}})}><strong>{id[0].toUpperCase() + id.slice(1)}</strong><small>{SOLCORD_PERFORMANCE_POLICIES[id].description}</small></button>)}</div>
-        <dl className="solcord-facts"><div><dt>Effective motion</dt><dd>{policy.effectiveMotion}</dd></div><div><dt>Sampling interval</dt><dd>at least {policy.sampleSeconds} seconds</dd></div><div><dt>Windows reduced motion</dt><dd>{reducedByOs ? "honored" : "not requested"}</dd></div></dl>
+        <details className="solcord-review-details"><summary>Performance details</summary><dl className="solcord-facts"><div><dt>Effective motion</dt><dd>{policy.effectiveMotion}</dd></div><div><dt>Sampling interval</dt><dd>at least {policy.sampleSeconds} seconds</dd></div><div><dt>Windows reduced motion</dt><dd>{reducedByOs ? "honored" : "not requested"}</dd></div></dl></details>
     </div>;
 }
 
@@ -205,42 +184,59 @@ function ThemeStep({value, appearance, performanceProfile, onChange, onAppearanc
     </div>;
 }
 
-function SafetyStep({value, onChange}: {value: SolcordSafetyPreferences; onChange(value: SolcordSafetyPreferences): void;}) {
-    return <div className="solcord-wizard-body">
-        <h3>Safety defaults</h3>
-        <p>These are local review tools. None silently opens, downloads, uploads, or navigates.</p>
-        <div className="solcord-choice-stack">
-            <label className="solcord-choice-row"><input type="checkbox" checked={value.linkLens} onChange={event => onChange({...value, linkLens: event.currentTarget.checked})} /><span><strong>Link Lens</strong><small>Review verified external-link activations in a native modal. Internal Discord routes remain untouched.</small></span></label>
-            <label className="solcord-choice-row"><input type="checkbox" checked={value.attachmentGuard} onChange={event => onChange({...value, attachmentGuard: event.currentTarget.checked})} /><span><strong>Show the manual Attachment Guard inspector</strong><small>Keep the local filename, MIME, and extension review tool in Safety. It does not intercept clicks, open files, or claim automatic protection.</small></span></label>
-            <label className="solcord-choice-row"><input type="checkbox" checked={value.privacyModeReady} onChange={event => onChange({...value, privacyModeReady: event.currentTarget.checked})} /><span><strong>Privacy Mode ready</strong><small>Keep the reversible redaction action available, but off.</small></span></label>
-        </div>
-    </div>;
-}
-
-function PrivateHistoryStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(value: SolcordSetupDraft): void;}) {
+function PrivacyStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(value: SolcordSetupDraft): void;}) {
     const friendWatch = draft.productPreferences.friendWatch;
+    const privacy = draft.productPreferences.privacy;
+    const safety = draft.productPreferences.safety;
+    const setPrivacyProfile = (profile: "strict" | "standard") => onChange({
+        ...draft,
+        productPreferences: {
+            ...draft.productPreferences,
+            privacy: {
+                ...privacy,
+                profile,
+                telemetry: profile === "strict" ? "block" : "allow",
+                crashReporting: profile === "strict" ? "block-optional" : "allow",
+                activityDiscovery: profile === "strict" ? "block" : "allow",
+                updates: "manual",
+                migrationPending: false
+            }
+        }
+    });
     return <div className="solcord-wizard-body">
-        <h3>Private local history</h3>
-        <p>Both capabilities are off until you choose them. They observe only data already loaded by this running client and never make extra Discord requests.</p>
+        <h3>Choose your privacy baseline</h3>
+        <p>Strict Privacy blocks verified optional reporting and activity discovery. Chat, calls, media, moderation, safety, sign-in, and Discord security updates continue normally.</p>
+        <div className="solcord-choice-grid solcord-choice-grid-two">
+            <label className="solcord-choice-row"><input type="radio" name="privacy-profile" checked={privacy.profile === "strict"} onChange={() => setPrivacyProfile("strict")} /><span><strong>Strict Privacy</strong><small>Recommended. Optional telemetry, crash reports, game discovery, and automatic Solcord checks stay off.</small></span></label>
+            <label className="solcord-choice-row"><input type="radio" name="privacy-profile" checked={privacy.profile !== "strict"} onChange={() => setPrivacyProfile("standard")} /><span><strong>Standard</strong><small>Discord optional reporting may run. Solcord update checks remain manual.</small></span></label>
+        </div>
+        <h3>Local safety tools</h3>
         <div className="solcord-choice-stack">
+            <label className="solcord-choice-row"><input type="checkbox" checked={safety.linkLens} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, linkLens: event.currentTarget.checked}}})} /><span><strong>Link Lens</strong><small>Review external links before opening them. Discord navigation is not intercepted.</small></span></label>
+            <label className="solcord-choice-row"><input type="checkbox" checked={safety.attachmentGuard} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, attachmentGuard: event.currentTarget.checked}}})} /><span><strong>Attachment review</strong><small>Inspect a file locally before upload. Solcord never submits it for you.</small></span></label>
+        </div>
+        <details className="solcord-review-details">
+            <summary>Optional private history</summary>
+            <p>These features are off by default. They use only data already loaded by this client and make no extra Discord requests.</p>
+            <div className="solcord-choice-stack">
             <label className="solcord-choice-row"><input type="checkbox" checked={friendWatch.enabled} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, enabled: event.currentTarget.checked}}})} /><span><strong>Friend Watch</strong><small>Relationship transitions only; 30-day encrypted local retention by default. It never guesses who blocked you.</small></span></label>
             <label className="solcord-choice-row"><input type="checkbox" disabled={!friendWatch.enabled} checked={friendWatch.includeDisplaySnapshot} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, includeDisplaySnapshot: event.currentTarget.checked}}})} /><span><strong>Keep display snapshots</strong><small>Store the already-loaded display name inside the encrypted account history. Turn this off to keep only an account-scoped subject key.</small></span></label>
             <label className="solcord-choice-row"><span><strong>Local notifications</strong><small>Daily shows one bounded in-app summary after a new transition; per-event is capped to prevent notification storms.</small></span><select aria-label="Friend Watch notification mode" disabled={!friendWatch.enabled} value={friendWatch.digest} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, digest: event.currentTarget.value as typeof friendWatch.digest}}})}><option value="off">Off</option><option value="daily">Daily in-app</option><option value="per-event">Per event, local</option></select></label>
             <label className="solcord-choice-row"><input type="checkbox" checked={draft.timelinePolicy.enabled} onChange={event => onChange({...draft, timelinePolicy: {...draft.timelinePolicy, enabled: event.currentTarget.checked}})} /><span><strong>Message Timeline</strong><small>DM-only, text-only, seven days by default. This stores observed message edits/deletes locally.</small></span></label>
-        </div>
-        <p className="solcord-callout">On Windows, safeStorage uses the signed-in Windows account boundary. It does not promise protection from every process already running as you. Without secure storage, persistence falls back to session-only.</p>
+            </div>
+            <p className="solcord-callout">Without Windows secure storage, private history becomes session-only.</p>
+        </details>
     </div>;
 }
 
 function ApplyStep({draft}: {draft: SolcordSetupDraft;}) {
-    return <div className="solcord-wizard-body">
-        <h3>Ready to apply</h3>
-        <p>Apply revalidates the reviewed bytes and provider identities, captures a rollback point, performs the transaction, and verifies the result. A failure aborts or rolls back without overwriting a different local file.</p>
+    return <div className="solcord-apply-summary">
+        <p>Apply verifies the selected files and captures a rollback point. Existing community plugins stay untouched.</p>
         <dl className="solcord-facts"><div><dt>Preset</dt><dd>{draft.preset}</dd></div><div><dt>Performance</dt><dd>{draft.productPreferences.performanceProfile}</dd></div><div><dt>Friend Watch</dt><dd>{draft.productPreferences.friendWatch.enabled ? "consented" : "off"}</dd></div><div><dt>Message Timeline</dt><dd>{draft.timelinePolicy.enabled ? "consented" : "off"}</dd></div><div><dt>Power Lab</dt><dd>off</dd></div></dl>
     </div>;
 }
 
-function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPending}: {draft: SolcordSetupDraft; toggle(name: string, enabled: boolean): void; selectRecommended(): void; setProvider(name: string, provider: SolcordAddonProvider): void; onReviewPending(): void;}) {
+function AddonStep({draft, toggle, selectRecommended}: {draft: SolcordSetupDraft; toggle(name: string, enabled: boolean): void; selectRecommended(): void;}) {
     const selected = useMemo(() => new Set(draft.selectedAddons), [draft.selectedAddons]);
     const plan = useMemo(() => resolveSolcordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
     const decisions = useMemo(() => new Map(plan.decisions.map(decision => [decision.name, decision])), [plan.decisions]);
@@ -252,42 +248,28 @@ function AddonStep({draft, toggle, selectRecommended, setProvider, onReviewPendi
     const pendingDecisions = useMemo(() => plan.decisions.filter(decision => !isReadyDecision(decision)), [plan.decisions]);
     const selectedReadyCount = readyDecisions.filter(decision => selected.has(decision.name)).length;
     const selectedPendingCount = pendingDecisions.filter(decision => selected.has(decision.name)).length;
-    const installedCommunityFiles = useStateFromStores([PluginManager], () => Object.fromEntries(SOLCORD_RUNTIME_ADDONS.flatMap(candidate => {
-        const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
-        return addon ? [[candidate.name, {fileName: addon.filename, enabled: PluginManager.isEnabled(addon.filename)}]] : [];
-    })) as Record<string, {fileName: string; enabled: boolean;}>);
     return <div className="solcord-wizard-body">
-        <div className="solcord-wizard-inline-heading"><div><h3>Ready local tools</h3><p>{selectedReadyCount} of {readyDecisions.length} selected. Each tool starts only after its Discord adapter validates.</p></div><div className="solcord-actions"><button type="button" className="solcord-action" onClick={selectRecommended}>Use recommended</button><button type="button" className="solcord-action" onClick={() => readyDecisions.forEach(decision => toggle(decision.name, false))}>Clear ready choices</button></div></div>
+        <div className="solcord-wizard-inline-heading"><div><h3>Choose useful features</h3><p>{selectedReadyCount} of {readyDecisions.length} selected. Each starts only after its Discord adapter validates.</p></div><div className="solcord-actions"><button type="button" className="solcord-action" onClick={selectRecommended}>Recommended</button><button type="button" className="solcord-action" onClick={() => readyDecisions.forEach(decision => toggle(decision.name, false))}>Clear</button></div></div>
         <div className="solcord-addon-groups">
             {readyGroups.map(group => <fieldset key={group.id} className="solcord-addon-group">
                 <legend>{group.title} <small>{group.summary}</small></legend>
                 {group.addons.map(addon => {
                     const decision = decisions.get(addon.name)!;
-                    const communityFile = installedCommunityFiles[addon.name];
-                    const showProviderChoice = selected.has(addon.name) && Boolean(communityFile) && isSolcordBuiltInAddon(addon.name, draft.addonModes[addon.name]);
-                    return <React.Fragment key={addon.name}>
-                        <label className="solcord-addon-choice">
+                    return <label key={addon.name} className="solcord-addon-choice">
                             <input type="checkbox" checked={selected.has(addon.name)} onChange={event => toggle(addon.name, event.currentTarget.checked)} />
-                            <span><strong>{addon.label}</strong><small>{addon.summary}</small><small>{decision.reason}</small></span>
+                            <span><strong>{addon.label}</strong><small>{addon.summary}</small></span>
                             <span className="solcord-review-chip">{decision.statusLabel}</span>
-                        </label>
-                        {showProviderChoice && <fieldset className="solcord-provider-choice">
-                        <legend>Existing file: <code>{communityFile.fileName}</code> · {communityFile.enabled ? "on" : "off"}</legend>
-                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-solcord"} onChange={() => setProvider(addon.name, "prefer-solcord")} /><span><strong>Use Solcord built-in (recommended)</strong><small>After the replacement validates, the exact source file moves to a rollback archive. Its settings and data stay untouched.</small></span></label>
-                            <label><input type="radio" name={`provider-${addon.name}`} checked={draft.addonProviders[addon.name] === "prefer-community"} onChange={() => setProvider(addon.name, "prefer-community")} /><span><strong>Keep community addon</strong><small>This file stays in Plugins and Solcord’s matching built-in stands down.</small></span></label>
-                        </fieldset>}
-                    </React.Fragment>;
+                        </label>;
                 })}
             </fieldset>)}
         </div>
         <div className="solcord-catalog-handoff">
-            <div><strong>Review pending tools separately</strong><p>{pendingDecisions.length} setup candidates still need a runtime, dependency, action, or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} previously saved request(s) remain pending and are not downloaded here. ` : ""}The complete {SOLCORD_CATALOG_SNAPSHOT.pluginCount}-plugin snapshot is available in the catalog after setup.</p><p><strong>Guarded Split Large Messages is built in.</strong> Apply and verify can enable its review-and-manual-copy flow; the community plugin&apos;s native multi-send mode remains held.</p></div>
-            <button type="button" className="solcord-action" onClick={onReviewPending}>Review pending</button>
+            <div><strong>Advanced choices come later</strong><p>{pendingDecisions.length} catalog candidates still need a runtime or security gate. {selectedPendingCount > 0 ? `${selectedPendingCount} saved request(s) remain pending. ` : ""}After setup, Extensions can review community files with a separate backup and rollback preview.</p></div>
         </div>
     </div>;
 }
 
-function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; providerMigrationPlan: SolcordProviderMigrationPlan | undefined;}) {
+function ReviewStep({draft}: {draft: SolcordSetupDraft;}) {
     const plan = useMemo(() => resolveSolcordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
     const readyCount = plan.decisions.filter(isReadyDecision).length;
     const executable = new Set(plan.executableAddons);
@@ -303,14 +285,6 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
         const requested = new Set(plan.requestedAddons);
         return SOLCORD_RUNTIME_ADDONS.filter(candidate => !requested.has(candidate.name) && communityAddonIsEnabled(PluginManager, candidate.name, candidate.fileName)).map(candidate => candidate.name);
     });
-    const installedBuiltInCounterparts = useStateFromStores([PluginManager], () => plan.executableAddons.flatMap(name => {
-        const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === name);
-        if (!candidate || !isSolcordBuiltInAddon(name, draft.addonModes[name])) return [];
-        const addon = resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName);
-        return addon ? [{name, fileName: addon.filename, enabled: PluginManager.isEnabled(addon.filename)}] : [];
-    }));
-    const communitySwitches = providerMigrationPlan?.entries ?? [];
-    const communityKeeps = installedBuiltInCounterparts.filter(counterpart => draft.addonProviders[counterpart.name] !== "prefer-solcord");
     const liveThemeState = useStateFromStores([ThemeManager], () => ({
         selectedEnabled: ThemeManager.isEnabled(selectedTheme.fileName),
         activeOtherNames: SOLCORD_THEMES.filter(theme => theme.id !== selectedTheme.id && ThemeManager.isEnabled(theme.fileName)).map(theme => theme.name),
@@ -319,7 +293,7 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
             .map(theme => theme.name || theme.filename)
     }));
     return <div className="solcord-wizard-body">
-        <h3>Complete transaction preview</h3>
+        <h3>Review and apply</h3>
         <dl className="solcord-facts">
             <div><dt>Ready tools selected</dt><dd>{plan.executableAddons.length} of {readyCount}</dd></div>
             <div><dt>Pending catalog requests</dt><dd>{plan.skipped.length} · no download</dd></div>
@@ -328,7 +302,6 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
             <div><dt>Bundled theme files in transaction</dt><dd>{SOLCORD_RUNTIME_THEMES.length}</dd></div>
             <div><dt>Maximum staged disk use</dt><dd>{bytesLabel(diskBytes)}</dd></div>
         </dl>
-        {communitySwitches.length > 0 && <p className="solcord-callout solcord-callout-danger"><strong>Replace duplicate cards:</strong> Apply and verify stops active files in this reviewed set, starts each matching Solcord built-in, then moves the exact unchanged source files into a timestamped rollback archive outside Plugins: {communitySwitches.map(counterpart => counterpart.fileName).join(", ")}. Settings and private databases stay untouched.</p>}
         <details className="solcord-review-details">
             <summary>Review every setting, conflict, and file</summary>
             <div className="solcord-review-columns">
@@ -338,7 +311,6 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
             {plan.skipped.length > 0 && <p className="solcord-callout"><strong>Pending stays pending:</strong> {plan.skipped.length} saved catalog request(s) remain uninstalled. Review their individual evidence and status in the catalog after setup.</p>}
             {activeSkipped.length > 0 && <p className="solcord-callout"><strong>Selected community files already active:</strong> {activeSkipped.map((decision: SolcordSetupCandidateDecision) => decision.name).join(", ")} remain enabled and owner-managed. Solcord skips their unaccepted catalog candidates without replacing, stopping, or certifying the existing files.</p>}
             {activeUnrequested.length > 0 && <p className="solcord-callout"><strong>Preserved owner addons:</strong> {activeUnrequested.join(", ")} are active but were not requested here. Apply and verify leaves them unchanged and outside this transaction.</p>}
-            {communityKeeps.length > 0 && <p className="solcord-callout"><strong>Keep community provider:</strong> {communityKeeps.map(counterpart => `${counterpart.name} (${counterpart.fileName}, ${counterpart.enabled ? "on" : "off"})`).join(", ")} stay owner-managed. Matching Solcord built-ins stand down.</p>}
             {liveThemeState.activeThirdPartyNames.length > 0 && <p className="solcord-callout"><strong>Possible theme overlap:</strong> {liveThemeState.activeThirdPartyNames.join(", ")} remain enabled and owner-managed. Apply and verify does not modify third-party themes.</p>}
             <div className="solcord-callout"><strong>Theme files</strong><p>All {SOLCORD_RUNTIME_THEMES.length} bundled files are included and hash-verified. Apply and verify {liveThemeState.selectedEnabled ? "keeps" : "enables"} {selectedTheme.name}{liveThemeState.activeOtherNames.length ? ` and disables ${liveThemeState.activeOtherNames.join(", ")}` : ""}; rollback restores the prior state.</p></div>
         </details>
@@ -346,16 +318,14 @@ function ReviewStep({draft, providerMigrationPlan}: {draft: SolcordSetupDraft; p
     </div>;
 }
 
-export default function SetupWizard({onReviewPending}: {onReviewPending(): void;}) {
+export default function SetupWizard() {
     const document = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot());
     const wizardRef = useRef<HTMLElement | null>(null);
     const [step, setStepState] = useState(document.onboarding.lastStep);
     const [draft, setDraftState] = useState<SolcordSetupDraft>(() => draftFrom(document));
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState("");
-    const [paused, setPaused] = useState(false);
     const plan = useMemo(() => resolveSolcordSetupPlan(draft.selectedAddons, draft.addonModes), [draft.addonModes, draft.selectedAddons]);
-    const providerMigrationPlan = useStateFromStores([PluginManager], () => SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]);
     useEffect(() => {
         try {SolcordSettings.setSetupDraft(draft);}
         catch {setStatus("Your setup choices could not be saved. The durable draft was left unchanged; check disk access and retry before applying.");}
@@ -365,7 +335,6 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
     }, [step]);
     const setDraft = (update: SolcordSetupDraft | ((current: SolcordSetupDraft) => SolcordSetupDraft)) => setDraftState(current => typeof update === "function" ? update(current) : update);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
-    const setProvider = (name: string, provider: SolcordAddonProvider) => setDraft(current => ({...current, addonProviders: {...current.addonProviders, [name]: provider}}));
     const setStep = (next: number) => {
         const bounded = Math.min(WIZARD_STEPS.length - 1, Math.max(0, next));
         try {
@@ -388,17 +357,11 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
         };
     });
     const finish = async () => {
-        if (!providerMigrationPlan) {
-            setStatus("Setup stopped before changing anything because the current provider identity could not be sealed. Review the active community addon files and try again.");
-            return;
-        }
-        const providerMigrations = providerMigrationPlan.entries.map(entry => entry.fileName);
-        const migrationNotice = providerMigrations.length ? ` This explicitly disables ${providerMigrations.join(", ")} in favor of the selected Solcord built-in and archives only exact unchanged source files outside the scanned Plugins folder; rollback restores them. BDFDB retires last only when no retained enabled addon still needs it.` : "";
-        if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s), verify or provision the ${SOLCORD_RUNTIME_THEMES.length} bundled theme files, and activate ${SOLCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? ${plan.skipped.length} selected optional choice(s) will be skipped without download. Existing differing files will abort without being overwritten.${migrationNotice}`)) return;
+        if (!window.confirm(`Apply ${plan.executableAddons.length} ready feature(s) and activate ${SOLCORD_THEMES.find(theme => theme.id === draft.selectedTheme)?.name}? Existing community plugins stay untouched; Extensions can review replacements later with a separate rollback preview.`)) return;
         setBusy(true);
         setStatus(plan.skipped.length ? `Applying the ready set; ${plan.skipped.length} unavailable choice(s) will be skipped…` : "Applying the ready set and verifying hashes…");
         try {
-            const result = await SolcordRuntime.finishSetup(draft, providerMigrationPlan);
+            const result = await SolcordRuntime.finishSetup(draft, undefined, {migrateProviders: false});
             setStatus(`Finished transaction ${result.transactionId}. ${result.enabled.length} enabled; ${plan.skipped.length} skipped; ${result.quarantined.length} quarantined; ${result.providerConflicts.length} provider conflict(s).`);
         }
         catch (error) {setStatus(setupFailureMessage(error));}
@@ -406,27 +369,21 @@ export default function SetupWizard({onReviewPending}: {onReviewPending(): void;
             setBusy(false);
         }
     };
-    const skip = () => {
-        if (!window.confirm("Skip setup? No plugin file, theme file, enabled state, or Timeline policy will change. You can reopen this wizard later.")) return;
+    const finishLater = () => {
         SolcordSettings.skipOnboarding();
     };
 
-    if (paused) return <section className="solcord-wizard solcord-wizard-paused" aria-label="Solcord setup paused"><div><strong>Setup paused</strong><p>Your draft is saved at step {step + 1}. No feature, addon, theme, or account state changed.</p></div><button type="button" className="solcord-action solcord-action-accent" onClick={() => setPaused(false)}>Resume setup</button></section>;
-
     return <section ref={wizardRef} className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
-        <div className="solcord-wizard-title"><div><h2 id="solcord-setup-title">Set up Solcord</h2><p>Your draft saves as you go. Nothing changes before Apply and verify.</p></div><div className="solcord-wizard-title-actions"><span>Step {step + 1} of {WIZARD_STEPS.length}</span>{step < WIZARD_STEPS.length - 1 && <button type="button" className="solcord-text-button" disabled={busy} onClick={() => setStep(WIZARD_STEPS.length - 1)}>Review changes</button>}</div></div>
+        <div className="solcord-wizard-title"><div><p className="solcord-eyebrow">First setup</p><h2 id="solcord-setup-title">Make Solcord yours</h2><p>Your choices save as you go. Nothing changes until Apply.</p></div><span>Step {step + 1} of {WIZARD_STEPS.length}</span></div>
         <div className="solcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
         {step === 0 && <WelcomeStep />}
-        {step === 1 && <><SafetyStep value={draft.productPreferences.safety} onChange={safety => setDraft(current => ({...current, productPreferences: {...current.productPreferences, safety}}))} /><PrivateHistoryStep draft={draft} onChange={setDraft} /></>}
-        {step === 2 && <PerformanceStep draft={draft} onChange={setDraft} />}
-        {step === 3 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} performanceProfile={draft.productPreferences.performanceProfile} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
-        {step === 4 && <><PresetStep value={draft.preset} onChange={setPreset} /><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} setProvider={setProvider} onReviewPending={onReviewPending} /></>}
-        {step === 5 && <ActivitiesStep />}
-        {step === 6 && <CurrentStateStep />}
-        {step === 7 && <><ReviewStep draft={draft} providerMigrationPlan={providerMigrationPlan} /><ApplyStep draft={draft} /></>}
+        {step === 1 && <PrivacyStep draft={draft} onChange={setDraft} />}
+        {step === 2 && <ThemeStep value={draft.selectedTheme} appearance={draft.productPreferences.appearance} performanceProfile={draft.productPreferences.performanceProfile} onChange={selectedTheme => setDraft(current => ({...current, selectedTheme}))} onAppearance={appearance => setDraft(current => ({...current, productPreferences: {...current.productPreferences, appearance}}))} />}
+        {step === 3 && <><PerformanceStep draft={draft} onChange={setDraft} /><PresetStep value={draft.preset} onChange={setPreset} /><details className="solcord-features-advanced"><summary>Customize individual features</summary><AddonStep draft={draft} toggle={toggle} selectRecommended={selectRecommended} /></details></>}
+        {step === 4 && <><ReviewStep draft={draft} /><ApplyStep draft={draft} /><details className="solcord-features-advanced"><summary>Activities compatibility check</summary><ActivitiesStep /></details></>}
         <div className="solcord-wizard-footer">
-            <div className="solcord-actions"><button type="button" className="solcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Verifying and applying…" : "Apply and verify"}</button>}<button type="button" className="solcord-action" disabled={busy} onClick={() => setPaused(true)}>Cancel for now</button><button type="button" className="solcord-action" disabled={busy} onClick={skip}>Skip setup</button></div>
+            <div className="solcord-actions"><button type="button" className="solcord-action" onClick={() => setStep(step - 1)} disabled={step === 0 || busy}>Back</button>{step < WIZARD_STEPS.length - 1 ? <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => setStep(step + 1)}>Continue</button> : <button type="button" className="solcord-action solcord-action-accent" disabled={busy} onClick={() => void finish()}>{busy ? "Applying…" : "Apply"}</button>}<button type="button" className="solcord-text-button" disabled={busy} onClick={finishLater}>Finish later</button></div>
             {status && <p role="status" aria-live="polite" className="solcord-setup-status">{status}</p>}
         </div>
     </section>;

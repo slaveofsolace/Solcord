@@ -51,6 +51,59 @@ export interface SolcordNativeSuiteAdapter {
     focusChannelIds?: readonly string[];
     saveFocusChannelIds?(ids: readonly string[]): void;
     identityNotesAvailable?: boolean;
+    externalProvidersAllowed?(): boolean;
+    voiceHealthEnabled?: boolean;
+}
+
+export interface SolcordSpeakingStoreShape {
+    getSpeakingUsers?(): unknown;
+    getSpeakers?(): unknown;
+}
+
+export interface SolcordChangeStoreShape {
+    addChangeListener(listener: () => void): void;
+    removeChangeListener(listener: () => void): void;
+}
+
+/**
+ * Discord renamed SpeakingStore#getSpeakingUsers to getSpeakers in app-1.0.9255.
+ * Resolve only these two reviewed, zero-argument store shapes and preserve the
+ * store receiver. Unknown shapes remain unavailable instead of being guessed.
+ */
+export function resolveSolcordSpeakingReader(store: SolcordSpeakingStoreShape | undefined): (() => unknown) | undefined {
+    if (typeof store?.getSpeakingUsers === "function") return () => store.getSpeakingUsers!();
+    if (typeof store?.getSpeakers === "function") return () => store.getSpeakers!();
+}
+
+/** Subscribe atomically and retain any failed remover for teardown retry. */
+export function subscribeSolcordChangeStores(scope: SolcordDisposalScope, stores: readonly SolcordChangeStoreShape[], listener: () => void): () => void {
+    const subscribed: SolcordChangeStoreShape[] = [];
+    try {
+        for (const store of stores) {
+            store.addChangeListener(listener);
+            subscribed.push(store);
+        }
+    }
+    catch (error) {
+        const cleanupErrors: unknown[] = [];
+        for (const store of subscribed.reverse()) {
+            try {store.removeChangeListener(listener);}
+            catch (cleanupError) {
+                scope.own(() => store.removeChangeListener(listener), "listener");
+                cleanupErrors.push(cleanupError);
+            }
+        }
+        if (cleanupErrors.length) throw new AggregateError([error, ...cleanupErrors], "Call Context subscription and rollback failed; listener cleanup remains owned for retry.");
+        throw error;
+    }
+    return () => {
+        const cleanupErrors: unknown[] = [];
+        for (const store of subscribed.slice().reverse()) {
+            try {store.removeChangeListener(listener);}
+            catch (error) {cleanupErrors.push(error);}
+        }
+        if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Call Context listener cleanup failed.");
+    };
 }
 
 interface RecordingState {
@@ -116,6 +169,7 @@ function stopMediaStreamTracks(stream: MediaStream): void {
 }
 
 export const SOLCORD_TRANSLATION_RESPONSE_MAX_BYTES = 1024 * 1024;
+export const SOLCORD_VOICE_NOTE_STOP_TIMEOUT_MS = 2_000;
 
 export async function readBoundedTranslationJson(response: Response): Promise<unknown> {
     const declaredSize = Number(response.headers.get("content-length"));
@@ -171,6 +225,8 @@ export class SolcordNativeSuiteController {
     #voicePromptGeneration = 0;
     #voicePromptPending = false;
     #translationEndpoints = new Map<string, string>();
+    #focusIds: string[] = [];
+    #releaseFocusObserver?: () => void;
     #disposed = false;
 
     constructor(scope: SolcordDisposalScope, addons: Readonly<Record<string, boolean>>, adapter: SolcordNativeSuiteAdapter) {
@@ -264,6 +320,9 @@ export class SolcordNativeSuiteController {
         const endpoint = this.#translationEndpoints.get(previewId);
         this.#translationEndpoints.delete(previewId);
         if (!endpoint) throw new Error("Translation endpoint review expired.");
+        if (this.#adapter.externalProvidersAllowed?.() !== true) {
+            throw new Error("Strict Privacy blocks external translation providers. Allow external providers in Privacy & Safety before translating.");
+        }
         const intent = this.confirmTranslation(previewId);
         if (Date.now() > intent.expiresAt) throw new Error("Translation confirmation expired.");
         if (intent.payload.provider === "deepl" && (!credential || credential.length > 512 || hasUnsafeControl(credential))) throw new Error("A valid DeepL credential is required.");
@@ -331,7 +390,7 @@ export class SolcordNativeSuiteController {
         if (!this.#adapter.saveFocusChannelIds) throw new Error("Focus Channels is unavailable.");
         const normalized = [...new Set(ids.map(id => safeToken(id)).slice(0, 100))];
         this.#adapter.saveFocusChannelIds(normalized);
-        this.#applyFocusChannels(normalized);
+        this.#synchronizeFocusChannels(normalized);
     }
 
     async beginVoiceNoteFromUserGesture(): Promise<{recordingId: string;}> {
@@ -389,7 +448,25 @@ export class SolcordNativeSuiteController {
         if (!recording || recording.recorder.state === "inactive" || !this.#voiceNote) return Promise.reject(new Error("No voice-note recording is active."));
         this.#clearVoiceNoteTimer(recording);
         return new Promise((resolve, reject) => {
+            let settled = false;
+            let watchdog = 0;
+            const cleanup = () => {
+                globalThis.clearTimeout(watchdog);
+                recording.recorder.removeEventListener("stop", finish);
+                recording.recorder.removeEventListener("error", failFromRecorder);
+            };
+            const fail = (error: Error) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                this.#abortVoiceNoteRecording(recording, error);
+                reject(error);
+            };
+            const failFromRecorder = () => fail(recording.abortError ?? new Error("Voice-note recording failed while stopping."));
             const finish = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
                 if (recording.abortError) {
                     reject(recording.abortError);
                     return;
@@ -413,11 +490,12 @@ export class SolcordNativeSuiteController {
                 finally {this.#releaseVoiceNoteResources(recording);}
             };
             recording.recorder.addEventListener("stop", finish, {once: true});
+            recording.recorder.addEventListener("error", failFromRecorder, {once: true});
+            watchdog = globalThis.setTimeout(() => fail(new Error("Voice-note recorder did not finish stopping.")), SOLCORD_VOICE_NOTE_STOP_TIMEOUT_MS) as unknown as number;
             try {recording.recorder.stop();}
             catch (error) {
                 const failure = error instanceof Error ? error : new Error("Voice-note recording failed to stop.");
-                this.#abortVoiceNoteRecording(recording, failure);
-                reject(failure);
+                fail(failure);
             }
         });
     }
@@ -434,6 +512,7 @@ export class SolcordNativeSuiteController {
         const extension = intent.payload.mime === "audio/ogg" ? "ogg" : "webm";
         const file = new File([recording.blob], `Solcord-voice-note-${Date.now().toString(36)}.${extension}`, {type: intent.payload.mime});
         this.#adapter.prepareVoiceNoteUpload(intent.payload.channelId, file);
+        this.#voiceNote.completeUpload(intent.payload.recordingId);
         this.cancelVoiceNote();
     }
 
@@ -525,16 +604,40 @@ export class SolcordNativeSuiteController {
 
     #startCallContext(): void {
         const providers = this.#enabled.get("call-context") ?? [];
+        if (!providers.length) {
+            this.#setStatus("call-context", "off", "Turn on a Call Context feature to load it.", []);
+            return;
+        }
+        if (!this.#adapter.currentCall) {
+            this.#setStatus("call-context", "unsupported", "This Discord build did not expose the required call store.", providers);
+            return;
+        }
         this.#call = new SolcordCallContextController();
+        this.#scope.own(() => document.querySelector("[data-solcord-call-badge]")?.remove(), "element");
         const sync = () => {
             const value = this.#adapter.currentCall?.();
             if (value) this.#call?.observe(value);
             this.#renderCallBadge(Boolean(value));
         };
-        const unsubscribe = this.#adapter.subscribeCall?.(sync);
-        if (unsubscribe) this.#scope.own(unsubscribe, "listener");
-        sync();
-        this.#setStatus("call-context", !providers.length ? "off" : this.#adapter.currentCall ? "ready" : "unsupported", !providers.length ? "Turn on a Call Context feature to load it." : this.#adapter.currentCall ? "Call duration, speaker counts, and exposed stream-viewer counts use loaded stores only." : "This Discord build did not expose the required call store.", providers);
+        let releaseSubscription: (() => void) | undefined;
+        try {
+            const unsubscribe = this.#adapter.subscribeCall?.(sync);
+            if (unsubscribe) releaseSubscription = this.#scope.own(unsubscribe, "listener");
+            sync();
+            this.#setStatus("call-context", "ready", "Call duration, speaker counts, and exposed stream-viewer counts use loaded stores only.", providers);
+        }
+        catch (error) {
+            let cleanupIncomplete = error instanceof AggregateError && error.message.includes("cleanup remains owned for retry");
+            if (releaseSubscription) {
+                try {releaseSubscription();}
+                catch {cleanupIncomplete = true;}
+            }
+            this.#call = undefined;
+            document.querySelector("[data-solcord-call-badge]")?.remove();
+            this.#setStatus("call-context", cleanupIncomplete ? "degraded" : "unsupported", cleanupIncomplete
+                ? "Call Context stayed off, but one listener cleanup is incomplete and remains owned for automatic retry."
+                : "Discord's call-store subscription failed safely; unrelated Solcord tools remain available.", providers);
+        }
     }
 
     #renderCallBadge(connected: boolean): void {
@@ -554,30 +657,52 @@ export class SolcordNativeSuiteController {
 
     #startAudioConsole(): void {
         const providers = this.#enabled.get("audio-console") ?? [];
+        if (!providers.length) {
+            this.#setStatus("audio-console", "off", "Turn on Audio Console to load local volume controls.", []);
+            return;
+        }
         this.#audio = new SolcordAudioConsoleController();
-        this.#setStatus("audio-console", !providers.length ? "off" : this.#adapter.setLocalVolume ? "ready" : "unsupported", !providers.length ? "Turn on Audio Console to load local volume controls." : this.#adapter.setLocalVolume ? "Local playback changes stay between 0 and 200 percent and require confirmation." : "This Discord build did not expose a validated local-volume action.", providers);
+        this.#setStatus("audio-console", this.#adapter.setLocalVolume ? "ready" : "unsupported", this.#adapter.setLocalVolume ? "Local playback changes stay between 0 and 200 percent and require confirmation." : "This Discord build did not expose a validated local-volume action.", providers);
     }
 
     #startVoiceNoteStudio(): void {
         const providers = this.#enabled.get("voice-note-studio") ?? [];
+        if (!providers.length) {
+            this.#setStatus("voice-note-studio", "off", "Turn on Voice Note Studio to load recording controls.", []);
+            return;
+        }
+        const recordingAvailable = typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder === "function";
+        const uploadAvailable = typeof this.#adapter.prepareVoiceNoteUpload === "function";
+        if (!recordingAvailable || !uploadAvailable) {
+            const missing = [!recordingAvailable ? "recording APIs" : "", !uploadAvailable ? "Discord's reviewed upload handoff" : ""].filter(Boolean).join(" and ");
+            this.#setStatus("voice-note-studio", "unsupported", `This Discord build did not expose ${missing}.`, providers);
+            return;
+        }
         this.#voiceNote = new SolcordVoiceNoteStudioController();
-        const available = typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder === "function";
-        this.#setStatus("voice-note-studio", !providers.length ? "off" : available ? "ready" : "unsupported", !providers.length ? "Turn on Voice Note Studio to load recording controls." : available ? "Record, preview, cancel, and hand off a reviewed file from explicit controls." : "This runtime does not expose the recording APIs Voice Note Studio needs.", providers);
+        this.#setStatus("voice-note-studio", "ready", "Record, preview, cancel, and hand off a reviewed file from explicit controls.", providers);
     }
 
     #startTranslationDesk(): void {
         const providers = this.#enabled.get("translation-desk") ?? [];
+        if (!providers.length) {
+            this.#setStatus("translation-desk", "off", "Turn on Translation Desk to configure a provider.", []);
+            return;
+        }
         this.#translation = new SolcordTranslationDeskController();
-        this.#setStatus("translation-desk", providers.length ? "needs-setup" : "off", providers.length ? "Choose a provider before translating. Every request shows where the text will go." : "Turn on Translation Desk to configure a provider.", providers);
+        this.#setStatus("translation-desk", "needs-setup", "Choose a provider before translating. Every request shows where the text will go.", providers);
     }
 
     #startPeopleAndSpaces(): void {
         const providers = this.#enabled.get("people-and-spaces") ?? [];
+        if (!providers.length) {
+            this.#setStatus("people-and-spaces", "off", "Turn on a People and Spaces feature to load it.", []);
+            return;
+        }
         this.#people = new SolcordPeopleSpacesController();
         for (const id of this.#adapter.peopleState?.pinnedDmIds ?? []) this.#people.pinDm(id);
         for (const id of this.#adapter.peopleState?.hiddenGuildIds ?? []) this.#people.hideGuild(id);
         for (const [id, alias] of Object.entries(this.#adapter.peopleState?.guildAliases ?? {})) this.#people.aliasGuild(id, alias);
-        this.#setStatus("people-and-spaces", providers.length ? "ready" : "off", providers.length ? "Pins, hidden servers, and aliases stay local to this Discord profile." : "Turn on a People and Spaces feature to load it.", providers);
+        this.#setStatus("people-and-spaces", "ready", "Pins, hidden servers, and aliases stay local to this Discord profile.", providers);
     }
 
     #savePeople(): void {
@@ -587,39 +712,74 @@ export class SolcordNativeSuiteController {
 
     #startChannelGlance(): void {
         const providers = this.#enabled.get("channel-glance") ?? [];
+        if (!providers.length) {
+            this.#setStatus("channel-glance", "off", "Turn on Channel Glance to load it.", []);
+            return;
+        }
         this.#glance = new SolcordChannelGlanceController();
-        this.#setStatus("channel-glance", !providers.length ? "off" : this.#adapter.loadedChannelMessages ? "ready" : "unsupported", !providers.length ? "Turn on Channel Glance to load it." : this.#adapter.loadedChannelMessages ? "Shows up to five already-loaded messages without fetching or marking read." : "This Discord build did not expose a validated loaded-message store.", providers);
+        this.#setStatus("channel-glance", this.#adapter.loadedChannelMessages ? "ready" : "unsupported", this.#adapter.loadedChannelMessages ? "Shows up to five already-loaded messages without fetching or marking read." : "This Discord build did not expose a validated loaded-message store.", providers);
     }
 
     #startNotificationReview(): void {
         const providers = this.#enabled.get("notification-review") ?? [];
+        if (!providers.length) {
+            this.#setStatus("notification-review", "off", "Turn on Notification Review to load it.", []);
+            return;
+        }
         this.#notifications = new SolcordNotificationReviewController();
         const available = Boolean(this.#adapter.notificationIds && this.#adapter.markNotificationsRead);
-        this.#setStatus("notification-review", !providers.length ? "off" : available ? "ready" : "unsupported", !providers.length ? "Turn on Notification Review to load it." : available ? "Preview the scope and count before one explicit mark-read action." : "This Discord build did not expose a complete read-state action.", providers);
+        this.#setStatus("notification-review", available ? "ready" : "unsupported", available ? "Preview the scope and count before one explicit mark-read action." : "This Discord build did not expose a complete read-state action.", providers);
     }
 
     #startMotionStudio(): void {
         const providers = this.#enabled.get("motion-studio") ?? [];
+        if (!providers.length) {
+            this.#setStatus("motion-studio", "off", "Turn on Motion Studio to load it.", []);
+            return;
+        }
         this.#motion = new SolcordMotionStudioController();
         const reduced = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
         const settings = this.#motion.configure({reducedMotion: reduced, intensity: 0.45, durationMs: 160, effectsEnabled: providers.includes("DiscordEffects")});
         if (providers.length && !settings.reducedMotion) this.#scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms} #app-mount [role="dialog"],#app-mount [class*="menu_"]{animation:solcord-native-enter var(--solcord-native-motion) ease-out}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}`);
-        this.#setStatus("motion-studio", !providers.length ? "off" : "ready", !providers.length ? "Turn on Motion Studio to load it." : settings.reducedMotion ? "Reduced motion is active, so optional effects are suppressed." : "Short local transitions are active and removed on disable.", providers);
+        this.#setStatus("motion-studio", "ready", settings.reducedMotion ? "Reduced motion is active, so optional effects are suppressed." : "Short local transitions are active and removed on disable.", providers);
     }
 
     #startVoiceHealth(): void {
+        if (!this.#adapter.voiceHealthEnabled) {
+            this.#setStatus("voice-health", "off", "Turn on Voice Health to sample cached connection quality.", []);
+            return;
+        }
         this.#voiceHealth = new SolcordVoiceHealthController();
         if (this.#adapter.voiceHealthSample) this.#scope.interval(() => {const sample = this.#adapter.voiceHealthSample?.(); if (sample) this.#voiceHealth?.add(sample);}, 5_000);
         this.#setStatus("voice-health", this.#adapter.voiceHealthSample ? "ready" : "unsupported", this.#adapter.voiceHealthSample ? "Keeps at most 120 connection-quality samples and never records audio." : "This Discord build did not expose a validated connection-quality sample.", []);
     }
 
     #startFocusChannels(): void {
-        const apply = () => this.#applyFocusChannels(this.#adapter.focusChannelIds ?? []);
-        const observer = new MutationObserver(apply);
-        this.#scope.observe(observer, document.body, {childList: true, subtree: true});
-        this.#scope.own(() => document.querySelectorAll("[data-solcord-focus-muted]").forEach(element => element.removeAttribute("data-solcord-focus-muted")), "element");
-        this.#scope.own(() => document.querySelector("[data-solcord-call-badge]")?.remove(), "element");
-        apply();
+        this.#synchronizeFocusChannels(this.#adapter.focusChannelIds ?? []);
+    }
+
+    #synchronizeFocusChannels(rawIds: readonly string[]): void {
+        this.#focusIds = [...new Set(rawIds.map(id => safeToken(id)).slice(0, 100))];
+        if (!this.#focusIds.length) {
+            this.#releaseFocusObserver?.();
+            this.#releaseFocusObserver = undefined;
+            this.#clearFocusChannels();
+            return;
+        }
+        if (!this.#releaseFocusObserver) {
+            const observer = new MutationObserver(() => this.#applyFocusChannels(this.#focusIds));
+            observer.observe(document.body, {childList: true, subtree: true});
+            this.#releaseFocusObserver = this.#scope.own(() => {
+                observer.disconnect();
+                this.#releaseFocusObserver = undefined;
+                this.#clearFocusChannels();
+            }, "observer");
+        }
+        this.#applyFocusChannels(this.#focusIds);
+    }
+
+    #clearFocusChannels(): void {
+        document.querySelectorAll("[data-solcord-focus-muted]").forEach(element => element.removeAttribute("data-solcord-focus-muted"));
     }
 
     #applyFocusChannels(rawIds: readonly string[]): void {

@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 532 |
-| Text files scanned | 518 |
+| Persistent tracked files | 537 |
+| Text files scanned | 523 |
 | Binary files classified | 14 |
-| Text lines scanned | 108,579 |
-| Custom Solcord lines | 22,938 |
+| Text lines scanned | 111,205 |
+| Custom Solcord lines | 24,297 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -24,39 +24,39 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Signal | Whole tree | Custom Solcord surfaces |
 | --- | ---: | ---: |
-| TODO / FIXME / HACK | 30 | 1 |
-| Timer calls | 41 | 2 |
+| TODO / FIXME / HACK | 30 | 0 |
+| Timer calls | 42 | 2 |
 | Mutation observers | 12 | 1 |
-| DOM queries | 53 | 0 |
-| Webpack discovery calls | 78 | 0 |
-| Patch calls | 25 | 1 |
-| Synchronous filesystem calls | 612 | 547 |
-| Console calls | 75 | 57 |
+| DOM queries | 57 | 3 |
+| Webpack discovery calls | 77 | 0 |
+| Patch calls | 26 | 1 |
+| Synchronous filesystem calls | 629 | 563 |
+| Console calls | 75 | 49 |
 | Empty catch blocks | 3 | 1 |
 
 ## Largest maintainable files
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 3,070 | 185.2 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 3,609 | 217.3 KiB |
 | 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 63.9 KiB |
-| 3 | `tests/solcord/storage-security.test.ts` | 1,342 | 76.7 KiB |
+| 3 | `tests/solcord/storage-security.test.ts` | 1,407 | 80.9 KiB |
 | 4 | `bun.lock` | 1,314 | 141.7 KiB |
-| 5 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 6 | `tests/common/i18n.test.ts` | 1,146 | 45.0 KiB |
-| 7 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,119 | 104.6 KiB |
-| 8 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
-| 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,051 | 55.6 KiB |
-| 10 | `src/betterdiscord/styles/solcord.css` | 901 | 68.4 KiB |
+| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,276 | 118.1 KiB |
+| 6 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
+| 7 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
+| 8 | `src/betterdiscord/modules/solcord/store.ts` | 1,063 | 56.2 KiB |
+| 9 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
+| 10 | `src/betterdiscord/styles/solcord.css` | 958 | 74.9 KiB |
 | 11 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 12 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
-| 13 | `src/betterdiscord/modules/addonstore.ts` | 701 | 21.2 KiB |
-| 14 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
-| 15 | `src/betterdiscord/modules/solcord/native-suite.ts` | 643 | 34.7 KiB |
+| 12 | `src/electron/main/modules/solcord-timeline.ts` | 825 | 36.2 KiB |
+| 13 | `src/betterdiscord/modules/solcord/native-suite.ts` | 803 | 41.1 KiB |
+| 14 | `src/betterdiscord/modules/addonstore.ts` | 701 | 21.2 KiB |
+| 15 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
 | 16 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
-| 17 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
-| 18 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
-| 19 | `tests/solcord/settings.test.ts` | 545 | 29.2 KiB |
+| 17 | `src/common/solcord/v2-feature-models.ts` | 617 | 31.4 KiB |
+| 18 | `tests/solcord/settings.test.ts` | 586 | 30.8 KiB |
+| 19 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
 | 20 | `installer/Solcord.Installer/InstallerEngine.cs` | 509 | 35.3 KiB |
 
 ## Largest custom Solcord files
@@ -64,25 +64,25 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
 | 1 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 63.9 KiB |
-| 2 | `tests/solcord/storage-security.test.ts` | 1,342 | 76.7 KiB |
-| 3 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 4 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,119 | 104.6 KiB |
-| 5 | `src/betterdiscord/styles/solcord.css` | 901 | 68.4 KiB |
+| 2 | `tests/solcord/storage-security.test.ts` | 1,407 | 80.9 KiB |
+| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,276 | 118.1 KiB |
+| 4 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
+| 5 | `src/betterdiscord/styles/solcord.css` | 958 | 74.9 KiB |
 | 6 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 7 | `src/electron/main/modules/solcord-timeline.ts` | 824 | 36.1 KiB |
-| 8 | `src/common/solcord/v2-feature-models.ts` | 612 | 31.1 KiB |
-| 9 | `tests/solcord/settings.test.ts` | 545 | 29.2 KiB |
+| 7 | `src/electron/main/modules/solcord-timeline.ts` | 825 | 36.2 KiB |
+| 8 | `src/common/solcord/v2-feature-models.ts` | 617 | 31.4 KiB |
+| 9 | `tests/solcord/settings.test.ts` | 586 | 30.8 KiB |
 | 10 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
 | 11 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
-| 12 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 434 | 42.5 KiB |
-| 13 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
-| 14 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
-| 15 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 380 | 19.0 KiB |
-| 16 | `src/electron/main/modules/solcord-audience-guard.ts` | 322 | 15.3 KiB |
-| 17 | `src/common/solcord/product.ts` | 289 | 14.1 KiB |
-| 18 | `scripts/build-solcord-runtime-catalog.cjs` | 281 | 16.6 KiB |
-| 19 | `docs/evidence/catalog/local-addon-inventory.json` | 279 | 10.4 KiB |
-| 20 | `tests/solcord/runtime-acceptance-generator.test.ts` | 268 | 12.4 KiB |
+| 12 | `tests/solcord/native-suite-security.test.ts` | 459 | 21.6 KiB |
+| 13 | `tests/solcord/renderer-security.test.ts` | 431 | 30.9 KiB |
+| 14 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
+| 15 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
+| 16 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 391 | 35.7 KiB |
+| 17 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 380 | 19.0 KiB |
+| 18 | `src/electron/main/modules/solcord-translation-credentials.ts` | 323 | 17.5 KiB |
+| 19 | `src/electron/main/modules/solcord-audience-guard.ts` | 322 | 15.3 KiB |
+| 20 | `src/common/solcord/product.ts` | 300 | 14.4 KiB |
 
 ## Confirmed surface corrections in this audit
 
@@ -92,23 +92,35 @@ These counts are inventory signals, not findings by themselves. Each use still r
 - Removed current lint warnings in the patch dispatcher and settings title provider.
 - Added explicit listener cleanup for the settings title provider.
 - Added long-list rendering containment to Solcord module, catalog, curated, and people-history rows.
-- Added a typed, default-off, lazy capability scaffold for useful plugin-store gaps.
+- Completed typed, default-off, lazy capability contracts with bounded runtime adapters; unsupported Discord internals remain visibly unavailable instead of being advertised as live.
 - Replaced broken historical binary links in the README with a release-page boundary and source-build instructions.
 - Added a repeatable audit command and a complete Codex handoff.
 
-## Deeper findings deferred to Codex
+## Circular-dependency classification
 
-1. The Solcord control panel is still a large composition surface and should be decomposed without changing visible behavior.
-2. Eleven circular-dependency groups remain in renderer/addon/editor/settings paths.
-3. The production renderer bundle remains approximately 1.3 MiB and needs measurement-led splitting, not speculative refactoring.
-4. Activities compatibility, Discord adapter drift, external editor focus, and installer rollback require live desktop validation.
-5. Historical release assets retain their original names; publish a replacement Solcord release rather than mutating provenance.
-6. Generated addon catalogs are large and should remain generated, isolated, and lazily consumed.
-7. Timer, observer, DOM-query, and synchronous-filesystem signals listed above need subsystem-by-subsystem ownership and teardown verification.
+The pinned dependency audit reports eleven groups. They are classified rather than hidden:
+
+| Groups | Area | Classification | Decision |
+| --- | --- | --- | --- |
+| 1–5 | BetterDiscord Webpack, patcher, and store utilities | Inherited core topology | Retain. Solcord added no edge in these groups; speculative rewrites would threaten public addon compatibility. |
+| 6–7 | BetterDiscord addon manager, editor, plugin, and theme managers | Inherited editor topology | Retain. Solcord's manager imports point only to leaf integrity/doctor modules and do not create the cycle. |
+| 8 | BetterDiscord floating-window container | Inherited UI topology | Retain. No Solcord change participates. |
+| 9–11 | BetterDiscord settings, addon store, builtins, and Custom CSS | Inherited settings topology | Retain. Solcord's settings-name helper is a leaf and creates no return edge. |
+
+No Solcord module appears in a reported cycle. The release gate therefore records the inherited groups as baseline debt while treating any future Solcord-introduced cycle as a failure.
+
+## Remaining measured constraints
+
+1. The Control Center remains a large composition surface. Further splitting is maintenance work only and must preserve its accepted route, focus, and scroll behavior.
+2. The production renderer bundle remains approximately 1.6 MiB; any split must be supported by startup and interaction measurements.
+3. Activities compatibility, Discord adapter drift, external editor focus, and installer rollback require exact-client validation for every release candidate.
+4. Historical release assets retain their original names; replacement releases must preserve that provenance rather than mutating old assets.
+5. Generated addon catalogs remain generated and isolated; consumers must not eagerly load optional source bodies.
+6. Timer, observer, DOM-query, and synchronous-filesystem signals require subsystem ownership and teardown evidence before release.
 
 ## Maintenance markers
 
-- scripts/translations.ts:9 — // TODO: this needs to be rewritten for new crowdsourcing
+No TODO, FIXME, or HACK markers were found in custom Solcord surfaces.
 
 ## Identity and wording checks
 

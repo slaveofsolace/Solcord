@@ -18,6 +18,7 @@ class LifecycleEnvironment implements LinkReviewLifecycleEnvironment {
     focusCalls = 0;
     clearCalls = 0;
     interval?: () => void;
+    deferredFocus?: () => void;
 
     href(): string {return this.hrefValue;}
     activeElement() {
@@ -34,7 +35,13 @@ class LifecycleEnvironment implements LinkReviewLifecycleEnvironment {
         this.clearCalls++;
         this.interval = undefined;
     }
+    deferFocus(callback: () => void): void {this.deferredFocus = callback;}
     tick(): void {this.interval?.();}
+    flushDeferredFocus(): void {
+        const callback = this.deferredFocus;
+        this.deferredFocus = undefined;
+        callback?.();
+    }
 }
 
 class NativeModalHarness implements LinkReviewModalAdapter {
@@ -110,8 +117,9 @@ describe("Link Lens native modal lifecycle", () => {
         lifecycle.open(modal, actions);
         modal.callbacks?.onClose();
         modal.callbacks?.onCancel();
+        environment.flushDeferredFocus();
         expect(counts).toEqual({confirm: 0, cancel: 1, failure: 0});
-        expect(environment.focusCalls).toBe(1);
+        expect(environment.focusCalls).toBe(2);
         expect(environment.clearCalls).toBe(1);
     });
 
@@ -124,9 +132,10 @@ describe("Link Lens native modal lifecycle", () => {
         lifecycle.open(modal, actions);
         environment.hrefValue = "https://discord.com/channels/@me/123";
         environment.tick();
+        environment.flushDeferredFocus();
         expect(modal.closeKeys).toEqual(["native-link-review"]);
         expect(counts).toEqual({confirm: 0, cancel: 1, failure: 0});
-        expect(environment.focusCalls).toBe(1);
+        expect(environment.focusCalls).toBe(2);
         expect(lifecycle.active).toBeFalse();
     });
 
@@ -152,9 +161,10 @@ describe("Link Lens native modal lifecycle", () => {
         expect(activation.event.defaultPrevented).toBeTrue();
         modal.callbacks?.onRenderError();
         modal.callbacks?.onRenderError();
+        environment.flushDeferredFocus();
         expect(activation.originalCalls()).toBe(1);
         expect(modal.closeKeys).toEqual(["native-link-review"]);
-        expect(environment.focusCalls).toBe(1);
+        expect(environment.focusCalls).toBe(2);
         expect(lifecycle.active).toBeFalse();
     });
 
@@ -167,9 +177,10 @@ describe("Link Lens native modal lifecycle", () => {
         lifecycle.open(modal, actions);
         lifecycle.dispose();
         lifecycle.dispose();
+        environment.flushDeferredFocus();
         expect(modal.closeKeys).toEqual(["native-link-review"]);
         expect(counts).toEqual({confirm: 0, cancel: 1, failure: 0});
-        expect(environment.focusCalls).toBe(1);
+        expect(environment.focusCalls).toBe(2);
     });
 
     test("confirmation opens the reviewed destination once and never invokes the original activation", () => {

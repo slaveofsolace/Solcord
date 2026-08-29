@@ -241,7 +241,7 @@ export default abstract class AddonManager<T extends Addon = Addon> extends Stor
         }
 
         this.trigger("loaded", addon);
-        if (this.hasInitialized) Toasts.success(t("Addons.wasLoaded", {name: addon.name, version: addon.version}));
+        if (this.hasInitialized) Toasts.success(t("Addons.wasLoaded", {name: addon.name, version: addon.version}), this.prefix === "theme" ? {group: "theme-change"} : undefined);
 
         return true;
     }
@@ -257,7 +257,7 @@ export default abstract class AddonManager<T extends Addon = Addon> extends Stor
 
         this.addonList.splice(this.addonList.indexOf(addon), 1);
         this.trigger("unloaded", addon);
-        Toasts.success(t("Addons.wasUnloaded", {name: addon.name}));
+        Toasts.success(t("Addons.wasUnloaded", {name: addon.name}), this.prefix === "theme" ? {group: "theme-change"} : undefined);
         return true;
     }
 

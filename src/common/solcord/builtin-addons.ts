@@ -64,6 +64,31 @@ export function solcordNativeSuiteFeatureForAddon(name: string): SolcordNativeSu
     return NATIVE_SUITE_PROVIDER[name as keyof typeof NATIVE_SUITE_PROVIDER];
 }
 
+export interface SolcordNativeSuiteLookupPlan {
+    callContext: boolean;
+    audioConsole: boolean;
+    voiceNoteStudio: boolean;
+    channelGlance: boolean;
+    notificationReview: boolean;
+    voiceHealth: boolean;
+}
+
+export function planSolcordNativeSuiteLookups(addons: Readonly<Record<string, boolean>>, voiceHealth: boolean): SolcordNativeSuiteLookupPlan {
+    const enabled = new Set<SolcordNativeSuiteFeature>();
+    for (const [name, active] of Object.entries(addons)) {
+        const feature = active ? solcordNativeSuiteFeatureForAddon(name) : undefined;
+        if (feature) enabled.add(feature);
+    }
+    return Object.freeze({
+        callContext: enabled.has("call-context"),
+        audioConsole: enabled.has("audio-console"),
+        voiceNoteStudio: enabled.has("voice-note-studio"),
+        channelGlance: enabled.has("channel-glance"),
+        notificationReview: enabled.has("notification-review"),
+        voiceHealth
+    });
+}
+
 export interface SolcordAddonLookup {
     addonList?: ReadonlyArray<{filename: string;}>;
     resolveAddon(idOrFile: string): {id: string; filename: string;} | undefined;

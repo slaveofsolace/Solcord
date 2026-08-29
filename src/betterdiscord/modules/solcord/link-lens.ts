@@ -59,6 +59,7 @@ export interface LinkReviewLifecycleEnvironment {
     activeElement(): LinkReviewFocusTarget | undefined;
     setInterval(callback: () => void, delay: number): unknown;
     clearInterval(handle: unknown): void;
+    deferFocus?(callback: () => void): void;
 }
 
 export interface LinkReviewLifecycleActions {
@@ -120,6 +121,12 @@ export class LinkReviewLifecycle {
             }
             if (closeModal) close();
             restoreFocus();
+            try {
+                this.environment.deferFocus?.(() => {
+                    if (!this.#active) restoreFocus();
+                });
+            }
+            catch {/* deferred focus restoration is best-effort */}
             if (reason === "confirm") actions.confirm();
             else if (reason === "cancel") actions.cancel();
             else actions.failure();

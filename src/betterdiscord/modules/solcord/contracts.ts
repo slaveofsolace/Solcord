@@ -15,6 +15,7 @@ export type SolcordThemeId =
 export type SolcordAddonMode = "default" | "guarded" | "native";
 export type SolcordAddonProvider = "prefer-community" | "prefer-solcord";
 export type SolcordOnboardingStatus = "pending" | "complete" | "skipped";
+export type {OutboundDataClass, PrivacyCapabilityRecord, PrivacyCapabilityState, PrivacyDecisionReceipt, PrivacyProfile, SolcordPrivacyPreferences} from "@common/solcord/privacy";
 export type {
     SolcordAccent,
     SolcordAppearancePreferences,
@@ -73,7 +74,7 @@ export interface SolcordPowerConsent {
 export type SolcordPowerExperimentId = "voice-anchor" | "expression-relay" | "decor" | "fake-deafen" | "fake-mute" | "stream-rtc";
 
 export interface SolcordOnboardingState {
-    version: 4;
+    version: 5;
     status: SolcordOnboardingStatus;
     lastStep: number;
     draft?: SolcordSetupDraft;
@@ -134,7 +135,7 @@ export interface SolcordUpdateEntry {
 }
 
 export interface SolcordSettingsDocument {
-    schemaVersion: 6;
+    schemaVersion: 7;
     consentVersion: 3;
     onboarding: SolcordOnboardingState;
     selectedTheme: SolcordThemeId;

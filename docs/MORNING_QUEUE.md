@@ -6,7 +6,7 @@ Safe close-out work is autonomous. This page lists optional signed-in checks tha
 
 1. Open **User Settings -> Solcord Suite** and confirm the installed version and source identity match the release manifest.
 2. Review First Setup's final file/state diff. Apply it only if the selected theme, built-ins, privacy choices, and provider changes are correct.
-3. Recheck **Codenames** and a second Activity only after Activity Bridge or preload-policy code changes. RC4 does not change those accepted mechanisms.
+3. Recheck **Codenames** and a second Activity only after Activity Bridge or preload-policy code changes. RC5 does not change those accepted mechanisms.
 4. Confirm Activity Bridge accepted only the verified same-package preload and that the unrestricted override remains off.
 5. Review Friend Watch's passive no-change state. Export or clear only if desired; do not change a real relationship for testing.
 6. Check ordinary chat, Settings, plugins, themes, Custom CSS, one modal, one popout, and Recovery.

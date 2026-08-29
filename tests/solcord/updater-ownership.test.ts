@@ -4,7 +4,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-import {isSolcordTransactionOwnedAcceptedArtifact} from "../../src/betterdiscord/modules/solcord/updater-ownership";
+import {classifySolcordUpdateOwnership, isSolcordTransactionOwnedAcceptedArtifact, solcordUpdateRequiresReview} from "../../src/betterdiscord/modules/solcord/updater-ownership";
 
 
 const roots: string[] = [];
@@ -46,6 +46,10 @@ function owned(pluginRoot: string, reviewedSha256: string, accepted = true): boo
     return isSolcordTransactionOwnedAcceptedArtifact({accepted, addonFolder: pluginRoot, fileName: FILE_NAME, kind: "plugin", reviewedSha256});
 }
 
+function classified(pluginRoot: string, reviewedSha256: string) {
+    return classifySolcordUpdateOwnership({accepted: true, addonFolder: pluginRoot, fileName: FILE_NAME, kind: "plugin", reviewedSha256});
+}
+
 afterEach(() => {
     for (const root of roots.splice(0)) {
         const resolved = fs.realpathSync(root);
@@ -78,9 +82,42 @@ describe("Solcord updater ownership", () => {
         expect(owned(rolledBack.pluginRoot, rolledBack.reviewedSha256)).toBeFalse();
     });
 
-    test("fails open to the ordinary updater when completion evidence is forged", () => {
+    test("fails closed when completion evidence is forged", () => {
         const state = fixture(true);
         fs.writeFileSync(path.join(state.transactionRoot, `${state.transactionId}.complete`), `${"0".repeat(64)}\n`);
         expect(owned(state.pluginRoot, state.reviewedSha256)).toBeFalse();
+        expect(classified(state.pluginRoot, state.reviewedSha256).state).toBe("indeterminate");
+    });
+
+    test("fails closed for malformed or unsafe transaction evidence", () => {
+        const malformed = fixture(true);
+        fs.writeFileSync(path.join(malformed.transactionRoot, `${malformed.transactionId}.json`), "{not-json\n");
+        expect(classified(malformed.pluginRoot, malformed.reviewedSha256).state).toBe("indeterminate");
+
+        const unsafe = fixture(true);
+        fs.rmSync(unsafe.transactionRoot, {recursive: true});
+        fs.writeFileSync(unsafe.transactionRoot, "not-a-directory\n");
+        expect(classified(unsafe.pluginRoot, unsafe.reviewedSha256).state).toBe("indeterminate");
+    });
+
+    test("allows ordinary updates only when ownership is provably owner-managed", () => {
+        const reused = fixture(false);
+        expect(classified(reused.pluginRoot, reused.reviewedSha256).state).toBe("owner-managed");
+
+        const noTransaction = fixture(false);
+        fs.rmSync(noTransaction.transactionRoot, {recursive: true});
+        expect(classified(noTransaction.pluginRoot, noTransaction.reviewedSha256).state).toBe("owner-managed");
+    });
+
+    test("holds both managed and indeterminate files at the updater decision boundary", () => {
+        const managed = fixture(true);
+        expect(solcordUpdateRequiresReview(classified(managed.pluginRoot, managed.reviewedSha256))).toBeTrue();
+
+        const indeterminate = fixture(true);
+        fs.writeFileSync(path.join(indeterminate.transactionRoot, `${indeterminate.transactionId}.complete`), "invalid\n");
+        expect(solcordUpdateRequiresReview(classified(indeterminate.pluginRoot, indeterminate.reviewedSha256))).toBeTrue();
+
+        const ownerManaged = fixture(false);
+        expect(solcordUpdateRequiresReview(classified(ownerManaged.pluginRoot, ownerManaged.reviewedSha256))).toBeFalse();
     });
 });

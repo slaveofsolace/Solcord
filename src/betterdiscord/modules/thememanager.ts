@@ -76,7 +76,7 @@ class ThemeManager extends AddonManager<Theme> {
         }
 
         DOMManager.injectTheme(theme.slug + "-theme-container", theme.css);
-        if (this.hasInitialized) Toasts.success(t("Addons.enabled", {name: theme.name, version: theme.version}));
+        if (this.hasInitialized) Toasts.success(t("Addons.enabled", {name: theme.name, version: theme.version}), {group: "theme-change"});
         else this.initialAddonsLoaded++;
 
         return true;
@@ -87,7 +87,7 @@ class ThemeManager extends AddonManager<Theme> {
         if (!theme) return false;
 
         DOMManager.removeTheme(theme.slug + "-theme-container");
-        Toasts.error(t("Addons.disabled", {name: theme.name, version: theme.version}));
+        Toasts.info(t("Addons.disabled", {name: theme.name, version: theme.version}), {group: "theme-change"});
 
         return true;
     }

@@ -27,8 +27,9 @@ import type {AddonType} from "@typed/addon";
 import {fetch} from "./net";
 import AddonStore from "./addonstore";
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {isSolcordTransactionOwnedAcceptedArtifact} from "./solcord/updater-ownership";
+import {classifySolcordUpdateOwnership, solcordUpdateRequiresReview} from "./solcord/updater-ownership";
 import {isSolcordAcceptanceMode} from "@common/solcord/acceptance-mode";
+import {onSolcordUpdatePolicyChange, solcordAutomaticUpdatesAllowed} from "./solcord/privacy-runtime-state";
 
 const ACCEPTANCE_UPDATE_HOLD = "Solcord update checks and addon writes are disabled in disposable acceptance mode.";
 
@@ -45,6 +46,7 @@ function acceptedSolcordArtifact(type: AddonType, fileName: string): {fileName: 
 
 export default class Updater {
     static updateCheckInterval: ReturnType<typeof setInterval> | null = null;
+    static removeSolcordPolicyListener: (() => void) | null = null;
 
     static initialize() {
         // TODO: get rid of element creation
@@ -69,6 +71,9 @@ export default class Updater {
         PluginUpdater.initialize();
         ThemeUpdater.initialize();
 
+        this.removeSolcordPolicyListener?.();
+        this.removeSolcordPolicyListener = onSolcordUpdatePolicyChange(() => this.startUpdateInterval());
+
         Events.on("setting-updated", (collection, category, id) => {
             if (collection !== "settings" || category !== "addons") return;
             if (id !== "updateInterval" && id !== "checkForUpdates") return;
@@ -85,7 +90,7 @@ export default class Updater {
             this.updateCheckInterval = null;
         }
 
-        if (isSolcordAcceptanceMode() || !SettingsStore.get("addons", "checkForUpdates")) return;
+        if (isSolcordAcceptanceMode() || !solcordAutomaticUpdatesAllowed() || !SettingsStore.get("addons", "checkForUpdates")) return;
 
         const hours = SettingsStore.get<number>("addons", "updateInterval");
         this.updateCheckInterval = setInterval(async () => {
@@ -103,7 +108,7 @@ export class CoreUpdater {
     static readonly disabledReason = "Solcord core updates are paused until an owner-controlled release feed provides signed integrity metadata.";
 
     static async initialize() {
-        if (!SettingsStore.get("addons", "checkForUpdates")) return;
+        if (!solcordAutomaticUpdatesAllowed() || !SettingsStore.get("addons", "checkForUpdates")) return;
         this.checkForUpdate();
     }
 
@@ -146,11 +151,9 @@ export class AddonUpdater {
 
     async initialize() {
         if (isSolcordAcceptanceMode()) return;
-        AddonStore.getAddons();
-        if (SettingsStore.get("addons", "checkForUpdates")) this.checkAll();
 
         Events.on(`${this.type}-read`, addon => {
-            if (!SettingsStore.get("addons", "checkForUpdates")) return;
+            if (!solcordAutomaticUpdatesAllowed() || !SettingsStore.get("addons", "checkForUpdates")) return;
             this.checkForUpdate(addon.filename, addon.version);
         });
 
@@ -158,6 +161,10 @@ export class AddonUpdater {
             const index = this.pending.indexOf(addon.filename);
             if (index >= 0) this.pending.splice(index, 1);
         });
+
+        if (!solcordAutomaticUpdatesAllowed()) return;
+        AddonStore.getAddons();
+        if (SettingsStore.get("addons", "checkForUpdates")) this.checkAll();
     }
 
     async checkAll(showNotice = true) {
@@ -195,15 +202,17 @@ export class AddonUpdater {
         }
         const basename = path.basename(filename);
         const reviewed = acceptedSolcordArtifact(this.type, basename);
-        const transactionOwned = reviewed && isSolcordTransactionOwnedAcceptedArtifact({
+        const ownership = reviewed && classifySolcordUpdateOwnership({
             accepted: true,
             addonFolder: this.manager.addonFolder,
             fileName: reviewed.fileName,
             kind: this.type,
             reviewedSha256: reviewed.reviewedSha256
         });
-        if (transactionOwned) {
-            const reason = "This exact file was installed by Solcord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated.";
+        if (ownership && solcordUpdateRequiresReview(ownership)) {
+            const reason = ownership.state === "solcord-managed"
+                ? "This exact file was installed by Solcord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated."
+                : `Solcord cannot safely determine who owns this reviewed file, so its update is paused. ${ownership.reason}`;
             Logger.warn("Solcord Addon Integrity", `${basename} update paused for re-review.`);
             Toasts.error(reason);
             return;

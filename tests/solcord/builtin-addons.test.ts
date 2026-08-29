@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
 
 
 describe("Solcord clean-room curated built-ins", () => {
@@ -16,6 +16,34 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(isSolcordBuiltInAddon("InvisibleTyping", "default")).toBeTrue();
         expect(isSolcordBuiltInAddon("SplitLargeMessages", "guarded")).toBeTrue();
         expect(isSolcordBuiltInAddon("SplitLargeMessages", "native")).toBeFalse();
+    });
+
+    test("plans no Discord module lookups for a fully disabled native suite", () => {
+        expect(planSolcordNativeSuiteLookups({}, false)).toEqual({
+            callContext: false,
+            audioConsole: false,
+            voiceNoteStudio: false,
+            channelGlance: false,
+            notificationReview: false,
+            voiceHealth: false
+        });
+    });
+
+    test("requests only the Discord surfaces used by enabled native tools", () => {
+        expect(planSolcordNativeSuiteLookups({
+            CallTimeCounter: true,
+            BetterVolume: true,
+            VoiceMessages: false,
+            MessagePeek: true,
+            ReadAllNotificationsButton: false
+        }, true)).toEqual({
+            callContext: true,
+            audioConsole: true,
+            voiceNoteStudio: false,
+            channelGlance: true,
+            notificationReview: false,
+            voiceHealth: true
+        });
     });
 
     test("finds an enabled community counterpart by addon id when its file was renamed", () => {

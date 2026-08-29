@@ -20,9 +20,9 @@ function stepLabels(): string[] {
 }
 
 describe("Solcord beginner-first setup UI", () => {
-    test("uses eight resumable novice steps with private-history consent and no Power Lab page", () => {
-        expect(stepLabels()).toEqual(["Welcome", "Privacy", "Performance", "Appearance", "Features", "Activities", "Import", "Ready"]);
-        expect(WIZARD_SOURCE).toContain("function PrivateHistoryStep");
+    test("uses five resumable novice steps with private-history consent and no Power Lab page", () => {
+        expect(stepLabels()).toEqual(["Welcome", "Privacy", "Appearance", "Features", "Review and Apply"]);
+        expect(WIZARD_SOURCE).toContain("<summary>Optional private history</summary>");
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setOnboardingStep(bounded)");
         expect(WIZARD_SOURCE).not.toContain("function PowerLabStep");
         expect(WIZARD_SOURCE).not.toContain("SOLCORD_POWER_LAB");
@@ -33,9 +33,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("wizardRef.current?.scrollIntoView({behavior: \"auto\", block: \"start\"})");
         expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: flex");
-        expect(WIZARD_CSS).toContain("overflow-x: auto");
-        expect(WIZARD_CSS).not.toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))");
+        expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { display: flex");
+        expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { overflow-x: auto");
         expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
     });
 
@@ -45,6 +45,14 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; top: 0;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 66px; }");
+        expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
+        expect(PANEL_SOURCE).toContain("getComputedStyle(navigation).position === \"sticky\"");
+        expect(PANEL_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
+        expect(PANEL_SOURCE).not.toContain("workspaceRef.current?.scrollIntoView");
+        expect(WIZARD_CSS).toContain(":is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type=\"checkbox\"] { appearance: none;");
+        expect(WIZARD_CSS).toContain("> input[type=\"checkbox\"]:focus-visible");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
@@ -85,22 +93,23 @@ describe("Solcord beginner-first setup UI", () => {
     test("renders only accepted ready tools and directs pending work to the catalog", () => {
         expect(WIZARD_SOURCE).toContain("addons: group.addons.filter(addon => isReadyDecision(decisions.get(addon.name)))");
         expect(WIZARD_SOURCE).toContain("const pendingDecisions = useMemo");
-        expect(WIZARD_SOURCE).toContain("Review pending tools separately");
-        expect(WIZARD_SOURCE).toContain("Review pending");
+        expect(WIZARD_SOURCE).toContain("Advanced choices come later");
+        expect(WIZARD_SOURCE).toContain("Extensions can review community files with a separate backup and rollback preview.");
         expect(WIZARD_SOURCE).toContain("Apply and verify");
-        expect(WIZARD_SOURCE).toContain("onReviewPending={onReviewPending}");
-        expect(PANEL_SOURCE).toContain("setWorkspaceFocus(\"catalog\")");
-        expect(PANEL_SOURCE).toContain(".solcord-catalog-table");
-        expect(PANEL_SOURCE).toContain("<SetupWizard onReviewPending={openCatalog} />");
-        expect(WIZARD_SOURCE).toContain("remain pending and are not downloaded here");
-        expect(WIZARD_SOURCE).toContain("Guarded Split Large Messages is built in.");
-        expect(WIZARD_SOURCE).toContain("review-and-manual-copy flow");
+        expect(WIZARD_SOURCE).not.toContain("onReviewPending");
+        expect(PANEL_SOURCE).toContain("<CatalogBrowser />");
+        expect(PANEL_SOURCE).toContain("<SetupWizard />");
+        expect(WIZARD_SOURCE).toContain("catalog candidates still need a runtime or security gate");
+        expect(WIZARD_SOURCE).toContain("Each starts only after its Discord adapter validates.");
+        expect(WIZARD_SOURCE).toContain("Pending tools stay uninstalled");
         expect(PANEL_SOURCE).toContain("Optional files not installed");
-        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
-        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
+        const catalogSource = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8");
+        expect(catalogSource).toContain("optional catalog file(s) absent");
+        expect(catalogSource).toMatch(/aria-label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
+        expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
-        expect(WIZARD_SOURCE).toContain("You may opt in during the Private history step; skipping setup leaves its policy unchanged.");
+        expect(WIZARD_SOURCE).toContain("These features are off by default.");
         expect(WIZARD_SOURCE).not.toContain("this wizard does not change its policy");
         expect(WIZARD_SOURCE).not.toContain("addonModes: {...current.addonModes, SplitLargeMessages: \"guarded\"}");
     });
@@ -108,24 +117,25 @@ describe("Solcord beginner-first setup UI", () => {
     test("keeps eleven theme choices, recommends Solcord Default, and preserves a no-change exit", () => {
         expect(WIZARD_SOURCE).toContain("\"solcord-default\": \"Recommended");
         expect(WIZARD_SOURCE).toContain("SOLCORD_THEMES.map(theme");
-        expect(WIZARD_SOURCE).toContain("No plugin file, theme file, enabled state, or Timeline policy will change");
-        expect(WIZARD_SOURCE).toContain("You can reopen this wizard later");
+        expect(WIZARD_SOURCE).toContain("Nothing changes until Apply.");
+        expect(WIZARD_SOURCE).toContain("Finish later");
+        expect(WIZARD_SOURCE).toContain("SolcordSettings.skipOnboarding()");
         expect(WIZARD_SOURCE).toContain("current.selectedAddons.filter(name => !readyNames.has(name))");
+        expect(PANEL_SOURCE).toContain("[onboarding.status, workspace]");
     });
 
-    test("shows an explicit reversible provider choice for an installed community counterpart", () => {
-        expect(WIZARD_SOURCE).toContain("showProviderChoice = selected.has(addon.name) && Boolean(communityFile) && isSolcordBuiltInAddon");
-        expect(WIZARD_SOURCE).toContain("installedCommunityFiles");
-        expect(WIZARD_SOURCE).toContain("Use Solcord built-in (recommended)");
-        expect(WIZARD_SOURCE).toContain("Keep community addon");
-        expect(WIZARD_SOURCE).toContain("the exact source file moves to a rollback archive");
-        expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft)");
-        expect(WIZARD_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(draft), [draft]");
+    test("moves reversible provider replacement out of first setup and into Extensions", () => {
+        expect(WIZARD_SOURCE).toContain("Existing community plugins stay untouched");
+        expect(WIZARD_SOURCE).toContain("{migrateProviders: false}");
+        expect(WIZARD_SOURCE).not.toContain("prepareProviderMigrationPlan");
+        expect(PANEL_SOURCE).toContain("Replace duplicate plugins");
+        expect(PANEL_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(state.draft)");
+        expect(PANEL_SOURCE).toContain("SolcordRuntime.finishSetup(state.draft, confirmedPlan)");
+        expect(PANEL_SOURCE).toContain("move only these exact files to a timestamped rollback archive");
+        expect(PANEL_SOURCE).toContain("Rollback latest migration");
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(entry.name)");
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(migration.name)");
-        expect(WIZARD_SOURCE).toContain("SolcordRuntime.finishSetup(draft, providerMigrationPlan)");
-        expect(WIZARD_SOURCE).toContain("active community provider changed after review");
-        expect(WIZARD_SOURCE).toContain("Replace duplicate cards");
+        expect(RUNTIME_SOURCE).toContain("SetupProviderMigrationConfirmationChanged");
     });
 
     test("describes the clean-room interaction tools without claiming unavailable choices or automatic sends", () => {
@@ -135,8 +145,8 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("keeps Attachment Guard truthful and gives its setup switch a visible effect", () => {
-        expect(WIZARD_SOURCE).toContain("Show the manual Attachment Guard inspector");
-        expect(WIZARD_SOURCE).toContain("It does not intercept clicks, open files, or claim automatic protection.");
+        expect(WIZARD_SOURCE).toContain("<strong>Attachment review</strong>");
+        expect(WIZARD_SOURCE).toContain("Inspect a file locally before upload. Solcord never submits it for you.");
         expect(WIZARD_SOURCE).not.toContain("Require a local review before opening high-risk file types.");
         expect(PANEL_SOURCE).toContain("productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />");
     });

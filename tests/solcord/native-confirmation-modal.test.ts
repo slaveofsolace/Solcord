@@ -22,15 +22,20 @@ describe("Solcord native-only confirmation modal wiring", () => {
         expect(nativeOnly).not.toContain("bd-modal-wrapper");
     });
 
-    test("keeps runtime maturity at preview until disposable acceptance", () => {
+    test("publishes ready only through the accepted native modal and bounded focus lifecycle", () => {
         const source = readFileSync(resolve(ROOT, "src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
         const start = source.indexOf("async #startLinkLens");
         const end = source.indexOf("#startStreamShield", start);
         const linkLensRuntime = source.slice(start, end);
 
         expect(linkLensRuntime).toContain("Modals.showNativeConfirmationModal");
-        expect(linkLensRuntime).toContain("maturity: \"preview\"");
-        expect(linkLensRuntime).not.toContain("maturity: \"ready\"");
+        expect(linkLensRuntime).toContain("maturity: \"ready\"");
+        expect(linkLensRuntime).toContain("userIntervened");
+        expect(linkLensRuntime).toContain("scope.listen(globalThis, \"pointerdown\"");
+        expect(linkLensRuntime).toContain("scope.listen(globalThis, \"keydown\"");
+        expect(linkLensRuntime).toContain("scope.timeout");
+        expect(linkLensRuntime).not.toContain("globalThis.addEventListener");
+        expect(linkLensRuntime).not.toContain("globalThis.setTimeout");
         expect(linkLensRuntime).not.toContain("Modals.showConfirmationModal");
     });
 });

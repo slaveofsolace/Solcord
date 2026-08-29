@@ -2,7 +2,10 @@ import {describe, expect, test} from "bun:test";
 
 import {
     audienceGuardIdsFromVoiceStates,
+    audienceGuardHealthMaturity,
     deniedAudienceMatches,
+    isAudienceGuardStartAction,
+    isAudienceGuardStopAction,
     normalizeAudienceGuardEntries,
     normalizeAudienceGuardPrivatePolicy,
     SolcordStreamAudienceGuard,
@@ -61,6 +64,27 @@ const MODES = {preventStart: true, stopOnJoin: true, stopOnWatch: false};
 const DENIED = [{userId: "300", label: "Denied person"}];
 
 describe("Solcord Stream Audience Guard", () => {
+    test("keeps a deliberate off state distinct from adapter unavailability", () => {
+        expect(audienceGuardHealthMaturity({phase: "off"})).toBe("preview");
+        expect(audienceGuardHealthMaturity({phase: "ready"})).toBe("preview");
+        expect(audienceGuardHealthMaturity({phase: "unavailable"})).toBe("unavailable");
+    });
+    test("recognizes the current native stream actions without accepting loose name matches", () => {
+        function start(user?: unknown, source?: unknown) {
+            const action = "startStreamWithSource";
+            if (!user) return [false, "no user or channel", action];
+            if (!source) return [false, "no source", action];
+            return [false, "no permission", action];
+        }
+        function stop() {
+            return ["getCurrentUserActiveStream", "arguments.length>0", "null!=t"];
+        }
+        expect(isAudienceGuardStartAction(start)).toBeTrue();
+        expect(isAudienceGuardStopAction(stop)).toBeTrue();
+        expect(isAudienceGuardStartAction(function startStream() {})).toBeFalse();
+        expect(isAudienceGuardStopAction(function getCurrentUserActiveStream() {})).toBeFalse();
+    });
+
     test("normalizes a bounded private denylist without accepting malformed identifiers", () => {
         const entries = normalizeAudienceGuardEntries([
             {userId: "300", label: "  Friend\nname  "},

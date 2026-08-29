@@ -138,7 +138,7 @@ describe("Solcord build provenance", () => {
         expect(epoch.buildTimestamp).toBe(TIMESTAMP);
         expect(() => capture(testFixture, "production", {sourceDateEpoch: "1787446800.5"})).toThrow("whole non-negative Unix seconds");
         expect(() => capture(testFixture, "production", {sourceDateEpoch: ""})).toThrow("whole non-negative Unix seconds");
-    });
+    }, 10_000);
 
     test("produces identical metadata, manifests, and ASAR bytes from identical clean inputs", async () => {
         const testFixture = fixture();

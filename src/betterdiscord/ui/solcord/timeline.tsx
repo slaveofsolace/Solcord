@@ -17,6 +17,12 @@ function time(value: number): string {
     return new Date(value).toLocaleString();
 }
 
+function storageLabel(enabled: boolean, retention: SolcordTimelinePolicy["retention"], persistent: boolean): string {
+    if (!enabled) return "Not in use while Timeline is off";
+    if (retention === "session") return "Session only by choice";
+    return persistent ? "AES-256-GCM · safeStorage-wrapped key" : "Session only · encrypted persistence unavailable";
+}
+
 export default function MessageTimelinePanel() {
     const [statusMessage, setStatusMessage] = useState("");
     const state = useStateFromStores([SolcordRuntime, SolcordSettings], () => ({
@@ -70,7 +76,7 @@ export default function MessageTimelinePanel() {
             <button type="button" className="solcord-action solcord-action-danger" onClick={() => void clear()}>Clear Timeline</button>
         </div>
         <dl className="solcord-facts solcord-timeline-facts">
-            <div><dt>Storage</dt><dd>{state.status.persistent ? "AES-256-GCM · safeStorage-wrapped key" : "session only · secure storage unavailable or disabled"}</dd></div>
+            <div><dt>Storage</dt><dd>{storageLabel(state.policy.enabled, state.policy.retention, state.status.persistent)}</dd></div>
             <div><dt>Observed records</dt><dd>{state.status.records}</dd></div>
             <div><dt>Deleted / edited</dt><dd>{state.status.deleted} / {state.status.edited}</dd></div>
             <div><dt>Text used</dt><dd>{bytesLabel(state.status.textBytes)} of 250 MiB</dd></div>

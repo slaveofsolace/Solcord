@@ -12,6 +12,7 @@ import {
     parseSolcordImport,
     previewSolcordImportChanges,
     previewSetupChanges,
+    reopenOnboardingState,
     restoreSnapshotState,
     serializeSolcordSettingsExport,
     SOLCORD_PRESET_ADDONS,
@@ -226,6 +227,7 @@ describe("Solcord settings schema", () => {
             hiddenGuildIds: ["123456789012345671"],
             guildAliases: {"123456789012345671": "Private workshop"},
             focusChannelIds: ["123456789012345672"],
+            voiceHealthEnabled: true,
             translation: {provider: "libretranslate", endpoint: "https://private.example/translate"}
         };
 
@@ -359,19 +361,43 @@ describe("Solcord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v6 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v7 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSolcordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(6);
+        expect(document.schemaVersion).toBe(7);
         expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 6}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 7}));
+    });
+
+    test("starts a genuinely new profile in Strict Privacy without a false migration receipt", () => {
+        const document = normalizeSolcordDocument(undefined);
+
+        expect(document.productPreferences.privacy).toEqual(expect.objectContaining({
+            profile: "strict",
+            migrationPending: false,
+            telemetry: "block",
+            crashReporting: "block-optional",
+            activityDiscovery: "block",
+            updates: "manual"
+        }));
+        expect(document.migrationProvenance).toEqual([]);
+    });
+
+    test("keeps a persisted pre-v7 profile on the explicit privacy migration path", () => {
+        const document = normalizeSolcordDocument({schemaVersion: 6});
+
+        expect(document.productPreferences.privacy).toEqual(expect.objectContaining({
+            profile: "standard",
+            migrationPending: true
+        }));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 6, toSchema: 7}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -395,7 +421,7 @@ describe("Solcord settings schema", () => {
             powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
         });
 
-        expect(document.schemaVersion).toBe(6);
+        expect(document.schemaVersion).toBe(7);
         expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-solcord");
         expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
     });
@@ -410,11 +436,26 @@ describe("Solcord settings schema", () => {
             }
         });
 
-        expect(document.onboarding.version).toBe(4);
+        expect(document.onboarding.version).toBe(5);
         expect(document.onboarding.lastStep).toBe(4);
         expect(document.onboarding.draft?.selectedTheme).toBe("paper-signal");
         expect(document.onboarding.draft?.selectedAddons).toEqual(["DoNotTrack"]);
         expect(document.onboarding.draft?.addonProviders.DoNotTrack).toBe("prefer-solcord");
+    });
+
+    test("resumes a deferred setup at the saved step and restarts completed setup from Welcome", () => {
+        const draft = normalizeSetupDraft({selectedTheme: "paper-signal"});
+        expect(reopenOnboardingState({version: 5, status: "skipped", lastStep: 2, completedAt: 10, draft})).toEqual({
+            version: 5,
+            status: "pending",
+            lastStep: 2,
+            draft
+        });
+        expect(reopenOnboardingState({version: 5, status: "complete", lastStep: 4, completedAt: 10})).toEqual({
+            version: 5,
+            status: "pending",
+            lastStep: 0
+        });
     });
 
     test("normalizes a setup draft to the 36 known addons and safe defaults", () => {
@@ -479,7 +520,7 @@ describe("Solcord settings schema", () => {
             productPreferences: document.productPreferences
         };
 
-        expect(document.onboarding).toEqual({version: 4, status: "pending", lastStep: 0});
+        expect(document.onboarding).toEqual({version: 5, status: "pending", lastStep: 0});
         const enablePreview = previewSetupChanges(document, noChangeDraft);
         const recommended = recommendedSolcordSetupAddons();
         expect(enablePreview).toHaveLength(recommended.length);

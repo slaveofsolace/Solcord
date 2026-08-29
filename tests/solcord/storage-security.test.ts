@@ -288,6 +288,50 @@ describe("Solcord translation credential security", () => {
         const root = path.join(appDataPath, "BetterDiscord", "solcord-translation-credentials-v1");
         expect(fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).some(name => /\.(?:old|tmp)$/.test(name))).toBeFalse();
     });
+
+    test("keeps a newer session credential authoritative after a durable write failure", async () => {
+        const endpoint = "https://translate.example/translate";
+        const storage = new SolcordTranslationCredentialStorage();
+        expect(await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "durable-key"})).toEqual({persistent: true, complete: true});
+
+        oversizedWrappedKey = true;
+        expect(await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "session-key"})).toEqual({persistent: false, complete: false});
+        oversizedWrappedKey = false;
+
+        expect(await storage.read("111222333", {provider: "libretranslate", endpoint})).toEqual({credential: "session-key", persistent: false, complete: true});
+        expect(await new SolcordTranslationCredentialStorage().read("111222333", {provider: "libretranslate", endpoint})).toEqual({credential: "durable-key", persistent: true, complete: true});
+    });
+
+    test("leaves a durable clear marker and never revives a credential after interrupted deletion", async () => {
+        const endpoint = "https://translate.example/translate";
+        const storage = new SolcordTranslationCredentialStorage();
+        await storage.write("111222333", {provider: "libretranslate", endpoint, credential: "must-not-revive"});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-translation-credentials-v1");
+        const credential = fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).find(name => name.endsWith(".scdb"));
+        if (!credential) throw new Error("Encrypted credential fixture was not created.");
+        const credentialFile = path.join(root, credential);
+        const originalUnlink = fs.unlinkSync;
+        let refused = false;
+        Object.defineProperty(fs, "unlinkSync", {
+            configurable: true,
+            value: (target: fs.PathLike) => {
+                if (!refused && path.resolve(String(target)) === path.resolve(credentialFile)) {
+                    refused = true;
+                    throw new Error("simulated locked credential");
+                }
+                return originalUnlink(target);
+            }
+        });
+        try {
+            expect(await storage.clear("111222333", {provider: "libretranslate", endpoint})).toEqual({persistent: false, complete: false});
+        }
+        finally {Object.defineProperty(fs, "unlinkSync", {configurable: true, value: originalUnlink});}
+
+        expect(fs.existsSync(`${credentialFile}.clear-pending`)).toBeTrue();
+        expect(await new SolcordTranslationCredentialStorage().read("111222333", {provider: "libretranslate", endpoint})).toEqual({credential: "", persistent: true, complete: true});
+        expect(fs.existsSync(credentialFile)).toBeFalse();
+        expect(fs.existsSync(`${credentialFile}.clear-pending`)).toBeFalse();
+    });
 });
 
 describe("Solcord Local Identity Notes storage security", () => {
@@ -926,6 +970,27 @@ describe("Solcord Message Timeline storage security", () => {
         expect((await timeline.read("111222333", {policy: {retention: "7-days"}})).events).toHaveLength(1);
         expect((await timeline.read("444555666", {policy: {retention: "7-days"}})).events).toHaveLength(0);
         expect(fs.existsSync(path.join(appDataPath, "BetterDiscord"))).toBeFalse();
+    });
+
+    test("keeps the complete append batch in memory when an encrypted segment write fails", async () => {
+        const originalWriteFileSync = fs.writeFileSync;
+        const writableFs = fs as unknown as {writeFileSync: typeof fs.writeFileSync;};
+        writableFs.writeFileSync = ((file: unknown, ...args: unknown[]) => {
+            if (String(file).includes(".scseg.")) throw new Error("synthetic segment write failure");
+            return (originalWriteFileSync as unknown as (target: unknown, ...values: unknown[]) => void)(file, ...args);
+        }) as typeof fs.writeFileSync;
+        try {
+            const timeline = new SolcordTimelineStorage();
+            const result = await timeline.append("111222333", timelineRequest({events: [
+                timelineEvent({eventId: "write-failure-a", content: "first"}),
+                timelineEvent({eventId: "write-failure-b", content: "second"})
+            ]}));
+            expect(result).toEqual({stored: 2, persistent: false, retentionApplied: false});
+            expect(timeline.status()).toEqual(expect.objectContaining({persistent: false, sessionOnly: true}));
+            const read = await timeline.read("111222333", {policy: {retention: "7-days"}});
+            expect(read.events.map(event => event.eventId)).toEqual(["write-failure-a", "write-failure-b"]);
+        }
+        finally {writableFs.writeFileSync = originalWriteFileSync;}
     });
 
     test("encrypts persistent records, obscures the account directory, and completely clears its store", async () => {

@@ -18,6 +18,7 @@ const files = execFileSync("git", ["ls-files", "-z"], {encoding: "utf8"})
     .filter(file => file && file !== OUTPUT && !EPHEMERAL_FILES.has(file));
 const generatedPath = /(?:^|\/)(?:dist|node_modules)(?:\/|$)|\.generated\.|^assets\/catalog\//;
 const customPath = /^(?:src\/common\/solcord\/|src\/betterdiscord\/(?:ui\/solcord\/|styles\/solcord\.css)|src\/electron\/.*solcord|installer\/SolcordSetup\/|scripts\/|tests\/solcord\/|docs\/)/;
+const inheritedPathsInsideCustomRoots = new Set(["scripts/translations.ts"]);
 const previousRoot = String.fromCharCode(115, 111, 117, 108);
 const identityResidue = new RegExp(`${previousRoot}[\\s_-]?cord|${previousRoot}-(?:dark|light)`, "i");
 const prohibitedTerms = [
@@ -73,7 +74,7 @@ for (const file of files) {
     const lineCount = lines.length;
     const signalEligible = file !== AUDIT_SCRIPT;
     const generated = generatedPath.test(file);
-    const custom = signalEligible && customPath.test(file) && !generated;
+    const custom = signalEligible && customPath.test(file) && !generated && !inheritedPathsInsideCustomRoots.has(file);
 
     totalLines += lineCount;
     if (custom) customLines += lineCount;
@@ -153,19 +154,31 @@ ${table(topCustom)}
 - Removed current lint warnings in the patch dispatcher and settings title provider.
 - Added explicit listener cleanup for the settings title provider.
 - Added long-list rendering containment to Solcord module, catalog, curated, and people-history rows.
-- Added a typed, default-off, lazy capability scaffold for useful plugin-store gaps.
+- Completed typed, default-off, lazy capability contracts with bounded runtime adapters; unsupported Discord internals remain visibly unavailable instead of being advertised as live.
 - Replaced broken historical binary links in the README with a release-page boundary and source-build instructions.
 - Added a repeatable audit command and a complete Codex handoff.
 
-## Deeper findings deferred to Codex
+## Circular-dependency classification
 
-1. The Solcord control panel is still a large composition surface and should be decomposed without changing visible behavior.
-2. Eleven circular-dependency groups remain in renderer/addon/editor/settings paths.
-3. The production renderer bundle remains approximately 1.3 MiB and needs measurement-led splitting, not speculative refactoring.
-4. Activities compatibility, Discord adapter drift, external editor focus, and installer rollback require live desktop validation.
-5. Historical release assets retain their original names; publish a replacement Solcord release rather than mutating provenance.
-6. Generated addon catalogs are large and should remain generated, isolated, and lazily consumed.
-7. Timer, observer, DOM-query, and synchronous-filesystem signals listed above need subsystem-by-subsystem ownership and teardown verification.
+The pinned dependency audit reports eleven groups. They are classified rather than hidden:
+
+| Groups | Area | Classification | Decision |
+| --- | --- | --- | --- |
+| 1–5 | BetterDiscord Webpack, patcher, and store utilities | Inherited core topology | Retain. Solcord added no edge in these groups; speculative rewrites would threaten public addon compatibility. |
+| 6–7 | BetterDiscord addon manager, editor, plugin, and theme managers | Inherited editor topology | Retain. Solcord's manager imports point only to leaf integrity/doctor modules and do not create the cycle. |
+| 8 | BetterDiscord floating-window container | Inherited UI topology | Retain. No Solcord change participates. |
+| 9–11 | BetterDiscord settings, addon store, builtins, and Custom CSS | Inherited settings topology | Retain. Solcord's settings-name helper is a leaf and creates no return edge. |
+
+No Solcord module appears in a reported cycle. The release gate therefore records the inherited groups as baseline debt while treating any future Solcord-introduced cycle as a failure.
+
+## Remaining measured constraints
+
+1. The Control Center remains a large composition surface. Further splitting is maintenance work only and must preserve its accepted route, focus, and scroll behavior.
+2. The production renderer bundle remains approximately 1.6 MiB; any split must be supported by startup and interaction measurements.
+3. Activities compatibility, Discord adapter drift, external editor focus, and installer rollback require exact-client validation for every release candidate.
+4. Historical release assets retain their original names; replacement releases must preserve that provenance rather than mutating old assets.
+5. Generated addon catalogs remain generated and isolated; consumers must not eagerly load optional source bodies.
+6. Timer, observer, DOM-query, and synchronous-filesystem signals require subsystem ownership and teardown evidence before release.
 
 ## Maintenance markers
 
