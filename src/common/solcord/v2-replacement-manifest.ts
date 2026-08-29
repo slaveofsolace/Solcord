@@ -98,6 +98,15 @@ export interface SolcordV2RetirementPlan {
     blockers: ReadonlyArray<Readonly<SolcordV2RetirementBlocker>>;
 }
 
+export interface SolcordV2ArchivedProviderRecord {
+    fileName: string;
+    sha256: string;
+    sizeBytes: number;
+}
+
+const PROVIDER_SHA256 = /^[0-9a-f]{64}$/;
+const MAX_PROVIDER_BYTES = 8 * 1024 * 1024;
+
 function hasControlCharacter(value: string): boolean {
     return [...value].some(character => {
         const code = character.charCodeAt(0);
@@ -129,6 +138,41 @@ export function findSolcordV2Replacement(fileName: string): Readonly<SolcordV2Re
     if (typeof fileName !== "string") return;
     const normalized = fileName.toLowerCase();
     return SOLCORD_V2_REPLACEMENT_MANIFEST.entries.find(candidate => candidate.fileName.toLowerCase() === normalized);
+}
+
+export function solcordV2QuarantineIdsForArchivedFiles(fileNames: readonly string[]): readonly string[] {
+    if (!Array.isArray(fileNames) || fileNames.length > 256) return Object.freeze([]);
+    const archived = new Set(fileNames.filter(fileName => typeof fileName === "string").map(fileName => fileName.toLocaleLowerCase("en-US")));
+    return Object.freeze(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.flatMap(candidate => archived.has(candidate.fileName.toLocaleLowerCase("en-US")) ? [candidate.cardName, candidate.fileName] : []));
+}
+
+export function normalizeSolcordV2ArchivedProviderRecords(rawRecords: unknown): ReadonlyArray<Readonly<SolcordV2ArchivedProviderRecord>> {
+    if (!Array.isArray(rawRecords) || rawRecords.length > SOLCORD_V2_REPLACEMENT_MANIFEST.entries.length) throw new Error("Invalid V2 provider archive receipt.");
+    const seen = new Set<string>();
+    return Object.freeze(rawRecords.map(rawRecord => {
+        if (!rawRecord || typeof rawRecord !== "object" || Array.isArray(rawRecord)) throw new Error("Invalid V2 provider archive receipt.");
+        const record = rawRecord as Record<string, unknown>;
+        const candidate = typeof record.fileName === "string" ? findSolcordV2Replacement(record.fileName) : undefined;
+        if (!candidate || typeof record.sha256 !== "string" || !PROVIDER_SHA256.test(record.sha256) || !Number.isSafeInteger(record.sizeBytes) || (record.sizeBytes as number) <= 0 || (record.sizeBytes as number) > MAX_PROVIDER_BYTES) {
+            throw new Error("Invalid V2 provider archive receipt.");
+        }
+        const key = candidate.fileName.toLocaleLowerCase("en-US");
+        if (seen.has(key)) throw new Error("Invalid V2 provider archive receipt.");
+        seen.add(key);
+        return Object.freeze({fileName: candidate.fileName, sha256: record.sha256, sizeBytes: record.sizeBytes as number});
+    }));
+}
+
+export function solcordV2ArchiveReceiptMatchesPreview(rawArchived: unknown, rawPreview: unknown): ReadonlyArray<Readonly<SolcordV2ArchivedProviderRecord>> {
+    const archived = normalizeSolcordV2ArchivedProviderRecords(rawArchived);
+    const preview = normalizeSolcordV2ArchivedProviderRecords(rawPreview);
+    if (archived.length !== preview.length) throw new Error("V2 provider archive receipt does not match its preview.");
+    const expected = new Map(preview.map(record => [record.fileName.toLocaleLowerCase("en-US"), record]));
+    for (const record of archived) {
+        const match = expected.get(record.fileName.toLocaleLowerCase("en-US"));
+        if (!match || match.sha256 !== record.sha256 || match.sizeBytes !== record.sizeBytes) throw new Error("V2 provider archive receipt does not match its preview.");
+    }
+    return archived;
 }
 
 export function planSolcordV2ProviderRetirement(input: SolcordV2RetirementInput): SolcordV2RetirementPlan {

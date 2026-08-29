@@ -37,7 +37,7 @@ import {audienceGuardHealthMaturity, audienceGuardIdsFromVoiceStates, isAudience
 import {resolveSolcordSpeakingReader, SolcordNativeSuiteController, subscribeSolcordChangeStores, type SolcordNativeSuiteAdapter, type SolcordNativeSuiteStatus} from "./native-suite";
 import {createCachedVoiceHealthReader} from "./voice-health";
 import {SolcordBaselineSuite, type SolcordBaselineSuiteStatus} from "./baseline-suite";
-import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
+import {SOLCORD_V2_REPLACEMENT_MANIFEST, solcordV2ArchiveReceiptMatchesPreview, solcordV2QuarantineIdsForArchivedFiles} from "@common/solcord/v2-replacement-manifest";
 import {resolveSolcordPerformancePolicy} from "@common/solcord/product";
 import {applyPrivacyProfile, boundPrivacyReceipts, createPrivacyDecisionReceipt} from "@common/solcord/privacy";
 import {resolvePrivacyMethodTarget, SolcordPrivacyPolicyAdapter, type PrivacyMethodSpec} from "./privacy-policy";
@@ -1164,6 +1164,7 @@ class SolcordRuntimeStore extends Store {
         const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
         let settingsRecorded = false;
         let providerArchiveTransactionId: string | undefined;
+        let providerArchiveFiles: string[] = [];
 
         try {
             const integrity = await this.#refreshAddonIntegrity("post-setup");
@@ -1273,9 +1274,11 @@ class SolcordRuntimeStore extends Store {
                 if (typeof preview.previewId !== "string" || !Array.isArray(preview.records)) throw new Error("ProviderArchivePreviewInvalid");
                 if (preview.records.length) {
                     const previewId = preview.previewId;
-                    const archived = await this.#withPrivateCapability(capability => TIMELINE_IPC.applyProviderArchive(capability, previewId)) as {transactionId?: unknown;};
+                    const archived = await this.#withPrivateCapability(capability => TIMELINE_IPC.applyProviderArchive(capability, previewId)) as {transactionId?: unknown; archived?: unknown;};
                     if (typeof archived.transactionId !== "string") throw new Error("ProviderArchiveApplyInvalid");
                     providerArchiveTransactionId = archived.transactionId;
+                    const archivedRecords = solcordV2ArchiveReceiptMatchesPreview(archived.archived, preview.records);
+                    providerArchiveFiles = archivedRecords.map(record => record.fileName);
                 }
             }
 
@@ -1284,6 +1287,8 @@ class SolcordRuntimeStore extends Store {
             await this.#withPrivateCapability(capability => TIMELINE_IPC.acknowledgeSetup(capability, transaction.transactionId));
             this.#refreshReviewedExecutionOwnership();
             await this.#synchronizeFeatures();
+            for (const quarantineId of solcordV2QuarantineIdsForArchivedFiles(providerArchiveFiles)) PluginDoctor.clearQuarantine(quarantineId);
+            if (providerArchiveFiles.length) this.emitChange();
             return {transactionId: transaction.transactionId, enabled, quarantined, providerConflicts};
         }
         catch (error) {
