@@ -1276,8 +1276,8 @@ class SolcordRuntimeStore extends Store {
                     const previewId = preview.previewId;
                     const archived = await this.#withPrivateCapability(capability => TIMELINE_IPC.applyProviderArchive(capability, previewId)) as {transactionId?: unknown; archived?: unknown;};
                     if (typeof archived.transactionId !== "string") throw new Error("ProviderArchiveApplyInvalid");
-                    const archivedRecords = solcordV2ArchiveReceiptMatchesPreview(archived.archived, preview.records);
                     providerArchiveTransactionId = archived.transactionId;
+                    const archivedRecords = solcordV2ArchiveReceiptMatchesPreview(archived.archived, preview.records);
                     providerArchiveFiles = archivedRecords.map(record => record.fileName);
                 }
             }
