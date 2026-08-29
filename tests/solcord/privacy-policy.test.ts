@@ -95,6 +95,59 @@ describe("Solcord privacy policy", () => {
         expect(state.module.track("restored")).toBe("sent");
     });
 
+    test("sanitizes only the structurally validated running-game action and restores normal dispatch", () => {
+        const dispatched: unknown[] = [];
+        const dispatcher = {dispatch(action: unknown) {dispatched.push(action); return "dispatched";}, subscribe() {}, unsubscribe() {}};
+        const releases: Array<() => void> = [];
+        const scope = new SolcordDisposalScope();
+        let preferences = defaultStrictPrivacyPreferences();
+        const patcher: PrivacyPolicyPatcher = {
+            instead(_caller, target, key, callback) {
+                const original = target[key] as (...args: unknown[]) => unknown;
+                const patched = function (this: unknown, ...args: unknown[]) {return callback(this, args, original);};
+                target[key] = patched;
+                const release = () => {if (target[key] === patched) target[key] = original;};
+                releases.push(release);
+                return release;
+            }
+        };
+        const adapter = new SolcordPrivacyPolicyAdapter({
+            scope,
+            patcher,
+            preferences: () => preferences,
+            receipt: () => {},
+            specs: [{
+                id: "running-game-dispatch",
+                dataClass: "activity-discovery",
+                key: "dispatch",
+                lookup: () => dispatcher,
+                validate: target => target.module === dispatcher && typeof dispatcher.subscribe === "function" && typeof dispatcher.unsubscribe === "function",
+                blockedValue: () => undefined,
+                intercept: (thisObject, args, original) => {
+                    const [action, ...rest] = args;
+                    if (!action || typeof action !== "object" || (action as {type?: unknown;}).type !== "RUNNING_GAMES_CHANGE") return Reflect.apply(original, thisObject, args);
+                    if (!Array.isArray((action as {games?: unknown;}).games)) return undefined;
+                    return Reflect.apply(original, thisObject, [{...action, games: []}, ...rest]);
+                }
+            }]
+        });
+
+        expect(adapter.start()).toContainEqual({dataClass: "activity-discovery", state: "Protected", summary: "1 validated optional emission surface blocked."});
+        expect(dispatcher.dispatch({type: "MESSAGE_CREATE", message: "untouched"})).toBe("dispatched");
+        expect(dispatcher.dispatch({type: "RUNNING_GAMES_CHANGE", games: [{pid: 42}]})).toBe("dispatched");
+        expect(dispatcher.dispatch({type: "RUNNING_GAMES_CHANGE"})).toBeUndefined();
+        expect(dispatched).toEqual([
+            {type: "MESSAGE_CREATE", message: "untouched"},
+            {type: "RUNNING_GAMES_CHANGE", games: []}
+        ]);
+
+        preferences = legacyPrivacyPreferences();
+        expect(dispatcher.dispatch({type: "RUNNING_GAMES_CHANGE", games: [{pid: 7}]})).toBe("dispatched");
+        expect(dispatched.at(-1)).toEqual({type: "RUNNING_GAMES_CHANGE", games: [{pid: 7}]});
+        scope.dispose();
+        expect(releases).toHaveLength(1);
+    });
+
     test("fails closed to an honest unsupported state instead of patching broad network APIs", () => {
         const scope = new SolcordDisposalScope();
         const adapter = new SolcordPrivacyPolicyAdapter({

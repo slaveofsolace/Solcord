@@ -5,8 +5,8 @@ This page is the current product-status source for the unsigned Solcord V2 relea
 ## Release line
 
 - Integration branch: `development`
-- Preserved releases: `v2.0.0-rc.2` and `v2.0.0-rc.3`
-- Current source-changing candidate: `v2.0.0-rc.4`
+- Preserved releases: `v2.0.0-rc.2`, `v2.0.0-rc.3`, and `v2.0.0-rc.4`
+- Current source-changing candidate: `v2.0.0-rc.5`
 - Target: Discord Stable on Windows, using the existing BetterDiscord injector and `BdApi` compatibility contracts
 - Distribution: unsigned prerelease with SHA-256 manifests, exact rollback identity, and no SmartScreen-reputation claim
 
@@ -16,25 +16,25 @@ Exact source, ASAR, installer, Discord version, profile type, backup, and rollba
 
 | Capability | Default | Status | Boundary |
 | --- | --- | --- | --- |
-| Activity Bridge | On | Ready, final live regression pending | Same-package Discord preload only; unrestricted override remains off |
+| Activity Bridge | On | Ready | Same-package Discord preload only; unrestricted override remains off |
 | Plugin Doctor and Addon Quarantine | On | Ready | Local diagnostics and fail-closed quarantine |
 | Performance HUD | On | Ready | Overlay remains hidden until requested |
 | Command Deck | On | Ready | Local commands only |
 | Settings Time Machine | On | Ready | Receipt-bound local snapshots and rollback previews |
-| Module Drift Radar | On | Preview | Reports drift without broadening compatibility |
-| Workspace Profiles | On | Preview | Local profile switching with reversible settings |
+| Module Drift Radar + Patch Canary | On | Ready | Live structural probes plus an isolated exactly-once patch/unpatch canary; never broadens compatibility |
+| Workspace Profiles | On | Ready | Complete diff, snapshot, local profile apply, and rollback; third-party execution is separately confirmed |
 | Layout Collapse | Off | Ready | Exact-client hide/restore and restart passed; one structural adapter and zero runtime work while disabled |
 | Embed Controls | Off | Ready | Exact-client controlled embed interaction, restart, teardown, and disabled-zero-work passed; message data is unchanged |
 | Cross-platform Autoscroll | Off | Ready | A current Discord scroller moved under the owned gesture loop and stopped on Escape; restart and teardown passed |
 | Message Link Preview | Off | Ready | A current loaded `MessageStore` record previewed without fetch or read-state mutation; missing records remain inert |
 | Media Shelf | Off | Ready | Exact-client local save/remove passed; references are bounded and the feature owns no Discord adapter or background work |
-| Audience Guard | Off | Preview, fail-closed on current action drift | Encrypted persistence is account-bound when available; current Discord stream-action exports do not pass structural validation |
+| Audience Guard | Off | Ready when enabled; unarmed by default | Encrypted persistence is account-bound when available; call-bound controls fail closed on action or store drift |
 | Fake Deafen | Off | Ready, consent required | Built-in Power Lab control is visible; requires normal deafen once and explicit per-call arming; never auto-arms |
 | Friend Watch | Off | Ready when consented | Encrypted restart, passive reconciliation, subject-free export, clear, account isolation fixtures, and teardown passed without a relationship mutation |
 | Message Timeline | Off | Preview | Consent-gated local observations; no unseen-message backfill |
 | Link Lens | Off | Preview | Native review modal only; internal Discord routes bypass it |
 | Stream Shield | Off | Preview | No silent recording or upload |
-| Accessibility Toolkit | Off | Preview | User-selected local presentation controls |
+| Accessibility Toolkit | Off | Ready | User-selected presentation controls apply immediately and restore on disable |
 | Curated addons | Off | Held | `0/36` enabled; a catalog entry is not an installable or accepted addon |
 
 First Setup is transactional and resumable. The exact disposable client passed forward/back navigation, pause/resume, final preview, Apply and verify, eleven-theme installation, restart persistence, and private-default behavior. Automated malformed-state, interrupted-recovery, and rollback coverage remains green. Skipping changes only the onboarding marker.
@@ -44,7 +44,8 @@ First Setup is transactional and resumable. The exact disposable client passed f
 - The current Discord Stable client loaded the exact candidate in a filesystem-isolated acceptance root with the expected source/ASAR identity and no duplicate bootstrap.
 - All four baseline runtime adapters survived restart together, then returned to zero styles, elements, classes, observers, listeners, timers, and previews after disable.
 - Friend Watch used Electron `safeStorage`, created only opaque encrypted account storage, survived restart, exported JSON and CSV without raw subject IDs or display labels, and cleared explicitly.
-- All eleven themes rendered at native Electron 100%, 125%, 150%, and 200% zoom. The 44-capture matrix had no horizontal overflow and every workspace remained reachable by ordinary scrolling.
+- All eleven themes rendered without a translation sentinel or contrast regression. Every workspace passed native Electron 100%, 125%, 150%, and 200% zoom (36 route cases) plus 45 responsive viewport cases, including a 320px narrow shell, with no horizontal overflow or offscreen control.
+- Audience Guard enabled without arming, reported encrypted `safeStorage` persistence, survived a complete process restart, remained unarmed, and returned to `off` on disable.
 - Keyboard traversal reached every workspace with visible focus. Reduced motion collapsed sampled transitions and animations to near-zero duration. Forced-colors rendered the Control Center with system black, white, borders, and focus treatment.
 - Setup and baseline acceptance performed no message, relationship, notification-read, voice, stream, upload, OAuth, or Activity mutation.
 
@@ -78,9 +79,9 @@ They remain measured technical debt. Do not churn public exports or upstream own
 
 Safe source, disposable-runtime, packaging, recovery, accessibility, and documentation work runs without repeated owner pauses. Optional owner validation covers authenticated or account-affecting interactions that automated acceptance deliberately does not perform:
 
-1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. The RC4 hotfix does not alter those accepted mechanisms.
-3. Confirm First Setup's final preview before applying it to the signed-in profile.
-4. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
+1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. RC5 does not alter those accepted mechanisms.
+2. Confirm First Setup's final preview before applying it to the signed-in profile.
+3. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
 
 The release is owner-ready only when the exact candidate survives two clean launches without an addon dialog, JavaScript error, sentinel translation, stale owned process, or rollback mismatch. No private feature may activate without consent.
 
@@ -90,4 +91,4 @@ The release is owner-ready only when the exact candidate survives two clean laun
 - A green build does not prove a Discord interaction until the exact client and candidate complete it.
 - Solcord does not extract tokens, automate accounts, forge entitlements, reveal hidden content, or silently record/upload media.
 - Existing owner plugins, themes, Custom CSS, and private databases are preserved; their presence is not compatibility certification.
-- `v2.0.0-rc.2` and `v2.0.0-rc.3` remain immutable. RC4 is a new artifact line.
+- `v2.0.0-rc.2`, `v2.0.0-rc.3`, and `v2.0.0-rc.4` remain immutable. RC5 is a new artifact line.

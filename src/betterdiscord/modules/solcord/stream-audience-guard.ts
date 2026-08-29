@@ -105,6 +105,29 @@ export function audienceGuardIdsFromVoiceStates(value: unknown): string[] {
     return [...new Set(ids)].slice(0, 10_000);
 }
 
+export function audienceGuardHealthMaturity(status: Pick<SolcordAudienceGuardStatus, "phase">): "preview" | "unavailable" {
+    return status.phase === "unavailable" ? "unavailable" : "preview";
+}
+
+export function isAudienceGuardStartAction(value: unknown): value is (...args: unknown[]) => unknown {
+    if (typeof value !== "function") return false;
+    const source = Function.prototype.toString.call(value);
+    return source.length <= 24_000
+        && source.includes("startStreamWithSource")
+        && source.includes("no user or channel")
+        && source.includes("no source")
+        && source.includes("no permission");
+}
+
+export function isAudienceGuardStopAction(value: unknown): value is (...args: unknown[]) => unknown {
+    if (typeof value !== "function") return false;
+    const source = Function.prototype.toString.call(value);
+    return source.length <= 1_000
+        && source.includes("getCurrentUserActiveStream")
+        && source.includes("arguments.length>0")
+        && source.includes("null!=t");
+}
+
 export function deniedAudienceMatches(denied: ReadonlySet<string>, observed: unknown): string[] {
     return normalizeAudienceGuardIds(observed).filter(id => denied.has(id)).slice(0, MAX_DENIED_USERS);
 }

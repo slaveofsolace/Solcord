@@ -44,7 +44,7 @@ BetterDiscord supplies the ecosystem and compatibility foundation. Solcord narro
 | Privacy | Privacy Controls, Link Lens, Invite Inspector, Stream Shield, Screenshot Scrubber, Attachment Guard |
 | Messages | Composer Toolkit, Double Click to Reply, guarded splitting, Translation Desk, Channel Glance |
 | Calls and audio | Call Context, Audio Console, Voice Note Studio, Voice Health, Shared Call Badge |
-| People and spaces | Pin DMs, server hiding/details, local aliases, Focus Channels, encrypted Local Identity Notes |
+| People and spaces | Session-only DM pins, server hiding/aliases, Focus Channels, and encrypted Local Identity Notes |
 | Local history and recovery | Message Timeline, Friend Watch, Workspace Profiles, Settings Time Machine, Update Ledger |
 | Power Lab | Separately consented, default-off experiments with explicit boundaries |
 

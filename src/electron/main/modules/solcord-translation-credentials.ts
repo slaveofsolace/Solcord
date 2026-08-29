@@ -19,6 +19,8 @@ const ACCOUNT_ID = /^\d{1,32}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const MAX_WRAPPED_BYTES = 64 * 1024;
 const TRANSIENT_SUFFIX = /^\.\d+\.[0-9a-f]{8}\.(?:old|tmp)$/;
+const CLEAR_MARKER_SUFFIX = ".clear-pending";
+const CLEAR_MARKER_CONTENT = "solcord-clear-v1\n";
 
 function hasUnsafeControl(value: string): boolean {
     return [...value].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127);
@@ -41,6 +43,8 @@ function normalizeRecord(value: unknown): CredentialRecord {
 
 export class SolcordTranslationCredentialStorage {
     #session = new Map<string, CredentialRecord>();
+    #sessionPreferred = new Set<string>();
+    #cleanupAttention = new Set<string>();
     #identity?: Buffer;
     #queue = Promise.resolve();
 
@@ -54,10 +58,27 @@ export class SolcordTranslationCredentialStorage {
         const binding = endpointHash(request.endpoint);
         const key = `${account}:${provider}:${binding}`;
         return this.#serialized(async () => {
+            if (this.#cleanupAttention.has(key)) {
+                try {
+                    const file = this.#file(account, provider, binding, false);
+                    if (file) this.#completePendingClear(file);
+                    this.#cleanupAttention.delete(key);
+                    this.#sessionPreferred.delete(key);
+                    return {credential: "", persistent: this.#secureAvailable(), complete: true};
+                }
+                catch {return {credential: this.#session.get(key)?.credential ?? "", persistent: false, complete: false};}
+            }
+            if (this.#sessionPreferred.has(key)) return {credential: this.#session.get(key)?.credential ?? "", persistent: false, complete: true};
             if (!this.#secureAvailable()) return {credential: this.#session.get(key)?.credential ?? "", persistent: false, complete: true};
             try {
                 const file = this.#file(account, provider, binding, false);
                 if (!file) return {credential: "", persistent: true, complete: true};
+                if (fs.existsSync(this.#clearMarker(file))) {
+                    this.#completePendingClear(file);
+                    this.#cleanupAttention.delete(key);
+                    this.#sessionPreferred.delete(key);
+                    return {credential: "", persistent: true, complete: true};
+                }
                 this.#recoverFile(file, provider, binding);
                 if (!fs.existsSync(file)) return {credential: "", persistent: true, complete: true};
                 const record = this.#readRecord(file, provider, binding);
@@ -73,16 +94,25 @@ export class SolcordTranslationCredentialStorage {
         const key = `${account}:${record.provider}:${record.endpointHash}`;
         this.#session.set(key, record);
         return this.#serialized(async () => {
-            if (!this.#secureAvailable()) return {persistent: false, complete: true};
+            if (!this.#secureAvailable()) {
+                this.#sessionPreferred.add(key);
+                return {persistent: false, complete: true};
+            }
             try {
                 const file = this.#file(account, record.provider, record.endpointHash, true)!;
+                if (fs.existsSync(this.#clearMarker(file))) this.#completePendingClear(file);
                 this.#recoverFile(file, record.provider, record.endpointHash);
                 const wrapped = safeStorage.encryptString(JSON.stringify(record));
                 if (!Buffer.isBuffer(wrapped) || wrapped.length <= 0 || wrapped.length > MAX_WRAPPED_BYTES) throw new TypeError("Invalid encrypted translation credential.");
                 this.#atomicReplace(file, wrapped, record.provider, record.endpointHash);
+                this.#sessionPreferred.delete(key);
+                this.#cleanupAttention.delete(key);
                 return {persistent: true, complete: true};
             }
-            catch {return {persistent: false, complete: false};}
+            catch {
+                this.#sessionPreferred.add(key);
+                return {persistent: false, complete: false};
+            }
         });
     }
 
@@ -94,24 +124,24 @@ export class SolcordTranslationCredentialStorage {
         const provider = request.provider;
         if (provider !== "deepl" && provider !== "libretranslate") throw new TypeError("Invalid translation provider.");
         const binding = endpointHash(request.endpoint);
-        this.#session.delete(`${account}:${provider}:${binding}`);
+        const key = `${account}:${provider}:${binding}`;
+        this.#session.delete(key);
         return this.#serialized(async () => {
             try {
                 const file = this.#file(account, provider, binding, false);
                 if (file) {
-                    const directory = path.dirname(file);
-                    const base = path.basename(file);
-                    for (const name of fs.readdirSync(directory)) {
-                        if (name !== base && !(name.startsWith(base) && TRANSIENT_SUFFIX.test(name.slice(base.length)))) continue;
-                        const candidate = path.join(directory, name);
-                        const stat = fs.lstatSync(candidate);
-                        if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe translation credential residue.");
-                        fs.unlinkSync(candidate);
-                    }
+                    this.#beginPendingClear(file);
+                    this.#completePendingClear(file);
                 }
+                this.#sessionPreferred.delete(key);
+                this.#cleanupAttention.delete(key);
                 return {persistent: this.#secureAvailable(), complete: true};
             }
-            catch {return {persistent: false, complete: false};}
+            catch {
+                this.#sessionPreferred.add(key);
+                this.#cleanupAttention.add(key);
+                return {persistent: false, complete: false};
+            }
         });
     }
 
@@ -146,7 +176,41 @@ export class SolcordTranslationCredentialStorage {
         if (relative.startsWith("..") || path.isAbsolute(relative)) throw new TypeError("Translation credential path escaped its store.");
         const base = path.basename(file);
         const hasTransient = fs.readdirSync(directory).some(name => name.startsWith(base) && TRANSIENT_SUFFIX.test(name.slice(base.length)));
-        return fs.existsSync(file) || hasTransient || create ? file : undefined;
+        return fs.existsSync(file) || fs.existsSync(this.#clearMarker(file)) || hasTransient || create ? file : undefined;
+    }
+
+    #clearMarker(file: string): string {
+        return `${file}${CLEAR_MARKER_SUFFIX}`;
+    }
+
+    #beginPendingClear(file: string): void {
+        const marker = this.#clearMarker(file);
+        if (fs.existsSync(marker)) {
+            const stat = fs.lstatSync(marker);
+            if (!stat.isFile() || stat.isSymbolicLink() || stat.size !== Buffer.byteLength(CLEAR_MARKER_CONTENT)) throw new TypeError("Unsafe translation credential clear marker.");
+            if (fs.readFileSync(marker, "utf8") !== CLEAR_MARKER_CONTENT) throw new TypeError("Invalid translation credential clear marker.");
+            return;
+        }
+        const descriptor = fs.openSync(marker, "wx", 0o600);
+        try {fs.writeFileSync(descriptor, CLEAR_MARKER_CONTENT, "utf8"); fs.fsyncSync(descriptor);}
+        finally {fs.closeSync(descriptor);}
+    }
+
+    #completePendingClear(file: string): void {
+        const marker = this.#clearMarker(file);
+        this.#beginPendingClear(file);
+        const directory = path.dirname(file);
+        const base = path.basename(file);
+        for (const name of fs.readdirSync(directory)) {
+            if (name !== base && !(name.startsWith(base) && TRANSIENT_SUFFIX.test(name.slice(base.length)))) continue;
+            const candidate = path.join(directory, name);
+            const stat = fs.lstatSync(candidate);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new TypeError("Unsafe translation credential residue.");
+            fs.unlinkSync(candidate);
+        }
+        const markerStat = fs.lstatSync(marker);
+        if (!markerStat.isFile() || markerStat.isSymbolicLink()) throw new TypeError("Unsafe translation credential clear marker.");
+        fs.unlinkSync(marker);
     }
 
     #root(create: boolean): string | undefined {

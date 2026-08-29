@@ -330,8 +330,13 @@ export class SolcordVoiceNoteStudioController implements SolcordV2Disposable {
         this.#lifecycle.assertActive();
         if (!this.#preview) throw new Error("Preview a voice note before authorizing upload.");
         const preview = this.#preview;
-        this.#preview = undefined;
         return this.#intents.create("voice-note-studio", "upload-voice-note", {channelId: requireToken(channelId, "Channel ID", 32), recordingId: preview.recordingId, sizeBytes: preview.sizeBytes, mime: preview.mime}, `Upload the reviewed ${Math.ceil(preview.durationMs / 1_000)} second voice note.`, 15_000);
+    }
+
+    completeUpload(recordingId: string): void {
+        this.#lifecycle.assertActive();
+        if (!this.#preview || this.#preview.recordingId !== recordingId) throw new Error("The reviewed voice note changed before upload handoff completed.");
+        this.#preview = undefined;
     }
 
     cancel(): void {this.#recording = false; this.#preview = undefined;}

@@ -20,6 +20,7 @@ export interface PrivacyMethodSpec {
     lookup(): unknown;
     validate(target: PrivacyMethodTarget): boolean;
     blockedValue(thisObject: unknown, args: unknown[]): unknown;
+    intercept?(thisObject: unknown, args: unknown[], original: OutboundMethod): unknown;
 }
 
 export interface PrivacyPolicyPatcher {
@@ -115,6 +116,7 @@ export class SolcordPrivacyPolicyAdapter {
 
                 const release = this.#options.patcher.instead(PATCH_CALLER, resolved.module, resolved.key, (thisObject, args, original) => {
                     if (!privacyCategoryBlocked(this.#options.preferences(), dataClass)) return Reflect.apply(original, thisObject, args);
+                    if (spec.intercept) return spec.intercept(thisObject, args, original);
                     return spec.blockedValue(thisObject, args);
                 }, {forcePatch: false});
                 if (typeof release !== "function") continue;

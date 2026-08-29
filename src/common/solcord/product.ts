@@ -29,6 +29,19 @@ export interface SolcordMediaShelfItem {
     kind: SolcordMediaKind;
 }
 
+const SOLCORD_MEDIA_HOSTS = new Set(["cdn.discordapp.com", "media.discordapp.net"]);
+
+export function normalizeSolcordMediaShelfUrl(value: unknown): string | undefined {
+    if (typeof value !== "string" || value.length > 2_048) return;
+    try {
+        const url = new URL(value);
+        if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash) return;
+        if (!SOLCORD_MEDIA_HOSTS.has(url.hostname) || !url.pathname.startsWith("/") || url.pathname.includes("\\")) return;
+        return url.toString();
+    }
+    catch {return;}
+}
+
 export interface SolcordBaselinePreferences {
     layoutCollapse: boolean;
     collapsedRegions: SolcordLayoutRegion[];
@@ -72,6 +85,7 @@ export interface SolcordProductPreferences {
         hiddenGuildIds: string[];
         guildAliases: Record<string, string>;
         focusChannelIds: string[];
+        voiceHealthEnabled: boolean;
         translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string;};
     };
     baseline: SolcordBaselinePreferences;
@@ -126,7 +140,7 @@ export function defaultSolcordProductPreferences(): SolcordProductPreferences {
         privacy: defaultStrictPrivacyPreferences(),
         friendWatch: {enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"},
         returnLaterRetentionDays: 30,
-        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], translation: {provider: "off", endpoint: ""}},
+        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], voiceHealthEnabled: false, translation: {provider: "off", endpoint: ""}},
         baseline: {layoutCollapse: false, collapsedRegions: [], embedControls: false, crossPlatformAutoscroll: false, messageLinkPreview: false, mediaShelf: []}
     };
 }
@@ -157,8 +171,6 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     const nativeSuite = record(source.nativeSuite);
     const translation = record(nativeSuite.translation);
     const baseline = record(source.baseline);
-    const snowflakes = (candidate: unknown, maximum: number) => Array.isArray(candidate) ? [...new Set(candidate.filter((item): item is string => typeof item === "string" && /^\d{1,32}$/.test(item)))].slice(0, maximum) : [];
-    const aliases = Object.fromEntries(Object.entries(record(nativeSuite.guildAliases)).flatMap(([id, alias]) => /^\d{1,32}$/.test(id) && typeof alias === "string" && alias.length <= 48 ? [[id, alias] as const] : []).slice(0, 200));
     let endpoint = "";
     if (typeof translation.endpoint === "string" && translation.endpoint.length <= 500) {
         try {
@@ -191,10 +203,13 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
         },
         returnLaterRetentionDays: choice(source.returnLaterRetentionDays, [7, 30, 90] as const, 30),
         nativeSuite: {
-            pinnedDmIds: snowflakes(nativeSuite.pinnedDmIds, 100),
-            hiddenGuildIds: snowflakes(nativeSuite.hiddenGuildIds, 200),
-            guildAliases: aliases,
-            focusChannelIds: snowflakes(nativeSuite.focusChannelIds, 500),
+            // Account-derived Discord IDs stay in runtime-only, account-isolated
+            // state. Normal settings, snapshots, profiles, and exports scrub them.
+            pinnedDmIds: [],
+            hiddenGuildIds: [],
+            guildAliases: {},
+            focusChannelIds: [],
+            voiceHealthEnabled: nativeSuite.voiceHealthEnabled === true,
             translation: {provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"), endpoint}
         },
         baseline: {
@@ -205,18 +220,15 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             messageLinkPreview: baseline.messageLinkPreview === true,
             mediaShelf: (Array.isArray(baseline.mediaShelf) ? baseline.mediaShelf : []).flatMap((candidate, index) => {
                 const item = record(candidate);
-                if (typeof item.url !== "string" || typeof item.label !== "string") return [];
-                try {
-                    const url = new URL(item.url);
-                    if (url.protocol !== "https:" || !["cdn.discordapp.com", "media.discordapp.net"].includes(url.hostname)) return [];
-                    return [{
+                if (typeof item.label !== "string") return [];
+                const url = normalizeSolcordMediaShelfUrl(item.url);
+                if (!url) return [];
+                return [{
                         id: typeof item.id === "string" && /^[a-zA-Z0-9_-]{1,64}$/.test(item.id) ? item.id : `media-${index + 1}`,
                         label: item.label.trim().slice(0, 64) || "Saved media",
-                        url: url.toString(),
+                        url,
                         kind: choice(item.kind, ["gif", "sticker", "emoji"] as const, "gif")
                     }];
-                }
-                catch {return [];}
             }).slice(0, 200)
         }
     };

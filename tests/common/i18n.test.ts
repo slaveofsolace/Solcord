@@ -1,6 +1,20 @@
 import {test, expect, describe, beforeEach} from "bun:test";
 import i18n, {t, formatters, type Locale} from "@common/i18n";
 
+function captureExpectedDiagnostics<T>(callback: () => T): {value: T; warnings: string[]; errors: string[];} {
+    const originalWarn = global.console.warn;
+    const originalError = global.console.error;
+    const warnings: string[] = [];
+    const errors: string[] = [];
+    global.console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
+    global.console.error = (...args: unknown[]) => errors.push(args.map(String).join(" "));
+    try {return {value: callback(), warnings, errors};}
+    finally {
+        global.console.warn = originalWarn;
+        global.console.error = originalError;
+    }
+}
+
 describe("i18n", function () {
 
     // Mock translations for testing
@@ -272,13 +286,21 @@ describe("i18n", function () {
 
         test("Should fall back to 'other' when no count provided", function () {
             // When no count is provided, should use 'other' form but warn about missing count
-            expect(t("plurals.item")).toBe("{{count}} items");
+            const captured = captureExpectedDiagnostics(() => t("plurals.item"));
+            expect(captured.value).toBe("{{count}} items");
+            expect(captured.warnings).toHaveLength(1);
+            expect(captured.warnings[0]).toContain("Invalid count provided for pluralization");
         });
 
         test("Should handle invalid count gracefully", function () {
             // Invalid counts should still attempt to format using 'other' form
-            expect(t("plurals.item", {count: NaN})).toBe("NaN items");
-            expect(t("plurals.item", {count: "invalid" as any})).toBe("invalid items");
+            const captured = captureExpectedDiagnostics(() => [
+                t("plurals.item", {count: NaN}),
+                t("plurals.item", {count: "invalid" as any})
+            ]);
+            expect(captured.value).toEqual(["NaN items", "invalid items"]);
+            expect(captured.warnings).toHaveLength(2);
+            expect(captured.warnings.every(warning => warning.includes("Invalid count provided for pluralization"))).toBeTrue();
         });
 
         test("Should fall back to 'one' when 'other' missing", function () {
@@ -1125,20 +1147,22 @@ describe("i18n", function () {
                 };
 
                 // Should gracefully handle formatter errors
-                expect(() => {
-                    addons.t("search", {context: "plugin"}, {context: badFormatter});
-                }).not.toThrow();
+                const captured = captureExpectedDiagnostics(() => addons.t("search", {context: "plugin"}, {context: badFormatter}));
+                expect(captured.value).toBe("Search Plugins");
+                expect(captured.errors).toHaveLength(1);
+                expect(captured.errors[0]).toContain("Error formatting context in Addons.search");
             });
 
             test("Should handle missing formatter values in namespaces", function () {
                 const plurals = i18n.ns("plurals");
 
-                const result = plurals.t("item",
+                const captured = captureExpectedDiagnostics(() => plurals.t("item",
                     {count: undefined},
                     {count: formatters.number()}
-                );
+                ));
                 // Should handle undefined gracefully
-                expect(result).toBe("{{count}} items");
+                expect(captured.value).toBe("{{count}} items");
+                expect(captured.warnings).toHaveLength(1);
             });
         });
     });

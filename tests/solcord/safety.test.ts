@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
 
-import {runStructuralProbes} from "../../src/betterdiscord/modules/solcord/drift";
+import {runReversiblePatchCanary, runStructuralProbes} from "../../src/betterdiscord/modules/solcord/drift";
 import {inspectLink, interceptLinkActivation, isDiscordInternalNavigation, shouldInterceptLink} from "../../src/betterdiscord/modules/solcord/link-lens";
 import {BoundedPerformanceSampler} from "../../src/betterdiscord/modules/solcord/performance";
 import {evaluateCrashGuard} from "../../src/betterdiscord/modules/solcord/crash-guard";
@@ -168,6 +168,72 @@ describe("Solcord safety adapters", () => {
 
         expect(clicks).toBe(1);
         expect(order).toEqual(["second", "first"]);
+        expect(scope.counts()).toEqual({});
+    });
+
+    test("Patch Canary proves exactly-once interception and restoration", () => {
+        const fixture = {evaluate(value: number) {return value + 1;}};
+        const original = fixture.evaluate;
+        const result = runReversiblePatchCanary({
+            id: "patch",
+            install: callback => {
+                fixture.evaluate = function (value) {return callback(this, [value], (...values: unknown[]) => original.apply(this, values as [number])) as number;};
+                return () => {fixture.evaluate = original;};
+            },
+            invoke: () => fixture.evaluate(40),
+            expectedPatched: 41,
+            expectedRestored: 41
+        }, 43);
+        expect(result).toEqual({id: "patch", ok: true, checkedAt: 43, detail: "Reversible patch applied exactly once and restored."});
+        expect(fixture.evaluate).toBe(original);
+    });
+
+    test("Patch Canary fails closed and releases a rejected fixture", () => {
+        let releases = 0;
+        const result = runReversiblePatchCanary({
+            id: "patch",
+            install: () => () => {releases++;},
+            invoke: () => {throw new TypeError("private detail");},
+            expectedPatched: 7,
+            expectedRestored: 7
+        }, 44);
+        expect(result).toEqual({id: "patch", ok: false, checkedAt: 44, detail: "Patch canary threw TypeError."});
+        expect(releases).toBe(1);
+    });
+
+    test("retains cleanup ownership after a disposer throws and retries only the unresolved resource", () => {
+        const scope = new SolcordDisposalScope();
+        let retryableAttempts = 0;
+        let completed = 0;
+        scope.own(() => {completed++;}, "listener");
+        scope.own(() => {
+            retryableAttempts++;
+            if (retryableAttempts === 1) throw new Error("cleanup interrupted");
+        }, "patch");
+
+        expect(() => scope.dispose()).toThrow("Solcord resource cleanup failed");
+        expect(scope.disposed).toBeTrue();
+        expect(completed).toBe(1);
+        expect(scope.counts()).toEqual({patch: 1});
+
+        expect(() => scope.dispose()).not.toThrow();
+        expect(retryableAttempts).toBe(2);
+        expect(completed).toBe(1);
+        expect(scope.counts()).toEqual({});
+    });
+
+    test("keeps explicit release ownership when the disposer throws", () => {
+        const scope = new SolcordDisposalScope();
+        let attempts = 0;
+        const release = scope.own(() => {
+            attempts++;
+            if (attempts === 1) throw new Error("listener removal interrupted");
+        }, "listener");
+
+        expect(() => release()).toThrow("listener removal interrupted");
+        expect(scope.counts()).toEqual({listener: 1});
+        expect(() => release()).not.toThrow();
+        expect(attempts).toBe(2);
         expect(scope.counts()).toEqual({});
     });
 });

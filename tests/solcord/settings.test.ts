@@ -227,6 +227,7 @@ describe("Solcord settings schema", () => {
             hiddenGuildIds: ["123456789012345671"],
             guildAliases: {"123456789012345671": "Private workshop"},
             focusChannelIds: ["123456789012345672"],
+            voiceHealthEnabled: true,
             translation: {provider: "libretranslate", endpoint: "https://private.example/translate"}
         };
 

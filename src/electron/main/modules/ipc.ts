@@ -257,18 +257,15 @@ const getTimelineStatus = (event: IpcMainInvokeEvent, request: unknown) => {
 };
 const appendTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordTimeline.append(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTimeline.append(accountScope, payload));
 };
 const readTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordTimeline.read(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTimeline.read(accountScope, payload));
 };
 const clearTimeline = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordTimeline.clear(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordTimeline.clear(accountScope, payload));
 };
 const getFriendWatchStatus = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
@@ -277,18 +274,15 @@ const getFriendWatchStatus = (event: IpcMainInvokeEvent, request: unknown) => {
 };
 const appendFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordFriendWatch.append(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordFriendWatch.append(accountScope, payload));
 };
 const readFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordFriendWatch.read(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordFriendWatch.read(accountScope, payload));
 };
 const clearFriendWatch = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordFriendWatch.clear(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordFriendWatch.clear(accountScope, payload));
 };
 const getAudienceGuardStatus = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
@@ -366,23 +360,19 @@ const getSolcordLocalIdentityNotesStatus = (event: IpcMainInvokeEvent, request: 
 };
 const readSolcordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordLocalIdentityNotes.read(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordLocalIdentityNotes.read(accountScope, payload));
 };
 const writeSolcordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordLocalIdentityNotes.write(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordLocalIdentityNotes.write(accountScope, payload));
 };
 const removeSolcordLocalIdentityNote = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordLocalIdentityNotes.remove(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordLocalIdentityNotes.remove(accountScope, payload));
 };
 const clearSolcordLocalIdentityNotes = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
-    const authorized = timelineAuthority.authorize(event.sender.id, request);
-    return SolcordLocalIdentityNotes.clear(authorized.accountScope, authorized.request);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordLocalIdentityNotes.clear(accountScope, payload));
 };
 
 const runRenderer = (event: IpcMainInvokeEvent) => {

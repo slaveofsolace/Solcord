@@ -214,9 +214,10 @@ export class SolcordTimelineStorage {
                 const prune = this.#pruneFiles(directory, request.policy, key);
                 return {stored: request.events.length, persistent: true, retentionApplied: prune.complete};
             }
-            catch (error) {
+            catch {
                 for (const file of written) this.#removeWrittenSegment(file, directory);
-                throw error;
+                this.#disablePersistence();
+                return {...this.#appendSession(accountScope, request), retentionApplied: false};
             }
             finally {key.fill(0);}
         });

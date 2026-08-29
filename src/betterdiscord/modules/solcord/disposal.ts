@@ -29,8 +29,9 @@ export class SolcordDisposalScope {
         return () => {
             const index = this.#records.indexOf(record);
             if (index < 0) return;
-            this.#records.splice(index, 1);
             record.dispose();
+            const completedIndex = this.#records.indexOf(record);
+            if (completedIndex >= 0) this.#records.splice(completedIndex, 1);
         };
     }
 
@@ -78,13 +79,23 @@ export class SolcordDisposalScope {
     }
 
     dispose(): void {
-        if (this.#disposed) return;
+        if (this.#disposed && !this.#records.length) return;
         this.#disposed = true;
         const records = this.#records.splice(0).reverse();
+        const failed: DisposalRecord[] = [];
         const errors: unknown[] = [];
         for (const record of records) {
             try {record.dispose();}
-            catch (error) {errors.push(error);}
+            catch (error) {
+                failed.push(record);
+                errors.push(error);
+            }
+        }
+        if (failed.length) {
+            // A throwing disposer may have failed before releasing its external
+            // resource. Retain ownership so a later stop/retry can attempt the
+            // exact cleanup again and resource counts remain truthful.
+            this.#records.push(...failed.reverse());
         }
         if (errors.length) throw new AggregateError(errors, "Solcord resource cleanup failed.");
     }

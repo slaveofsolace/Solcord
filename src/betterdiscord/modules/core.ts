@@ -19,6 +19,7 @@ import Updater from "./updater";
 import AddonStore from "./addonstore";
 
 import Styles from "@styles/index.css";
+import SolcordHankenFont from "@styles/fonts/HankenGrotesk-variable.ttf";
 import Modals from "@ui/modals";
 import FloatingWindows from "@ui/floatingwindows";
 import Toasts from "@ui/toasts";
@@ -46,7 +47,8 @@ export default new class Core {
 
         // Load css early
         Logger.log("Startup", "Injecting BD Styles");
-        DOMManager.injectStyle("bd-stylesheet", Styles.toString());
+        const bundledStyles = Styles.toString().replace("./fonts/HankenGrotesk-variable.ttf", SolcordHankenFont);
+        DOMManager.injectStyle("bd-stylesheet", bundledStyles);
 
         Logger.log("Startup", "Initializing LocaleManager");
         LocaleManager.initialize();

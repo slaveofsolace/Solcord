@@ -45,6 +45,14 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; top: 0;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 66px; }");
+        expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
+        expect(PANEL_SOURCE).toContain("getComputedStyle(navigation).position === \"sticky\"");
+        expect(PANEL_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
+        expect(PANEL_SOURCE).not.toContain("workspaceRef.current?.scrollIntoView");
+        expect(WIZARD_CSS).toContain(":is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type=\"checkbox\"] { appearance: none;");
+        expect(WIZARD_CSS).toContain("> input[type=\"checkbox\"]:focus-visible");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
@@ -95,8 +103,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Each starts only after its Discord adapter validates.");
         expect(WIZARD_SOURCE).toContain("Pending tools stay uninstalled");
         expect(PANEL_SOURCE).toContain("Optional files not installed");
-        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).toContain("optional catalog file(s) absent");
-        expect(readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8")).not.toContain("\"not staged\"");
+        const catalogSource = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8");
+        expect(catalogSource).toContain("optional catalog file(s) absent");
+        expect(catalogSource).toMatch(/aria-label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
+        expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
         expect(WIZARD_SOURCE).toContain("These features are off by default.");

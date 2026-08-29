@@ -63,6 +63,38 @@ describe("Solcord renderer security contracts", () => {
         expect(runtime).not.toContain("IPC.clearTimeline({accountId");
     });
 
+    test("keeps account-derived workspace state out of ordinary settings and clears every private panel draft on account switch", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const product = source("src/common/solcord/product.ts");
+        const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
+        expect(runtime).toContain("#sessionPeopleState");
+        expect(runtime).toContain("#sessionFocusChannelIds");
+        expect(runtime).toContain("this.#returnLater = new SolcordReturnLaterJournal()");
+        expect(runtime).toContain("JsonStore.delete(\"misc\", \"solcordReturnLater\")");
+        expect(runtime).not.toContain("JsonStore.set(\"misc\", \"solcordReturnLater\"");
+        expect(runtime).not.toContain("nativeSuite: {...preferences.nativeSuite, pinnedDmIds");
+        expect(product).toContain("pinnedDmIds: []");
+        expect(product).toContain("focusChannelIds: []");
+        expect(panel).toContain("accountGeneration: SolcordRuntime.privateAccountGeneration()");
+        for (const reset of ["setTranslationCredential(\"\")", "setTranslationText(\"\")", "setTranslationResult(\"\")", "setIdentityNotes([])", "setComposerDraft(\"\")", "setGlance([])", "setVoicePreview(undefined)"]) expect(panel).toContain(reset);
+    });
+
+    test("revalidates every queued account-scoped main-process storage result before returning it", () => {
+        const ipc = source("src/electron/main/modules/ipc.ts");
+        const helper = ipc.slice(ipc.indexOf("const withCurrentAccountBinding"), ipc.indexOf("const bootstrapTimeline"));
+        expect(helper).toContain("const result = await operation");
+        expect(helper).toContain("timelineAuthority.assertCurrent(event.sender.id, authorized)");
+        for (const operation of [
+            "SolcordTimeline.append", "SolcordTimeline.read", "SolcordTimeline.clear",
+            "SolcordFriendWatch.append", "SolcordFriendWatch.read", "SolcordFriendWatch.clear",
+            "SolcordAudienceGuard.read", "SolcordAudienceGuard.write", "SolcordAudienceGuard.clear",
+            "SolcordTranslationCredentials.read", "SolcordTranslationCredentials.write", "SolcordTranslationCredentials.clear",
+            "SolcordLocalIdentityNotes.read", "SolcordLocalIdentityNotes.write", "SolcordLocalIdentityNotes.remove", "SolcordLocalIdentityNotes.clear"
+        ]) {
+            expect(ipc).toContain(`withCurrentAccountBinding(event, request, (accountScope, payload) => ${operation}(accountScope, payload))`);
+        }
+    });
+
     test("switches Timeline identity synchronously and discards events until the account is ready", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         expect(runtime).toContain("userStore.addChangeListener(onAccountChange)");
@@ -139,6 +171,144 @@ describe("Solcord renderer security contracts", () => {
         expect(runtime).toContain("The persistent read is partial");
         expect(runtime).toContain("if (result.retentionApplied === true) return");
         expect(runtime).toContain("Retention cleanup is incomplete; ambiguous encrypted residue remains and requires review.");
+    });
+
+    test("blocks native process discovery and cached running-game publication independently", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const policy = runtime.slice(runtime.indexOf("const activitySpecs"), runtime.indexOf("const specs: PrivacyMethodSpec[]"));
+        expect(policy).toContain("id: \"native-process-discovery\"");
+        expect(policy).toContain("id: \"running-game-dispatch\"");
+        expect(policy).toContain("id: `running-game-");
+        expect(policy).not.toContain("else if (runningGamePrototype");
+    });
+
+    test("does not claim a privacy rollback succeeded until addon and settings restoration verify", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
+        const restore = runtime.slice(runtime.indexOf("#restorePrivacyRollback"), runtime.indexOf("#privacyRollbackError"));
+        expect(restore).toContain("PluginManager.isEnabled(entry.fileName)");
+        expect(restore).toContain("PluginDoctor.isQuarantined(entry.doctorId)");
+        expect(restore).toContain("if (!SolcordSettings.rollback(snapshotId))");
+        expect(runtime).toContain("automatic recovery was incomplete");
+        expect(panel).toContain("error instanceof Error ? error.message");
+        expect(panel).not.toContain("the previous snapshot was restored");
+    });
+
+    test("records every disabled addon before quarantine can fail so Strict Privacy rollback remains complete", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        for (const start of [runtime.indexOf("async #enforceStrictCommunityAddonPolicy"), runtime.indexOf("async setPrivacyProfile")]) {
+            const block = runtime.slice(start, runtime.indexOf("finally", start));
+            expect(block.indexOf("changed.push") >= 0 ? block.indexOf("changed.push") : block.indexOf("disabledCommunity.push")).toBeLessThan(block.indexOf("PluginDoctor.quarantine"));
+        }
+    });
+
+    test("refreshes Plugin Doctor health after every completed integrity audit", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const refreshStart = runtime.indexOf("#refreshAddonIntegrity(phase:");
+        const refresh = runtime.slice(refreshStart, runtime.indexOf("\n    #enforceAddonIntegrity(", refreshStart));
+        expect(refresh).toContain("this.#updatePluginDoctorHealth()");
+        expect(runtime).toContain("const update = () => this.#updatePluginDoctorHealth()");
+        expect(runtime).toContain("integrity.attention + integrity.unavailable");
+    });
+
+    test("exposes Call Context only after its selected-channel, voice-state, optional provider, and subscription contracts validate", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        expect(runtime).toContain("const callContextAvailable = lookups.callContext");
+        expect(runtime).toContain("typeof selectedChannelStore?.getVoiceChannelId === \"function\"");
+        expect(runtime).toContain("typeof voiceStateStore?.getVoiceStatesForChannel === \"function\"");
+        expect(runtime).toContain("callContextStores.every(store => typeof store?.addChangeListener === \"function\" && typeof store.removeChangeListener === \"function\")");
+        expect(runtime).toContain("currentCall: callContextAvailable ? currentCall : undefined");
+        expect(runtime).toContain("subscribeCall: callContextAvailable ? listener =>");
+    });
+
+    test("does not let stale asynchronous feature starts resurrect disabled or unavailable modules", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const startAt = runtime.indexOf("async #startFeature(id: SolcordModuleId)");
+        const stopAt = runtime.indexOf("#stopFeature(id: SolcordModuleId)", startAt);
+        const start = runtime.slice(startAt, stopAt);
+        expect(start).toContain("#featureStartGenerations.set(id, generation)");
+        expect(start).toContain("this.#featureStartGenerations.get(id) === generation");
+        expect(start).toContain("this.#scopes.get(id) === scope");
+        expect(start).toContain("!scope.disposed");
+        expect(start).toContain("SolcordSettings.module(id).enabled");
+        expect(start).toContain("this.#health.get(id)?.status === \"unavailable\"");
+        expect(start).toContain("this.#scopes.delete(id)");
+        expect(start).toContain("scope.dispose()");
+        expect(start.indexOf("this.#health.get(id)?.status === \"unavailable\"")).toBeLessThan(start.indexOf("lastSuccessfulValidation: Date.now()"));
+
+        const stopEnd = runtime.indexOf("#recordFailure(", stopAt);
+        const stop = runtime.slice(stopAt, stopEnd);
+        expect(stop).toContain("this.#featureStartGenerations.set(id, (this.#featureStartGenerations.get(id) ?? 0) + 1)");
+    });
+
+    test("prevents disposed Friend Watch work and stale Fake Deafen lookups from mutating replacement state", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const fakeStart = runtime.indexOf("async #synchronizePowerLab()");
+        const fakeEnd = runtime.indexOf("\n    #stopFakeDeafen(", fakeStart);
+        const fake = runtime.slice(fakeStart, fakeEnd);
+        expect(fake).toContain("const generation = ++this.#fakeDeafenGeneration");
+        expect(fake).toContain("generation !== this.#fakeDeafenGeneration || scope.disposed || this.#fakeDeafenScope !== scope");
+        expect(fake).toContain("onStatus: status =>");
+
+        const fakeStop = runtime.slice(fakeEnd, runtime.indexOf("async #startFeature", fakeEnd));
+        expect(fakeStop).toContain("if (invalidatePending) this.#fakeDeafenGeneration++");
+
+        const friendStart = runtime.indexOf("async #startFriendWatch(");
+        const friendEnd = runtime.indexOf("async #startMessageTimeline(", friendStart);
+        const friend = runtime.slice(friendStart, friendEnd);
+        expect(friend).toContain("if (scope.disposed) return");
+        expect(friend).toContain("if (scope.disposed || !identityIsCurrent()) return");
+        expect(friend.indexOf("if (scope.disposed || !identityIsCurrent()) return")).toBeLessThan(friend.indexOf("this.#friendWatchPersistent = opened.status.persistent"));
+    });
+
+    test("keeps native-suite resynchronization and module teardown failure-atomic", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const preferences = runtime.slice(runtime.indexOf("async setProductPreferences"), runtime.indexOf("privacyCapabilities()"));
+        expect(preferences).toContain("if (this.#curatedSynchronizationError)");
+        expect(preferences).toContain("SolcordSettings.setProductPreferences(previous)");
+        expect(preferences).toContain("Previous settings were restored");
+
+        const curatedStart = runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride");
+        const curated = runtime.slice(curatedStart, runtime.indexOf("#nativeSuiteAdapter(", curatedStart));
+        expect(curated).toContain("try {this.#curatedScope.dispose();}");
+        expect(curated).toContain("return failClosed");
+        expect(curated).toContain("this.#nativeSuite = undefined");
+        expect(curated).toContain("replacement adapters stayed off");
+
+        const stopStart = runtime.indexOf("#stopFeature(id: SolcordModuleId)");
+        const stop = runtime.slice(stopStart, runtime.indexOf("\n    #resetStoppedAudienceGuard(", stopStart));
+        expect(stop.indexOf("scope.dispose()")).toBeLessThan(stop.indexOf("this.#scopes.delete(id)"));
+        expect(stop).toContain("resources: scope.counts()");
+        expect(stop).toContain("retained ownership will be retried");
+
+        const privacyStart = runtime.indexOf("#synchronizePrivacyPolicy(): void");
+        const privacy = runtime.slice(privacyStart, runtime.indexOf("\n    #stopFakeDeafen(", privacyStart));
+        expect(privacy).toContain("Solcord retained ownership and will not install a second policy");
+        expect(privacy.indexOf("return;", privacy.indexOf("catch (error)"))).toBeGreaterThan(-1);
+
+        const fakeStopStart = runtime.indexOf("#stopFakeDeafen(invalidatePending");
+        const fakeStop = runtime.slice(fakeStopStart, runtime.indexOf("\n    async #startFeature(", fakeStopStart));
+        expect(fakeStop).toContain("Solcord retained teardown ownership and will not install a second adapter");
+        expect(fakeStop.indexOf("return;", fakeStop.indexOf("catch (error)"))).toBeGreaterThan(-1);
+    });
+
+    test("rolls back partial Call Context subscriptions before exposing the adapter", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const start = runtime.indexOf("subscribeCall: callContextAvailable");
+        const subscription = runtime.slice(start, runtime.indexOf("setLocalVolume:", start));
+        expect(subscription).toContain("subscribeSolcordChangeStores(scope, callContextStores");
+        const helper = source("src/betterdiscord/modules/solcord/native-suite.ts");
+        expect(helper).toContain("cleanup remains owned for retry");
+        expect(helper).toContain("scope.own(() => store.removeChangeListener(listener), \"listener\")");
+    });
+
+    test("rewrites the packaged Solcord font to a bundled data URL before stylesheet injection", () => {
+        const core = source("src/betterdiscord/modules/core.ts");
+        const declarations = source("src/betterdiscord/types/declaration/assets.d.ts");
+        expect(core).toContain("import SolcordHankenFont from \"@styles/fonts/HankenGrotesk-variable.ttf\"");
+        expect(core).toContain("Styles.toString().replace(\"./fonts/HankenGrotesk-variable.ttf\", SolcordHankenFont)");
+        expect(core.indexOf("Styles.toString().replace")).toBeLessThan(core.indexOf("DOMManager.injectStyle(\"bd-stylesheet\", bundledStyles)"));
+        expect(declarations).toContain("declare module \"*.ttf\"");
     });
 
     test("reconciles prepared setup files before features and acknowledges only after durable settings", () => {
@@ -251,9 +421,10 @@ describe("Solcord renderer security contracts", () => {
         expect(panel).toContain("They do not capture Timeline policy or curated-addon choices");
         expect(panel).toContain("Save module state");
         expect(panel).not.toContain("Save current state");
-        expect(runtime).toContain("Profiles save module settings and optional exact addon states");
-        expect(runtime).toContain("name: \"Module Drift Radar\"");
-        expect(runtime).toContain("captured-fixture Patch Canary coverage is not implemented in V1");
-        expect(runtime).not.toContain("name: \"Module Drift Radar / Patch Canary\"");
+        expect(runtime).toContain("Profiles preview, snapshot, apply, and roll back module settings");
+        expect(runtime).toContain("name: \"Module Drift Radar + Patch Canary\"");
+        expect(runtime).toContain("maturity: \"ready\"");
+        expect(runtime).toContain("runReversiblePatchCanary");
+        expect(runtime).not.toContain("Patch Canary coverage is not available yet");
     });
 });

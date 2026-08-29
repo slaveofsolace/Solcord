@@ -1,12 +1,12 @@
 # Windows install and rollback
 
-Solcord V2 RC is installed only after tests, lint, type checks, production build, packaging, security review, artifact hashing, disposable acceptance, and the live-install checkpoint pass. Source work does not authorize closing Discord or changing the live profile; fresh owner approval is required at that checkpoint. Windows security, authentication, and permission dialogs remain manual.
+Solcord V2 RC is installed only after tests, lint, type checks, production build, packaging, security review, artifact hashing, disposable acceptance, and rollback proof pass. Installation follows the exact reviewed candidate and leaves Windows security, authentication, and permission dialogs manual.
 
 ## Current live checkpoint
 
-`v2.0.0-rc.2` remains the preserved public rollback release. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
+`v2.0.0-rc.2`, `v2.0.0-rc.3`, and `v2.0.0-rc.4` remain immutable. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
 
-The RC3 source line passed transactional First Setup, the five baseline capabilities, encrypted Friend Watch restart/export/clear, all eleven themes at native 100%/125%/150%/200% zoom, keyboard/reduced-motion/forced-colors review, and the installer self-test's install, upgrade, repair, downgrade refusal, interrupted recovery, rollback, and uninstall cases in disposable targets. RC4 adds the provider-consolidation fixes and restores the built-in Fake Deafen control without changing Activity Bridge or the restricted preload policy. Its exact artifact, installer, signed-in installation, and two-start evidence are recorded in the RC4 manifest. Audience Guard storage reporting is accepted, but its current Discord stream-action adapter remains visibly unavailable and fail-closed.
+The RC3 source line passed transactional First Setup, the five baseline capabilities, encrypted Friend Watch restart/export/clear, all eleven themes, keyboard/reduced-motion/forced-colors review, and the installer self-test's install, upgrade, repair, downgrade refusal, interrupted recovery, rollback, and uninstall cases in disposable targets. RC4 added provider-consolidation fixes and restored the built-in Fake Deafen control. RC5 corrects the Control Center's narrow layout, makes strict privacy the fresh-install baseline, completes the built-in adapter and secure-storage boundaries, and keeps Activity Bridge's restricted preload policy unchanged. Audience Guard now proves encrypted `safeStorage` availability, adapter enable, process restart, unarmed recovery, and disable in the isolated exact client; it still makes no per-person media-delivery claim.
 
 The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Applying setup to the signed-in owner profile, Message Timeline persistence, and Link Lens's external-link modal remain separate optional choices even though disposable setup acceptance is complete.
 
@@ -67,7 +67,7 @@ The machine-readable install manifest records exact backup and rollback paths af
 
 The normal RC path is designed to take about one minute on a typical Windows PC after download. This is a usability target, not a time guarantee.
 
-1. Download the complete `Solcord-v2.0.0-rc.4-win-x64` directory. Keep `SolcordInstaller.exe`, `solcord.asar`, both JSON manifests, and `SHA256SUMS.txt` together.
+1. Download the complete `Solcord-v2.0.0-rc.5-win-x64` directory. Keep `SolcordInstaller.exe`, `solcord.asar`, both JSON manifests, and `SHA256SUMS.txt` together.
 2. Compare the executable and ASAR hashes with `SHA256SUMS.txt` from the owner-controlled release. Stop on any mismatch.
 3. Quit Discord completely. Run `SolcordInstaller.exe`, confirm the detected Stable/PTB/Canary target, and choose **Install**.
 4. Choose **Verify**, then **Launch Discord**. Open **User Settings → Solcord Suite** and review the setup diff before enabling optional features.
@@ -84,7 +84,7 @@ The core ASAR and injector entry files are replaced as separately verified files
 
 ## First-run setup transaction
 
-The V2 first-run draft selects Solcord Default and the 21 behavior mappings implemented by the Native Suite. Those mappings include the three established interaction controls and grouped composer, call, audio, voice-note, translation, people/space, glance, notification, and motion tools. A mapping is not a blanket live claim: its adapter must report ready before a matching community provider may be archived. Message Timeline, Stream Audience Guard, and every Power Lab experiment remain off. The other catalog entries are optional and carry an individual reason/status; unavailable choices never block **Apply and verify**. `Skip` changes no addon file, enabled state, theme, Timeline setting, credential, or provider archive; only the resumable onboarding marker is recorded.
+The V2 first-run draft selects Solcord Default and the 21 behavior mappings implemented by the Native Suite. Those mappings include the three established interaction controls and grouped composer, call, audio, voice-note, translation, people/space, glance, notification, and motion tools. A mapping is not a blanket live claim: its adapter must report ready before a matching community provider may be archived. Message Timeline, Stream Audience Guard, and every Power Lab experiment remain off. The other catalog entries are optional and carry an individual reason/status; unavailable choices never block **Apply**. **Finish later** changes no addon file, enabled state, theme, Timeline setting, credential, or provider archive; only the resumable onboarding marker is recorded.
 
 After the owner presses **Apply and verify**, Solcord stages only accepted requested candidates and their complete dependency closure, verifies immutable hashes, and refuses a differing local file. It enables accepted choices one at a time and activates one of eleven Solcord themes. Requested-but-held and unrequested owner addons remain untouched and owner-managed; setup does not replace, stop, or certify them. When an active community plugin overlaps a selected built-in, the community provider remains active until the owner chooses Solcord and that exact replacement reports ready. The wizard then seals the feature name, community filename/hash, enabled state, dependency state, archive destination, and provider choice. Apply rechecks the source bytes and readiness before moving only the provider `.plugin.js` into `solcord-provider-archive-v2`, outside the scanned plugin folder. BDFDB is archived last and only when no retained consumer remains. Configuration and private databases are not moved, read, or deleted. Any drift aborts or rolls back the transaction. A start failure is reported and quarantined; it is not counted as working. Reduced-motion conflicts suppress optional animation/effect behavior. This transaction is not installation evidence until the disposable-profile tests pass.
 
@@ -92,7 +92,7 @@ The setup rollback action restores the recorded prior plugin/theme enabled state
 
 ## Owner Activity acceptance
 
-The owner reported Activities working for the accepted live build. RC4 does not change Activity Bridge or preload policy, so that result remains the product acceptance record. Re-run the matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
+The owner reported Activities working for the accepted live build. RC5 does not change Activity Bridge or preload policy, so that result remains the product acceptance record. Re-run the matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
 
 1. Open Solcord Suite → Activity Bridge and confirm the unrestricted override reads **Off by default**.
 2. In a designated low-risk server/channel, start **Codenames** yourself. Wait for READY and complete one join/leave/rejoin cycle.
@@ -122,6 +122,6 @@ Do not delete the Solcord artifact or backup until the owner accepts both Activi
 - The vanilla launcher is an escape hatch, not a Solcord validation path.
 - A catalog hash match or static pass is not plugin runtime acceptance.
 - The 36-entry catalog is not an enabled-addon list. V2's recommended mappings select built-in behavior, not community payloads; every runtime adapter can still report unavailable and every provider migration remains separately hash- and health-gated.
-- Persistent Timeline and setup rollback are source-implemented, not Windows-accepted, until their integration gates pass.
+- Message Timeline remains opt-in; its encrypted storage and fallback paths are tested, but no automated acceptance captures or exports owner messages.
 - “About one minute” describes the intended happy path after download. It does not include download time, Windows review prompts, Discord shutdown delays, backup recovery, or first-run feature decisions.
 - The unsigned RC has no publisher identity in Windows. A successful lifecycle self-test does not replace code signing or authenticated release distribution.

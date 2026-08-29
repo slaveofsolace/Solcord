@@ -12,6 +12,8 @@ export interface ToastOptions {
     timeout?: number;
     /** Whether to force showing the toast and ignore the BD setting */
     forceShow?: boolean;
+    /** Replaces an earlier toast in the same short-lived interaction group instead of stacking over the UI. */
+    group?: string;
 }
 
 class Toasts extends Store {
@@ -23,7 +25,7 @@ class Toasts extends Store {
     }
 
     private addToast(toast: ToastProps) {
-        this._toasts = [...this._toasts, toast];
+        this._toasts = [...this._toasts.filter(existing => !toast.group || existing.group !== toast.group), toast];
         this.emitChange();
 
         setTimeout(() => {
@@ -48,12 +50,13 @@ class Toasts extends Store {
      */
     show(content: string, options: ToastOptions = {}) {
         try {
-            const {type = "default", icon = true, timeout = 3000, forceShow = false} = options;
+            const {type = "default", icon = true, timeout = 3000, forceShow = false, group} = options;
 
             if (!this.shouldShowToasts && !forceShow) return;
 
             this.addToast({
                 key: this.toastKey++,
+                group,
                 content,
                 type,
                 icon,

@@ -16,6 +16,7 @@ export type ToastType = "default" | "info" | "success" | "warning" | "error";
 
 export interface ToastProps {
     key: number;
+    group?: string;
     content: string;
     type: ToastType;
     icon: boolean;

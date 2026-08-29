@@ -12,7 +12,7 @@ Solcord V2 has three distinct layers. Core reliability/privacy modules ship with
 | Audio Console | BetterVolume | Local 0–200% playback change after preview and explicit apply |
 | Voice Note Studio | VoiceMessages | User-gesture record, stop, preview, cancel, then separately reviewed native upload preparation |
 | Translation Desk | Translator | DeepL or configured LibreTranslate only after provider/text disclosure; no provider active by default |
-| People and Spaces | BetterFriendList, PinDMs, ServerHider, ServerDetails, local Server Aliases replacing EditServers | Local organization only; no Discord server profile mutation |
+| People and Spaces | BetterFriendList, PinDMs, ServerHider, ServerDetails, local Server Aliases replacing EditServers | Account-isolated session state only; no Discord server profile mutation or plaintext ID persistence |
 | Channel Glance | MessagePeek | Shows at most five already-loaded messages; never fetches history or marks read |
 | Notification Review | ReadAllNotificationsButton | Previews scope and count before one explicit mark-read action |
 | Motion Studio | BetterAnimations, DiscordEffects | Bounded local transitions; suppressed when reduced motion is active |

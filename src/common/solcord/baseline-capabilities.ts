@@ -7,8 +7,6 @@ export type SolcordBaselineCapabilityId =
     | "cross-platform-autoscroll"
     | "message-link-preview";
 
-export type SolcordBaselineCapabilityStatus = "scaffold" | "adapter-review" | "runtime-acceptance" | "ready";
-
 export interface SolcordBaselineCapability {
     id: SolcordBaselineCapabilityId;
     title: string;
@@ -18,7 +16,7 @@ export interface SolcordBaselineCapability {
     defaultEnabled: false;
     loading: "lazy";
     disabledRuntimeCost: "none";
-    status: SolcordBaselineCapabilityStatus;
+    status: "ready";
     requiredAdapters: readonly string[];
     boundaries: readonly string[];
     networkAccess: false;

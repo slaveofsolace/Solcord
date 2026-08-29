@@ -74,6 +74,8 @@ describe("Solcord V2 clean-room feature models", () => {
         voice.attachPreview({recordingId: "recording-1", durationMs: 2_500, sizeBytes: 50_000, mime: "audio/webm"});
         const upload = voice.confirmUpload("300");
         expect(upload).toMatchObject({kind: "upload-voice-note", expiresAt: 18_000, payload: {channelId: "300", recordingId: "recording-1", sizeBytes: 50_000}});
+        expect(voice.confirmUpload("300")).toMatchObject({kind: "upload-voice-note", payload: {recordingId: "recording-1"}});
+        voice.completeUpload("recording-1");
         expect(() => voice.confirmUpload("300")).toThrow("Preview");
 
         voice.beginFromUserGesture(true);

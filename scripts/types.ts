@@ -21,6 +21,9 @@ async function buildTypes() {
     console.log("Bundling into index.d.ts...");
     const bundle = await rollup({
         input: `${declarationsDir}/src/betterdiscord/api/index.d.ts`,
+        // Public API declarations may reference Node built-ins. Keep those imports in
+        // the type package without asking Rollup to resolve a runtime module.
+        external: [/^node:/],
         plugins: [dts({
             compilerOptions: {
                 baseUrl: declarationsDir,

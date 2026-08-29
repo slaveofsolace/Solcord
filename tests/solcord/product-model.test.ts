@@ -5,6 +5,7 @@ import {describe, expect, test} from "bun:test";
 import {
     expandedSolcordPermissions,
     inferSolcordPermissionCard,
+    normalizeSolcordMediaShelfUrl,
     normalizeSolcordProductPreferences,
     prioritizeSolcordPulse,
     resolveSolcordPerformancePolicy,
@@ -56,7 +57,9 @@ describe("Solcord V2 product model", () => {
                 mediaShelf: [
                     {id: "one", label: "  reference  ", url: "https://cdn.discordapp.com/attachments/a/b/image.gif", kind: "gif"},
                     {id: "two", label: "tracker", url: "https://example.com/pixel.gif", kind: "gif"},
-                    {id: "three", label: "wrong protocol", url: "http://media.discordapp.net/a.gif", kind: "gif"}
+                    {id: "three", label: "wrong protocol", url: "http://media.discordapp.net/a.gif", kind: "gif"},
+                    {id: "four", label: "signed", url: "https://cdn.discordapp.com/attachments/a/b/image.gif?ex=secret&is=signature", kind: "gif"},
+                    {id: "five", label: "fragment", url: "https://media.discordapp.net/a.gif#private", kind: "gif"}
                 ]
             }
         });
@@ -66,6 +69,21 @@ describe("Solcord V2 product model", () => {
         expect(normalized.baseline.mediaShelf).toEqual([
             {id: "one", label: "reference", url: "https://cdn.discordapp.com/attachments/a/b/image.gif", kind: "gif"}
         ]);
+        expect(normalizeSolcordMediaShelfUrl("https://user:secret@cdn.discordapp.com/a.gif")).toBeUndefined();
+        expect(normalizeSolcordMediaShelfUrl("https://cdn.discordapp.com:444/a.gif")).toBeUndefined();
+    });
+
+    test("scrubs account-derived Discord ids from ordinary preferences", () => {
+        const normalized = normalizeSolcordProductPreferences({
+            nativeSuite: {
+                pinnedDmIds: ["111222333"],
+                hiddenGuildIds: ["444555666"],
+                guildAliases: {444555666: "Private server"},
+                focusChannelIds: ["777888999"]
+            }
+        });
+
+        expect(normalized.nativeSuite).toMatchObject({pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: []});
     });
 
     test("resolves performance and motion without overriding reduced-motion safety", () => {

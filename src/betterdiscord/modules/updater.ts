@@ -27,7 +27,7 @@ import type {AddonType} from "@typed/addon";
 import {fetch} from "./net";
 import AddonStore from "./addonstore";
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {isSolcordTransactionOwnedAcceptedArtifact} from "./solcord/updater-ownership";
+import {classifySolcordUpdateOwnership, solcordUpdateRequiresReview} from "./solcord/updater-ownership";
 import {isSolcordAcceptanceMode} from "@common/solcord/acceptance-mode";
 import {onSolcordUpdatePolicyChange, solcordAutomaticUpdatesAllowed} from "./solcord/privacy-runtime-state";
 
@@ -202,15 +202,17 @@ export class AddonUpdater {
         }
         const basename = path.basename(filename);
         const reviewed = acceptedSolcordArtifact(this.type, basename);
-        const transactionOwned = reviewed && isSolcordTransactionOwnedAcceptedArtifact({
+        const ownership = reviewed && classifySolcordUpdateOwnership({
             accepted: true,
             addonFolder: this.manager.addonFolder,
             fileName: reviewed.fileName,
             kind: this.type,
             reviewedSha256: reviewed.reviewedSha256
         });
-        if (transactionOwned) {
-            const reason = "This exact file was installed by Solcord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated.";
+        if (ownership && solcordUpdateRequiresReview(ownership)) {
+            const reason = ownership.state === "solcord-managed"
+                ? "This exact file was installed by Solcord from an accepted source. Its update is paused until provenance, code, and runtime checks are repeated."
+                : `Solcord cannot safely determine who owns this reviewed file, so its update is paused. ${ownership.reason}`;
             Logger.warn("Solcord Addon Integrity", `${basename} update paused for re-review.`);
             Toasts.error(reason);
             return;
