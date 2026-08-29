@@ -125,9 +125,22 @@ try {
     if (selfTest.status !== 0) throw new Error(`Embedded-resource installer self-test failed with status ${selfTest.status}.`);
     if (fs.readdirSync(validationRoot).length !== 0) throw new Error("The installer self-test unexpectedly relied on or left files in its empty working directory.");
 
+    const publishedFiles = [
+        [stagedArtifact, "solcord.asar"],
+        [stagedBuildManifest, "solcord-build-manifest.json"],
+        [stagedInstallerManifest, "solcord-installer-manifest.json"]
+    ];
+    for (const [source, name] of publishedFiles) fs.copyFileSync(source, path.join(staging, name), fs.constants.COPYFILE_EXCL);
+    const checksumNames = ["SolcordInstaller.exe", ...publishedFiles.map(([, name]) => name)];
+    const checksumText = checksumNames.map(name => `${hashFile(path.join(staging, name))}  ${name}`).join("\n");
+    fs.writeFileSync(path.join(staging, "SHA256SUMS.txt"), `${checksumText}\n`, {encoding: "utf8", flag: "wx"});
+    const finalEntries = fs.readdirSync(staging).sort();
+    const expectedEntries = [...checksumNames, "SHA256SUMS.txt"].sort();
+    if (JSON.stringify(finalEntries) !== JSON.stringify(expectedEntries)) throw new Error("The release-candidate directory contains an unexpected file set.");
+
     fs.renameSync(staging, output);
     published = true;
-    console.log(JSON.stringify({output, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), embeddedResources: "PASS", selfTest: "PASS"}, null, 2));
+    console.log(JSON.stringify({output, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), embeddedResources: "PASS", selfTest: "PASS", releaseFiles: finalEntries}, null, 2));
 } finally {
     removeGeneratedDirectory(inputRoot, os.tmpdir(), "solcord-installer-input-");
     removeGeneratedDirectory(validationRoot, os.tmpdir(), "solcord-installer-validation-");

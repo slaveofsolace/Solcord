@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 537 |
 | Text files scanned | 523 |
 | Binary files classified | 14 |
-| Text lines scanned | 111,189 |
-| Custom Solcord lines | 24,281 |
+| Text lines scanned | 111,205 |
+| Custom Solcord lines | 24,297 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -30,7 +30,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | DOM queries | 57 | 3 |
 | Webpack discovery calls | 77 | 0 |
 | Patch calls | 26 | 1 |
-| Synchronous filesystem calls | 626 | 560 |
+| Synchronous filesystem calls | 629 | 563 |
 | Console calls | 75 | 49 |
 | Empty catch blocks | 3 | 1 |
 

@@ -35,15 +35,18 @@ describe("Solcord installer security contracts", () => {
         expect(builder).toContain("\"-r\", \"win-x64\"");
     });
 
-    test("embeds the exact manifest-bound resources and publishes no sidecars", () => {
+    test("embeds the exact manifest-bound resources before publishing transparent release references", () => {
         expect(builder).toContain("-p:SolcordRequireEmbeddedBundle=true");
         expect(builder).toContain("SolcordEmbeddedArtifact");
         expect(builder).toContain("SolcordEmbeddedBuildManifest");
         expect(builder).toContain("SolcordEmbeddedInstallerManifest");
         expect(builder).toContain("entries.length !== 1");
         expect(builder).toContain("entries[0].name !== \"SolcordInstaller.exe\"");
-        expect(builder).not.toContain("SHA256SUMS.txt");
-        expect(builder).not.toContain("path.join(output, \"solcord-installer-manifest.json\")");
+        expect(builder).toContain("SHA256SUMS.txt");
+        expect(builder).toContain("solcord-build-manifest.json");
+        expect(builder).toContain("solcord-installer-manifest.json");
+        expect(builder).toContain("The release-candidate directory contains an unexpected file set");
+        expect(builder.indexOf("const selfTest = spawnSync")).toBeLessThan(builder.indexOf("const publishedFiles"));
     });
 
     test("verifies embedded bytes before private extraction and cleans only known files", () => {
