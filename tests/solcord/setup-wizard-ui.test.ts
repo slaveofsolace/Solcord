@@ -131,11 +131,15 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("Replace duplicate plugins");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.prepareProviderMigrationPlan(state.draft)");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.finishSetup(state.draft, confirmedPlan)");
-        expect(PANEL_SOURCE).toContain("move only these exact files to a timestamped rollback archive");
+        expect(PANEL_SOURCE).toContain("move only these reviewed files to a timestamped rollback archive");
         expect(PANEL_SOURCE).toContain("Rollback latest migration");
+        expect(PANEL_SOURCE).toContain("BDFDB retires last only if no remaining addon uses it");
+        expect(PANEL_SOURCE).toContain("BDFDB is rechecked and retires last only when no remaining addon uses it");
+        expect(PANEL_SOURCE).toContain("dependency rechecked last");
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(entry.name)");
         expect(RUNTIME_SOURCE).toContain("const standaloneFileName = solcordStandaloneProviderFileName(migration.name)");
         expect(RUNTIME_SOURCE).toContain("SetupProviderMigrationConfirmationChanged");
+        expect(RUNTIME_SOURCE).toContain("solcordV2QuarantineIdsForArchivedFiles(providerArchiveFiles)");
     });
 
     test("describes the clean-room interaction tools without claiming unavailable choices or automatic sends", () => {

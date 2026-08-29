@@ -131,6 +131,12 @@ export function findSolcordV2Replacement(fileName: string): Readonly<SolcordV2Re
     return SOLCORD_V2_REPLACEMENT_MANIFEST.entries.find(candidate => candidate.fileName.toLowerCase() === normalized);
 }
 
+export function solcordV2QuarantineIdsForArchivedFiles(fileNames: readonly string[]): readonly string[] {
+    if (!Array.isArray(fileNames) || fileNames.length > 256) return Object.freeze([]);
+    const archived = new Set(fileNames.filter(fileName => typeof fileName === "string").map(fileName => fileName.toLocaleLowerCase("en-US")));
+    return Object.freeze(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.flatMap(candidate => archived.has(candidate.fileName.toLocaleLowerCase("en-US")) ? [candidate.cardName, candidate.fileName] : []));
+}
+
 export function planSolcordV2ProviderRetirement(input: SolcordV2RetirementInput): SolcordV2RetirementPlan {
     const present = validateFileList(input.presentFiles, "Present files");
     const ready = validateFileList(input.replacementReadyFiles, "Replacement-ready files");

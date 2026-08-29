@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {findSolcordV2Replacement, planSolcordV2ProviderRetirement, SOLCORD_V2_REPLACEMENT_MANIFEST} from "../../src/common/solcord/v2-replacement-manifest";
+import {findSolcordV2Replacement, planSolcordV2ProviderRetirement, SOLCORD_V2_REPLACEMENT_MANIFEST, solcordV2QuarantineIdsForArchivedFiles} from "../../src/common/solcord/v2-replacement-manifest";
 
 const EXPECTED_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
     "0BDFDB.plugin.js": [],
@@ -44,6 +44,16 @@ describe("Solcord V2 provider replacement manifest", () => {
     test("keeps private MessageLoggerV2 data explicitly untouched", () => {
         expect(findSolcordV2Replacement("MessageLoggerV2.plugin.js")).toMatchObject({replacement: "message-timeline", privateData: "leave-untouched", archiveScope: "source-file-only"});
         expect(findSolcordV2Replacement("messageloggerv2.plugin.js")?.cardName).toBe("MessageLoggerV2");
+    });
+
+    test("returns only known addon and filename quarantine keys after an archive", () => {
+        expect(solcordV2QuarantineIdsForArchivedFiles(["bettervolume.plugin.js", "0BDFDB.plugin.js", "Owner.plugin.js"])).toEqual([
+            "BDFDB",
+            "0BDFDB.plugin.js",
+            "BetterVolume",
+            "BetterVolume.plugin.js"
+        ]);
+        expect(solcordV2QuarantineIdsForArchivedFiles(Array.from({length: 257}, () => "DoNotTrack.plugin.js"))).toEqual([]);
     });
 
     test("archives only ready replacements and always schedules BDFDB last", () => {

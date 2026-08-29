@@ -1006,10 +1006,12 @@ function ProviderMigrationStatus() {
     const plan = SolcordRuntime.prepareProviderMigrationPlan(state.draft);
     const eligible = plan?.entries ?? [];
     const eligibleNames = new Set(eligible.map(entry => entry.name));
-    const held = state.installed.filter(item => !eligibleNames.has(item.cardName));
+    const dependency = state.installed.find(item => item.fileName === "0BDFDB.plugin.js");
+    const held = state.installed.filter(item => item.fileName !== dependency?.fileName && !eligibleNames.has(item.cardName));
+    const reviewedFiles = [...eligible.map(entry => entry.fileName), ...(dependency ? [dependency.fileName] : [])];
     const apply = async (confirmedPlan: SolcordProviderMigrationPlan) => {
-        const files = confirmedPlan.entries.map(entry => entry.fileName).join(", ");
-        if (!window.confirm(`Replace ${confirmedPlan.entries.length} duplicate plugin provider(s)? Solcord will verify the replacements, move only these exact files to a timestamped rollback archive, and preserve their private data: ${files}`)) return;
+        const files = [...confirmedPlan.entries.map(entry => entry.fileName), ...(dependency ? [dependency.fileName] : [])].join(", ");
+        if (!window.confirm(`Replace ${confirmedPlan.entries.length} duplicate plugin provider(s)? Solcord will verify the replacements, move only these reviewed files to a timestamped rollback archive, and preserve their private data. BDFDB retires last only if no remaining addon uses it: ${files}`)) return;
         setBusy(true);
         setStatus("Verifying replacements and preparing the rollback archive…");
         try {
@@ -1035,8 +1037,9 @@ function ProviderMigrationStatus() {
             <div><strong>{state.installed.length}</strong><span>duplicate files</span></div>
             <div><strong>{enabled.length}</strong><span>currently active</span></div>
             <div><strong>{eligible.length}</strong><span>ready to replace</span></div>
+            {dependency && <div><strong>1</strong><span>dependency rechecked last</span></div>}
         </div>
-        <details className="solcord-secondary-tools solcord-provider-files"><summary>Review backup and rollback plan</summary><p>{eligible.length ? eligible.map(item => item.fileName).join(", ") : "No duplicate currently has a verified replacement."}</p><small>Solcord rechecks this sealed list immediately before it acts, starts every replacement first, and moves only matching source files into a timestamped archive outside the plugin scan directory. Private databases and settings stay untouched.</small>{held.length > 0 && <p>{held.length} duplicate file(s) remain owner-managed because their replacement is off, unsupported, or still needs consent.</p>}</details>
+        <details className="solcord-secondary-tools solcord-provider-files"><summary>Review backup and rollback plan</summary><p>{reviewedFiles.length ? reviewedFiles.join(", ") : "No duplicate currently has a verified replacement."}</p><small>Solcord rechecks this reviewed list immediately before it acts, starts every replacement first, and moves only matching source files into a timestamped rollback archive outside the plugin scan directory. Private databases and settings stay untouched. BDFDB is rechecked and retires last only when no remaining addon uses it.</small>{held.length > 0 && <p>{held.length} duplicate file(s) remain owner-managed because their replacement is off, unsupported, or still needs consent.</p>}</details>
         <div className="solcord-actions"><ActionButton tone="accent" disabled={busy || !plan || eligible.length === 0} onClick={() => plan && void apply(plan)}>{busy ? "Working…" : "Replace ready duplicates"}</ActionButton><ActionButton disabled={busy || !state.latest?.providerArchiveTransactionId} onClick={() => void rollback()}>Rollback latest migration</ActionButton></div>
         {status && <p className="solcord-setup-status" role="status" aria-live="polite">{status}</p>}
     </Section>;
