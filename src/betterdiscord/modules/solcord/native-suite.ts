@@ -28,6 +28,7 @@ import {isSolcordDiscordSnowflake} from "./voice-adapter-capabilities";
 import {
     SolcordLocalTranslationEngine,
     type SolcordLocalLanguageDetectorFactory,
+    type SolcordLocalTranslationAvailability,
     type SolcordLocalTranslationSnapshot,
     type SolcordLocalTranslatorFactory
 } from "./local-translation";
@@ -593,6 +594,11 @@ export class SolcordNativeSuiteController {
         return this.#localTranslation?.subscribe(listener) ?? (() => {});
     }
 
+    localTranslationAvailability(sourceLanguage: string, targetLanguage: string, signal?: AbortSignal): Promise<SolcordLocalTranslationAvailability> {
+        if (!this.#translation || !this.#localTranslation) return Promise.resolve("unavailable");
+        return this.#localTranslation.availability(sourceLanguage, targetLanguage, signal);
+    }
+
     translateLocally(sourceLanguage: string, targetLanguage: string, text: string, signal?: AbortSignal): Promise<string> {
         if (!this.#translation || !this.#localTranslation) return Promise.reject(new Error("On-device Translation Desk is unavailable."));
         return this.#localTranslation.translate(sourceLanguage, targetLanguage, text, signal);
@@ -738,10 +744,11 @@ export class SolcordNativeSuiteController {
                     const preview = this.#voiceNote!.attachPreview({recordingId: recording.id, durationMs, sizeBytes: blob.size, mime, waveform: analysis.waveform});
                     const providers = this.#enabled.get("voice-note-studio") ?? [];
                     const nativeHandoffReady = typeof this.#adapter.prepareVoiceNoteUpload === "function";
-                    this.#setProviderReady("VoiceMessages", providers.includes("VoiceMessages") && nativeHandoffReady);
-                    this.#setStatus("voice-note-studio", nativeHandoffReady ? "ready" : "degraded", nativeHandoffReady
+                    const localFileReady = typeof this.#adapter.saveVoiceNoteFile === "function";
+                    this.#setProviderReady("VoiceMessages", providers.includes("VoiceMessages") && (nativeHandoffReady || localFileReady));
+                    this.#setStatus("voice-note-studio", "ready", nativeHandoffReady
                         ? "A local recording produced a reviewed preview; Discord's normal composer handoff is ready and still requires an explicit send."
-                        : "A local recording produced a reviewed preview. Discord's composer handoff is unavailable, so only explicit local-file save is offered.", providers);
+                        : "A local recording produced a reviewed preview. Save the local file explicitly, then attach it through Discord's ordinary composer.", providers);
                     this.#voicePreviewPending = false;
                     this.#emitVoiceNotePhase();
                     resolve({...preview, url: recording.url});
@@ -1218,7 +1225,8 @@ export class SolcordNativeSuiteController {
             this.#setStatus("voice-note-studio", "off", "Turn on Voice Note Studio to load recording controls.", []);
             return;
         }
-        const recordingAvailable = (this.#adapter.voiceNoteCaptureCapability ?? (typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder === "function" ? "available" : "unavailable")) === "available";
+        const captureCapability = this.#adapter.voiceNoteCaptureCapability ?? (typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder === "function" ? "available" : "unavailable");
+        const recordingAvailable = captureCapability === "ready" || captureCapability === "available";
         const uploadAvailable = typeof this.#adapter.prepareVoiceNoteUpload === "function";
         const localSaveAvailable = typeof this.#adapter.saveVoiceNoteFile === "function";
         if (!recordingAvailable || (!uploadAvailable && !localSaveAvailable)) {
@@ -1229,10 +1237,10 @@ export class SolcordNativeSuiteController {
         this.#voiceNote = new SolcordVoiceNoteStudioController();
         this.#setProviderAvailable("VoiceMessages", providers.includes("VoiceMessages"));
         if (this.#adapter.voiceNotePreferences?.downloadButton !== false) this.#installVoiceDownloadLinks();
-        this.#setProviderReady("VoiceMessages", false);
-        this.#setStatus("voice-note-studio", "degraded", this.#adapter.voiceNoteCaptureDetail ?? (uploadAvailable
-            ? "Available — recording and composer handoff are validated. Ready is reported after an explicit recording produces a local preview."
-            : "Available with local-file fallback — Ready remains withheld until an explicit recording produces a preview."), providers);
+        this.#setProviderReady("VoiceMessages", providers.includes("VoiceMessages"));
+        this.#setStatus("voice-note-studio", "ready", this.#adapter.voiceNoteCaptureDetail ?? (uploadAvailable
+            ? "Ready — record, preview, cancel, then open Discord's ordinary upload composer. Sending is always explicit."
+            : "Ready — record, preview, cancel, then save a local file to attach manually."), providers);
     }
 
     #installVoiceDownloadLinks(): void {
@@ -1273,8 +1281,8 @@ export class SolcordNativeSuiteController {
         const local = this.#localTranslation.snapshot();
         const selected = this.#adapter.translationPreferences?.provider ?? "off";
         if (local.phase !== "unsupported") {
-            this.#setStatus("translation-desk", "ready", selected === "local"
-                ? "Ready — local. Text stays on this device; Chromium downloads a language pack only when the selected pair needs one."
+            this.#setStatus("translation-desk", selected === "local" ? "degraded" : "ready", selected === "local"
+                ? "Local engine detected. Translation Desk checks the selected language pair before enabling a request."
                 : selected === "off"
                     ? "Ready — provider off. The on-device engine is available; no provider runs until one is selected."
                     : "The selected external provider is ready for reviewed requests; the on-device engine remains available as the private option.", providers);

@@ -69,28 +69,24 @@ export function CuratedAddonSet() {
         setBusy(undefined);
     };
     const canManage = state.onboarding.status === "complete";
+    const communityGroups = SOLCORD_ADDON_GROUPS.map(group => ({
+        ...group,
+        addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)
+    })).filter(group => group.addons.length > 0);
     return <section className="solcord-section">
-        <div className="solcord-section-heading"><h2>Daily add-on set</h2><p>Thirty-six catalog-pinned candidates, grouped by purpose. Static security, dependency, action, runtime, and hash gates remain separate; a pinned file is not automatically approved.</p></div>
-        <p className="solcord-callout">Integrity check: {state.integrity.summary.match} verified · {state.integrity.summary.missing} optional catalog file(s) absent · {state.integrity.summary.attention + state.integrity.summary.unavailable} held for review. An absent optional file is not an error and does not affect Solcord built-ins.</p>
-        {!canManage && <p className="solcord-callout">Finish the setup transaction before managing this set. Existing local addon states remain unchanged while setup is pending or skipped.</p>}
+        <div className="solcord-section-heading"><h2>Optional community plugins</h2><p>Installed community files stay separate from Solcord built-ins and remain owner-managed.</p></div>
+        <details className="solcord-secondary-tools"><summary>Integrity summary</summary><p>{state.integrity.summary.match} verified · {state.integrity.summary.missing} optional file(s) absent · {state.integrity.summary.attention + state.integrity.summary.unavailable} held for review. An absent optional file is not an error.</p></details>
+        {!canManage && <p className="solcord-callout">Complete First Setup once to establish a rollback point before changing community plugins.</p>}
         <div className="solcord-curated-groups">
-            {SOLCORD_ADDON_GROUPS.map(group => <details key={group.id} open={group.id === "privacy-interaction"}>
+            {communityGroups.map(group => <details key={group.id}>
                 <summary><span><strong>{group.title}</strong><small>{group.summary}</small></span><span>{group.addons.filter(addon => state.addons.find(item => item.name === addon.name)?.enabled).length} / {group.addons.length} on</span></summary>
                 <div className="solcord-curated-list">
                     {group.addons.map(presentation => {
                         const addon = state.addons.find(item => item.name === presentation.name)!;
-                        const usingCommunity = addon.builtIn && addon.communityEnabled;
-                        const integrityLabel = usingCommunity
-                            ? "owner-managed file"
-                            : addon.builtIn && addon.integrity?.status === "missing"
-                            ? "clean-room built-in"
-                            : addon.integrity?.status === "match"
-                                ? "hash verified"
-                                : addon.integrity?.status === "missing"
-                                    ? "optional file absent"
-                                    : `${addon.integrity?.status ?? "unavailable"} · held`;
+                        const visibleState = addon.quarantine ? "Quarantined" : addon.adapter?.conflict ? "Conflict" : addon.enabled ? "On" : addon.installed ? "Off" : "Not installed";
+                        const visibleTone = addon.quarantine || addon.adapter?.conflict ? "solcord-status-quarantined" : addon.enabled ? "solcord-status-active" : "solcord-status-stopped";
                         return <div className="solcord-curated-row" key={addon.name}>
-                            <div><div className="solcord-module-name"><strong>{presentation.label}</strong><span className="solcord-maturity">{addon.installed ? addon.builtIn ? usingCommunity ? "community provider" : "Solcord built-in" : `local ${addon.version}` : "catalog preview"}</span><span className="solcord-review-chip">{usingCommunity ? "owner-managed community" : addon.builtIn ? "clean-room built-in" : addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()}</span><span className={`solcord-status ${usingCommunity || addon.integrity?.status === "match" || (addon.builtIn && addon.integrity?.status === "missing") ? "solcord-status-active" : addon.integrity?.status === "missing" ? "solcord-status-stopped" : "solcord-status-quarantined"}`}>{integrityLabel}</span>{addon.adapter?.conflict && <span className="solcord-status solcord-status-quarantined">provider conflict</span>}{addon.quarantine && <span className="solcord-status solcord-status-quarantined">quarantined</span>}</div><p>{presentation.summary}</p>{addon.permissions && <PermissionCard permissions={addon.permissions} />}{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{usingCommunity && <small>The enabled community file remains owner-managed; Solcord does not certify or claim it.</small>}{addon.adapter?.conflict && <small className="solcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.builtIn && !addon.installable && <small className="solcord-error">Owner-enabled local state is preserved, but Solcord has not accepted this candidate and will not re-enable it.</small>}{addon.quarantine && <small className="solcord-error">{addon.quarantine}</small>}</div>
+                            <div><div className="solcord-module-name"><strong>{presentation.label}</strong><span className={`solcord-status ${visibleTone}`}>{visibleState}</span></div><p>{presentation.summary}</p><details className="solcord-secondary-tools"><summary>Technical details</summary><p>{addon.installed ? `Local ${addon.version}` : "Catalog reference only"} · {addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()} · {addon.integrity?.status ?? "integrity unavailable"}</p>{addon.permissions && <PermissionCard permissions={addon.permissions} />}{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{addon.adapter?.conflict && <small className="solcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.installable && <small className="solcord-error">Owner-enabled local state is preserved, but Solcord will not re-enable this candidate.</small>}{addon.quarantine && <small className="solcord-error">{addon.quarantine}</small>}</details></div>
                             <label className="solcord-toggle"><input type="checkbox" aria-label={`${addon.enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={event => void toggle(addon.name, event.currentTarget.checked)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
                         </div>;
                     })}

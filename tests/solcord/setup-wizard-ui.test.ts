@@ -32,6 +32,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
         expect(WIZARD_SOURCE).toContain("function scrollSolcordSetupTarget(target: HTMLElement | null): void");
         expect(WIZARD_SOURCE).toContain("/auto|scroll|overlay/.test(overflowY) && scrollOwner.scrollHeight > scrollOwner.clientHeight");
+        expect(WIZARD_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
+        expect(WIZARD_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
         expect(WIZARD_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
         expect(WIZARD_SOURCE).toContain("scrollSolcordSetupTarget(wizardRef.current)");
         expect(WIZARD_SOURCE).not.toContain("wizardRef.current?.scrollIntoView");
@@ -58,16 +60,20 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("padding: 0 clamp(20px, 2.8vw, 34px) 52px");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-search { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; top: 0;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 66px; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; isolation: isolate; top: 0;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 84px; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { min-width: 0; padding-top: 12px; }");
         expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
-        expect(PANEL_SOURCE).toContain("getComputedStyle(navigation).position === \"sticky\"");
+        expect(PANEL_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
+        expect(PANEL_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
         expect(PANEL_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
         expect(PANEL_SOURCE).not.toContain("workspaceRef.current?.scrollIntoView");
         expect(WIZARD_CSS).toContain(":is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type=\"checkbox\"] { appearance: none;");
         expect(WIZARD_CSS).toContain("> input[type=\"checkbox\"]:focus-visible");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
+        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
         expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
@@ -125,7 +131,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("Pending tools stay uninstalled");
         expect(PANEL_SOURCE).toContain("Optional files not installed");
         const catalogSource = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8");
-        expect(catalogSource).toContain("optional catalog file(s) absent");
+        expect(catalogSource).toContain("optional file(s) absent");
+        expect(catalogSource).toContain("addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)");
+        expect(catalogSource).toContain("<summary>Technical details</summary>");
+        expect(catalogSource).not.toContain("clean-room built-in");
         expect(catalogSource).toMatch(/aria-label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
         expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
@@ -203,6 +212,16 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("On. History is encrypted, local, and isolated to this account.");
         expect(PANEL_SOURCE).toContain("On for this session only. Persistent storage is unavailable.");
         expect(PANEL_SOURCE).toContain("state.persistent");
+    });
+
+    test("keeps compact setup navigation readable and accessible without repeated headings", () => {
+        expect(WIZARD_SOURCE).toMatch(/aria-label=\{`\$\{index \+ 1\}\. \$\{label\}\$\{index === step \? ", current step" : ""\}`\}/);
+        expect(WIZARD_SOURCE).toContain("<h3>Choose your look</h3>");
+        expect(WIZARD_SOURCE).toContain("<h3>Check your choices</h3>");
+        expect(WIZARD_SOURCE).not.toContain("<h3>Appearance</h3>");
+        expect(WIZARD_SOURCE).not.toContain("<h3>Review and apply</h3>");
+        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps button span:last-child { display: none; }");
     });
 
     test("uses one setup rail and whitespace instead of nested divider boxes", () => {

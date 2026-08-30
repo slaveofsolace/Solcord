@@ -76,6 +76,10 @@ function normalizeSourceLanguage(value: string): string {
     return value.trim().toLowerCase() === "auto" ? "auto" : languageTag(value, "Source language");
 }
 
+function samePrimaryLanguage(sourceLanguage: string, targetLanguage: string): boolean {
+    return sourceLanguage.split("-", 1)[0].toLocaleLowerCase() === targetLanguage.split("-", 1)[0].toLocaleLowerCase();
+}
+
 function boundedText(value: string): string {
     if (!value || value.length > MAX_INPUT_CHARACTERS) throw new Error(`Local translation text must contain 1 to ${MAX_INPUT_CHARACTERS.toLocaleString("en-US")} characters.`);
     return value;
@@ -193,6 +197,10 @@ export class SolcordLocalTranslationEngine {
         this.#assertActive();
         const source = languageTag(sourceLanguage, "Source language");
         const target = languageTag(targetLanguage, "Target language");
+        if (samePrimaryLanguage(source, target)) {
+            this.#setState("ready", 1, "available");
+            return "available";
+        }
         if (!this.#factory) {
             this.#setState("unsupported", 0, "unavailable");
             return "unavailable";
@@ -293,6 +301,12 @@ export class SolcordLocalTranslationEngine {
                 try {
                     if (job.controller.signal.aborted) throw cancellationError();
                     if (job.sourceLanguage === "auto") job.sourceLanguage = await this.#detectLanguage(job);
+                    if (samePrimaryLanguage(job.sourceLanguage, job.targetLanguage)) {
+                        this.#completed++;
+                        this.#setState("ready", 1, "translated");
+                        job.resolve(job.text);
+                        continue;
+                    }
                     const instance = await this.#instanceFor(job);
                     const result = await raceAbort(Promise.resolve(instance.translate(job.text, {signal: job.controller.signal})), job.controller.signal);
                     if (typeof result !== "string" || result.length > MAX_OUTPUT_CHARACTERS) throw new Error("The local Translator response changed shape.");

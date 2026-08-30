@@ -183,7 +183,7 @@ describe("Solcord native-suite security boundaries", () => {
         controllers.push({controller: active, scope: activeScope});
         const activeStatus = Object.fromEntries(active.statuses().map(item => [item.id, item.maturity]));
         expect(activeStatus["audio-console"]).toBe("degraded");
-        expect(activeStatus["translation-desk"]).toBe("ready");
+        expect(activeStatus["translation-desk"]).toBe("degraded");
         await expect(active.translateLocally("en", "es", "hello")).resolves.toBe("local:hello");
         expect(active.providerReady("BetterVolume")).toBeFalse();
         expect(active.providerAvailable("BetterVolume")).toBeTrue();
@@ -428,8 +428,8 @@ describe("Solcord native-suite security boundaries", () => {
         const fallback = new SolcordNativeSuiteController(fallbackScope, {VoiceMessages: true}, {saveVoiceNoteFile: () => {}});
         fallback.start();
         controllers.push({controller: fallback, scope: fallbackScope});
-        expect(fallback.statuses().find(item => item.id === "voice-note-studio")?.maturity).toBe("degraded");
-        expect(fallback.providerReady("VoiceMessages")).toBeFalse();
+        expect(fallback.statuses().find(item => item.id === "voice-note-studio")?.maturity).toBe("ready");
+        expect(fallback.providerReady("VoiceMessages")).toBeTrue();
         expect(fallback.providerAvailable("VoiceMessages")).toBeTrue();
         expect(fallback.voiceNoteDeliveryMode()).toBe("local-file");
 
@@ -437,8 +437,8 @@ describe("Solcord native-suite security boundaries", () => {
         const ready = new SolcordNativeSuiteController(readyScope, {VoiceMessages: true}, {prepareVoiceNoteUpload: () => {}});
         ready.start();
         controllers.push({controller: ready, scope: readyScope});
-        expect(ready.statuses().find(item => item.id === "voice-note-studio")?.maturity).toBe("degraded");
-        expect(ready.providerReady("VoiceMessages")).toBeFalse();
+        expect(ready.statuses().find(item => item.id === "voice-note-studio")?.maturity).toBe("ready");
+        expect(ready.providerReady("VoiceMessages")).toBeTrue();
         expect(ready.providerAvailable("VoiceMessages")).toBeTrue();
         expect(ready.voiceNoteDeliveryMode()).toBe("discord-composer");
     });

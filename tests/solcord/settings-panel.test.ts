@@ -92,21 +92,29 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("no Activity window has opened in this session");
     });
 
-    test("places Fake Deafen under a collapsed Voice experimental disclosure", () => {
-        expect(panel).toContain("<details className=\"solcord-experimental\"><summary>Experimental</summary><PowerLabStatus /></details>");
+    test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
+        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
         expect(panel).toContain("aria-label=\"Enable Solcord Fake Deafen\"");
         expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
     });
 
+    test("uses one-click effect color swatches instead of the sticky native color popup", () => {
+        expect(panel).toContain("role=\"radiogroup\" aria-label=\"Effect color\"");
+        expect(panel).toContain("role=\"radio\" aria-checked=");
+        expect(panel).not.toContain("type=\"color\"");
+    });
+
     test("presents Translation Desk as local-first without disguising network providers as setup dependencies", () => {
-        expect(panel).toContain("<option value=\"local\">On-device (recommended)</option>");
-        expect(panel).toContain("Ready — local. Text stays on this device.");
-        expect(panel).toContain("Ready — provider off. Nothing will be transmitted.");
+        expect(panel).toContain("<option value=\"local\">On-device</option>");
+        expect(panel).toContain("Checking this language pair on device");
+        expect(panel).toContain("Provider off. Nothing will be transmitted.");
         expect(panel).toContain("No cloud fallback will run automatically.");
         expect(panel).toContain("Translate on device");
-        expect(panel).toContain("External provider selected. Solcord will show the destination and ask before each request.");
+        expect(panel).toContain("External provider selected. Solcord shows the destination and asks before each request.");
+        expect(panel).toContain("localPairBlocked");
+        expect(panel).toContain("<summary>External provider settings</summary>");
     });
 
     test("keeps Voice Note Studio actions synchronized with permission, recording, and preview state", () => {
@@ -198,8 +206,8 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("keeps Return Later in one primary workspace while People and Spaces resolves loaded object types", () => {
-        expect(panel).toContain("workspace === \"chat\" && <><BaselineToolsPanel /><NativeSuitePanel key=\"chat\" scope=\"chat\" /><ReturnLaterPanel /></>");
-        expect(panel).toContain("workspace === \"friends\" && <><FriendWatchPanel /><NativeSuitePanel key=\"friends\" scope=\"friends\" /></>");
+        expect(panel).toContain("workspace === \"chat\" && <><BaselineToolsPanel /><BuiltInFeatureSwitches scope=\"chat\" /><NativeSuitePanel key=\"chat\" scope=\"chat\" /><ReturnLaterPanel /></>");
+        expect(panel).toContain("workspace === \"friends\" && <><FriendWatchPanel /><BuiltInFeatureSwitches scope=\"friends\" /><NativeSuitePanel key=\"friends\" scope=\"friends\" /></>");
         expect(panel.match(/<ReturnLaterPanel \/>/g)).toHaveLength(1);
         expect(panel).toContain("scope === \"friends\" ? SolcordRuntime.currentPeopleObjectId() ?? \"\"");
         expect(panel).toContain("SolcordRuntime.resolvePeopleObject(channelId.trim())");
@@ -242,7 +250,7 @@ describe("Solcord Control Center clarity", () => {
     test("uses whitespace and type hierarchy instead of stacked adjacent dividers", () => {
         expect(panel).toContain("<h3>{title}</h3>");
         expect(panel).not.toContain("<h2>{title}</h2>");
-        expect(styles).toContain(".solcord-workspace-heading { padding: 3px 0 20px; }");
+        expect(styles).toContain(".solcord-workspace-heading { padding: 0 0 20px; }");
         expect(styles).toContain(".solcord-workspace-heading h2 { margin: 0 0 8px;");
         expect(styles).toContain(".solcord-section-heading h3 { margin: 0;");
         expect(styles).toContain(".solcord-section { padding: 20px 0 24px; border: 0; }");
@@ -251,7 +259,7 @@ describe("Solcord Control Center clarity", () => {
         expect(styles).toContain(".solcord-setting-row > span:first-child { display: grid; gap: 8px;");
         for (const primitive of [
             ".solcord-setting-rows { display: grid; gap: 4px; }",
-            ".solcord-setting-list { display: grid; gap: 4px; }",
+            ".solcord-setting-list { display: grid; gap: 4px; max-width: 700px; }",
             ".solcord-module-table { display: grid; gap: 4px; overflow: hidden; }",
             ".solcord-native-ledger { display: grid; gap: 4px; }",
             ".solcord-privacy-capabilities { display: grid; gap: 4px; margin-top: 14px; }",
@@ -297,7 +305,7 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("leads Privacy with the explicit profile and content-free capability report", () => {
-        expect(panel).toContain("<PrivacyProtectionPanel /><StreamShieldControls />");
+        expect(panel).toContain("<PrivacyProtectionPanel /><BuiltInFeatureSwitches scope=\"privacy\" /><StreamShieldControls />");
         expect(panel).toContain("Use Strict Privacy");
         expect(panel).toContain("Check for updates");
         expect(panel).toContain("privacyCapabilityStateLabel(capability.state)");

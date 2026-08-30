@@ -17,8 +17,18 @@ const {useEffect, useMemo, useRef, useState} = React;
 
 const WIZARD_STEPS = SOLCORD_SETUP_STEPS;
 
+function stickySetupNavigationOffset(target: HTMLElement, navigation: HTMLElement | null): number {
+    if (!navigation || getComputedStyle(navigation).position !== "sticky") return 0;
+    const navigationRect = navigation.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const horizontallyOverlaps = navigationRect.left < targetRect.right && navigationRect.right > targetRect.left;
+    return horizontallyOverlaps ? Math.ceil(navigationRect.height) + 12 : 0;
+}
+
 function scrollSolcordSetupTarget(target: HTMLElement | null): void {
     if (!target) return;
+    const navigation = target.closest(".solcord-control-center")?.querySelector<HTMLElement>(".solcord-workspace-nav") ?? null;
+    const stickyOffset = stickySetupNavigationOffset(target, navigation);
     let scrollOwner = target.parentElement;
     while (scrollOwner) {
         const overflowY = getComputedStyle(scrollOwner).overflowY;
@@ -27,10 +37,9 @@ function scrollSolcordSetupTarget(target: HTMLElement | null): void {
     }
     if (!scrollOwner) {
         target.scrollIntoView({block: "start"});
+        if (stickyOffset) globalThis.scrollBy?.({top: -stickyOffset, behavior: "auto"});
         return;
     }
-    const navigation = target.closest(".solcord-control-center")?.querySelector<HTMLElement>(".solcord-workspace-nav");
-    const stickyOffset = navigation && getComputedStyle(navigation).position === "sticky" ? navigation.getBoundingClientRect().height + 8 : 0;
     const targetOffset = target.getBoundingClientRect().top - scrollOwner.getBoundingClientRect().top;
     scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: "auto"});
 }
@@ -97,7 +106,7 @@ function DisclosureSummary({title, detail}: {title: string; detail: string;}) {
 function StepNavigation({step, setStep, disabled}: {step: number; setStep(step: number): void; disabled: boolean;}) {
     return <ol className="solcord-wizard-steps" aria-label="Solcord setup steps">
         {WIZARD_STEPS.map((label, index) => <li key={label}>
-            <button type="button" aria-current={index === step ? "step" : undefined} disabled={disabled} onClick={() => setStep(index)}>
+            <button type="button" aria-label={`${index + 1}. ${label}${index === step ? ", current step" : ""}`} aria-current={index === step ? "step" : undefined} disabled={disabled} onClick={() => setStep(index)}>
                 <span aria-hidden="true">{index + 1}</span><span>{label}</span>
             </button>
         </li>)}
@@ -183,7 +192,7 @@ function useFullShellAppearancePreview(appearance: SolcordAppearancePreferences,
 function ThemeStep({value, appearance, performanceProfile, onChange, onAppearance}: {value: SolcordThemeId; appearance: SolcordAppearancePreferences; performanceProfile: SolcordPerformanceProfile; onChange(value: SolcordThemeId): void; onAppearance(value: SolcordAppearancePreferences): void;}) {
     useFullShellAppearancePreview(appearance, performanceProfile);
     return <div className="solcord-wizard-body">
-        <h3>Appearance</h3>
+        <h3>Choose your look</h3>
         <p>Choose the product mode first. The live preview covers the full Discord shell and restores your saved appearance when you leave this step.</p>
         <div className="solcord-appearance-controls">
             <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
@@ -314,7 +323,7 @@ function ReviewStep({draft}: {draft: SolcordSetupDraft;}) {
             .map(theme => theme.name || theme.filename)
     }));
     return <div className="solcord-wizard-body">
-        <h3>Review and apply</h3>
+        <h3>Check your choices</h3>
         <dl className="solcord-facts">
             <div><dt>Ready tools selected</dt><dd>{plan.executableAddons.length} of {readyCount}</dd></div>
             <div><dt>Pending catalog requests</dt><dd>{plan.skipped.length} · no download</dd></div>

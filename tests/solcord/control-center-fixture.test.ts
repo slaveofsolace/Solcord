@@ -26,6 +26,8 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(fixture).toContain(contract);
         }
         expect(fixture).toContain("nativeRowSpacingFailures");
+        expect(fixture).toContain("compactNavigationGeometry");
+        expect(fixture).toContain("opaqueBackground:");
         expect(fixture).toContain("People and Spaces");
         expect(fixture).toContain("replacement.left - title.right < 8");
         expect(renderer).toContain("isolated representative fixture using the production Solcord stylesheet; not live Discord acceptance");
@@ -33,6 +35,8 @@ describe("Solcord isolated Control Center fixture", () => {
         expect(renderer).toContain("fixtureWidth=320");
         expect(renderer).toContain("privacy-light-1920x1080");
         expect(renderer).toContain("setup-dark-1280x720");
+        expect(renderer).toContain("setup-dark-680x520-compact");
+        expect(renderer).toContain("privacy-light-compact-short-320x568");
         for (const scale of ["scale=100", "scale=125", "scale=150", "scale=200"]) {
             expect(renderer).toContain(scale);
         }

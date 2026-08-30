@@ -55,6 +55,22 @@ describe("Solcord local Translation Desk", () => {
         engine.dispose();
     });
 
+    test("returns same-language text locally without requesting a redundant model", async () => {
+        let creates = 0;
+        const engine = new SolcordLocalTranslationEngine(localFactory({
+            availability: async () => "unavailable",
+            create: async () => {creates++; throw new Error("must not create");}
+        }), {
+            availability: async () => "available",
+            create: async () => ({detect: async () => [{detectedLanguage: "en", confidence: 0.99}], destroy: () => {}})
+        });
+        await expect(engine.availability("en", "EN")).resolves.toBe("available");
+        await expect(engine.translate("auto", "EN", "already English")).resolves.toBe("already English");
+        expect(creates).toBe(0);
+        expect(engine.snapshot()).toMatchObject({phase: "ready", completed: 1, failed: 0, lastResult: "translated", containsPlaintext: false});
+        engine.dispose();
+    });
+
     test("surfaces bounded download progress and fails closed when model creation fails", async () => {
         const observed: Array<{phase: string; progress: number;}> = [];
         const engine = new SolcordLocalTranslationEngine(localFactory({
