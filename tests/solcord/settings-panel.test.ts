@@ -73,6 +73,13 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("<summary>Community plugins</summary>");
     });
 
+    test("shows native feature readiness before the collapsed community-plugin tools", () => {
+        const statusLedger = panel.indexOf("<NativeSuitePanel scope=\"status\" />");
+        const communityDisclosure = panel.indexOf("<details className=\"solcord-extension-disclosure\"");
+        expect(statusLedger).toBeGreaterThan(-1);
+        expect(communityDisclosure).toBeGreaterThan(statusLedger);
+    });
+
     test("keeps idle Fake Deafen out of Overview attention signals", () => {
         const pulse = panel.slice(panel.indexOf("function SessionPulse"), panel.indexOf("function ProviderMigrationStatus"));
         expect(pulse).not.toContain("fakeDeafen");

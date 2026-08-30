@@ -1338,7 +1338,8 @@ export default function SolcordPanel() {
                 {workspace === "extensions" && <>
                     <ProviderMigrationStatus />
                     <div className="solcord-all-clear"><strong>Built-ins live with their features</strong><span>Message, voice, privacy, and people tools are managed in the matching workspace.</span></div>
-                    <details className="solcord-extension-disclosure"><summary>Community plugins</summary><p>Optional plugins, migration, and troubleshooting details stay here until you need them.</p><NativeSuitePanel scope="status" /><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
+                    <NativeSuitePanel scope="status" />
+                    <details className="solcord-extension-disclosure"><summary>Community plugins</summary><p>Optional plugins, migration, and troubleshooting details stay here until you need them.</p><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
                 </>}
                 {workspace === "recovery" && <><SetupManagement openSetup={openSetup} /><PluginRecovery /><ProfilesAndHistory /><details className="solcord-secondary-tools"><summary>About and technical information</summary><AboutSolcord /></details></>}
                 </>}
