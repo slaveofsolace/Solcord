@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 556 |
 | Text files scanned | 542 |
 | Binary files classified | 14 |
-| Text lines scanned | 116,922 |
-| Custom Solcord lines | 27,404 |
+| Text lines scanned | 119,226 |
+| Custom Solcord lines | 28,523 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -26,11 +26,11 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 0 |
 | Timer calls | 45 | 3 |
-| Mutation observers | 15 | 1 |
-| DOM queries | 101 | 28 |
+| Mutation observers | 17 | 1 |
+| DOM queries | 110 | 29 |
 | Webpack discovery calls | 78 | 0 |
-| Patch calls | 26 | 1 |
-| Synchronous filesystem calls | 667 | 601 |
+| Patch calls | 30 | 3 |
+| Synchronous filesystem calls | 672 | 606 |
 | Console calls | 77 | 51 |
 | Empty catch blocks | 3 | 1 |
 
@@ -38,51 +38,51 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,209 | 255.0 KiB |
-| 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 1,505 | 95.0 KiB |
-| 3 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
-| 4 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
-| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.0 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,449 | 269.0 KiB |
+| 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 1,951 | 121.0 KiB |
+| 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,482 | 66.4 KiB |
+| 4 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
+| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,444 | 146.4 KiB |
 | 6 | `bun.lock` | 1,314 | 141.7 KiB |
-| 7 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
-| 8 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,103 | 57.9 KiB |
-| 10 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
-| 11 | `tests/solcord/native-suite-security.test.ts` | 996 | 51.2 KiB |
-| 12 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
+| 7 | `tests/solcord/native-suite-security.test.ts` | 1,260 | 65.8 KiB |
+| 8 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
+| 9 | `tests/solcord/disposable-acceptance.test.ts` | 1,159 | 56.0 KiB |
+| 10 | `src/betterdiscord/styles/solcord.css` | 1,114 | 84.2 KiB |
+| 11 | `src/betterdiscord/modules/solcord/store.ts` | 1,113 | 58.2 KiB |
+| 12 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
 | 13 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 14 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 15 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
-| 16 | `src/common/solcord/v2-feature-models.ts` | 656 | 35.8 KiB |
+| 16 | `src/common/solcord/v2-feature-models.ts` | 660 | 36.0 KiB |
 | 17 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
 | 18 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
-| 19 | `tests/solcord/settings.test.ts` | 588 | 31.1 KiB |
+| 19 | `tests/solcord/settings.test.ts` | 589 | 31.2 KiB |
 | 20 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
 
 ## Largest custom Solcord files
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
-| 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
-| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.0 KiB |
-| 4 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 5 | `tests/solcord/native-suite-security.test.ts` | 996 | 51.2 KiB |
-| 6 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
+| 1 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,482 | 66.4 KiB |
+| 2 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
+| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,444 | 146.4 KiB |
+| 4 | `tests/solcord/native-suite-security.test.ts` | 1,260 | 65.8 KiB |
+| 5 | `tests/solcord/disposable-acceptance.test.ts` | 1,159 | 56.0 KiB |
+| 6 | `src/betterdiscord/styles/solcord.css` | 1,114 | 84.2 KiB |
 | 7 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 8 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
-| 9 | `src/common/solcord/v2-feature-models.ts` | 656 | 35.8 KiB |
-| 10 | `tests/solcord/settings.test.ts` | 588 | 31.1 KiB |
-| 11 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
-| 12 | `tests/solcord/renderer-security.test.ts` | 482 | 34.4 KiB |
-| 13 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
-| 14 | `scripts/soak-solcord-backend.ts` | 468 | 21.1 KiB |
-| 15 | `src/common/solcord/product.ts` | 466 | 23.7 KiB |
-| 16 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
-| 17 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
-| 18 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 391 | 35.7 KiB |
+| 9 | `src/common/solcord/v2-feature-models.ts` | 660 | 36.0 KiB |
+| 10 | `tests/solcord/settings.test.ts` | 589 | 31.2 KiB |
+| 11 | `tests/solcord/renderer-security.test.ts` | 530 | 38.6 KiB |
+| 12 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
+| 13 | `scripts/soak-solcord-backend.ts` | 471 | 21.5 KiB |
+| 14 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
+| 15 | `src/common/solcord/product.ts` | 466 | 23.8 KiB |
+| 16 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 420 | 37.5 KiB |
+| 17 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
+| 18 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
 | 19 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 380 | 19.0 KiB |
-| 20 | `src/electron/main/modules/solcord-translation-credentials.ts` | 323 | 17.5 KiB |
+| 20 | `tests/solcord/settings-panel.test.ts` | 352 | 23.6 KiB |
 
 ## Confirmed surface corrections in this audit
 

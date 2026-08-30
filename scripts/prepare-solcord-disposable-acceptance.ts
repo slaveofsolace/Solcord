@@ -1259,12 +1259,64 @@ function renderLauncher(): string {
     return `@echo off\r
 setlocal\r
 set "SOLCORD_ACCEPTANCE_ROOT=%~dp0"\r
+set "SOLCORD_ACCEPTANCE_LEDGER=%SOLCORD_ACCEPTANCE_ROOT%${RUNTIME_LEDGER_FILE}"\r
+set "SOLCORD_ACCEPTANCE_LAUNCH_GUARD=%SOLCORD_ACCEPTANCE_ROOT%.launch-attempt"\r
+set "SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT=%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%\\discord-processes.txt"\r
+if not exist "%SOLCORD_ACCEPTANCE_ROOT%runtime\\Discord.exe" goto :missing_runtime\r
+if exist "%SOLCORD_ACCEPTANCE_LEDGER%" goto :already_attempted\r
+if exist "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%" goto :already_attempted\r
+2>nul mkdir "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%"\r
+if errorlevel 1 goto :already_attempted\r
+if exist "%SOLCORD_ACCEPTANCE_LEDGER%" goto :ledger_race\r
+if not exist "%SystemRoot%\\System32\\tasklist.exe" goto :process_check_failed\r
+if not exist "%SystemRoot%\\System32\\findstr.exe" goto :process_check_failed\r
+for %%P in (Discord.exe DiscordPTB.exe DiscordCanary.exe) do (\r
+    "%SystemRoot%\\System32\\tasklist.exe" /FI "IMAGENAME eq %%P" /NH > "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%"\r
+    if errorlevel 1 goto :process_check_failed\r
+    "%SystemRoot%\\System32\\findstr.exe" /I /B /C:"%%P " "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul\r
+    if not errorlevel 1 goto :discord_running\r
+)\r
+del /q "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul 2>nul\r
 set "APPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming"\r
 set "LOCALAPPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Local"\r
 set "DISCORD_USER_DATA_DIR=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming"\r
 set "SOLCORD_ACCEPTANCE_MODE=1"\r
 start "" "%SOLCORD_ACCEPTANCE_ROOT%runtime\\Discord.exe" --multi-instance\r
-endlocal\r
+if errorlevel 1 goto :launch_failed\r
+endlocal & exit /b 0\r
+\r
+:missing_runtime\r
+echo Solcord acceptance runtime is incomplete. Prepare a new disposable lane.\r
+endlocal & exit /b 20\r
+\r
+:already_attempted\r
+echo This disposable lane is single-use and already has launch evidence. Prepare a new lane.\r
+endlocal & exit /b 21\r
+\r
+:ledger_race\r
+call :release_launch_guard\r
+echo Runtime evidence appeared while the launcher was acquiring ownership. Nothing was started.\r
+endlocal & exit /b 22\r
+\r
+:discord_running\r
+call :release_launch_guard\r
+echo Another Discord desktop channel is running. Close it before isolated acceptance.\r
+endlocal & exit /b 23\r
+\r
+:process_check_failed\r
+call :release_launch_guard\r
+echo Discord process inspection failed closed. Nothing was started.\r
+endlocal & exit /b 24\r
+\r
+:launch_failed\r
+call :release_launch_guard\r
+echo The disposable Discord process could not be started.\r
+endlocal & exit /b 25\r
+\r
+:release_launch_guard\r
+if exist "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" del /q "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul 2>nul\r
+2>nul rmdir "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%"\r
+exit /b 0\r
 `;
 }
 

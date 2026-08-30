@@ -2,7 +2,7 @@ name: Solcord V2 CI
 
 on:
   push:
-    branches: ["fork/**", "v2/**", "audit/**"]
+    branches: ["development", "fork/**", "v2/**", "audit/**"]
   pull_request:
     branches: ["development"]
 

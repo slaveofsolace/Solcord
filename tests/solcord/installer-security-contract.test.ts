@@ -12,6 +12,9 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), 
 const engine = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerEngine.cs"), "utf8");
 const embeddedBundle = fs.readFileSync(path.join(root, "installer/Solcord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
 const selfTest = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Program.cs"), "utf8");
+const installerReadme = fs.readFileSync(path.join(root, "installer/README.md"), "utf8");
+const fullCi = fs.readFileSync(path.join(root, ".github/workflows/solcord-ci.yml"), "utf8");
+const gitignore = fs.readFileSync(path.join(root, ".gitignore"), "utf8").split(/\r?\n/);
 
 describe("Solcord installer security contracts", () => {
     test("routes candidate builds through the tested embedded-resource builder", () => {
@@ -47,6 +50,22 @@ describe("Solcord installer security contracts", () => {
         expect(builder).toContain("solcord-installer-manifest.json");
         expect(builder).toContain("The release-candidate directory contains an unexpected file set");
         expect(builder.indexOf("const selfTest = spawnSync")).toBeLessThan(builder.indexOf("const publishedFiles"));
+    });
+
+    test("documents the complete review bundle and keeps generated evidence out of source status", () => {
+        for (const file of [
+            "SolcordInstaller.exe",
+            "solcord.asar",
+            "solcord-build-manifest.json",
+            "solcord-installer-manifest.json",
+            "SHA256SUMS.txt"
+        ]) expect(installerReadme).toContain(file);
+        expect(installerReadme).toContain("five-file review bundle");
+        expect(gitignore).toContain("outputs/");
+    });
+
+    test("runs the complete Solcord workflow on canonical development pushes", () => {
+        expect(fullCi).toContain("branches: [\"development\", \"fork/**\", \"v2/**\", \"audit/**\"]");
     });
 
     test("verifies embedded bytes before private extraction and cleans only known files", () => {
