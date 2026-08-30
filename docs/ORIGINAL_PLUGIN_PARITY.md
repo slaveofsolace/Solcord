@@ -2,7 +2,7 @@
 
 Solcord is replacing the owner-supplied community plugin set with first-party modules that share one lifecycle, one settings surface, and no community library runtime. A plugin is considered replaced only when its own behavior validates; another working tool in the same group cannot make it pass. A green source row means the listed behavior exists in source, not that every option from the original plugin has passed the current Discord client.
 
-Provider retirement has two independent gates: the exact adapter must be healthy, and the provider name must be in the reviewed source-parity allowlist. An adapter that merely starts can no longer cause an unfinished community provider to be archived. The owner-supplied 21-card replacement set now has a complete source behavior contract; each card still remains independently held if its exact Discord adapter, persistence, cleanup, or visible placement does not validate.
+Provider retirement has two independent gates: the exact adapter must be healthy, and the provider name must be in the reviewed source-parity allowlist. An adapter that merely starts can no longer cause an unfinished community provider to be archived. The owner-supplied set contains 23 feature plugins plus the BDFDB dependency, for 24 files total. Every feature now has a source behavior contract; each replacement still remains independently held if its exact Discord adapter, persistence, cleanup, or visible placement does not validate.
 
 The source status below is current for the RC5 branch. Exact-client validation is deliberately separate because Discord is in use and was not restarted for this pass.
 
