@@ -41,6 +41,10 @@
 .solcord-panel { position: relative; isolation: isolate; box-sizing: border-box; container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%; padding: 0 clamp(20px, 2.8vw, 34px) 52px; color: var(--header-primary, var(--text-normal)); background: var(--sc-surface-0); font-family: var(--sc-font-body); font-kerning: normal; font-synthesis: none; text-rendering: optimizelegibility; --sc-text: var(--header-primary, var(--text-normal)); --sc-muted: color-mix(in srgb, var(--header-primary, var(--text-normal)) 82%, var(--background-primary)); --sc-border: color-mix(in srgb, var(--header-primary, var(--text-normal)) 18%, transparent); --sc-border-strong: color-mix(in srgb, var(--header-primary, var(--text-normal)) 34%, transparent); --text-muted: var(--sc-muted); }
 .solcord-panel::before { position: absolute; z-index: -2; inset: 0; content: ""; pointer-events: none; background-image: var(--sc-field-grain); background-size: 180px 180px; opacity: 0.026; }
 .solcord-panel.solcord-density-compact { --sc-space-3: 9px; --sc-space-4: 12px; --sc-space-5: 18px; }
+.solcord-panel.solcord-density-compact .solcord-workspace-nav button { min-height: 32px; padding-block: 6px; }
+.solcord-panel.solcord-density-compact .solcord-section { padding-block: 14px 16px; }
+.solcord-panel.solcord-density-compact :is(.solcord-setting-rows > label, .solcord-setting-row) { min-height: 46px; padding-block: 6px; }
+.solcord-panel.solcord-density-compact .solcord-native-row { padding-block: 7px; }
 
 /* Product appearance is applied to the whole Discord renderer. The data
  * attributes are owned by SolcordRuntime; Follow Discord deliberately has no
@@ -284,24 +288,116 @@ html:not([data-solcord-accent="system"])[data-solcord-accent] :is(#app-mount, .t
     --button-filled-brand-background: var(--sc-runtime-accent);
     --button-filled-brand-background-hover: var(--sc-runtime-accent-hover);
     --button-filled-brand-text: var(--sc-runtime-on-accent);
+    --focus-primary: var(--sc-runtime-accent);
+    --input-border-focus: var(--sc-runtime-accent);
+    --text-brand: var(--sc-runtime-accent);
+    --control-brand-foreground: var(--sc-runtime-accent);
+    --control-brand-foreground-new: var(--sc-runtime-accent);
+    --background-modifier-hover: color-mix(in srgb, var(--sc-runtime-accent) 9%, transparent);
+    --background-modifier-active: color-mix(in srgb, var(--sc-runtime-accent) 15%, transparent);
+    --background-modifier-selected: color-mix(in srgb, var(--sc-runtime-accent) 21%, transparent);
+    --background-mod-subtle: color-mix(in srgb, var(--sc-runtime-accent) 8%, transparent);
+    --background-mod-normal: color-mix(in srgb, var(--sc-runtime-accent) 14%, transparent);
+    --background-mod-strong: color-mix(in srgb, var(--sc-runtime-accent) 20%, transparent);
 }
 html:not([data-solcord-accent="system"])[data-solcord-accent] .solcord-panel { --sc-accent: var(--sc-runtime-accent); }
 
+/* Density is a shell-level rhythm, not a message-spacing hint. Keep the
+ * contract on stable region boundaries and let volatile descendants inherit
+ * the dimensions. Comfortable is explicit so switching back restores every
+ * surface without a reload. */
+html[data-solcord-density="comfortable"] {
+    --sc-density-channel-height: 38px;
+    --sc-density-member-height: 44px;
+    --sc-density-friend-height: 54px;
+    --sc-density-composer-height: 44px;
+    --sc-density-message-space: 0.42rem;
+}
+
 html[data-solcord-density="compact"] {
-    --custom-message-spacing-vertical-container-cozy: 0.24rem;
+    --sc-density-channel-height: 30px;
+    --sc-density-member-height: 36px;
+    --sc-density-friend-height: 44px;
+    --sc-density-composer-height: 38px;
+    --sc-density-message-space: 0.16rem;
+    --custom-message-spacing-vertical-container-cozy: var(--sc-density-message-space);
     --custom-message-spacing-vertical-container-compact: 0.06rem;
 }
-html[data-solcord-density="compact"] #app-mount :is([class*="sidebarList_"], [class*="privateChannels_"], [class*="membersWrap_"]) [class*="link_"] { min-height: 30px; }
-html[data-solcord-density="compact"] #app-mount li[id^="chat-messages-"] { margin-block: 0; }
+
+html[data-solcord-density] :is(#app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --custom-message-spacing-vertical-container-cozy: var(--sc-density-message-space);
+}
+
+html[data-solcord-density] #app-mount :is([class*="sidebarList_"], [class*="privateChannels_"]) :is([class*="link_"], [class*="channel_"]) {
+    height: var(--sc-density-channel-height);
+    min-height: var(--sc-density-channel-height);
+}
+html[data-solcord-density] #app-mount [class*="membersWrap_"] [class*="member_"] { height: var(--sc-density-member-height); min-height: var(--sc-density-member-height); }
+html[data-solcord-density] #app-mount [class*="peopleListItem_"] { height: var(--sc-density-friend-height); min-height: var(--sc-density-friend-height); }
+html[data-solcord-density] #app-mount [class*="channelTextArea_"] [class*="scrollableContainer_"] { min-height: var(--sc-density-composer-height); }
+html[data-solcord-density="compact"] #app-mount li[id^="chat-messages-"] { margin-block: 0; padding-block: 1px; }
+html[data-solcord-density="comfortable"] #app-mount li[id^="chat-messages-"] { padding-block: 3px; }
+
+/* Discord intentionally softens account controls. On a light Solcord shell
+ * that opacity pushed the microphone, headphones, status and settings icons
+ * below useful graphical contrast. Preserve semantic status colors while
+ * making the actual controls readable. */
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] {
+    --interactive-normal: #403C38;
+    --interactive-hover: #1F1D1B;
+    --interactive-active: #171513;
+    --interactive-muted: #5F5953;
+    --icon-primary: #24211F;
+    --icon-secondary: #403C38;
+    --icon-tertiary: #5F5953;
+}
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is(button, [role="button"], [class*="button_"]) {
+    color: var(--interactive-normal);
+}
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is(button, [role="button"], [class*="button_"]):not(:disabled, [aria-disabled="true"]) {
+    opacity: 1;
+}
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is(button, [role="button"], [class*="button_"]):not([aria-pressed="true"], [aria-checked="true"]):is(:hover, :focus-visible) {
+    color: var(--interactive-hover);
+}
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is([aria-pressed="true"], [aria-checked="true"], [data-state="checked"], [class*="danger_"]) {
+    color: var(--status-danger, var(--sc-app-danger));
+}
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is([class*="nameTag_"], [class*="title_"], [class*="username_"]) { color: var(--sc-app-text); }
+html[data-solcord-mode="solcord-light"] #app-mount [class*="panels_"] :is([class*="subtext_"], [class*="hovered_"], [class*="description_"]) { color: var(--sc-app-muted); }
 
 html[data-solcord-message-shape="seamed"] #app-mount li[id^="chat-messages-"] {
     border-bottom: 1px solid color-mix(in srgb, var(--border-subtle, currentcolor) 62%, transparent);
     border-radius: 0;
 }
 
+html[data-solcord-effective-motion="full"] { --sc-motion-duration: 180ms; --sc-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1); }
+html[data-solcord-effective-motion="subtle"] { --sc-motion-duration: 110ms; --sc-motion-ease: ease-out; }
+html[data-solcord-effective-motion="reduced"] { --sc-motion-duration: 0.01ms; --sc-motion-ease: linear; }
+
+html[data-solcord-effective-motion] #app-mount :is([class*="sidebarList_"], [class*="privateChannels_"], [class*="membersWrap_"], [class*="peopleList_"]) :is([class*="link_"], [class*="channel_"], [class*="member_"], [class*="peopleListItem_"]),
+html[data-solcord-effective-motion] #app-mount [class*="panels_"] :is(button, [role="button"]) {
+    transition-duration: var(--sc-motion-duration);
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-timing-function: var(--sc-motion-ease);
+}
+
+/* Defense in depth: the runtime also avoids creating these nodes when the
+ * resolved policy forbids ambient work. If a stale adapter survives a live
+ * profile change, Lean/Balanced and reduced motion still cannot paint it. */
+html:not([data-solcord-performance="visual"]) [data-solcord-ambient-effect],
+html[data-solcord-effective-motion="reduced"] [data-solcord-ambient-effect] {
+    display: none !important;
+    visibility: hidden !important;
+    animation: none !important;
+}
+
 html[data-solcord-motion="reduced"] #app-mount *,
 html[data-solcord-motion="reduced"] #app-mount *::before,
-html[data-solcord-motion="reduced"] #app-mount *::after {
+html[data-solcord-motion="reduced"] #app-mount *::after,
+html[data-solcord-effective-motion="reduced"] #app-mount *,
+html[data-solcord-effective-motion="reduced"] #app-mount *::before,
+html[data-solcord-effective-motion="reduced"] #app-mount *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
@@ -309,15 +405,7 @@ html[data-solcord-motion="reduced"] #app-mount *::after {
     animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
 }
-html[data-solcord-effective-motion="reduced"] #app-mount * {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
-    animation-duration: 0.01ms !important;
-    animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
-}
-html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, select, summary) { transition-duration: 110ms; transition-timing-function: ease-out; }
+html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, select, summary) { transition-duration: var(--sc-motion-duration); transition-timing-function: var(--sc-motion-ease); }
 .solcord-panel *,
 .solcord-panel *::before,
 .solcord-panel *::after { box-sizing: border-box; }
@@ -343,18 +431,18 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-workspace-nav small { color: var(--sc-muted); line-height: 1.3; overflow-wrap: anywhere; }
 .solcord-workspace-switcher { display: none; }
 .solcord-workspace { min-width: 0; }
-.solcord-workspace-heading { padding: 3px 0 var(--sc-space-4); border-bottom: 1px solid var(--sc-border); }
-.solcord-workspace-heading h2 { margin: 0 0 4px; font-family: var(--font-primary, var(--sc-font-body)); font-size: clamp(20px, 2.4vw, 24px); font-weight: 700; line-height: 1.15; letter-spacing: -0.015em; }
-.solcord-workspace-heading p { max-width: 64ch; margin: 0; color: var(--sc-muted); font-size: 13px; }
-.solcord-segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--sc-space-3) 0; overflow: hidden; border-block: 1px solid var(--sc-border-strong); }
-.solcord-segmented button { display: grid; gap: 4px; min-height: 76px; padding: 12px; color: var(--sc-text); background: var(--sc-surface-1); border: 0; border-right: 1px solid var(--sc-border); text-align: left; cursor: pointer; }
-.solcord-segmented button:last-child { border-right: 0; }
-.solcord-segmented button:hover { background: var(--sc-surface-2); }
-.solcord-segmented button[aria-checked="true"] { background: color-mix(in srgb, var(--sc-accent) 13%, var(--sc-surface-1)); box-shadow: inset 0 -3px var(--sc-accent); }
+.solcord-workspace-heading { padding: 3px 0 20px; }
+.solcord-workspace-heading h2 { margin: 0 0 8px; font-family: var(--font-primary, var(--sc-font-body)); font-size: clamp(20px, 2.4vw, 24px); font-weight: 700; line-height: 1.15; letter-spacing: -0.015em; }
+.solcord-workspace-heading p { max-width: 64ch; margin: 0; color: var(--sc-muted); font-size: 13px; line-height: 1.45; }
+.solcord-segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: var(--sc-space-3) 0; }
+.solcord-segmented button { display: grid; gap: 6px; min-height: 72px; padding: 11px 12px; color: var(--sc-text); background: transparent; border: 0; border-radius: 4px; text-align: left; cursor: pointer; }
+.solcord-segmented button:hover { background: var(--sc-surface-1); }
+.solcord-segmented button[aria-checked="true"] { background: color-mix(in srgb, var(--sc-accent) 12%, var(--sc-surface-1)); box-shadow: inset 0 -3px var(--sc-accent); }
 .solcord-segmented small { color: var(--sc-muted); line-height: 1.35; }
 .solcord-policy-facts { margin-top: var(--sc-space-3); }
-.solcord-setting-rows { display: grid; border-top: 1px solid var(--sc-border); }
-.solcord-setting-rows > label { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 54px; padding: 10px 0; border-bottom: 1px solid var(--sc-border); }
+.solcord-setting-rows { display: grid; gap: 4px; }
+.solcord-setting-rows > label { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 54px; padding: 9px 8px; border: 0; border-radius: 4px; }
+.solcord-setting-rows > label:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-setting-rows > label > span { display: grid; gap: 3px; min-width: 0; }
 .solcord-setting-rows small { color: var(--sc-muted); line-height: 1.35; }
 :is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"] { appearance: none; position: relative; width: 38px; height: 22px; flex: 0 0 38px; margin: 0; background: var(--sc-surface-2); border: 1px solid var(--sc-border-strong); border-radius: 999px; cursor: pointer; transition: background-color 110ms ease-out, border-color 110ms ease-out; }
@@ -363,13 +451,14 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 :is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:checked::after { background: var(--sc-surface-0); transform: translateX(16px); }
 :is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:focus-visible { outline: 3px solid var(--solcord-focus, var(--solcord-sea)); outline-offset: 2px; }
 :is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.48; }
-.solcord-inline-options { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; color: var(--sc-text); background: var(--sc-surface-1); border-bottom: 1px solid var(--sc-border); }
+.solcord-inline-options { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; color: var(--sc-text); background: var(--sc-surface-1); border: 0; }
 .solcord-inline-options label { display: flex; align-items: center; gap: 7px; }
-.solcord-media-shelf { margin-top: var(--sc-space-4); border-top: 1px solid var(--sc-border); }
+.solcord-media-shelf { margin-top: var(--sc-space-4); }
 .solcord-media-shelf > summary { padding: 12px 0; color: var(--sc-text); font-weight: 650; cursor: pointer; }
 .solcord-media-shelf > summary small { margin-left: 8px; color: var(--sc-muted); font-weight: 400; }
-.solcord-media-list { display: grid; border-top: 1px solid var(--sc-border); }
-.solcord-media-list > div { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--sc-border); }
+.solcord-media-list { display: grid; gap: 4px; }
+.solcord-media-list > div { display: flex; align-items: center; gap: 8px; padding: 9px 8px; border: 0; border-radius: 4px; }
+.solcord-media-list > div:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-media-list > div > span { display: grid; flex: 1; min-width: 0; }
 .solcord-media-list small { color: var(--sc-muted); }
 .solcord-pulse-list { display: grid; border: 1px solid var(--sc-border); }
@@ -409,9 +498,9 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-domain-memory p,
 .solcord-domain-memory small { display: block; margin: 4px 0; }
 .solcord-permission-card { display: block; margin: 7px 0; color: var(--sc-muted); }
-.solcord-choice-stack { display: grid; overflow: hidden; border-block: 1px solid var(--border-subtle); }
-.solcord-choice-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 11px 4px; background: transparent; }
-.solcord-choice-row + .solcord-choice-row { border-top: 1px solid var(--sc-border); }
+.solcord-choice-stack { display: grid; gap: 4px; overflow: hidden; }
+.solcord-choice-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 8px; background: transparent; border: 0; border-radius: 4px; }
+.solcord-choice-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-choice-row > span { display: grid; gap: 3px; }
 .solcord-choice-row small { color: var(--sc-muted); line-height: 1.4; }
 .solcord-legacy-themes { margin-top: var(--sc-space-4); }
@@ -437,25 +526,27 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-eyebrow { color: var(--solcord-accent-text, var(--solcord-sea)) !important; font: 650 10px/1.2 var(--sc-font-code); text-transform: uppercase; letter-spacing: 0.15em; }
 .solcord-mark { display: grid; place-items: center; width: 38px; height: 38px; padding: 4px; background: color-mix(in srgb, var(--sc-surface-1) 88%, transparent); border: 1px solid color-mix(in srgb, var(--solcord-sea) 58%, var(--sc-border)); border-radius: 4px; overflow: hidden; }
 .solcord-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.solcord-section { padding: 18px 0 21px; border-bottom: 1px solid var(--sc-border); }
-.solcord-section-heading { display: block; margin-bottom: 13px; }
-.solcord-section-heading h2 { margin: 0; font-family: var(--font-primary, var(--sc-font-body)); font-size: 15px; font-weight: 700; line-height: 1.25; letter-spacing: -0.008em; }
-.solcord-section-heading p { max-width: 64ch; margin: 3px 0 0; color: var(--sc-muted); font-size: 13px; line-height: 1.38; }
+.solcord-section { padding: 20px 0 24px; border: 0; }
+.solcord-section + .solcord-section { border-top: 1px solid var(--sc-border); }
+.solcord-section-heading { display: block; margin-bottom: 16px; }
+.solcord-section-heading h3 { margin: 0; font-family: var(--font-primary, var(--sc-font-body)); font-size: 15px; font-weight: 700; line-height: 1.25; letter-spacing: -0.008em; }
+.solcord-section-heading p { max-width: 64ch; margin: 8px 0 0; color: var(--sc-muted); font-size: 13px; line-height: 1.45; }
 .solcord-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.solcord-facts { display: grid; gap: 6px; margin: 0; }
-.solcord-facts div { display: grid; grid-template-columns: minmax(140px, 0.7fr) 1fr; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border-subtle); }
+.solcord-facts { display: grid; gap: 2px; margin: 0; }
+.solcord-facts div { display: grid; grid-template-columns: minmax(140px, 0.7fr) 1fr; gap: 12px; padding: 7px 8px; border: 0; border-radius: 4px; }
+.solcord-facts div:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-facts dt { color: var(--text-muted); }
 .solcord-facts dd { margin: 0; overflow-wrap: anywhere; }
 .solcord-ledger { border-left: 2px solid var(--solcord-sea); padding-left: 12px; }
 .solcord-ledger-row { display: grid; grid-template-columns: 112px 120px 1fr; gap: 8px; padding: 7px 0; font-size: 12px; border-bottom: 1px solid var(--border-subtle); }
 .solcord-ledger-row time,
 .solcord-ledger-row span { color: var(--text-muted); }
-.solcord-module-table { border-block: 1px solid var(--border-subtle); overflow: hidden; }
+.solcord-module-table { display: grid; gap: 4px; overflow: hidden; }
 .solcord-daily-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .solcord-daily-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; padding: 13px; background: var(--background-secondary); border: 1px solid var(--border-subtle); border-radius: 0; }
 .solcord-daily-row p { margin: 7px 0 0; color: var(--text-muted); line-height: 1.42; }
-.solcord-module-row { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 14px; background: var(--background-secondary); }
-.solcord-module-row + .solcord-module-row { border-top: 1px solid var(--border-subtle); }
+.solcord-module-row { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 12px 10px; background: transparent; border: 0; border-radius: 4px; }
+.solcord-module-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-module-primary p { margin: 5px 0; color: var(--text-muted); }
 .solcord-module-primary small { color: var(--text-muted); overflow-wrap: anywhere; }
 .solcord-module-name { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
@@ -494,7 +585,7 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-setup-management p { margin: 3px 0 0; }
 .solcord-setup-management .solcord-actions { margin: 0; flex: 0 0 auto; }
 .solcord-setup-management > [role="status"] { flex-basis: 100%; margin: 0; }
-.solcord-wizard { overflow: hidden; color: var(--text-normal); background: var(--background-primary); border-block: 1px solid var(--border-subtle); }
+.solcord-wizard { overflow: hidden; color: var(--text-normal); background: var(--background-primary); border: 0; }
 .solcord-wizard-paused { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; }
 .solcord-wizard-paused p { margin: 4px 0 0; color: var(--text-muted); }
 .solcord-wizard[aria-busy="true"] { cursor: progress; }
@@ -524,11 +615,15 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-wizard-inline-heading h3 { margin: 0 0 4px; }
 .solcord-wizard-inline-heading p { margin: 0; color: var(--text-muted); }
 .solcord-wizard-inline-heading .solcord-actions { margin: 0; flex: 0 0 auto; }
-.solcord-wizard-body + .solcord-wizard-body { min-height: 0; padding-top: 8px; border-top: 1px solid var(--sc-border); }
-.solcord-features-advanced { margin: 0 0 18px; border-block: 1px solid var(--sc-border); }
+.solcord-wizard-body + .solcord-wizard-body { min-height: 0; padding-top: 8px; }
+.solcord-features-advanced { margin: 0 0 18px; border: 0; }
 .solcord-features-advanced > summary { display: flex; align-items: center; min-height: 46px; color: var(--sc-text); font-weight: 650; cursor: pointer; }
 .solcord-features-advanced > .solcord-wizard-body { min-height: 0; padding-top: 10px; }
-.solcord-apply-summary { margin-bottom: 18px; padding: 12px 0; border-block: 1px solid var(--sc-border); }
+.solcord-disclosure-summary > span { display: grid; gap: 2px; min-width: 0; padding: 8px 0; }
+.solcord-disclosure-summary strong,
+.solcord-disclosure-summary small { display: block; }
+.solcord-disclosure-summary small { color: var(--sc-muted); font-size: 12px; font-weight: 450; line-height: 1.35; }
+.solcord-apply-summary { margin-bottom: 18px; padding: 10px 0; border: 0; }
 .solcord-apply-summary > p { margin: 0 0 10px; color: var(--sc-muted); }
 .solcord-callout { margin: 14px 0 0; padding: 10px 12px; color: var(--solcord-callout-text, var(--text-muted)); background: color-mix(in srgb, var(--solcord-sea) 7%, var(--background-tertiary)); border-left: 2px solid var(--solcord-sea); line-height: 1.45; }
 .solcord-callout code { color: var(--text-normal); font-size: 0.92em; }
@@ -564,14 +659,17 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-theme-paper-signal .solcord-theme-swatch i:nth-child(2) { background: #24211F; }
 .solcord-theme-paper-signal .solcord-theme-swatch i:nth-child(3) { background: #E36F5C; }
 .solcord-theme-paper-signal .solcord-theme-swatch i:nth-child(4) { background: #2C8984; }
-.solcord-addon-groups { display: grid; gap: 10px; margin-top: 16px; }
-.solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; margin: 0; padding: 8px 12px 10px; border: 1px solid var(--border-subtle); }
-.solcord-addon-group legend { padding: 0 6px; font-weight: 700; }
-.solcord-addon-group legend small { margin-left: 8px; color: var(--text-muted); font-weight: 400; }
-.solcord-addon-choice { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); }
+.solcord-addon-groups { display: grid; gap: 18px; margin-top: 18px; }
+.solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px; margin: 0; padding: 4px 0 0; border: 0; min-inline-size: 0; }
+.solcord-addon-group legend { grid-column: 1 / -1; width: 100%; margin: 0 0 4px; padding: 0; font-weight: 700; }
+.solcord-addon-group legend span,
+.solcord-addon-group legend small { display: block; }
+.solcord-addon-group legend small { margin-top: 2px; color: var(--text-muted); font-weight: 400; line-height: 1.35; }
+.solcord-addon-choice { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: start; min-width: 0; padding: 8px 0; }
 .solcord-addon-choice input { margin-top: 2px; accent-color: var(--solcord-sea); }
 .solcord-addon-choice > span:nth-child(2) { display: grid; gap: 2px; }
 .solcord-addon-choice small { color: var(--text-muted); line-height: 1.35; }
+.solcord-addon-choice .solcord-review-chip { align-self: start; max-width: 16ch; white-space: normal; text-align: right; line-height: 1.2; }
 .solcord-provider-choice { grid-column: 1 / -1; margin: -2px 0 8px 30px; padding: 9px 11px 10px; border: 1px solid color-mix(in srgb, var(--solcord-sea) 42%, var(--border-subtle)); border-radius: 5px; }
 .solcord-provider-choice legend { padding: 0 5px; color: var(--text-normal); font-size: 12px; }
 .solcord-provider-choice label { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; }
@@ -584,14 +682,14 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-catalog-controls label { display: grid; gap: 5px; color: var(--text-muted); font-size: 12px; }
 .solcord-catalog-controls :is(select, input),
 .solcord-timeline-toolbar select { box-sizing: border-box; min-height: 36px; padding: 7px 9px; color: var(--text-normal); background: var(--input-background); border: 1px solid var(--border-subtle); border-radius: 4px; }
-.solcord-power-list { display: grid; gap: 0; border: 1px solid var(--border-subtle); }
-.solcord-power-list > :last-child { border-bottom: 0; }
-.solcord-power-control { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 58px; padding: 12px 0; border-block: 1px solid var(--sc-border); }
+.solcord-power-list { display: grid; gap: 4px; border: 0; }
+.solcord-power-control { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 58px; padding: 10px 8px; border: 0; border-radius: 4px; }
+.solcord-power-control:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-power-control > div { min-width: 0; }
 .solcord-power-control p { margin: 4px 0 0; color: var(--sc-muted); line-height: 1.4; }
-.solcord-provider-summary { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)) auto; align-items: center; border-block: 1px solid var(--sc-border); }
+.solcord-provider-summary { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)) auto; gap: 6px 16px; align-items: center; border: 0; }
 .solcord-provider-summary > div { display: grid; gap: 2px; min-height: 58px; padding: 10px 14px 10px 0; }
-.solcord-provider-summary > div + div { padding-left: 14px; border-left: 1px solid var(--sc-border); }
+.solcord-provider-summary > div + div { padding-left: 0; border: 0; }
 .solcord-provider-summary strong { color: var(--sc-text); font-size: 16px; }
 .solcord-provider-summary span { color: var(--sc-muted); font-size: 12px; }
 .solcord-provider-summary > .solcord-action { margin-left: 14px; }
@@ -601,7 +699,7 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-review-columns > div { padding: 12px; border-left: 2px solid var(--solcord-amber); background: var(--background-tertiary); }
 .solcord-review-columns ul { margin: 8px 0 0; padding-left: 20px; }
 .solcord-review-columns p { color: var(--text-muted); }
-.solcord-review-details { margin-top: 14px; border-block: 1px solid var(--sc-border); }
+.solcord-review-details { margin-top: 14px; border: 0; }
 .solcord-review-details > summary { min-height: 44px; display: flex; align-items: center; color: var(--sc-text); font-weight: 680; cursor: pointer; }
 .solcord-review-details[open] { padding-bottom: 12px; }
 .solcord-curated-groups { display: grid; gap: 6px; }
@@ -656,16 +754,19 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-link-result ul { margin: 8px 0 0; padding-left: 20px; }
 .solcord-inline-field { display: flex; gap: 8px; margin-top: 14px; }
 .solcord-inline-field input { flex: 1; min-width: 0; }
+.solcord-inline-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; margin-top: 6px; padding-inline-start: 10px; border-inline-start: 2px solid var(--solcord-sea); color: var(--text-muted); }
+.solcord-inline-status .solcord-action { flex: 0 0 auto; }
 .solcord-file-import { display: grid; gap: 6px; margin-top: 12px; color: var(--text-muted); }
 .solcord-file-import input,
 .solcord-panel input[type="file"] { box-sizing: border-box; display: block; width: 100%; min-width: 0; max-width: 100%; overflow: hidden; color: var(--text-normal); }
 .solcord-profile-addon-optin { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; color: var(--text-muted); line-height: 1.4; }
 .solcord-profile-addon-optin input { margin-top: 2px; accent-color: var(--solcord-sea); }
 .solcord-import-status { margin: 8px 0 0; color: var(--text-muted); }
-.solcord-control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block: 1px solid var(--sc-border); }
-.solcord-control-grid label { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 44px; padding: 9px 4px; background: transparent; border-bottom: 1px solid var(--sc-border); }
+.solcord-control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.solcord-control-grid label { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 44px; padding: 9px 8px; background: transparent; border: 0; border-radius: 4px; }
+.solcord-control-grid label:hover { background: var(--sc-surface-1); }
 .solcord-control-grid label:nth-child(odd) { padding-right: 16px; }
-.solcord-control-grid label:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--sc-border); }
+.solcord-control-grid label:nth-child(even) { padding-left: 16px; }
 .solcord-control-grid input { accent-color: var(--solcord-sea); }
 .solcord-control-grid .solcord-range-control { grid-column: span 2; display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; }
 .solcord-range-control output { min-width: 88px; color: var(--text-muted); text-align: right; }
@@ -686,10 +787,12 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-about-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
 .solcord-about-grid p { margin: 0; line-height: 1.5; }
 .solcord-attribution { margin: 18px 0 0; padding-top: 12px; color: var(--text-muted); border-top: 1px solid var(--border-subtle); }
-.solcord-empty { color: var(--text-muted); font-style: italic; line-height: 1.45; }
+.solcord-empty { margin: 10px 0; color: var(--text-muted); font-style: normal; line-height: 1.45; }
 .solcord-error { color: var(--status-danger); font-weight: 600; line-height: 1.45; }
-.solcord-local-overlay { position: fixed; z-index: 2147483646; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 68%); }
+.solcord-local-overlay { position: fixed; z-index: 2147483646; inset: 0; display: grid; place-items: center; padding: 24px; pointer-events: auto !important; background: rgb(0 0 0 / 68%); }
 .solcord-local-dialog { width: min(520px, 100%); max-height: min(680px, 90vh); overflow: auto; isolation: isolate; color-scheme: dark; padding: 20px; color: #F2F4F7; background: #181B1F; border: 1px solid #414750; border-top: 3px solid var(--solcord-sea); border-radius: 7px; box-shadow: 0 16px 46px rgb(0 0 0 / 58%); }
+.solcord-local-dialog,
+.solcord-local-dialog :where(button, input, select, textarea) { pointer-events: auto !important; }
 .solcord-local-dialog h2 { margin: 0 0 8px; }
 .solcord-local-dialog p,
 .solcord-local-dialog li { color: #C7CDD5; line-height: 1.45; }
@@ -701,7 +804,26 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-command-list { display: grid; gap: 5px; margin-top: 10px; }
 .solcord-command-list button { text-align: left; }
 .solcord-local-dialog input { box-sizing: border-box; width: 100%; padding: 9px; color: var(--text-normal); background: var(--input-background); border: 1px solid var(--border-subtle); border-radius: 4px; }
-.solcord-performance-overlay { position: fixed; z-index: 2147483645; left: 12px; bottom: 12px; padding: 5px 8px; color: var(--solcord-cream); background: rgb(23 26 28 / 92%); border-left: 2px solid var(--solcord-sea); border-radius: 3px; font: 600 11px/1.4 var(--font-code); pointer-events: none; }
+.solcord-performance-overlay {
+    position: fixed;
+    z-index: 10000;
+    inset-block-start: max(52px, calc(env(safe-area-inset-top, 0px) + 52px));
+    inset-inline-end: max(12px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+    inline-size: max-content;
+    max-inline-size: min(360px, calc(100vw - 24px));
+    padding: 7px 10px;
+    overflow-wrap: anywhere;
+    color: var(--text-normal, var(--sc-app-text, #F2F4F7));
+    background: var(--background-floating, var(--sc-app-surface-3, #181B1F));
+    border: 1px solid var(--border-strong, var(--sc-app-border-strong, #505862));
+    border-inline-start: 3px solid var(--sc-runtime-accent, var(--solcord-sea));
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+    contain: layout paint style;
+    font: 600 11px/1.4 var(--sc-font-code, var(--font-code, "Cascadia Code", consolas, monospace));
+    pointer-events: none;
+}
 
 @container solcord-panel (max-width: 720px) {
     .solcord-setup-banner { align-items: stretch; flex-direction: column; }
@@ -746,16 +868,18 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 
 .solcord-native-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 10px; color: var(--sc-muted); font-size: 12px; }
 .solcord-native-summary strong { color: var(--sc-text); }
-.solcord-health-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; border-block: 1px solid var(--sc-border); }
-.solcord-health-strip span { padding: 9px 10px; color: var(--sc-muted); font-size: 12px; }
-.solcord-health-strip span + span { border-left: 1px solid var(--sc-border); }
+.solcord-health-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.solcord-health-strip span { padding: 9px 10px; color: var(--sc-muted); background: var(--sc-surface-1); border: 0; border-radius: 4px; font-size: 12px; }
 .solcord-health-strip strong { display: block; color: var(--sc-text); font-size: 16px; font-variant-numeric: tabular-nums; }
 .solcord-state-help { margin: 0 0 10px; color: var(--sc-muted); font-size: 12px; }
 .solcord-state-help summary { width: fit-content; cursor: pointer; font-weight: 650; }
 .solcord-state-help p { max-width: 72ch; margin: 7px 0 0; line-height: 1.4; }
-.solcord-native-ledger { border-block: 1px solid var(--sc-border); }
-.solcord-native-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--sc-border); }
-.solcord-native-row:last-child { border-bottom: 0; }
+.solcord-native-ledger { display: grid; gap: 4px; }
+.solcord-native-row { display: grid; grid-template-columns: minmax(132px, max-content) minmax(18ch, 1fr) auto; column-gap: 18px; row-gap: 6px; align-items: center; min-width: 0; padding: 9px 8px; border: 0; border-radius: 4px; }
+.solcord-native-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }
+.solcord-native-title { grid-column: 1; min-width: 0; }
+.solcord-native-replaces { grid-column: 2; min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.solcord-native-row > .solcord-capability { grid-column: 3; }
 .solcord-native-row p { margin: 3px 0; color: var(--text-muted); }
 .solcord-native-row small { color: var(--text-muted); }
 .solcord-capability { justify-self: end; color: var(--sc-muted); font-size: 10px; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -765,16 +889,23 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-capability-unsupported { color: var(--solcord-danger-text, var(--status-danger)); }
 .solcord-native-unavailable-list { margin-top: 10px; color: var(--sc-muted); }
 .solcord-native-unavailable-list > summary { padding: 8px 0; cursor: pointer; font-size: 12px; font-weight: 650; }
-.solcord-native-unavailable-list > div { display: grid; grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr); gap: 12px; padding: 8px 0; border-top: 1px solid var(--sc-border); }
-.solcord-native-context-status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 10px; border-block: 1px solid var(--sc-border); }
-.solcord-native-context-status > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 4px; background: transparent; border-bottom: 1px solid var(--sc-border); }
+.solcord-native-unavailable-list > div { display: grid; grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr); gap: 12px; padding: 8px; border: 0; border-radius: 4px; }
+.solcord-native-unavailable-list > div:is(:hover, :focus-within) { background: var(--sc-surface-1); }
+.solcord-native-context-status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 20px; margin-bottom: 10px; }
+.solcord-native-context-status > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 4px; background: transparent; border: 0; }
 .solcord-native-context-status > div:nth-child(odd) { padding-right: 14px; }
-.solcord-native-context-status > div:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--sc-border); }
-.solcord-native-tools { display: grid; gap: 0; margin-top: 12px; border-top: 1px solid var(--sc-border); }
-.solcord-native-tools > details { display: block; padding: 0 0 10px; border-bottom: 1px solid var(--sc-border); }
-.solcord-native-tools > details > summary { cursor: pointer; padding: 11px 2px; color: var(--header-primary); font-weight: 650; }
+.solcord-native-context-status > div:nth-child(even) { padding-left: 14px; }
+.solcord-native-tools { display: grid; gap: 8px; margin-top: 14px; }
+.solcord-native-tools > details { display: block; padding: 0; border: 0; }
+.solcord-native-tools > details > summary { cursor: pointer; padding: 9px 2px; color: var(--header-primary); font-weight: 650; }
 .solcord-native-preview { display: grid; gap: 7px; margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--sc-accent); background: var(--sc-surface-raised); }
 .solcord-native-preview p { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 8px; margin: 0; }
+.solcord-glance-row { display: grid; grid-template-columns: minmax(88px, 0.28fr) minmax(0, 1fr) max-content; gap: 10px; align-items: baseline; min-width: 0; padding: 6px 8px; border: 0; border-radius: 4px; }
+.solcord-glance-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }
+.solcord-glance-row > strong,
+.solcord-glance-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.solcord-glance-row > span { color: var(--text-normal); }
+.solcord-glance-row > time { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .solcord-native-preview audio { width: min(100%, 560px); }
 .solcord-voice-waveform { display: flex; min-height: 32px; align-items: center; gap: 2px; overflow: hidden; padding-block: 2px; }
 .solcord-voice-waveform > i { width: 3px; flex: 1 1 3px; border-radius: 2px; background: var(--sc-accent); }
@@ -798,26 +929,27 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-composer-lab textarea { min-height: 96px; resize: vertical; }
 .solcord-catalog-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .solcord-catalog-tools > label { display: grid; gap: 6px; }
-.solcord-secondary-tools { margin-top: 14px; border-block: 1px solid var(--sc-border); }
-.solcord-secondary-tools > summary { min-height: 42px; display: flex; align-items: center; color: var(--sc-text); font-weight: 650; cursor: pointer; }
+.solcord-secondary-tools { margin-top: 14px; border: 0; }
+.solcord-secondary-tools > summary { min-height: 38px; display: flex; align-items: center; width: fit-content; color: var(--sc-text); font-weight: 650; cursor: pointer; }
 .solcord-secondary-tools[open] { padding-bottom: 12px; }
-.solcord-extension-disclosure { margin-top: 14px; border-block: 1px solid var(--sc-border); }
+.solcord-extension-disclosure { margin-top: 18px; padding-top: 12px; border: 0; border-top: 1px solid var(--sc-border); }
 .solcord-extension-disclosure > summary { min-height: 46px; display: flex; align-items: center; color: var(--sc-text); font-weight: 680; cursor: pointer; }
 .solcord-extension-disclosure > summary::after { margin-inline-start: auto; color: var(--sc-muted); content: "Show"; font-size: 11px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
 .solcord-extension-disclosure[open] > summary::after { content: "Hide"; }
 .solcord-extension-disclosure > p { max-width: 68ch; margin: -5px 0 8px; color: var(--sc-muted); font-size: 12px; }
 .solcord-extension-disclosure > .solcord-section { padding-inline: 0; }
 .solcord-setup-reminder,
-.solcord-all-clear { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; margin-top: 16px; padding: 10px 0; border-block: 1px solid var(--sc-border); }
+.solcord-all-clear { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 0; margin: 4px 0 12px; padding: 8px 0; border: 0; }
 .solcord-setup-reminder > span,
 .solcord-all-clear { color: var(--sc-text); }
-.solcord-setup-reminder > span { display: grid; gap: 2px; }
+.solcord-setup-reminder > span { display: grid; gap: 8px; }
 .solcord-setup-reminder small,
 .solcord-all-clear span { color: var(--sc-muted); }
-.solcord-all-clear { justify-content: flex-start; border-left: 3px solid var(--sc-success); padding-left: 12px; }
-.solcord-setting-list { display: grid; border-top: 1px solid var(--sc-border); }
-.solcord-setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; min-height: 56px; padding: 9px 0; border-bottom: 1px solid var(--sc-border); }
-.solcord-setting-row > span:first-child { display: grid; gap: 3px; min-width: 0; }
+.solcord-all-clear { justify-content: flex-start; border-left: 3px solid var(--sc-success); padding: 6px 0 6px 12px; }
+.solcord-setting-list { display: grid; gap: 4px; }
+.solcord-setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; min-height: 56px; padding: 9px 8px; border: 0; border-radius: 4px; }
+.solcord-setting-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }
+.solcord-setting-row > span:first-child { display: grid; gap: 8px; min-width: 0; }
 .solcord-setting-row small { color: var(--sc-muted); line-height: 1.35; }
 .solcord-setting-row select { box-sizing: border-box; min-width: 132px; min-height: 36px; padding: 6px 9px; color: var(--sc-text); background: var(--input-background, var(--sc-surface-2)); border: 1px solid var(--sc-border-strong); border-radius: 4px; }
 .solcord-switch { position: relative; display: inline-flex; width: 36px; height: 20px; flex: 0 0 36px; }
@@ -827,11 +959,13 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-switch input:checked + i { background: var(--sc-accent); border-color: var(--sc-accent); }
 .solcord-switch input:checked + i::after { color: var(--sc-surface-0); transform: translateX(16px); }
 .solcord-switch input:focus-visible + i { outline: 3px solid var(--solcord-focus, var(--solcord-sea)); outline-offset: 2px; }
-.solcord-privacy-summary { margin: 0; padding: 10px 0; color: var(--sc-muted); border-bottom: 1px solid var(--sc-border); line-height: 1.4; }
+.solcord-privacy-summary { margin: 0; padding: 8px 0; color: var(--sc-muted); border: 0; line-height: 1.45; }
 .solcord-privacy-command { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; padding: 0 0 14px; }
 .solcord-privacy-command p { max-width: 68ch; margin: 5px 0 0; color: var(--sc-muted); }
-.solcord-privacy-capabilities { display: grid; margin-top: 14px; border-top: 1px solid var(--sc-border); }
-.solcord-privacy-capabilities > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 52px; padding: 8px 0; border-bottom: 1px solid var(--sc-border); }
+.solcord-privacy-capabilities { display: grid; gap: 4px; margin-top: 14px; }
+.solcord-privacy-capabilities > div { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 52px; padding: 8px 8px 8px 22px; border: 0; border-radius: 4px; }
+.solcord-privacy-capabilities > div::before { position: absolute; left: 8px; width: 6px; height: 6px; content: ""; background: currentcolor; border-radius: 50%; opacity: 0.75; }
+.solcord-privacy-capabilities > div:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-privacy-capabilities > div > span:first-child { display: grid; gap: 2px; text-transform: capitalize; }
 .solcord-privacy-capabilities small { color: var(--sc-muted); text-transform: none; }
 .solcord-privacy-state { font-size: 11px; font-weight: 700; }
@@ -839,26 +973,27 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-privacy-state-needsreview,
 .solcord-privacy-state-degraded { color: var(--sc-warning); }
 .solcord-privacy-state-unsupported { color: var(--sc-muted); }
-.solcord-experimental { margin-top: 18px; border-block: 1px solid var(--sc-border); }
+.solcord-experimental { margin-top: 18px; border: 0; }
 .solcord-experimental > summary { min-height: 46px; display: flex; align-items: center; color: var(--sc-warning); font-weight: 680; cursor: pointer; }
 .solcord-experimental .solcord-section { padding-inline: 0; }
-.solcord-choice-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block: 1px solid var(--sc-border); }
-.solcord-choice-grid-two .solcord-choice-row + .solcord-choice-row { border-top: 0; border-left: 1px solid var(--sc-border); }
+.solcord-choice-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; border: 0; }
+.solcord-choice-grid-two .solcord-choice-row + .solcord-choice-row { border: 0; }
 
 @container solcord-panel (max-width: 760px) {
     .solcord-segmented { grid-template-columns: 1fr; }
-    .solcord-segmented button { border-right: 0; border-bottom: 1px solid var(--sc-border); }
-    .solcord-segmented button:last-child { border-bottom: 0; }
+    .solcord-segmented button { border: 0; }
     .solcord-segmented button[aria-checked="true"] { box-shadow: inset 3px 0 var(--sc-accent); }
     .solcord-catalog-tools { grid-template-columns: 1fr; }
     .solcord-translation-grid { grid-template-columns: 1fr; }
     .solcord-translation-grid textarea,
     .solcord-translation-grid output { grid-column: 1; }
     .solcord-native-preview p { grid-template-columns: 1fr; }
+    .solcord-glance-row { grid-template-columns: 1fr max-content; }
+    .solcord-glance-row > span { grid-column: 1 / -1; grid-row: 2; white-space: normal; }
     .solcord-audience-command { grid-template-columns: 1fr; }
     .solcord-appearance-controls { grid-template-columns: 1fr; }
     .solcord-native-context-status { grid-template-columns: 1fr; }
-    .solcord-native-context-status > div:nth-child(n) { padding-inline: 4px; border-left: 0; }
+    .solcord-native-context-status > div:nth-child(n) { padding-inline: 4px; border: 0; }
     .solcord-section-heading,
     .solcord-split,
     .solcord-about-grid { grid-template-columns: 1fr; }
@@ -867,7 +1002,7 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     .solcord-control-grid label:nth-child(n) { padding-inline: 4px; border-left: 0; }
     .solcord-privacy-command,
     .solcord-choice-grid-two { grid-template-columns: 1fr; }
-    .solcord-choice-grid-two .solcord-choice-row + .solcord-choice-row { border-top: 1px solid var(--sc-border); border-left: 0; }
+    .solcord-choice-grid-two .solcord-choice-row + .solcord-choice-row { border: 0; }
     .solcord-theme-options,
     .solcord-review-columns,
     .solcord-timeline-facts,
@@ -910,13 +1045,17 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     .solcord-theme-option { grid-template-columns: auto minmax(58px, 76px) minmax(0, 1fr); gap: 9px; }
     .solcord-addon-choice { grid-template-columns: auto minmax(0, 1fr); }
     .solcord-addon-choice .solcord-review-chip { grid-column: 2; justify-self: start; white-space: normal; }
+    .solcord-native-row { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
+    .solcord-native-title { grid-column: 1; }
+    .solcord-native-row > .solcord-capability { grid-column: 2; }
+    .solcord-native-replaces { grid-row: 2; grid-column: 1 / -1; }
     .solcord-module-row,
     .solcord-daily-row,
     .solcord-curated-row { grid-template-columns: 1fr; }
     .solcord-toggle { grid-auto-flow: column; justify-content: start; justify-items: start; width: fit-content; }
     .solcord-power-control { align-items: flex-start; flex-direction: column; gap: 10px; }
     .solcord-provider-summary { grid-template-columns: 1fr; }
-    .solcord-provider-summary > div + div { padding-left: 0; border-top: 1px solid var(--sc-border); border-left: 0; }
+    .solcord-provider-summary > div + div { padding-left: 0; border: 0; }
     .solcord-facts div { grid-template-columns: 1fr; gap: 3px; }
     .solcord-inline-field { flex-direction: column; }
     .solcord-inline-field .solcord-action { align-self: flex-start; }
@@ -941,6 +1080,15 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     #app-mount [class*="content_"]:has(.solcord-panel) [class*="contentBody_"] { width: 100%; min-width: 0; }
     #app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] > [class*="panel_"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }
     .solcord-panel { box-sizing: border-box; width: 100%; max-width: 100%; padding-right: 12px; padding-left: 12px; }
+}
+
+@media (max-width: 480px) {
+    .solcord-performance-overlay {
+        inset-block-start: max(44px, calc(env(safe-area-inset-top, 0px) + 44px));
+        inset-inline: 8px;
+        inline-size: auto;
+        max-inline-size: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

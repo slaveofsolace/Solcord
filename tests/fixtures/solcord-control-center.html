@@ -130,7 +130,7 @@
     const action = (label, tone = "neutral") => `<button type="button" class="solcord-action solcord-action-${tone}">${label}</button>`;
     const toggle = (title, copy, checked = false) => `<div class="solcord-setting-row" data-critical="row"><span><strong>${title}</strong><small>${copy}</small></span><label class="solcord-switch"><span class="sr-only">${title}</span><input type="checkbox" ${checked ? "checked" : ""}><i></i></label></div>`;
     const heading = (id) => `<header class="solcord-workspace-heading" data-critical="workspace-heading"><h2 tabindex="-1">${workspaceNames[id][0]}</h2><p>${workspaceNames[id][1]}</p></header>`;
-    const section = (title, summary, body) => `<section class="solcord-section"><div class="solcord-section-heading"><h2>${title}</h2>${summary ? `<p>${summary}</p>` : ""}</div>${body}</section>`;
+            const section = (title, summary, body) => `<section class="solcord-section"><div class="solcord-section-heading"><h3>${title}</h3>${summary ? `<p>${summary}</p>` : ""}</div>${body}</section>`;
     const allClear = `<div class="solcord-all-clear" role="status"><strong>All clear</strong><span>Protection is active and no action is needed.</span></div>`;
 
     const screens = {
@@ -141,7 +141,7 @@
         chat: () => `${heading("chat")}${section("Composer Toolkit", "Small, reversible writing aids with no automatic sends.", `<div class="solcord-setting-list">${toggle("Double-click to reply", "Starts a normal Discord reply from an observed message.", true)}${toggle("Character counter", "Shows draft length without storing message text.", true)}${toggle("Guarded message split", "Previews bounded chunks for manual copy and confirmation.")}</div>`)}${section("Draft tools", "Everything remains local and explicit.", `<label class="solcord-field">Composer sandbox<textarea rows="4">A local preview that is never sent automatically.</textarea></label>`)}`,
         voice: () => `${heading("voice")}${section("Call Context", "Useful call information with complete teardown.", `<div class="solcord-setting-list">${toggle("Call timer", "Shows the current call duration.", true)}${toggle("Voice activity context", "Uses already-loaded call state.", true)}</div>`)}${section("Audience Guard", "Your stream will not start or continue while a denied user is detected in the current call or viewer list.", `<div class="solcord-audience-command"><div><strong>Disarmed</strong><p>Client-side stop guard only. It is not per-person media access control and cannot guarantee zero-frame exposure.</p></div>${action("Arm for this call")}</div>`)}<details class="solcord-experimental"><summary>Experimental</summary>${section("Fake Deafen", "Manual, call-bound, account-risk, and off by default.", `<div class="solcord-setting-row"><span><strong>Scoped Fake Deafen</strong><small>Disarms on disconnect, channel change, account change, drift, recovery, or disable.</small></span><label class="solcord-switch"><span class="sr-only">Scoped Fake Deafen</span><input type="checkbox"><i></i></label></div>`)}</details>`,
         friends: () => `${heading("friends")}${section("Friend Watch", "Opt-in relationship transitions from already-loaded state.", `<p class="solcord-privacy-summary">No messages, no network polling, and no guesses about who blocked whom.</p><div class="solcord-setting-list">${toggle("Keep relationship history", "Account-isolated encrypted local history with a clear retention limit.")}${toggle("Local summary", "Shows one bounded in-app summary after a new transition.")}</div>`)}${section("People & Spaces", "Local organization that never edits Discord servers or profiles.", `<div class="solcord-setting-list">${toggle("Pinned DMs", "Keep chosen conversations easy to reach.", true)}${toggle("Server aliases", "Private names stored only on this device.")}</div>`)}`,
-        extensions: () => `${heading("extensions")}<div class="solcord-all-clear"><strong>Built-ins live with their features</strong><span>Message, voice, privacy, and people tools are managed in the matching workspace.</span></div><details class="solcord-extension-disclosure"><summary>Community plugins</summary><p>Optional plugins, migration, and troubleshooting details stay here until you need them.</p>${section("Provider migration", "A separate, reversible transaction with a verified rollback preview.", `<div class="solcord-setting-row"><span><strong>Duplicate providers</strong><small>No files move until preview and confirmation.</small></span>${action("Preview")}</div>`)}</details>`,
+        extensions: () => `${heading("extensions")}<div class="solcord-all-clear"><strong>Built-ins live with their features</strong><span>Message, voice, privacy, and people tools are managed in the matching workspace.</span></div><div class="solcord-native-ledger" aria-label="Built-in feature summary"><div class="solcord-native-row" data-native-layout><strong class="solcord-native-title">Composer Toolkit</strong><small class="solcord-native-replaces">Replaces CharCounter, CompleteTimestamps, DoubleClickToReply, and guarded SplitLargeMessages</small><span class="solcord-capability solcord-capability-ready">Ready</span></div><div class="solcord-native-row" data-native-layout><strong class="solcord-native-title">People and Spaces</strong><small class="solcord-native-replaces">Replaces BetterFriendList, PinDMs, ServerHider, ServerDetails, and local-only Server Aliases without editing Discord</small><span class="solcord-capability solcord-capability-ready">Ready</span></div></div><details class="solcord-extension-disclosure"><summary>Community plugins</summary><p>Optional plugins, migration, and troubleshooting details stay here until you need them.</p>${section("Provider migration", "A separate, reversible transaction with a verified rollback preview.", `<div class="solcord-setting-row"><span><strong>Duplicate providers</strong><small>No files move until preview and confirmation.</small></span>${action("Preview")}</div>`)}</details>`,
         recovery: () => `${heading("recovery")}${section("Setup", "Resume, rerun, or roll back first setup.", `<div class="solcord-setup-management"><div><strong>${state === "setup" ? "Setup saved for later" : "Setup complete"}</strong><p>Existing plugins, themes, and settings remain protected.</p></div><div class="solcord-actions">${action(state === "setup" ? "Resume setup" : "Run setup again")}${action("Rollback")}</div></div>`)}${section("Plugin Doctor", "Details expand only when something needs attention.", state === "degraded" ? `<div class="solcord-callout solcord-callout-danger"><strong>One addon needs review.</strong><p>It is quarantined and will not re-enable silently.</p></div>` : allClear)}<details class="solcord-secondary-tools"><summary>About and technical information</summary><dl class="solcord-facts"><div><dt>Runtime</dt><dd>Solcord V2 fixture</dd></div><div><dt>Diagnostics</dt><dd>Content-free</dd></div></dl></details>`
     };
 
@@ -216,6 +216,17 @@
         const verticalOverlap = Math.max(0, Math.min(nav.bottom, area.bottom) - Math.max(nav.top, area.top));
         const sideBySide = nav.right <= area.left + 1;
         const stacked = nav.bottom <= area.top + 1;
+        const nativeRowSpacingFailures = [...document.querySelectorAll("[data-native-layout]")].flatMap(row => {
+            const title = row.querySelector(".solcord-native-title")?.getBoundingClientRect();
+            const replacement = row.querySelector(".solcord-native-replaces")?.getBoundingClientRect();
+            const status = row.querySelector(".solcord-capability")?.getBoundingClientRect();
+            if (!title || !replacement || !status) return ["missing-column"];
+            const overlaps = (left, right) => Math.min(left.right, right.right) > Math.max(left.left, right.left) && Math.min(left.bottom, right.bottom) > Math.max(left.top, right.top);
+            if (overlaps(title, replacement) || overlaps(replacement, status) || overlaps(title, status)) return [row.textContent.trim().slice(0, 80)];
+            if (replacement.top < title.bottom && replacement.left - title.right < 8) return [row.textContent.trim().slice(0, 80)];
+            if (status.top < replacement.bottom && status.left - replacement.right < 8) return [row.textContent.trim().slice(0, 80)];
+            return [];
+        });
         const result = {
             scenario: {workspace, state, mode: document.documentElement.dataset.solcordMode, theme: document.documentElement.dataset.solcordFixtureTheme, motion: document.documentElement.dataset.solcordEffectiveMotion, scale: Number(document.documentElement.dataset.solcordFixtureScale), width: innerWidth, height: innerHeight, devicePixelRatio},
             horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -223,6 +234,7 @@
             focusableCount: focusables.length,
             focusFailures,
             workspaceHeadingCount: content.querySelectorAll(":scope > .solcord-workspace-heading").length,
+            nativeRowSpacingFailures,
             navigationRelationship: {sideBySide, stacked, horizontalOverlap: Number(horizontalOverlap.toFixed(2)), verticalOverlap: Number(verticalOverlap.toFixed(2))},
             contrast: {
                 normal: Number(elementContrast(panel).toFixed(2)),
@@ -235,7 +247,7 @@
         };
         const expectedHeadingCount = state === "wizard" ? 0 : 1;
         const contrastSamples = Object.values(result.contrast).filter(value => value !== null);
-        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && result.workspaceHeadingCount === expectedHeadingCount && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked);
+        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && result.workspaceHeadingCount === expectedHeadingCount && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked);
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(result))));
         document.body.dataset.fixtureResult = encoded;
         document.querySelector("#fixture-result").textContent = JSON.stringify(result, null, 2);

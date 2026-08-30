@@ -31,6 +31,8 @@
     --solcord-sea: var(--sct-accent);
     --solcord-coral: var(--sct-alert);
     --solcord-focus: var(--sct-focus);
+    --focus-primary: var(--solcord-focus);
+    --input-border-focus: var(--solcord-focus);
     --solcord-on-accent: var(--sct-on-accent);
     --solcord-accent-text: #8DDED3;
     --solcord-warning-text: #F3B79F;
@@ -104,7 +106,8 @@ body { background: var(--sct-canvas) !important; font-family: "Solcord Hanken", 
 #app-mount { background: var(--sct-canvas) !important; }
 #app-mount :is(h1, h2, h3, [class*="title_"]) { font-family: "gg sans", "Solcord Hanken", "Segoe UI Variable Display", "Segoe UI", sans-serif; font-kerning: normal; letter-spacing: -0.016em; }
 ::selection { color: var(--sct-on-accent); background: var(--sct-accent); }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--sct-focus) !important; outline-offset: 2px; }
+:where(button, [role="button"], a):focus-visible { outline: 3px solid var(--sct-focus) !important; outline-offset: 2px; }
+.solcord-panel :where(input, textarea, select):focus-visible { outline: 2px solid var(--solcord-focus) !important; outline-offset: 2px; }
 
 /* Signature: a single continuous rule ties the shell together. */
 #app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="chatContent_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"]) {
@@ -132,10 +135,10 @@ body { background: var(--sct-canvas) !important; font-family: "Solcord Hanken", 
 #app-mount :is([class*="peopleListItem_"], [class*="itemCard_"]) { border: 0; border-bottom: 1px solid var(--sct-rule); border-radius: 0 !important; background: transparent !important; }
 #app-mount [class*="itemCard_"] { border-left: 3px solid var(--sct-accent-strong); }
 
-#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) { border: 1px solid var(--sct-rule-strong) !important; border-radius: 0 !important; background: #10191E !important; box-shadow: inset 3px 0 0 var(--sct-accent-strong); }
+#app-mount [class*="channelTextArea_"] { border: 1px solid var(--sct-rule-strong) !important; border-radius: 0 !important; background: #10191E !important; box-shadow: inset 3px 0 0 var(--sct-accent-strong); }
 #app-mount :is([class*="menu_"], [class*="modal_"], [role="dialog"]) { border: 1px solid var(--sct-rule-strong); border-radius: 0 !important; background: var(--sct-raised) !important; box-shadow: 10px 10px 0 rgb(0 0 0 / 28%); }
-#app-mount [class*="standardSidebarView_"] :is([class*="sidebarRegion_"], [class*="contentRegion_"]) { border-right: 1px solid var(--sct-rule); background: var(--background-secondary) !important; }
-#app-mount [class*="contentRegion_"] { background: var(--background-primary) !important; }
+#app-mount [class*="standardSidebarView_"] [class*="sidebarRegion_"] { border: 0; border-right: 1px solid var(--sct-rule); background: var(--background-secondary) !important; }
+#app-mount [class*="standardSidebarView_"] [class*="contentRegion_"] { border: 0; background: var(--background-primary) !important; }
 #app-mount [class*="embedFull_"] { border: 1px solid var(--sct-rule) !important; border-left: 3px solid var(--sct-accent) !important; border-radius: 0 !important; }
 #app-mount [class*="newMessagesBar_"] { color: var(--sct-on-accent) !important; background: var(--sct-accent) !important; border-radius: 0 !important; }
 

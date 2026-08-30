@@ -16,6 +16,8 @@ describe("Solcord isolated Control Center fixture", () => {
         expect(fixture).toContain("state === \"wizard\" ? setupScreen()");
         expect(fixture).toContain("Your choices save as you go. Nothing changes until Apply.");
         expect(fixture).toContain("result.workspaceHeadingCount === expectedHeadingCount");
+        expect(fixture).toContain("<div class=\"solcord-section-heading\"><h3>$" + "{title}</h3>");
+        expect(fixture).not.toContain("<div class=\"solcord-section-heading\"><h2>$" + "{title}</h2>");
         expect(fixture).toContain(String.raw`document.querySelector(".solcord-workspace-switcher select").value = workspace;`);
     });
 
@@ -23,6 +25,9 @@ describe("Solcord isolated Control Center fixture", () => {
         for (const contract of ["horizontalOverflow", "clippedOrOverflowingElements", "focusFailures", "normal: Number(elementContrast", "muted: Number(elementContrast", "navigation: Number(elementContrast", "settingTitle:", "settingCopy:", "navigationRelationship", "reducedMotion"]) {
             expect(fixture).toContain(contract);
         }
+        expect(fixture).toContain("nativeRowSpacingFailures");
+        expect(fixture).toContain("People and Spaces");
+        expect(fixture).toContain("replacement.left - title.right < 8");
         expect(renderer).toContain("isolated representative fixture using the production Solcord stylesheet; not live Discord acceptance");
         expect(renderer).toContain("appearance-light-long-320-container");
         expect(renderer).toContain("fixtureWidth=320");
