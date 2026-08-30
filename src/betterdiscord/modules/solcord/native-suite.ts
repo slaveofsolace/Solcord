@@ -85,6 +85,35 @@ export interface SolcordChangeStoreShape {
     removeChangeListener(listener: () => void): void;
 }
 
+export interface SolcordRelationshipStoreShape {
+    getRelationships?(): unknown;
+    getMutableRelationships?(): unknown;
+}
+
+/**
+ * Discord has exposed the loaded relationship snapshot through both names.
+ * Prefer the immutable reader, but accept the mutable-named reader strictly as
+ * a read-only compatibility surface. The returned wrapper rejects arrays and
+ * primitives so Better Friend List cannot advertise readiness on a drifted
+ * store shape.
+ */
+export function resolveSolcordRelationshipReader(store: SolcordRelationshipStoreShape | undefined): (() => Map<unknown, unknown> | Readonly<Record<string, unknown>> | undefined) | undefined {
+    const read = typeof store?.getRelationships === "function"
+        ? store.getRelationships.bind(store)
+        : typeof store?.getMutableRelationships === "function"
+            ? store.getMutableRelationships.bind(store)
+            : undefined;
+    if (!read) return;
+    return () => {
+        try {
+            const value = read();
+            if (value instanceof Map) return value;
+            if (value && typeof value === "object" && !Array.isArray(value)) return value as Readonly<Record<string, unknown>>;
+        }
+        catch {/* A drifting store stays unavailable instead of breaking navigation. */}
+    };
+}
+
 const SOLCORD_VOICE_DOWNLOAD_HOSTS = new Set(["cdn.discordapp.com", "media.discordapp.net"]);
 
 interface SolcordVoiceAnalysisContext {

@@ -34,7 +34,7 @@ import {inspectSolcordDomain, SolcordDomainMemory, type SolcordDomainDecision, t
 import {inspectSolcordAttachment, type SolcordAttachmentInspection} from "@common/solcord/attachment-guard";
 import {normalizeSolcordReturnRoute, SolcordReturnLaterJournal, type SolcordReturnLaterItem} from "@common/solcord/return-later";
 import {audienceGuardHealthMaturity, audienceGuardIdsFromVoiceStates, isAudienceGuardStartAction, isAudienceGuardStopAction, normalizeAudienceGuardEntries, normalizeAudienceGuardIds, normalizeAudienceGuardPrivatePolicy, SolcordStreamAudienceGuard, type SolcordAudienceGuardPrivatePolicy, type SolcordAudienceGuardStatus} from "./stream-audience-guard";
-import {resolveSolcordSpeakingReader, SolcordNativeSuiteController, subscribeSolcordChangeStores, type SolcordNativeSuiteAdapter, type SolcordNativeSuiteStatus} from "./native-suite";
+import {resolveSolcordRelationshipReader, resolveSolcordSpeakingReader, SolcordNativeSuiteController, subscribeSolcordChangeStores, type SolcordNativeSuiteAdapter, type SolcordNativeSuiteStatus} from "./native-suite";
 import {createCachedVoiceHealthReader} from "./voice-health";
 import {SolcordBaselineSuite, type SolcordBaselineSuiteStatus} from "./baseline-suite";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST, solcordV2ArchiveReceiptMatchesPreview, solcordV2QuarantineIdsForArchivedFiles} from "@common/solcord/v2-replacement-manifest";
@@ -2436,8 +2436,10 @@ class SolcordRuntimeStore extends Store {
             ? getStore("MemberCountStore") as {getMemberCount?(guildId: string): number | undefined;} | undefined
             : undefined;
         const relationshipStore = lookups.peopleAndSpaces
-            ? getStore("RelationshipStore") as {getRelationships?(): Record<string, number>; getRelationshipSince?(userId: string): unknown;} | undefined
+            ? getStore("RelationshipStore") as {getRelationships?(): unknown; getMutableRelationships?(): unknown; getRelationshipSince?(userId: string): unknown;} | undefined
             : undefined;
+        const relationshipReader = resolveSolcordRelationshipReader(relationshipStore);
+        const relationshipReaderAvailable = relationshipReader?.() !== undefined;
         const mutualGuildStore = lookups.peopleAndSpaces
             ? getStore("MutualGuildStore") as {getMutualGuilds?(userId: string): unknown;} | undefined
             : undefined;
@@ -2556,20 +2558,21 @@ class SolcordRuntimeStore extends Store {
             };
         };
         const loadedFriends = () => {
-            if (typeof relationshipStore?.getRelationships !== "function" || typeof userStore?.getUser !== "function") return [];
-            const relationships = relationshipStore.getRelationships();
-            if (!relationships || typeof relationships !== "object") return [];
+            if (!relationshipReaderAvailable || typeof userStore?.getUser !== "function") return [];
+            const relationships = relationshipReader?.();
+            if (!relationships) return [];
             const statuses = new Set(["online", "idle", "dnd", "offline"]);
             const relationshipTypes = new Map<number, "friend" | "blocked" | "incoming" | "outgoing" | "ignored">([[1, "friend"], [2, "blocked"], [3, "incoming"], [4, "outgoing"], [5, "ignored"]]);
-            return Object.entries(relationships).flatMap(([id, relationship]) => {
-                const relationshipLabel = relationshipTypes.get(relationship);
+            const entries = relationships instanceof Map ? relationships.entries() : Object.entries(relationships);
+            return [...entries].flatMap(([id, relationship]) => {
+                const relationshipLabel = typeof relationship === "number" ? relationshipTypes.get(relationship) : undefined;
                 if (!relationshipLabel) return [];
                 const normalizedId = normalizeTimelineAccountId(id);
                 const user = normalizedId ? userStore.getUser!(normalizedId) : undefined;
                 if (!normalizedId || user?.id !== normalizedId) return [];
                 const rawStatus = presenceStore?.getStatus?.(normalizedId);
                 const status = typeof rawStatus === "string" && statuses.has(rawStatus) ? rawStatus as "online" | "idle" | "dnd" | "offline" : "unknown" as const;
-                const rawSince = relationshipStore.getRelationshipSince?.(normalizedId);
+                const rawSince = relationshipStore?.getRelationshipSince?.(normalizedId);
                 const sinceCandidate = rawSince instanceof Date ? rawSince.valueOf()
                     : typeof rawSince === "number" ? rawSince
                         : typeof rawSince === "string" ? Date.parse(rawSince)
@@ -2600,7 +2603,8 @@ class SolcordRuntimeStore extends Store {
             const recipientId = normalizeTimelineAccountId(typeof rawRecipient === "string" ? rawRecipient : rawRecipient && typeof rawRecipient === "object" ? (rawRecipient as {id?: unknown;}).id : undefined);
             if (!recipientId) return "others";
             if (userStore?.getUser?.(recipientId)?.bot === true) return "bots";
-            const relationship = relationshipStore?.getRelationships?.()?.[recipientId];
+            const relationships = relationshipReader?.();
+            const relationship = relationships instanceof Map ? relationships.get(recipientId) : relationships?.[recipientId];
             if (relationship === 2) return "blocked";
             if (relationship === 1) return "friends";
             return "others";
@@ -2716,7 +2720,7 @@ class SolcordRuntimeStore extends Store {
             } : undefined,
             saveVoiceNoteFile,
             guildDetails: lookups.peopleAndSpaces && typeof guildStore?.getGuild === "function" ? guildDetails : undefined,
-            loadedFriends: lookups.peopleAndSpaces && typeof relationshipStore?.getRelationships === "function" && typeof userStore?.getUser === "function" ? loadedFriends : undefined,
+            loadedFriends: lookups.peopleAndSpaces && relationshipReaderAvailable && typeof userStore?.getUser === "function" ? loadedFriends : undefined,
             dmUnreadCount: lookups.peopleAndSpaces && typeof readStateStore?.getMentionCount === "function" ? dmUnreadCount : undefined,
             dmLastMessageTimestamp: lookups.peopleAndSpaces && typeof readStateStore?.lastMessageId === "function" ? dmLastMessageTimestamp : undefined,
             dmCategory: lookups.peopleAndSpaces && typeof channelStore?.getChannel === "function" ? dmCategory : undefined,

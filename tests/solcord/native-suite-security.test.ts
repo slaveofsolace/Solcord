@@ -6,6 +6,7 @@ import {
     analyzeSolcordVoiceNote,
     normalizeSolcordVoiceDownloadUrl,
     readBoundedTranslationJson,
+    resolveSolcordRelationshipReader,
     resolveSolcordSpeakingReader,
     SOLCORD_TRANSLATION_RESPONSE_MAX_BYTES,
     SOLCORD_VOICE_NOTE_STOP_TIMEOUT_MS,
@@ -96,6 +97,22 @@ afterEach(() => {
 });
 
 describe("Solcord native-suite security boundaries", () => {
+    test("reads current and legacy relationship-store snapshots without mutating them", () => {
+        const immutable = {101: 1};
+        const immutableReader = resolveSolcordRelationshipReader({getRelationships: () => immutable});
+        expect(immutableReader?.()).toBe(immutable);
+
+        const legacy = new Map([["202", 2]]);
+        const legacyStore = {getMutableRelationships: () => legacy};
+        const legacyReader = resolveSolcordRelationshipReader(legacyStore);
+        expect(legacyReader?.()).toBe(legacy);
+        expect(legacyStore.getMutableRelationships()).toBe(legacy);
+
+        expect(resolveSolcordRelationshipReader({getRelationships: () => []})?.()).toBeUndefined();
+        expect(resolveSolcordRelationshipReader({getMutableRelationships: () => {throw new Error("drift");}})?.()).toBeUndefined();
+        expect(resolveSolcordRelationshipReader({})).toBeUndefined();
+    });
+
     test("derives bounded voice-note duration and waveform locally and always closes audio resources", async () => {
         let closed = 0;
         const result = await analyzeSolcordVoiceNote(new Blob([new Uint8Array([1, 2, 3])]), () => ({
