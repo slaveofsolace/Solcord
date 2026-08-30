@@ -127,7 +127,7 @@ export interface SolcordProductPreferences {
         };
         voiceNotes: {downloadButton: boolean; stripMetadata: boolean;};
         motion: {
-            effect: "off" | "signal" | "snow" | "rain" | "stars";
+            effect: "off" | "signal" | "field" | "snow" | "rain" | "stars";
             particleCount: number;
             color: string;
             opacityPercent: number;
@@ -220,7 +220,7 @@ export function defaultSolcordProductPreferences(): SolcordProductPreferences {
             notifications: {includeDms: true, includeGuilds: true, includeMuted: false},
             timestamps: {chat: true, embeds: true, markup: true, auditLogs: true, chatTooltips: true, editedTooltips: true, markupTooltips: true},
             voiceNotes: {downloadButton: true, stripMetadata: false},
-            motion: {effect: "signal", particleCount: 10, color: "#9fb8ff", opacityPercent: 42, speedPercent: 100, starAngleDegrees: -28, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}},
+            motion: {effect: "field", particleCount: 10, color: "#9fb8ff", opacityPercent: 42, speedPercent: 100, starAngleDegrees: -28, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}},
             composer: {doubleClickReplyModifier: "none", splitBoundary: "balanced", preserveBlankLines: false, splitLimit: 2_000, maxSplitParts: 0, attachmentThreshold: 0, counterWarningPercent: 80, timestampFormat: "full"}
         },
         baseline: {layoutCollapse: false, collapsedRegions: [], embedControls: false, crossPlatformAutoscroll: false, messageLinkPreview: false, mediaShelf: []}
@@ -347,7 +347,9 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             },
             voiceNotes: {downloadButton: voiceNotes.downloadButton !== false, stripMetadata: voiceNotes.stripMetadata === true},
             motion: {
-                effect: choice(motion.effect, ["off", "signal", "snow", "rain", "stars"] as const, "signal"),
+                // `stars` remains readable as a migration alias, but the UI no longer
+                // offers it and Motion Studio renders it through the owner-approved field.
+                effect: choice(motion.effect, ["off", "signal", "field", "snow", "rain", "stars"] as const, "field"),
                 particleCount: Math.max(1, Math.min(24, Number.isFinite(motion.particleCount) ? Math.floor(motion.particleCount as number) : 10)),
                 color: typeof motion.color === "string" && /^#[0-9a-f]{6}$/i.test(motion.color) ? motion.color.toLowerCase() : "#9fb8ff",
                 opacityPercent: Math.max(10, Math.min(100, Number.isFinite(motion.opacityPercent) ? Math.floor(motion.opacityPercent as number) : 42)),

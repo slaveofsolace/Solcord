@@ -125,7 +125,7 @@ describe("Solcord V2 product model", () => {
         expect(normalized.nativeSuite.timestamps).toEqual({chat: false, embeds: false, markup: false, auditLogs: false, chatTooltips: false, editedTooltips: false, markupTooltips: false});
         expect(normalized.nativeSuite.voiceNotes).toEqual({downloadButton: false, stripMetadata: true});
         expect(normalized.nativeSuite.motion).toEqual({effect: "rain", particleCount: 24, color: "#aabbcc", opacityPercent: 10, speedPercent: 300, starAngleDegrees: -75, surfaces: {messages: false, channels: false, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}});
-        expect(normalizeSolcordProductPreferences({nativeSuite: {motion: {effect: "remote-css", particleCount: -2, color: "url(bad)", opacityPercent: 900, speedPercent: -2, starAngleDegrees: 900}}}).nativeSuite.motion).toEqual({effect: "signal", particleCount: 1, color: "#9fb8ff", opacityPercent: 100, speedPercent: 25, starAngleDegrees: 75, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}});
+        expect(normalizeSolcordProductPreferences({nativeSuite: {motion: {effect: "remote-css", particleCount: -2, color: "url(bad)", opacityPercent: 900, speedPercent: -2, starAngleDegrees: 900}}}).nativeSuite.motion).toEqual({effect: "field", particleCount: 1, color: "#9fb8ff", opacityPercent: 100, speedPercent: 25, starAngleDegrees: 75, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}});
     });
 
     test("resolves performance and motion without overriding reduced-motion safety", () => {

@@ -338,6 +338,29 @@ describe("Solcord native-suite security boundaries", () => {
         host.remove();
     });
 
+    test("does not rewrite an unchanged composer counter during repeated input synchronization", () => {
+        const host = document.createElement("div");
+        host.innerHTML = `<div class="channelTextArea_test"><div role="textbox" contenteditable="true">hello</div></div>`;
+        document.body.append(host);
+        const scope = new SolcordDisposalScope();
+        const controller = new SolcordNativeSuiteController(scope, {CharCounter: true}, {});
+        controller.start();
+        controllers.push({controller, scope});
+
+        const counter = host.querySelector<HTMLElement>("[data-solcord-composer-count]")!;
+        const stableText = counter.textContent;
+        let writes = 0;
+        Object.defineProperty(counter, "textContent", {
+            configurable: true,
+            get: () => stableText,
+            set: () => {writes++;}
+        });
+        document.dispatchEvent(new Event("input", {bubbles: true}));
+        document.dispatchEvent(new Event("input", {bubbles: true}));
+        expect(writes).toBe(0);
+        host.remove();
+    });
+
     test("adds bounded counters to loaded note textareas and removes them on teardown", () => {
         const field = document.createElement("textarea");
         field.maxLength = 12;
@@ -621,6 +644,29 @@ describe("Solcord native-suite security boundaries", () => {
         member.remove();
     });
 
+    test("keeps voice-presence nodes stable when the call store repeats the same state", () => {
+        const member = document.createElement("div");
+        member.dataset.userId = "555";
+        member.className = "membersWrap_test";
+        document.body.append(member);
+        let notify: (() => void) | undefined;
+        const scope = new SolcordDisposalScope();
+        const controller = new SolcordNativeSuiteController(scope, {VoiceActivity: true}, {
+            currentCall: () => ({channelId: "777", connectedAt: Date.now(), participantCount: 1, speakerCount: 1, viewerCount: 0, participantIds: ["555"], speakerIds: ["555"]}),
+            subscribeCall: listener => {notify = listener; return () => {};},
+            voiceActivityAvailable: true
+        });
+        controller.start();
+        controllers.push({controller, scope});
+
+        const badge = member.querySelector("[data-solcord-voice-presence]");
+        expect(badge).not.toBeNull();
+        notify?.();
+        notify?.();
+        expect(member.querySelector("[data-solcord-voice-presence]")).toBe(badge);
+        member.remove();
+    });
+
     test("keeps account-local voice ignore rules encrypted with People state and removes indicators immediately", () => {
         const member = document.createElement("div");
         member.dataset.userId = "555";
@@ -697,6 +743,52 @@ describe("Solcord native-suite security boundaries", () => {
         controller.dispose();
         scope.dispose();
         expect(document.querySelector("[data-solcord-ambient-effect]")).toBeNull();
+    });
+
+    test("mounts the owner-approved SOL flow canvas and cancels its frame on teardown", () => {
+        const originalContext = HTMLCanvasElement.prototype.getContext;
+        const originalFrame = globalThis.requestAnimationFrame;
+        const originalCancel = globalThis.cancelAnimationFrame;
+        let nextFrame: FrameRequestCallback | undefined;
+        let strokes = 0;
+        let cancelled = 0;
+        const context = {
+            globalAlpha: 1,
+            globalCompositeOperation: "source-over",
+            fillStyle: "",
+            strokeStyle: "",
+            lineWidth: 1,
+            setTransform() {},
+            save() {},
+            restore() {},
+            fillRect() {},
+            beginPath() {},
+            moveTo() {},
+            quadraticCurveTo() {},
+            stroke() {strokes++;}
+        } as unknown as CanvasRenderingContext2D;
+        HTMLCanvasElement.prototype.getContext = (() => context) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        globalThis.requestAnimationFrame = callback => {nextFrame = callback; return 17;};
+        globalThis.cancelAnimationFrame = handle => {if (handle === 17) cancelled++;};
+        try {
+            const scope = new SolcordDisposalScope();
+            const controller = new SolcordNativeSuiteController(scope, {DiscordEffects: true}, {motionPreferences: {effect: "field", particleCount: 10, color: "#abcdef", opacityPercent: 38, speedPercent: 100, starAngleDegrees: 0, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}}});
+            controller.start();
+            controllers.push({controller, scope});
+            const canvas = document.querySelector<HTMLCanvasElement>("canvas[data-solcord-ambient-effect][data-effect='field']");
+            expect(canvas).not.toBeNull();
+            nextFrame?.(48);
+            expect(strokes).toBeGreaterThan(0);
+            controller.dispose();
+            scope.dispose();
+            expect(canvas?.isConnected).toBeFalse();
+            expect(cancelled).toBeGreaterThan(0);
+        }
+        finally {
+            HTMLCanvasElement.prototype.getContext = originalContext;
+            globalThis.requestAnimationFrame = originalFrame;
+            globalThis.cancelAnimationFrame = originalCancel;
+        }
     });
 
     test("applies Better Animations only to explicitly selected surfaces", () => {

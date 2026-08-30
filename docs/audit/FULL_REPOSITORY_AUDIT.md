@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 556 |
 | Text files scanned | 542 |
 | Binary files classified | 14 |
-| Text lines scanned | 116,692 |
-| Custom Solcord lines | 27,311 |
+| Text lines scanned | 116,922 |
+| Custom Solcord lines | 27,404 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -27,7 +27,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | TODO / FIXME / HACK | 30 | 0 |
 | Timer calls | 45 | 3 |
 | Mutation observers | 15 | 1 |
-| DOM queries | 100 | 26 |
+| DOM queries | 101 | 28 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 26 | 1 |
 | Synchronous filesystem calls | 667 | 601 |
@@ -39,17 +39,17 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
 | 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,209 | 255.0 KiB |
-| 2 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
-| 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
-| 4 | `src/betterdiscord/modules/solcord/native-suite.ts` | 1,368 | 87.5 KiB |
-| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,350 | 135.3 KiB |
+| 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 1,505 | 95.0 KiB |
+| 3 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
+| 4 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
+| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.0 KiB |
 | 6 | `bun.lock` | 1,314 | 141.7 KiB |
 | 7 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 8 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
 | 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,103 | 57.9 KiB |
 | 10 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
-| 11 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
-| 12 | `tests/solcord/native-suite-security.test.ts` | 904 | 46.7 KiB |
+| 11 | `tests/solcord/native-suite-security.test.ts` | 996 | 51.2 KiB |
+| 12 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
 | 13 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 14 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 15 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
@@ -65,10 +65,10 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | ---: | --- | ---: | ---: |
 | 1 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
 | 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
-| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,350 | 135.3 KiB |
+| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.0 KiB |
 | 4 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 5 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
-| 6 | `tests/solcord/native-suite-security.test.ts` | 904 | 46.7 KiB |
+| 5 | `tests/solcord/native-suite-security.test.ts` | 996 | 51.2 KiB |
+| 6 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
 | 7 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
 | 8 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 9 | `src/common/solcord/v2-feature-models.ts` | 656 | 35.8 KiB |
@@ -77,7 +77,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 12 | `tests/solcord/renderer-security.test.ts` | 482 | 34.4 KiB |
 | 13 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
 | 14 | `scripts/soak-solcord-backend.ts` | 468 | 21.1 KiB |
-| 15 | `src/common/solcord/product.ts` | 464 | 23.5 KiB |
+| 15 | `src/common/solcord/product.ts` | 466 | 23.7 KiB |
 | 16 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
 | 17 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
 | 18 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 391 | 35.7 KiB |

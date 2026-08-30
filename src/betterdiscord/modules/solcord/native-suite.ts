@@ -72,7 +72,7 @@ export interface SolcordNativeSuiteAdapter {
     subscribeStreamerMode?(listener: () => void): () => void;
     voiceNotePreferences?: {downloadButton: boolean; stripMetadata: boolean;};
     notificationPreferences?: {includeDms: boolean; includeGuilds: boolean; includeMuted: boolean;};
-    motionPreferences?: {effect: "off" | "signal" | "snow" | "rain" | "stars"; particleCount: number; color: string; opacityPercent: number; speedPercent: number; starAngleDegrees: number; surfaces: {messages: boolean; channels: boolean; servers: boolean; members: boolean; modals: boolean; popouts: boolean; settings: boolean; tooltips: boolean; threads: boolean;};};
+    motionPreferences?: {effect: "off" | "signal" | "field" | "snow" | "rain" | "stars"; particleCount: number; color: string; opacityPercent: number; speedPercent: number; starAngleDegrees: number; surfaces: {messages: boolean; channels: boolean; servers: boolean; members: boolean; modals: boolean; popouts: boolean; settings: boolean; tooltips: boolean; threads: boolean;};};
 }
 
 export interface SolcordSpeakingStoreShape {
@@ -751,6 +751,13 @@ export class SolcordNativeSuiteController {
         };
         const placeEnabled = (surface: ReturnType<typeof timestampSurface>): boolean => surface === "embed" ? timestampPreferences.embeds : surface === "audit" ? timestampPreferences.auditLogs : surface === "markup" ? timestampPreferences.markup : timestampPreferences.chat;
         const tooltipEnabled = (surface: ReturnType<typeof timestampSurface>): boolean => surface === "edited" ? timestampPreferences.editedTooltips : surface === "markup" ? timestampPreferences.markupTooltips : timestampPreferences.chatTooltips;
+        const updateCounter = (counter: HTMLElement, text: string, warning: boolean, overLimit: boolean): void => {
+            if (counter.textContent !== text) counter.textContent = text;
+            const warningValue = String(warning);
+            const overLimitValue = String(overLimit);
+            if (counter.dataset.warning !== warningValue) counter.dataset.warning = warningValue;
+            if (counter.dataset.overLimit !== overLimitValue) counter.dataset.overLimit = overLimitValue;
+        };
         const sync = () => {
             if (providers.includes("CharCounter")) {
                 const editors = document.querySelectorAll<HTMLElement>("[role='textbox'][contenteditable='true']");
@@ -767,9 +774,7 @@ export class SolcordNativeSuiteController {
                         host.append(counter);
                     }
                     const length = (editor.innerText || editor.textContent || "").length;
-                    counter.textContent = `${length.toLocaleString("en-US")} / 2,000`;
-                    counter.dataset.warning = String(length >= 2_000 * (counterWarningPercent / 100));
-                    counter.dataset.overLimit = String(length > 2_000);
+                    updateCounter(counter, `${length.toLocaleString("en-US")} / 2,000`, length >= 2_000 * (counterWarningPercent / 100), length > 2_000);
                 }
                 for (const field of document.querySelectorAll<HTMLTextAreaElement>("textarea[maxlength]")) {
                     const maximum = field.maxLength;
@@ -785,9 +790,7 @@ export class SolcordNativeSuiteController {
                         field.insertAdjacentElement("afterend", counter);
                     }
                     const length = field.value.length;
-                    counter.textContent = `${length.toLocaleString("en-US")} / ${maximum.toLocaleString("en-US")}`;
-                    counter.dataset.warning = String(length >= maximum * (counterWarningPercent / 100));
-                    counter.dataset.overLimit = String(length > maximum);
+                    updateCounter(counter, `${length.toLocaleString("en-US")} / ${maximum.toLocaleString("en-US")}`, length >= maximum * (counterWarningPercent / 100), length > maximum);
                 }
             }
             if (!providers.includes("CompleteTimestamps")) return;
@@ -815,7 +818,9 @@ export class SolcordNativeSuiteController {
             }
         };
         const observer = new MutationObserver(sync);
-        this.#scope.observe(observer, document.body, {childList: true, subtree: true, characterData: true});
+        // Editor input events cover text changes. Observing every character-data mutation
+        // also observes the counter's own text and can create a renderer-saturating loop.
+        this.#scope.observe(observer, document.body, {childList: true, subtree: true});
         if (providers.includes("CharCounter")) this.#scope.listen(document, "input", sync);
         this.#scope.own(() => document.querySelectorAll("[data-solcord-composer-count],[data-solcord-input-count]").forEach(element => element.remove()), "element");
         this.#scope.own(() => this.#restoreTimestampTitles(), "element");
@@ -896,38 +901,50 @@ export class SolcordNativeSuiteController {
     }
 
     #renderCallPresence(connected: boolean): void {
-        document.querySelectorAll("[data-solcord-voice-presence]").forEach(element => element.remove());
-        if (!connected || !this.#providerReadiness.get("VoiceActivity")) return;
+        const existing = new Map<HTMLElement, HTMLElement>();
+        for (const badge of document.querySelectorAll<HTMLElement>("[data-solcord-voice-presence]")) {
+            const host = badge.parentElement;
+            if (host) existing.set(host, badge);
+            else badge.remove();
+        }
+        const removeUnused = (): void => existing.forEach(badge => badge.remove());
+        if (!connected || !this.#providerReadiness.get("VoiceActivity")) return removeUnused();
         const summary = this.#call?.summary();
-        if (!summary?.connected || !summary.participantIds.length) return;
+        if (!summary?.connected || !summary.participantIds.length) return removeUnused();
         const context = this.#adapter.currentVoiceContext?.();
         const peopleState = this.#people?.snapshot() ?? {
             ignoredVoiceChannelIds: this.#adapter.peopleState?.ignoredVoiceChannelIds ?? [],
             ignoredVoiceGuildIds: this.#adapter.peopleState?.ignoredVoiceGuildIds ?? []
         };
-        if (context && (peopleState?.ignoredVoiceChannelIds.includes(context.channelId) || Boolean(context.guildId && peopleState?.ignoredVoiceGuildIds.includes(context.guildId)))) return;
+        if (context && (peopleState?.ignoredVoiceChannelIds.includes(context.channelId) || Boolean(context.guildId && peopleState?.ignoredVoiceGuildIds.includes(context.guildId)))) return removeUnused();
         const participants = new Set(summary.participantIds);
         const speakers = new Set(summary.speakerIds);
         const preferences = this.#adapter.voiceActivityPreferences ?? {memberList: true, dmList: true, peopleList: true, highlightCurrentChannel: true, statusIcons: true, currentUser: true};
         for (const host of document.querySelectorAll<HTMLElement>("[data-user-id], [data-list-item-id*='members-'], [data-list-item-id*='voice'], [data-list-item-id*='private-channels'], [data-list-item-id*='people']")) {
             const identity = host.dataset.userId ?? host.dataset.listItemId ?? "";
             const userId = identity.match(/(?:^|\D)(\d{1,32})(?:\D|$)/)?.[1];
-            if (!userId || !participants.has(userId) || host.querySelector(":scope > [data-solcord-voice-presence]")) continue;
+            if (!userId || !participants.has(userId)) continue;
             const listIdentity = (host.dataset.listItemId ?? "").toLocaleLowerCase();
             const isMember = listIdentity.includes("members-") || Boolean(host.closest("[class*='membersWrap'], [class*='members_']"));
             const isDm = listIdentity.includes("private-channels") || Boolean(host.closest("[class*='privateChannels'], [class*='private_channels']"));
             const isPeople = listIdentity.includes("people") || Boolean(host.closest("[class*='peopleList'], [class*='people_list']"));
             if ((isMember && !preferences.memberList) || (isDm && !preferences.dmList) || (isPeople && !preferences.peopleList)) continue;
             if (userId === this.#adapter.voiceActivityCurrentUserId && !preferences.currentUser) continue;
-            const badge = document.createElement("span");
             const speaking = speakers.has(userId);
-            badge.dataset.solcordVoicePresence = speaking && preferences.statusIcons ? "speaking" : "connected";
-            badge.dataset.currentCall = String(preferences.highlightCurrentChannel);
-            badge.className = "solcord-voice-presence";
-            badge.textContent = speaking && preferences.statusIcons ? "Speaking" : "In voice";
-            badge.setAttribute("aria-label", speaking && preferences.statusIcons ? "Speaking in the current call" : "Connected to the current call");
-            host.append(badge);
+            const presence = speaking && preferences.statusIcons ? "speaking" : "connected";
+            const label = speaking && preferences.statusIcons ? "Speaking" : "In voice";
+            const ariaLabel = speaking && preferences.statusIcons ? "Speaking in the current call" : "Connected to the current call";
+            const badge = existing.get(host) ?? document.createElement("span");
+            existing.delete(host);
+            if (badge.dataset.solcordVoicePresence !== presence) badge.dataset.solcordVoicePresence = presence;
+            const currentCall = String(preferences.highlightCurrentChannel);
+            if (badge.dataset.currentCall !== currentCall) badge.dataset.currentCall = currentCall;
+            if (badge.className !== "solcord-voice-presence") badge.className = "solcord-voice-presence";
+            if (badge.textContent !== label) badge.textContent = label;
+            if (badge.getAttribute("aria-label") !== ariaLabel) badge.setAttribute("aria-label", ariaLabel);
+            if (!badge.isConnected) host.append(badge);
         }
+        removeUnused();
     }
 
     #startAudioConsole(): void {
@@ -1245,7 +1262,7 @@ export class SolcordNativeSuiteController {
             motionPreferences.surfaces.tooltips && "#app-mount [role='tooltip']",
             motionPreferences.surfaces.threads && "#app-mount [class*='threadSidebar_']"
         ].filter((selector): selector is string => Boolean(selector)).join(",");
-        if (providers.length && !settings.reducedMotion) this.#scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms}${surfaceSelectors ? `${surfaceSelectors}{animation:solcord-native-enter var(--solcord-native-motion) ease-out}` : ""}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}.solcord-interaction-effect{position:fixed;z-index:10002;width:18px;height:18px;margin:-9px;border:2px solid var(--solcord-effect-color,var(--solcord-accent,var(--brand-500)));border-radius:50%;pointer-events:none;animation:solcord-native-effect 420ms ease-out forwards}@keyframes solcord-native-effect{from{opacity:var(--solcord-effect-opacity,.42);transform:scale(.35)}to{opacity:0;transform:scale(1.8)}}.solcord-ambient-effect{position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;contain:strict}.solcord-ambient-effect span{position:absolute;opacity:var(--solcord-effect-opacity,.42);will-change:transform,opacity}.solcord-ambient-effect[data-effect='snow'] span{top:-12px;width:6px;height:6px;border-radius:50%;background:var(--solcord-effect-color,var(--text-normal));animation:solcord-fall 9s linear infinite}.solcord-ambient-effect[data-effect='rain'] span{top:-24px;width:2px;height:18px;background:var(--solcord-effect-color,var(--text-muted));animation:solcord-fall 1.8s linear infinite}.solcord-ambient-effect[data-effect='stars'] span{width:32px;height:1px;background:var(--solcord-effect-color,var(--text-normal));animation:solcord-star 5.5s ease-in infinite}@keyframes solcord-fall{from{transform:translate3d(0,-4vh,0);opacity:0}10%{opacity:var(--solcord-effect-opacity,.42)}to{transform:translate3d(0,105vh,0);opacity:0}}@keyframes solcord-star{from{transform:translate3d(-15vw,-8vh,0) rotate(var(--solcord-star-angle,-28deg));opacity:0}18%{opacity:var(--solcord-effect-opacity,.42)}to{transform:translate3d(115vw,58vh,0) rotate(var(--solcord-star-angle,-28deg));opacity:0}}`);
+        if (providers.length && !settings.reducedMotion) this.#scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms}${surfaceSelectors ? `${surfaceSelectors}{animation:solcord-native-enter var(--solcord-native-motion) ease-out}` : ""}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}.solcord-interaction-effect{position:fixed;z-index:10002;width:18px;height:18px;margin:-9px;border:2px solid var(--solcord-effect-color,var(--solcord-accent,var(--brand-500)));border-radius:50%;pointer-events:none;animation:solcord-native-effect 420ms ease-out forwards}@keyframes solcord-native-effect{from{opacity:var(--solcord-effect-opacity,.42);transform:scale(.35)}to{opacity:0;transform:scale(1.8)}}.solcord-ambient-effect{position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;contain:strict}.solcord-flow-field{width:100%;height:100%;opacity:var(--solcord-effect-opacity,.42);mix-blend-mode:screen;filter:saturate(.9) contrast(1.04)}html[data-solcord-mode='solcord-light'] .solcord-flow-field,.theme-light .solcord-flow-field{mix-blend-mode:multiply;filter:saturate(.72) contrast(.96)}.solcord-ambient-effect span{position:absolute;opacity:var(--solcord-effect-opacity,.42);will-change:transform,opacity}.solcord-ambient-effect[data-effect='snow'] span{top:-12px;width:6px;height:6px;border-radius:50%;background:var(--solcord-effect-color,var(--text-normal));animation:solcord-fall 9s linear infinite}.solcord-ambient-effect[data-effect='rain'] span{top:-24px;width:2px;height:18px;background:var(--solcord-effect-color,var(--text-muted));animation:solcord-fall 1.8s linear infinite}@keyframes solcord-fall{from{transform:translate3d(0,-4vh,0);opacity:0}10%{opacity:var(--solcord-effect-opacity,.42)}to{transform:translate3d(0,105vh,0);opacity:0}}`);
         this.#setProviderReady("BetterAnimations", providers.includes("BetterAnimations"));
         this.#setProviderReady("DiscordEffects", providers.includes("DiscordEffects"));
         if (providers.includes("DiscordEffects") && !settings.reducedMotion && motionPreferences.effect === "signal") {
@@ -1263,7 +1280,10 @@ export class SolcordNativeSuiteController {
             });
             this.#scope.own(() => document.querySelectorAll("[data-solcord-interaction-effect]").forEach(element => element.remove()), "element");
         }
-        if (providers.includes("DiscordEffects") && !settings.reducedMotion && ["snow", "rain", "stars"].includes(motionPreferences.effect)) {
+        if (providers.includes("DiscordEffects") && !settings.reducedMotion && ["field", "stars"].includes(motionPreferences.effect)) {
+            this.#mountSolFlow(motionPreferences.opacityPercent, motionPreferences.speedPercent, motionPreferences.particleCount);
+        }
+        if (providers.includes("DiscordEffects") && !settings.reducedMotion && ["snow", "rain"].includes(motionPreferences.effect)) {
             const container = document.createElement("div");
             container.className = "solcord-ambient-effect";
             container.dataset.solcordAmbientEffect = "true";
@@ -1279,15 +1299,132 @@ export class SolcordNativeSuiteController {
                 particle.style.setProperty("--d", String((index * 7) % 11));
                 particle.style.left = `${(index * 41 + 7) % 97}%`;
                 particle.style.animationDelay = `${-((index * 0.73) % 5.5)}s`;
-                const baseDuration = motionPreferences.effect === "rain" ? 1.2 + (index % 7) * 0.12 : motionPreferences.effect === "snow" ? 7 + (index % 5) : 4 + (index % 6) * 0.35;
+                const baseDuration = motionPreferences.effect === "rain" ? 1.2 + (index % 7) * 0.12 : 7 + (index % 5);
                 particle.style.animationDuration = `${Math.max(0.25, baseDuration * speedFactor).toFixed(2)}s`;
-                if (motionPreferences.effect === "stars") particle.style.top = `${(index * 17 + 3) % 83}%`;
                 container.append(particle);
             }
             document.body.append(container);
             this.#scope.own(() => container.remove(), "element");
         }
-        this.#setStatus("motion-studio", "ready", settings.reducedMotion ? "Reduced motion is active, so optional effects are suppressed." : `Short local transitions are active${providers.includes("DiscordEffects") && motionPreferences.effect !== "off" ? ` with the ${motionPreferences.effect} effect` : ""} and removed on disable.`, providers);
+        const effectLabel = ["field", "stars"].includes(motionPreferences.effect) ? "SOL flow" : motionPreferences.effect;
+        this.#setStatus("motion-studio", "ready", settings.reducedMotion ? "Reduced motion is active, so optional effects are suppressed." : `Short local transitions are active${providers.includes("DiscordEffects") && motionPreferences.effect !== "off" ? ` with ${effectLabel}` : ""} and removed on disable.`, providers);
+    }
+
+    #mountSolFlow(opacityPercent: number, speedPercent: number, density: number): void {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d", {alpha: true});
+        if (!context) return;
+        canvas.className = "solcord-ambient-effect solcord-flow-field";
+        canvas.dataset.solcordAmbientEffect = "true";
+        canvas.dataset.effect = "field";
+        canvas.setAttribute("aria-hidden", "true");
+        canvas.style.setProperty("--solcord-effect-opacity", String(Math.max(10, Math.min(100, opacityPercent)) / 100));
+        document.body.append(canvas);
+        this.#scope.own(() => canvas.remove(), "element");
+
+        type FlowPair = {angle: number; radius: number; previousRadius: number; turn: number; previousTurn: number; speed: number; bend: number; phase: number; tint: number;};
+        const pairs: FlowPair[] = [];
+        const tau = Math.PI * 2;
+        let width = 1;
+        let height = 1;
+        let exitRadius = 1;
+        let frame = 0;
+        let previousTime = 0;
+        let stopped = false;
+        const seed = (index: number, salt: number): number => {
+            const value = Math.sin(index * 91.713 + salt * 37.117) * 43_758.5453;
+            return value - Math.floor(value);
+        };
+        const reset = (pair: FlowPair, index: number, mature = false): void => {
+            const progress = mature ? seed(index, 11) : seed(index, pair.phase + 2) * 0.035;
+            pair.radius = progress * exitRadius;
+            pair.previousRadius = pair.radius;
+            pair.turn = seed(index, 13) * 0.18 - 0.09;
+            pair.previousTurn = pair.turn;
+        };
+        const populate = (): void => {
+            const count = width < 620 ? 16 : Math.max(18, Math.min(32, 16 + Math.round(density)));
+            pairs.length = 0;
+            for (let index = 0; index < count; index++) {
+                const jitter = (seed(index, 1) - 0.5) * (tau / count) * 0.78;
+                const pair: FlowPair = {
+                    angle: (index / count) * tau + jitter,
+                    radius: 0,
+                    previousRadius: 0,
+                    turn: 0,
+                    previousTurn: 0,
+                    speed: (11 + seed(index, 5) * 10) * Math.max(0.25, Math.min(3, speedPercent / 100)),
+                    bend: (seed(index, 6) > 0.5 ? 1 : -1) * (0.025 + seed(index, 8) * 0.06),
+                    phase: seed(index, 7) * tau,
+                    tint: Math.floor(seed(index, 9) * 3)
+                };
+                reset(pair, index, true);
+                pairs.push(pair);
+            }
+        };
+        const resize = (): void => {
+            const ratio = Math.min(globalThis.devicePixelRatio || 1, 1.5);
+            width = Math.max(1, globalThis.innerWidth);
+            height = Math.max(1, globalThis.innerHeight);
+            exitRadius = Math.hypot(width, height) * 0.64;
+            canvas.width = Math.round(width * ratio);
+            canvas.height = Math.round(height * ratio);
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            populate();
+        };
+        const palette = (): string[] => document.documentElement.dataset.solcordMode === "solcord-light" || document.querySelector(".theme-light")
+            ? ["rgba(167,47,35,.30)", "rgba(49,91,74,.24)", "rgba(90,78,65,.18)"]
+            : ["rgba(255,117,95,.34)", "rgba(118,168,145,.24)", "rgba(225,206,181,.16)"];
+        const point = (pair: FlowPair, opposite: boolean, previous: boolean, time: number): [number, number, number] => {
+            const radius = previous ? pair.previousRadius : pair.radius;
+            const turn = previous ? pair.previousTurn : pair.turn;
+            const wave = Math.sin(radius * 0.008 + pair.phase + time * 0.00014) * 0.28 + Math.sin(radius * 0.0036 - pair.phase * 0.6 - time * 0.00008) * 0.13;
+            const angle = pair.angle + (opposite ? Math.PI : 0) + turn + wave;
+            return [width * 0.5 + Math.cos(angle) * radius, height * 0.5 + Math.sin(angle) * radius, angle];
+        };
+        const stroke = (pair: FlowPair, index: number, opposite: boolean, colors: string[], time: number): void => {
+            const [previousX, previousY] = point(pair, opposite, true, time);
+            const [x, y, angle] = point(pair, opposite, false, time);
+            const progress = Math.min(1, pair.radius / exitRadius);
+            const alpha = Math.sin(progress * Math.PI) * Math.min(1, pair.radius / 72);
+            const curve = (2.5 + seed(index, 15) * 4.6) * (opposite ? -1 : 1);
+            context.globalAlpha = Math.max(0, alpha);
+            context.strokeStyle = colors[pair.tint] ?? colors[0]!;
+            context.lineWidth = pair.tint === 0 ? 1.1 : 0.76;
+            context.beginPath();
+            context.moveTo(previousX, previousY);
+            context.quadraticCurveTo((previousX + x) * 0.5 - Math.sin(angle) * curve, (previousY + y) * 0.5 + Math.cos(angle) * curve, x, y);
+            context.stroke();
+        };
+        const draw = (time: number): void => {
+            if (stopped) return;
+            frame = requestAnimationFrame(draw);
+            if (document.hidden || time - previousTime < 32) return;
+            const delta = Math.min(0.05, Math.max(0.001, (time - previousTime) / 1_000));
+            previousTime = time;
+            context.save();
+            context.globalCompositeOperation = "destination-out";
+            context.fillStyle = "rgba(0,0,0,.072)";
+            context.fillRect(0, 0, width, height);
+            context.restore();
+            const colors = palette();
+            pairs.forEach((pair, index) => {
+                pair.previousRadius = pair.radius;
+                pair.previousTurn = pair.turn;
+                pair.radius += pair.speed * delta;
+                pair.turn += pair.bend * delta;
+                stroke(pair, index, false, colors, time);
+                stroke(pair, index, true, colors, time);
+                if (pair.radius >= exitRadius) reset(pair, index);
+            });
+            context.globalAlpha = 1;
+        };
+        resize();
+        this.#scope.listen(globalThis, "resize", resize, {passive: true});
+        frame = requestAnimationFrame(draw);
+        this.#scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
     }
 
     #startVoiceHealth(): void {
