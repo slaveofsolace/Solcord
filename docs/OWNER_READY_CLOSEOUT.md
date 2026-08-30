@@ -12,6 +12,8 @@ This page is the current product-status source for the unsigned Solcord V2 relea
 
 Exact source, ASAR, installer, Discord version, profile type, backup, and rollback hashes belong in the external release-evidence manifest generated from the frozen commit.
 
+Current RC5 branch status: source, package, installer-self-test, security, and isolated fixture gates are in progress or complete. The exact RC5 ASAR has not yet been launched in the signed-in owner profile. Earlier exact-client results below remain useful regression evidence, but they do not certify a newer source SHA.
+
 ## Product status
 
 | Capability | Default | Status | Boundary |
@@ -39,7 +41,11 @@ Exact source, ASAR, installer, Discord version, profile type, backup, and rollba
 
 First Setup is transactional and resumable. The exact disposable client passed forward/back navigation, pause/resume, final preview, Apply and verify, eleven-theme installation, restart persistence, and private-default behavior. Automated malformed-state, interrupted-recovery, and rollback coverage remains green. Skipping changes only the onboarding marker.
 
-## Exact-client acceptance now complete
+The status labels above describe implemented behavior plus retained adapter evidence. They are not a claim that every volatile Discord lookup has passed against the current RC5 ASAR. Current-build live status is recorded separately in the external release manifest; an unvalidated adapter continues to report `Unavailable` rather than borrowing a neighboring module's result.
+
+## Prior exact-client acceptance retained
+
+The following checks passed on the previously reviewed exact-client candidate. They are retained as regression evidence only. They must be repeated for the final RC5 source and ASAR before RC5 is called owner-ready.
 
 - The current Discord Stable client loaded the exact candidate in a filesystem-isolated acceptance root with the expected source/ASAR identity and no duplicate bootstrap.
 - All four baseline runtime adapters survived restart together, then returned to zero styles, elements, classes, observers, listeners, timers, and previews after disable.

@@ -1,27 +1,27 @@
 # RC5 backend lifecycle soak
 
-This receipt covers source-only, renderer-independent lifecycle testing for the RC5 working tree based on `development@01a65c48f7c0317219991e50e9e279bfdff19026`.
+This receipt covers source-only, renderer-independent lifecycle testing for the frozen RC5 source checkpoint `4fe8008e25be2cd658b9d6b14bae6f5ab52173e4`, based on `development@01a65c48f7c0317219991e50e9e279bfdff19026`.
 
 ## Exact run
 
 - Harness: `scripts/soak-solcord-backend.ts`
-- Harness SHA-256: `b56d8b136f9f3201a0e46846f5e4186f21f77ce34aca0907aeb0bfc8ae8007df`
+- Harness SHA-256: `ccd5eab5334a3b48c37c0faea8dd33dd399be28cfc289a1b063b04ae8788e6a6`
 - Embed Controls implementation SHA-256: `5888e946a6d995e7f5984ad3fb9d9b7c3e03eb70efa4ecea8c2b60674a75ebf8`
 - Scenario: `all`
 - Configured duration: 1,800,000 ms
-- Measured duration: 1,800,070 ms
-- Lifecycle cycles: 17,643
+- Measured duration: 1,800,092 ms
+- Lifecycle cycles: 17,662
 - Adapter executions: 0
 - Maximum owned resources: 17
 - Maximum Voice Health samples: 120
-- Final heap growth: 12,340,876 bytes
+- Final heap growth: 12,263,647 bytes
 - Heap-growth ceiling: 67,108,864 bytes
-- Peak heap: 19,386,860 bytes
-- Peak RSS: 113,901,568 bytes
+- Peak heap: 19,302,013 bytes
+- Peak RSS: 115,965,952 bytes
 - Failures: none
 - Result: PASS
-- Report: `outputs/rc5-backend-soak-exact-2026-08-30/backend-soak-report.json`
-- Report SHA-256: `2df3924089993410bd74111a313eef51d6c94dceb6eeef9602ba66ad909d1cdb`
+- Report: external release evidence `backend-soak-report.json`
+- Report SHA-256: `702323120f3a3c75c3e0e81e2cf545a2f241497b2d70e48eed6e462326a93ac6`
 
 The harness repeatedly exercises all thirteen disposal resource kinds, the DOM-backed Baseline Suite, twelve V2 clean-room controllers, and Stream Audience Guard with a fake adapter. Every cycle verifies idempotent teardown, empty owned-resource counts, bounded Voice Health history, no delayed DOM residue, and zero adapter execution.
 
@@ -41,13 +41,13 @@ The Baseline Suite was further split into Layout Collapse, Embed Controls, Cross
 
 ## Companion gates
 
-- Full source matrix: 784 tests, 0 failures, 4,875 assertions.
+- Full source matrix: 814 tests, 0 failures, 5,099 assertions.
 - ESLint, Solcord CSS lint, TypeScript, and type generation: PASS.
 - Repository audit: PASS after regeneration.
 - Production dependency audit: 92 packages checked, 0 vulnerabilities.
-- Codex Security diff scan `bf2d6941-f9e1-4ddc-b370-c933c8d2f734`: 18/18 changed files reviewed, six security surfaces closed, zero findings.
-- Minified diagnostic build: PASS for Solcord, main, preload, early renderer, editor preload, editor, and editor HTML.
-- Production-mode build: intentionally blocked because the reviewed source is still an uncommitted working tree. The build provenance guard requires a clean commit before release packaging.
+- Codex Security diff scan `36cb987a-9573-46f7-93d3-f22fbb246c77`: 38/38 production or executable review items closed across eight security surfaces, zero findings.
+- Two clean production builds emitted byte-identical 2,032,032-byte ASARs at SHA-256 `1b674f2a05ed07860b9fd3b46042e4e8eb80921c2f31c0434d8b661a24024d2e` for source checkpoint `4fe8008e25be2cd658b9d6b14bae6f5ab52173e4`.
+- The self-contained Windows installer passed its embedded-resource and disposable lifecycle self-test. All three exact-head GitHub checks passed on PR #13.
 
 ## Nonclaims
 
