@@ -257,7 +257,7 @@ windowsDescribe("Solcord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.solcordAsar);
-        expect(result.manifest.schemaVersion).toBe(7);
+        expect(result.manifest.schemaVersion).toBe(10);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.solcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.solcordBuildMode).toBe("production");

@@ -29,6 +29,8 @@ class FakeAdapter implements DoubleClickReplyAdapter {
     public valid = true;
     public installs = 0;
     public disposals = 0;
+    public suppressorInstalls = 0;
+    public suppressorDisposals = 0;
     public replies: DoubleClickReplyTarget[] = [];
     public listener: ((event: unknown) => void) | undefined;
 
@@ -51,6 +53,11 @@ class FakeAdapter implements DoubleClickReplyAdapter {
 
     public requestReply(target: DoubleClickReplyTarget): void {
         this.replies.push(target);
+    }
+
+    public installAltClickSuppressor(): () => void {
+        this.suppressorInstalls++;
+        return () => {this.suppressorDisposals++;};
     }
 }
 
@@ -87,6 +94,15 @@ describe("double-click reply domain policy", () => {
         expect(decideDoubleClickReply(context({hasSelection: true}))).toEqual({action: "ignore", reason: "text-selected"});
         expect(decideDoubleClickReply(context({shiftKey: true}))).toEqual({action: "ignore", reason: "modified-click"});
         expect(decideDoubleClickReply(context({message: null}))).toEqual({action: "ignore", reason: "not-message"});
+    });
+
+    test("supports one explicitly configured Ctrl, Shift, or Alt reply modifier", () => {
+        expect(decideDoubleClickReply(context({ctrlKey: true}), "ctrl").action).toBe("reply");
+        expect(decideDoubleClickReply(context({shiftKey: true}), "shift").action).toBe("reply");
+        expect(decideDoubleClickReply(context({altKey: true}), "alt").action).toBe("reply");
+        expect(decideDoubleClickReply(context(), "shift")).toEqual({action: "ignore", reason: "modified-click"});
+        expect(decideDoubleClickReply(context({ctrlKey: true, shiftKey: true}), "ctrl")).toEqual({action: "ignore", reason: "modified-click"});
+        expect(decideDoubleClickReply(context({metaKey: true}), "none")).toEqual({action: "ignore", reason: "modified-click"});
     });
 
     test("fails closed for malformed or structurally invalid message identities", () => {
@@ -146,5 +162,32 @@ describe("double-click reply lifecycle", () => {
         expect(feature.start()).toBeTrue();
         expect(() => adapter.listener?.(context())).not.toThrow();
         expect(adapter.replies).toEqual([]);
+    });
+
+    test("owns the Alt conflict suppressor and fails closed if the adapter cannot provide one", () => {
+        const adapter = new FakeAdapter();
+        const feature = new DoubleClickReplyFeature(adapter, "alt");
+        expect(feature.start()).toBeTrue();
+        expect(adapter.suppressorInstalls).toBe(1);
+        feature.stop();
+        expect(adapter.suppressorDisposals).toBe(1);
+
+        const incomplete = new FakeAdapter();
+        incomplete.installAltClickSuppressor = undefined as unknown as () => () => void;
+        const unsupported = new DoubleClickReplyFeature(incomplete, "alt");
+        expect(unsupported.start()).toBeFalse();
+        expect(incomplete.disposals).toBe(1);
+    });
+
+    test("rolls back the primary listener if Alt suppressor installation throws", () => {
+        const adapter = new FakeAdapter();
+        adapter.installAltClickSuppressor = () => {throw new Error("Discord click adapter drifted");};
+        const feature = new DoubleClickReplyFeature(adapter, "alt");
+
+        expect(feature.start()).toBeFalse();
+        expect(feature.running).toBeFalse();
+        expect(adapter.installs).toBe(1);
+        expect(adapter.disposals).toBe(1);
+        expect(adapter.listener).toBeUndefined();
     });
 });

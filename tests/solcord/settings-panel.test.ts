@@ -70,7 +70,7 @@ describe("Solcord Control Center clarity", () => {
 
     test("keeps runtime diagnostics and the community catalog out of the primary path", () => {
         expect(panel).toContain("className=\"solcord-extension-disclosure\"");
-        expect(panel).toContain("Community software and technical state");
+        expect(panel).toContain("<summary>Community plugins</summary>");
     });
 
     test("keeps idle Fake Deafen out of Overview attention signals", () => {

@@ -8,6 +8,7 @@ import ActivityCompatibility from "./activity-compatibility";
 import SolcordTimeline from "./solcord-timeline";
 import SolcordFriendWatch from "./solcord-friend-watch";
 import SolcordAudienceGuard from "./solcord-audience-guard";
+import SolcordPeopleState from "./solcord-people-state";
 import SolcordSetup from "./solcord-setup";
 import SolcordProviderArchive from "./solcord-provider-archive";
 import SolcordTranslationCredentials from "./solcord-translation-credentials";
@@ -301,6 +302,23 @@ const clearAudienceGuard = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
     return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordAudienceGuard.clear(accountScope, payload));
 };
+const getPeopleStateStatus = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SolcordPeopleState.status();
+};
+const readPeopleState = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordPeopleState.read(accountScope, payload));
+};
+const writePeopleState = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordPeopleState.write(accountScope, payload));
+};
+const clearPeopleState = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    return withCurrentAccountBinding(event, request, (accountScope, payload) => SolcordPeopleState.clear(accountScope, payload));
+};
 const applySolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
@@ -428,6 +446,10 @@ export default class IPCMain {
             ipc.handle(IPCEvents.AUDIENCE_GUARD_READ, readAudienceGuard);
             ipc.handle(IPCEvents.AUDIENCE_GUARD_WRITE, writeAudienceGuard);
             ipc.handle(IPCEvents.AUDIENCE_GUARD_CLEAR, clearAudienceGuard);
+            ipc.handle(IPCEvents.PEOPLE_STATE_STATUS, getPeopleStateStatus);
+            ipc.handle(IPCEvents.PEOPLE_STATE_READ, readPeopleState);
+            ipc.handle(IPCEvents.PEOPLE_STATE_WRITE, writePeopleState);
+            ipc.handle(IPCEvents.PEOPLE_STATE_CLEAR, clearPeopleState);
             ipc.handle(IPCEvents.SETUP_APPLY, applySolcordSetup);
             ipc.handle(IPCEvents.SETUP_ACKNOWLEDGE, acknowledgeSolcordSetup);
             ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSolcordSetup);

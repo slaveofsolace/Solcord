@@ -148,6 +148,22 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.AUDIENCE_GUARD_CLEAR, this.#timelineRequest(capability, request));
     }
 
+    getPeopleStateStatus(capability: string) {
+        return invokePrivate(IPCEvents.PEOPLE_STATE_STATUS, {capability});
+    }
+
+    readPeopleState(capability: string) {
+        return invokePrivate(IPCEvents.PEOPLE_STATE_READ, {capability});
+    }
+
+    writePeopleState(capability: string, request: unknown) {
+        return invokePrivate(IPCEvents.PEOPLE_STATE_WRITE, this.#timelineRequest(capability, request));
+    }
+
+    clearPeopleState(capability: string) {
+        return invokePrivate(IPCEvents.PEOPLE_STATE_CLEAR, {capability});
+    }
+
     applySolcordSetup(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.SETUP_APPLY, this.#privateRequest(capability, request));
     }

@@ -30,6 +30,7 @@ const {SolcordSetupTransactions, isReviewedLegacySolcordTheme, validatePinnedSou
 const {SolcordTimelineStorage} = await import("../../src/electron/main/modules/solcord-timeline");
 const {SolcordFriendWatchStorage} = await import("../../src/electron/main/modules/solcord-friend-watch");
 const {SolcordAudienceGuardStorage} = await import("../../src/electron/main/modules/solcord-audience-guard");
+const {SolcordPeopleStateStorage} = await import("../../src/electron/main/modules/solcord-people-state");
 const {SolcordTranslationCredentialStorage} = await import("../../src/electron/main/modules/solcord-translation-credentials");
 const {SolcordLocalIdentityNotesStorage} = await import("../../src/electron/main/modules/solcord-local-identity-notes");
 const {SolcordProviderArchive, hasCompiledSolcordV2Replacement} = await import("../../src/electron/main/modules/solcord-provider-archive");
@@ -249,6 +250,67 @@ describe("Solcord Audience Guard storage security", () => {
         expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "solcord-audience-guard-v1"))).toBeFalse();
         expect(() => storage.write("111222333", {accountId: "444555666", policy: {entries: []}})).toThrow();
         expect(() => storage.read("111222333", {accountScope: "444555666"})).toThrow();
+    });
+});
+
+describe("Solcord People and Spaces private state", () => {
+    test("encrypts restart-persistent account state without identifiers in paths", async () => {
+        const storage = new SolcordPeopleStateStorage();
+        const state = {
+            pinnedDmIds: ["111222333"],
+            hiddenGuildIds: ["444555666"],
+            guildAliases: {444555666: "Private workshop"},
+            favoriteFriendIds: ["555666777"],
+            hiddenFriendIds: ["888999000"],
+            ignoredVoiceChannelIds: ["111999222"],
+            ignoredVoiceGuildIds: ["333999444"]
+        };
+
+        expect(await storage.write("777888999", {state})).toEqual(expect.objectContaining({persistent: true, complete: true}));
+        const restarted = new SolcordPeopleStateStorage();
+        expect((await restarted.read("777888999", {})).state).toEqual({version: 3, ...state});
+        expect((await restarted.read("999888777", {})).state).toEqual({version: 3, pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []});
+
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
+        const names = fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).join("\n");
+        expect(names).not.toContain("777888999");
+        expect(names).not.toContain("111222333");
+        expect(names).not.toContain("444555666");
+        expect(names).not.toContain("Private workshop");
+        for (const relative of fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String)) {
+            const file = path.join(root, relative);
+            if (fs.lstatSync(file).isFile()) expect(fs.readFileSync(file, "utf8")).toStartWith("solcord-test:");
+        }
+    });
+
+    test("uses an account-isolated memory fallback and rejects renderer-selected authority", async () => {
+        encryptionAvailable = false;
+        const storage = new SolcordPeopleStateStorage();
+        const state = {pinnedDmIds: ["111222333", "../bad", "111222333"], hiddenGuildIds: [], guildAliases: {"111222333": "  Alias\u0000 name  ", "../bad": "blocked"}};
+
+        expect(storage.status()).toEqual(expect.objectContaining({persistent: false, sessionOnly: true}));
+        const written = await storage.write("777888999", {state});
+        expect(written).toEqual({
+            state: {version: 3, pinnedDmIds: ["111222333"], hiddenGuildIds: [], guildAliases: {111222333: "Alias name"}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []},
+            persistent: false,
+            complete: true
+        });
+        expect((await storage.read("999888777", {})).state.pinnedDmIds).toEqual([]);
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1"))).toBeFalse();
+        expect(() => storage.write("777888999", {accountId: "999888777", state})).toThrow();
+        expect(() => storage.read("777888999", {accountScope: "999888777"})).toThrow();
+        expect((await storage.clear("777888999", {})).complete).toBeTrue();
+        expect((await storage.read("777888999", {})).state.pinnedDmIds).toEqual([]);
+    });
+
+    test("replaces private state atomically and leaves no recovery debris", async () => {
+        const storage = new SolcordPeopleStateStorage();
+        await storage.write("777888999", {state: {pinnedDmIds: ["111222333"], hiddenGuildIds: [], guildAliases: {}}});
+        await storage.write("777888999", {state: {pinnedDmIds: [], hiddenGuildIds: ["444555666"], guildAliases: {444555666: "Updated"}}});
+
+        expect((await new SolcordPeopleStateStorage().read("777888999", {})).state).toEqual({version: 3, pinnedDmIds: [], hiddenGuildIds: ["444555666"], guildAliases: {444555666: "Updated"}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
+        expect(fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).some(name => /\.(?:old|tmp)$/.test(name))).toBeFalse();
     });
 });
 

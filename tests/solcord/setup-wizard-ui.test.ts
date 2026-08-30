@@ -196,7 +196,7 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("ships the V2 native tool surface without browser prompts or hidden account actions", () => {
-        for (const label of ["Composer Proof and Time Composer", "Permission Lens and Focus Channels", "Encrypted Local Identity Notes", "Voice Note Studio", "Notification Review"]) {
+        for (const label of ["Composer Proof reviewed this local draft", "Time Composer generated local Discord timestamp markup", "Permission Lens and Focus Channels", "Encrypted Local Identity Notes", "Voice Note Studio", "Notification Review"]) {
             expect(PANEL_SOURCE).toContain(label);
         }
         expect(PANEL_SOURCE).not.toContain("window.prompt(");

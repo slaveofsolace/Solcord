@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 537 |
-| Text files scanned | 523 |
+| Persistent tracked files | 553 |
+| Text files scanned | 539 |
 | Binary files classified | 14 |
-| Text lines scanned | 111,287 |
-| Custom Solcord lines | 24,374 |
+| Text lines scanned | 116,033 |
+| Custom Solcord lines | 26,685 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -25,64 +25,64 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Signal | Whole tree | Custom Solcord surfaces |
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 0 |
-| Timer calls | 42 | 2 |
-| Mutation observers | 12 | 1 |
-| DOM queries | 57 | 3 |
-| Webpack discovery calls | 77 | 0 |
+| Timer calls | 45 | 3 |
+| Mutation observers | 15 | 1 |
+| DOM queries | 100 | 26 |
+| Webpack discovery calls | 78 | 0 |
 | Patch calls | 26 | 1 |
-| Synchronous filesystem calls | 629 | 563 |
-| Console calls | 75 | 49 |
+| Synchronous filesystem calls | 644 | 578 |
+| Console calls | 77 | 51 |
 | Empty catch blocks | 3 | 1 |
 
 ## Largest maintainable files
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 3,614 | 217.9 KiB |
-| 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 63.9 KiB |
-| 3 | `tests/solcord/storage-security.test.ts` | 1,407 | 80.9 KiB |
-| 4 | `bun.lock` | 1,314 | 141.7 KiB |
-| 5 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,279 | 118.6 KiB |
-| 6 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
-| 7 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 8 | `src/betterdiscord/modules/solcord/store.ts` | 1,063 | 56.2 KiB |
-| 9 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
-| 10 | `src/betterdiscord/styles/solcord.css` | 958 | 74.9 KiB |
-| 11 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 12 | `src/electron/main/modules/solcord-timeline.ts` | 825 | 36.2 KiB |
-| 13 | `src/betterdiscord/modules/solcord/native-suite.ts` | 803 | 41.1 KiB |
-| 14 | `src/betterdiscord/modules/addonstore.ts` | 701 | 21.2 KiB |
-| 15 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
-| 16 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
-| 17 | `src/common/solcord/v2-feature-models.ts` | 617 | 31.4 KiB |
-| 18 | `tests/solcord/settings.test.ts` | 586 | 30.8 KiB |
-| 19 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
-| 20 | `installer/Solcord.Installer/InstallerEngine.cs` | 509 | 35.3 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,205 | 254.6 KiB |
+| 2 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
+| 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
+| 4 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.3 KiB |
+| 5 | `src/betterdiscord/modules/solcord/native-suite.ts` | 1,339 | 86.2 KiB |
+| 6 | `bun.lock` | 1,314 | 141.7 KiB |
+| 7 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
+| 8 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
+| 9 | `src/betterdiscord/modules/solcord/store.ts` | 1,103 | 57.9 KiB |
+| 10 | `CHANGELOG.md` | 1,057 | 33.3 KiB |
+| 11 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
+| 12 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
+| 13 | `tests/solcord/native-suite-security.test.ts` | 887 | 45.8 KiB |
+| 14 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
+| 15 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
+| 16 | `src/common/solcord/v2-feature-models.ts` | 656 | 35.8 KiB |
+| 17 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
+| 18 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
+| 19 | `tests/solcord/settings.test.ts` | 588 | 31.1 KiB |
+| 20 | `src/betterdiscord/styles/buttons.css` | 579 | 14.0 KiB |
 
 ## Largest custom Solcord files
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,428 | 63.9 KiB |
-| 2 | `tests/solcord/storage-security.test.ts` | 1,407 | 80.9 KiB |
-| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,279 | 118.6 KiB |
+| 1 | `tests/solcord/storage-security.test.ts` | 1,469 | 85.1 KiB |
+| 2 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,430 | 64.1 KiB |
+| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,349 | 135.3 KiB |
 | 4 | `tests/solcord/disposable-acceptance.test.ts` | 1,149 | 55.2 KiB |
-| 5 | `src/betterdiscord/styles/solcord.css` | 958 | 74.9 KiB |
+| 5 | `src/betterdiscord/styles/solcord.css` | 966 | 75.8 KiB |
 | 6 | `src/electron/main/modules/solcord-setup.ts` | 899 | 50.5 KiB |
-| 7 | `src/electron/main/modules/solcord-timeline.ts` | 825 | 36.2 KiB |
-| 8 | `src/common/solcord/v2-feature-models.ts` | 617 | 31.4 KiB |
-| 9 | `tests/solcord/settings.test.ts` | 586 | 30.8 KiB |
-| 10 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
-| 11 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
-| 12 | `tests/solcord/native-suite-security.test.ts` | 459 | 21.6 KiB |
-| 13 | `tests/solcord/renderer-security.test.ts` | 431 | 30.9 KiB |
-| 14 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
-| 15 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
-| 16 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 391 | 35.7 KiB |
-| 17 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 380 | 19.0 KiB |
-| 18 | `src/electron/main/modules/solcord-translation-credentials.ts` | 323 | 17.5 KiB |
-| 19 | `src/electron/main/modules/solcord-audience-guard.ts` | 322 | 15.3 KiB |
-| 20 | `src/common/solcord/product.ts` | 300 | 14.4 KiB |
+| 7 | `tests/solcord/native-suite-security.test.ts` | 887 | 45.8 KiB |
+| 8 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
+| 9 | `src/common/solcord/v2-feature-models.ts` | 656 | 35.8 KiB |
+| 10 | `tests/solcord/settings.test.ts` | 588 | 31.1 KiB |
+| 11 | `docs/handoff/CODEX_HANDOFF.md` | 503 | 21.6 KiB |
+| 12 | `tests/solcord/renderer-security.test.ts` | 482 | 34.4 KiB |
+| 13 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
+| 14 | `scripts/soak-solcord-backend.ts` | 468 | 21.1 KiB |
+| 15 | `src/common/solcord/product.ts` | 464 | 23.5 KiB |
+| 16 | `src/electron/main/modules/solcord-provider-archive.ts` | 402 | 22.0 KiB |
+| 17 | `scripts/helpers/build-provenance.ts` | 399 | 16.6 KiB |
+| 18 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 391 | 35.7 KiB |
+| 19 | `src/electron/main/modules/solcord-local-identity-notes.ts` | 380 | 19.0 KiB |
+| 20 | `src/electron/main/modules/solcord-translation-credentials.ts` | 323 | 17.5 KiB |
 
 ## Confirmed surface corrections in this audit
 

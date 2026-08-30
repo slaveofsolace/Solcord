@@ -60,7 +60,6 @@ SyncModules.Tooltip ??= (props => props.children?.({}) ?? null) as DiscordToolti
 const MemoModules = memoize({
     get InviteActions(): InviteActions | undefined {return getByKeys(["createInvite"], {firstId: 846293, cacheId: "core-InviteActions"});},
     get SimpleMarkdownWrapper(): SimpleMarkdownWrapper | undefined {return getByKeys(["reactParserFor"], {firstId: 46054, cacheId: "core-SimpleMarkdownWrapper"});},
-    get promptToUpload() {return getByStrings<PromptToUpload>(["getUploadCount", ".UPLOAD_FILE_LIMIT_ERROR"], {searchExports: true, firstId: 518960, cacheId: "core-promptToUpload"});},
     get RemoteModule(): RemoteModule | undefined {return getByKeys(["setBadge"], {firstId: 837921, cacheId: "core-RemoteModule"});},
     get UserAgentInfo(): UserAgentInfo | undefined {return getByKeys(["os", "layout"], {firstId: 214958, cacheId: "core-UserAgentInfo"});},
     get MessageUtils() {return getByKeys<MessageUtils>(["sendMessage"], {firstId: 843472, cacheId: "core-MessageUtils"});},
@@ -72,5 +71,23 @@ const MemoModules = memoize({
     get ViewClasses(): {standardSidebarView: string;} | undefined {return getByKeys(["standardSidebarView"], {cacheId: "core-ViewClasses"});},
 });
 
-const DiscordModules = Object.assign(MemoModules, SyncModules);
+/**
+ * Upload internals are loaded later than most core modules on some Discord
+ * builds. Do not memoize a missing first lookup forever. The first signature is
+ * the currently reviewed invariant; the second preserves the older compatible
+ * shape while both results still have to be callable.
+ */
+export function resolvePromptToUpload(): PromptToUpload | undefined {
+    const current = getByStrings<PromptToUpload>(["Unexpected mismatch between files and file metadata"], {searchExports: true, cacheId: "core-promptToUpload-current"});
+    if (typeof current === "function") return current;
+    const legacy = getByStrings<PromptToUpload>(["getUploadCount", ".UPLOAD_FILE_LIMIT_ERROR"], {searchExports: true, firstId: 518960, cacheId: "core-promptToUpload-legacy"});
+    return typeof legacy === "function" ? legacy : undefined;
+}
+
+const DiscordModules = Object.assign(MemoModules, SyncModules) as typeof MemoModules & Modules & {readonly promptToUpload?: PromptToUpload;};
+Object.defineProperty(DiscordModules, "promptToUpload", {
+    configurable: false,
+    enumerable: true,
+    get: resolvePromptToUpload
+});
 export default DiscordModules;

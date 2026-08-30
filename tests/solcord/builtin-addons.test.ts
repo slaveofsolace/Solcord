@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordProviderSourceParityComplete, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
 
 
 describe("Solcord clean-room curated built-ins", () => {
@@ -23,6 +23,7 @@ describe("Solcord clean-room curated built-ins", () => {
             callContext: false,
             audioConsole: false,
             voiceNoteStudio: false,
+            peopleAndSpaces: false,
             channelGlance: false,
             notificationReview: false,
             voiceHealth: false
@@ -40,6 +41,7 @@ describe("Solcord clean-room curated built-ins", () => {
             callContext: true,
             audioConsole: true,
             voiceNoteStudio: false,
+            peopleAndSpaces: false,
             channelGlance: true,
             notificationReview: false,
             voiceHealth: true
@@ -209,6 +211,20 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(solcordProviderReplacementIsReady(activeLogger, undefined, true, true)).toBeTrue();
         expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, provider: "solcord"}, false, false)).toBeTrue();
         expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, provider: "community"}, false, false)).toBeFalse();
+    });
+
+    test("requires both reviewed source parity and the exact provider adapter before retirement", () => {
+        const readyAdapter = {enabled: true, provider: "solcord"};
+        const completed = {name: "Translator", fileName: "Translator.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
+        const unknown = {name: "UnknownAddon", fileName: "UnknownAddon.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
+        const complete = {name: "BetterVolume", fileName: "BetterVolume.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
+
+        expect(solcordProviderSourceParityComplete("Translator")).toBeTrue();
+        expect(solcordProviderReplacementIsReady(completed, readyAdapter, false, false)).toBeTrue();
+        expect(solcordProviderSourceParityComplete("UnknownAddon")).toBeFalse();
+        expect(solcordProviderReplacementIsReady(unknown, readyAdapter, false, false)).toBeFalse();
+        expect(solcordProviderSourceParityComplete("BetterVolume")).toBeTrue();
+        expect(solcordProviderReplacementIsReady(complete, readyAdapter, false, false)).toBeTrue();
     });
 
     test("canonicalizes a bounded exact plan and rejects path-shaped identities", () => {

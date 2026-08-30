@@ -5,6 +5,7 @@ import {
     boundedTimelineMessageIds,
     channelIsInTimelineScope,
     MessageTimelineJournal,
+    normalizeDiscordTimelineDispatch,
     normalizeTimelineAccountId,
     normalizeTimelineEvent,
     TimelineAccountGuard,
@@ -95,6 +96,34 @@ describe("Message Timeline model", () => {
         expect(normalizeTimelineEvent(null)).toBeUndefined();
     });
 
+    test("normalizes current and legacy Discord dispatcher shapes without a logger dependency", () => {
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_CREATE", {message: {
+            id: "101",
+            channelId: "201",
+            content: "hello",
+            author: {globalName: "Display name"},
+            attachments: [{filename: "note.txt", content_type: "text/plain", size: 12}]
+        }})).toEqual([{
+            kind: "create",
+            messageId: "101",
+            channelId: "201",
+            authorLabel: "Display name",
+            content: "hello",
+            attachments: [{name: "note.txt", contentType: "text/plain", size: 12}]
+        }]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_UPDATE", {
+            messageRecord: {id: "101", content: "edited", author: {global_name: "Legacy"}},
+            channel_id: "201"
+        })).toEqual([{kind: "edit", messageId: "101", channelId: "201", authorLabel: "Legacy", content: "edited"}]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_DELETE", {message: {id: "101", channel_id: "201"}})).toEqual([{kind: "delete", messageId: "101", channelId: "201"}]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_DELETE_BULK", {channelId: "201", ids: new Set(["101", "102", "../bad"])})).toEqual([
+            {kind: "bulk-delete", messageId: "101", channelId: "201"},
+            {kind: "bulk-delete", messageId: "102", channelId: "201"}
+        ]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_CREATE", {message: {id: "../bad", channel_id: "201"}})).toEqual([]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_DELETE", null)).toEqual([]);
+    });
+
     test("hydrates out-of-order observations chronologically and preserves edit/delete/recovery order", () => {
         const journal = new MessageTimelineJournal();
         journal.hydrate([
@@ -112,7 +141,70 @@ describe("Message Timeline model", () => {
             deletedAt: 30,
             edits: [{at: 20, content: "first"}]
         })]);
-        expect(journal.status()).toEqual({records: 1, deleted: 1, edited: 1, textBytes: 11});
+        expect(journal.status()).toEqual({records: 1, deleted: 1, edited: 1, ghostPings: 0, textBytes: 11});
+    });
+
+    test("preserves author facts and marks observed ghost pings without treating partial edits as mention removal", () => {
+        const userId = "999";
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_CREATE", {message: {
+            id: "101",
+            channel_id: "201",
+            content: "hello",
+            author: {id: "123", username: "Helper", bot: true},
+            mentions: [{id: userId}]
+        }}, userId)).toEqual([{
+            kind: "create",
+            messageId: "101",
+            channelId: "201",
+            authorId: "123",
+            authorLabel: "Helper",
+            authorIsBot: true,
+            mentionedCurrentUser: true,
+            content: "hello"
+        }]);
+        expect(normalizeDiscordTimelineDispatch("MESSAGE_UPDATE", {
+            message: {id: "101", channel_id: "201", content: "partial update"}
+        }, userId)).toEqual([{
+            kind: "edit",
+            messageId: "101",
+            channelId: "201",
+            content: "partial update"
+        }]);
+
+        const journal = new MessageTimelineJournal();
+        journal.apply({
+            eventId: "create-mentioned",
+            kind: "create",
+            observedAt: 1,
+            messageId: "101",
+            channelId: "201",
+            authorId: "123",
+            authorIsBot: true,
+            mentionedCurrentUser: true,
+            content: "hello"
+        }, policy(), 1);
+        journal.apply({
+            eventId: "partial-edit",
+            kind: "edit",
+            observedAt: 2,
+            messageId: "101",
+            channelId: "201",
+            content: "still mentioned"
+        }, policy(), 2);
+        expect(journal.snapshot()[0]).toMatchObject({mentionedCurrentUser: true, authorId: "123", authorIsBot: true});
+        expect(journal.status().ghostPings).toBe(0);
+
+        journal.apply({
+            eventId: "mention-removed",
+            kind: "edit",
+            observedAt: 3,
+            messageId: "101",
+            channelId: "201",
+            mentionedCurrentUser: false,
+            content: "mention removed"
+        }, policy(), 3);
+        expect(journal.snapshot()[0]).toMatchObject({mentionedCurrentUser: false, ghostPingAt: 3});
+        expect(journal.status().ghostPings).toBe(1);
     });
 
     test("applies create, edit, delete, and bulk-delete idempotently", () => {
@@ -136,6 +228,7 @@ describe("Message Timeline model", () => {
         expect(new Set(bounded).size).toBe(bounded.length);
         expect(bounded).not.toContain("../2");
         expect(boundedTimelineMessageIds(ids, 0)).toEqual([]);
+        expect(boundedTimelineMessageIds(new Set(["3", "3", "4"]))).toEqual(["3", "4"]);
     });
 
     test("hard-bounds zero-text records, edit history, dedupe state, and snapshot work", () => {
@@ -214,5 +307,6 @@ describe("Message Timeline model", () => {
         journal.clear();
         expect(journal.status().records).toBe(0);
         expect(journal.apply(create, policy(), 1)).toBeTrue();
+        expect(journal.has("100")).toBeTrue();
     });
 });

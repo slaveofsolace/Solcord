@@ -9,7 +9,7 @@ import ThemeManager from "@modules/thememanager";
 import SettingsRenderer from "@ui/settings";
 import Modals from "@ui/modals";
 import DiscordModules from "@modules/discordmodules";
-import {getByKeys, getLazyByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
+import {Filters, getByKeys, getLazy, getLazyByKeys, getLazyBySource, getStore, getWithKey} from "@webpack";
 
 import type {PrivacyCapabilityRecord, PrivacyDecisionReceipt, PrivacyProfile, SolcordCuratedAddonState, SolcordMaturity, SolcordModuleHealth, SolcordModuleId, SolcordPowerExperimentId} from "./contracts";
 import {SolcordDisposalScope} from "./disposal";
@@ -19,8 +19,8 @@ import {runReversiblePatchCanary, runStructuralProbes, type StructuralProbeResul
 import {inspectLink, interceptLinkActivation, LinkReviewLifecycle, type LinkInspection} from "./link-lens";
 import {BoundedPerformanceSampler, type PerformanceSample} from "./performance";
 import {evaluateCrashGuard, type CrashGuardDocument} from "./crash-guard";
-import {boundedTimelineMessageIds, channelIsInTimelineScope, MessageTimelineJournal, normalizeTimelineAccountId, TimelineAccountGuard, timelineEventAccountMatches, type TimelineAccountIdentity, type TimelineAttachmentMetadata, type TimelineEvent, type TimelineMessageState} from "./message-timeline";
-import {splitLargeMessage} from "./message-splitter";
+import {channelIsInTimelineScope, MessageTimelineJournal, normalizeDiscordTimelineDispatch, normalizeTimelineAccountId, TimelineAccountGuard, timelineEventAccountMatches, type DiscordTimelineDispatchType, type TimelineAccountIdentity, type TimelineEvent, type TimelineMessageState} from "./message-timeline";
+import {planLargeMessage} from "./message-splitter";
 import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
 import {SOLCORD_CATALOG_INDEX, SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
 import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
@@ -64,6 +64,43 @@ interface SolcordPrivateStorageStatus {
     persistent: boolean;
     sessionOnly: boolean;
     reason?: string;
+}
+
+interface SolcordPeoplePrivateState {
+    pinnedDmIds: string[];
+    hiddenGuildIds: string[];
+    guildAliases: Record<string, string>;
+    favoriteFriendIds: string[];
+    hiddenFriendIds: string[];
+    ignoredVoiceChannelIds: string[];
+    ignoredVoiceGuildIds: string[];
+}
+
+function normalizePrivatePeopleState(value: unknown): SolcordPeoplePrivateState {
+    const record = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    const privateIds = (candidate: unknown) => Array.isArray(candidate)
+        ? [...new Set(candidate.filter((id): id is string => typeof id === "string" && /^\d{1,32}$/.test(id)))].slice(0, 500)
+        : [];
+    const rawAliases = record.guildAliases && typeof record.guildAliases === "object" && !Array.isArray(record.guildAliases)
+        ? record.guildAliases as Record<string, unknown>
+        : {};
+    const guildAliases = Object.fromEntries(Object.entries(rawAliases)
+        .filter(([id, alias]) => /^\d{1,32}$/.test(id) && typeof alias === "string")
+        .slice(0, 500)
+        .map(([id, alias]) => [id, [...(alias as string)].map(character => {
+            const code = character.charCodeAt(0);
+            return code < 32 || code === 127 ? " " : character;
+        }).join("").replace(/\s+/g, " ").trim().slice(0, 80)])
+        .filter(([, alias]) => Boolean(alias)));
+    return {
+        pinnedDmIds: privateIds(record.pinnedDmIds),
+        hiddenGuildIds: privateIds(record.hiddenGuildIds),
+        guildAliases,
+        favoriteFriendIds: privateIds(record.favoriteFriendIds),
+        hiddenFriendIds: privateIds(record.hiddenFriendIds),
+        ignoredVoiceChannelIds: privateIds(record.ignoredVoiceChannelIds),
+        ignoredVoiceGuildIds: privateIds(record.ignoredVoiceGuildIds)
+    };
 }
 
 export interface ProfileAddonExecutionPlan {
@@ -246,6 +283,10 @@ const TIMELINE_IPC = Object.freeze({
     audienceRead: IPC.readAudienceGuard.bind(IPC),
     audienceWrite: IPC.writeAudienceGuard.bind(IPC),
     audienceClear: IPC.clearAudienceGuard.bind(IPC),
+    peopleStatus: IPC.getPeopleStateStatus.bind(IPC),
+    peopleRead: IPC.readPeopleState.bind(IPC),
+    peopleWrite: IPC.writePeopleState.bind(IPC),
+    peopleClear: IPC.clearPeopleState.bind(IPC),
     applySetup: IPC.applySolcordSetup.bind(IPC),
     acknowledgeSetup: IPC.acknowledgeSolcordSetup.bind(IPC),
     reconcileSetup: IPC.reconcileSolcordSetup.bind(IPC),
@@ -290,13 +331,18 @@ class SolcordRuntimeStore extends Store {
     #returnLater = new SolcordReturnLaterJournal();
     #privateUiAccountGuard = new TimelineAccountGuard();
     #privateUiAccountIdentity?: TimelineAccountIdentity;
-    #sessionPeopleState: {pinnedDmIds: string[]; hiddenGuildIds: string[]; guildAliases: Record<string, string>;} = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}};
+    #sessionPeopleState: SolcordPeoplePrivateState = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []};
+    #peopleStatePersistent = false;
+    #peopleStateLoadGeneration = 0;
     #sessionFocusChannelIds: string[] = [];
     #timelinePersistent = false;
     #curatedScope = new SolcordDisposalScope();
     #curatedSynchronizationError?: string;
     #curatedCommunitySignature = "";
     #curatedAdapterResults: Record<string, CuratedAdapterResult> = {};
+    #curatedAdapterRetryAttempt = 0;
+    #curatedAdapterRetryScheduled = false;
+    #curatedAdapterRetryGeneration = 0;
     #nativeSuite?: SolcordNativeSuiteController;
     #baselineSuite?: SolcordBaselineSuite;
     #splitReviewOpen = false;
@@ -451,7 +497,7 @@ class SolcordRuntimeStore extends Store {
         });
 
         await this.#startupPhases!.run("patch-observer", async () => {
-            this.#installRuntimeObservers();
+            await this.#installRuntimeObservers();
             this.#synchronizeCuratedAdapters();
             await this.#synchronizePowerLab();
         });
@@ -467,14 +513,17 @@ class SolcordRuntimeStore extends Store {
         }, 1_500);
     }
 
-    #installRuntimeObservers(): void {
+    async #installRuntimeObservers(): Promise<void> {
         const privateUserStore = getStore("UserStore") as {getCurrentUser?: () => {id?: string;} | undefined; addChangeListener?: (listener: () => void) => void; removeChangeListener?: (listener: () => void) => void;} | undefined;
         this.#observePrivateUiAccount();
+        await this.#loadPeopleState();
         if (typeof privateUserStore?.addChangeListener === "function" && typeof privateUserStore.removeChangeListener === "function") {
             const onPrivateAccountChange = () => {
                 if (!this.#observePrivateUiAccount()) return;
-                this.#synchronizeCuratedAdapters();
-                this.emitChange();
+                void this.#loadPeopleState().finally(() => {
+                    this.#synchronizeCuratedAdapters();
+                    this.emitChange();
+                });
             };
             privateUserStore.addChangeListener(onPrivateAccountChange);
             this.#rootScope.own(() => privateUserStore.removeChangeListener?.(onPrivateAccountChange), "listener");
@@ -770,11 +819,56 @@ class SolcordRuntimeStore extends Store {
         const identity = this.#privateUiAccountGuard.observe(this.#currentTimelineAccountId());
         const previous = this.#privateUiAccountIdentity;
         this.#privateUiAccountIdentity = identity;
-        if (!previous || (previous.accountId === identity.accountId && previous.generation === identity.generation)) return false;
-        this.#sessionPeopleState = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}};
+        if (previous && previous.accountId === identity.accountId && previous.generation === identity.generation) return false;
+        this.#peopleStateLoadGeneration++;
+        this.#sessionPeopleState = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []};
+        this.#peopleStatePersistent = false;
         this.#sessionFocusChannelIds = [];
         this.#returnLater = new SolcordReturnLaterJournal();
         return true;
+    }
+
+    #privateUiIdentityIsCurrent(identity: TimelineAccountIdentity): boolean {
+        const current = this.#privateUiAccountIdentity;
+        return current?.accountId === identity.accountId
+            && current?.generation === identity.generation
+            && this.#privateUiAccountGuard.matches(identity, this.#currentTimelineAccountId());
+    }
+
+    async #loadPeopleState(): Promise<void> {
+        const identity = this.#privateUiAccountIdentity;
+        if (!identity?.accountId) return;
+        const generation = ++this.#peopleStateLoadGeneration;
+        const identityIsCurrent = () => generation === this.#peopleStateLoadGeneration && this.#privateUiIdentityIsCurrent(identity);
+        try {
+            const result = await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.peopleRead(capability), identityIsCurrent) as {state?: unknown; persistent?: boolean; complete?: boolean;};
+            if (!identityIsCurrent()) return;
+            this.#sessionPeopleState = normalizePrivatePeopleState(result.state);
+            this.#peopleStatePersistent = result.persistent === true && result.complete === true;
+        }
+        catch {
+            if (identityIsCurrent()) this.#peopleStatePersistent = false;
+        }
+    }
+
+    async #persistPeopleState(state: SolcordPeoplePrivateState): Promise<void> {
+        const identity = this.#privateUiAccountIdentity;
+        if (!identity?.accountId) return;
+        const generation = ++this.#peopleStateLoadGeneration;
+        const identityIsCurrent = () => generation === this.#peopleStateLoadGeneration && this.#privateUiIdentityIsCurrent(identity);
+        try {
+            const result = await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.peopleWrite(capability, {state}), identityIsCurrent) as {state?: unknown; persistent?: boolean; complete?: boolean;};
+            if (!identityIsCurrent()) return;
+            this.#sessionPeopleState = normalizePrivatePeopleState(result.state);
+            this.#peopleStatePersistent = result.persistent === true && result.complete === true;
+            this.#synchronizeCuratedAdapters();
+            this.emitChange();
+        }
+        catch {
+            if (!identityIsCurrent()) return;
+            this.#peopleStatePersistent = false;
+            this.emitChange();
+        }
     }
 
     privacyCapabilities(): PrivacyCapabilityRecord[] {
@@ -2130,7 +2224,8 @@ class SolcordRuntimeStore extends Store {
         this.#curatedScope = new SolcordDisposalScope();
         const scope = this.#curatedScope;
         this.#curatedCommunitySignature = this.#communityAddonSignature();
-        const nativeEnabled = Object.fromEntries(Object.entries(curated).map(([name, state]) => [name, state.enabled === true && isSolcordBuiltInAddon(name, state.mode) && !this.#communityAddonEnabled(name)]));
+        const separatelyOwnedProviders = new Set(["DoNotTrack", "InvisibleTyping", "DoubleClickToReply", "SplitLargeMessages"]);
+        const nativeEnabled = Object.fromEntries(Object.entries(curated).map(([name, state]) => [name, state.enabled === true && isSolcordBuiltInAddon(name, state.mode) && !separatelyOwnedProviders.has(name) && !this.#communityAddonEnabled(name)]));
         const nativeSuite = new SolcordNativeSuiteController(scope, nativeEnabled, this.#nativeSuiteAdapter(nativeEnabled, scope));
         this.#nativeSuite = nativeSuite;
         scope.own(() => {
@@ -2232,7 +2327,8 @@ class SolcordRuntimeStore extends Store {
             results.DoubleClickToReply = communityResult("DoubleClickToReply");
         }
         else {
-            const feature = new DoubleClickReplyFeature(this.#doubleClickReplyAdapter());
+            const modifier = SolcordSettings.snapshot().productPreferences.nativeSuite.composer.doubleClickReplyModifier;
+            const feature = new DoubleClickReplyFeature(this.#doubleClickReplyAdapter(), modifier);
             if (feature.start()) {
                 scope.own(() => feature.stop(), "listener");
                 results.DoubleClickToReply = {enabled: true, provider: "solcord"};
@@ -2264,10 +2360,21 @@ class SolcordRuntimeStore extends Store {
             PluginDoctor.recordFailure(name, "start", new Error("NativeSuiteAdapterUnavailable"));
         }
         if (!curatedOverride) {
-            for (const [name, result] of Object.entries(results)) {
+            const retryable = Object.entries(results).some(([name, result]) => {
                 const state = curated[name];
-                if (!state?.enabled || !isSolcordBuiltInAddon(name, state.mode) || result.enabled || !result.reason) continue;
-                SolcordSettings.setCuratedAddonEnabled(name, false, result.reason);
+                return state?.enabled === true
+                    && isSolcordBuiltInAddon(name, state.mode)
+                    && !this.#communityAddonEnabled(name)
+                    && !result.enabled
+                    && Boolean(result.reason);
+            });
+            if (retryable) {
+                this.#scheduleCuratedAdapterRetry();
+            }
+            else {
+                this.#curatedAdapterRetryAttempt = 0;
+                this.#curatedAdapterRetryScheduled = false;
+                this.#curatedAdapterRetryGeneration++;
             }
         }
         this.#curatedAdapterResults = structuredClone(results);
@@ -2275,12 +2382,28 @@ class SolcordRuntimeStore extends Store {
         return results;
     }
 
+    #scheduleCuratedAdapterRetry(): void {
+        if (this.#curatedAdapterRetryScheduled || this.#curatedAdapterRetryAttempt >= 3 || !this.#initialized) return;
+        const delays = [1_500, 5_000, 15_000] as const;
+        const delay = delays[this.#curatedAdapterRetryAttempt] ?? delays.at(-1)!;
+        const generation = ++this.#curatedAdapterRetryGeneration;
+        this.#curatedAdapterRetryAttempt++;
+        this.#curatedAdapterRetryScheduled = true;
+        this.#rootScope.timeout(() => {
+            if (generation !== this.#curatedAdapterRetryGeneration) return;
+            this.#curatedAdapterRetryScheduled = false;
+            if (!this.#started || this.#recoveryMode) return;
+            this.#synchronizeCuratedAdapters();
+        }, delay);
+    }
+
     #nativeSuiteAdapter(nativeEnabled: Readonly<Record<string, boolean>>, scope: SolcordDisposalScope): SolcordNativeSuiteAdapter {
         type FluxStore = {addChangeListener?(listener: () => void): void; removeChangeListener?(listener: () => void): void;};
         type Message = {id?: string; timestamp?: {valueOf?(): number;} | number; content?: string; author?: {username?: string; globalName?: string;};};
-        type Channel = {id?: string;};
+        type Channel = {id?: string; guild_id?: string; type?: number; recipientId?: string; getRecipientId?(): string | undefined; recipients?: Array<string | {id?: string;}>; rawRecipients?: Array<string | {id?: string;}>;};
         type GuildChannelBucket = {channel?: Channel;};
-        const voiceHealthEnabled = SolcordSettings.snapshot().productPreferences.nativeSuite.voiceHealthEnabled;
+        const nativePreferences = SolcordSettings.snapshot().productPreferences.nativeSuite;
+        const voiceHealthEnabled = nativePreferences.voiceHealthEnabled;
         const lookups = planSolcordNativeSuiteLookups(nativeEnabled, voiceHealthEnabled);
         const selectedChannelStore = lookups.callContext || lookups.voiceNoteStudio
             ? getStore("SelectedChannelStore") as FluxStore & {getChannelId?(): string | undefined; getVoiceChannelId?(): string | undefined;} | undefined
@@ -2300,17 +2423,41 @@ class SolcordRuntimeStore extends Store {
         const messageStore = lookups.channelGlance
             ? getStore("MessageStore") as {getMessages?(channelId: string): {toArray?(): Message[];} | Message[] | undefined;} | undefined
             : undefined;
-        const channelStore = lookups.voiceNoteStudio || lookups.notificationReview
-            ? getStore("ChannelStore") as {getChannel?(channelId: string): unknown; getSortedPrivateChannels?(): Channel[];} | undefined
+        const channelStore = lookups.callContext || lookups.voiceNoteStudio || lookups.notificationReview || lookups.peopleAndSpaces
+            ? getStore("ChannelStore") as {getChannel?(channelId: string): Channel | undefined; getSortedPrivateChannels?(): Channel[];} | undefined
             : undefined;
-        const guildStore = lookups.notificationReview
-            ? getStore("GuildStore") as {getGuilds?(): Record<string, unknown>;} | undefined
+        const guildStore = lookups.notificationReview || lookups.peopleAndSpaces
+            ? getStore("GuildStore") as {getGuilds?(): Record<string, unknown>; getGuild?(guildId: string): {id?: string; name?: string; ownerId?: string; owner_id?: string; memberCount?: number; joinedAt?: unknown; joined_at?: unknown; premiumSubscriptionCount?: unknown; preferredLocale?: unknown;} | undefined;} | undefined
             : undefined;
-        const guildChannelStore = lookups.notificationReview
+        const userStore = lookups.callContext || lookups.peopleAndSpaces
+            ? getStore("UserStore") as {getUser?(userId: string): {id?: string; username?: string; globalName?: string; bot?: boolean;} | undefined; getCurrentUser?(): {id?: string;} | undefined;} | undefined
+            : undefined;
+        const memberCountStore = lookups.peopleAndSpaces
+            ? getStore("MemberCountStore") as {getMemberCount?(guildId: string): number | undefined;} | undefined
+            : undefined;
+        const relationshipStore = lookups.peopleAndSpaces
+            ? getStore("RelationshipStore") as {getRelationships?(): Record<string, number>; getRelationshipSince?(userId: string): unknown;} | undefined
+            : undefined;
+        const mutualGuildStore = lookups.peopleAndSpaces
+            ? getStore("MutualGuildStore") as {getMutualGuilds?(userId: string): unknown;} | undefined
+            : undefined;
+        const presenceStore = lookups.peopleAndSpaces
+            ? getStore("PresenceStore") as {getStatus?(userId: string): unknown;} | undefined
+            : undefined;
+        const guildChannelStore = lookups.notificationReview || lookups.peopleAndSpaces
             ? getStore("GuildChannelStore") as {getChannels?(guildId: string): Record<string, GuildChannelBucket[]>;} | undefined
             : undefined;
-        const readStateStore = lookups.notificationReview
+        const guildRoleStore = lookups.peopleAndSpaces
+            ? getStore("GuildRoleStore") as {getRoles?(guildId: string): Record<string, unknown> | undefined;} | undefined
+            : undefined;
+        const readStateStore = lookups.notificationReview || lookups.peopleAndSpaces
             ? getStore("ReadStateStore") as {hasUnread?(channelId: string): boolean; getMentionCount?(channelId: string): number; lastMessageId?(channelId: string): string | null;} | undefined
+            : undefined;
+        const notificationMuteStore = lookups.notificationReview
+            ? getStore("UserGuildSettingsStore") as {isChannelMuted?(guildId: string | null | undefined, channelId: string): boolean; isGuildOrCategoryOrChannelMuted?(guildId: string, channelId: string): boolean;} | undefined
+            : undefined;
+        const streamerModeStore = lookups.peopleAndSpaces
+            ? getStore("StreamerModeStore") as FluxStore & {enabled?: boolean; getSettings?(): {enabled?: unknown;} | undefined;} | undefined
             : undefined;
         const volumeActions = lookups.audioConsole
             ? getByKeys<{setLocalVolume?(userId: string, volume: number): void;}>(["setLocalVolume"])
@@ -2323,27 +2470,140 @@ class SolcordRuntimeStore extends Store {
             ])
             : undefined;
         const speakingReader = resolveSolcordSpeakingReader(speakingStore);
-        const callContextStores = [selectedChannelStore, voiceStateStore];
-        if (nativeEnabled.VoiceActivity) callContextStores.push(speakingStore);
-        if (nativeEnabled.ShowSpectators) callContextStores.push(streamingStore);
+        const baseCallContextStores = [selectedChannelStore, voiceStateStore];
+        const voiceActivityAvailable = typeof speakingReader === "function"
+            && typeof speakingStore?.addChangeListener === "function"
+            && typeof speakingStore.removeChangeListener === "function";
+        const spectatorsAvailable = typeof streamingStore?.getCurrentUserActiveStream === "function"
+            && typeof streamingStore.getViewerIds === "function"
+            && typeof streamingStore.addChangeListener === "function"
+            && typeof streamingStore.removeChangeListener === "function";
+        const callContextStores = [...baseCallContextStores];
+        if (nativeEnabled.VoiceActivity && voiceActivityAvailable) callContextStores.push(speakingStore);
+        if (nativeEnabled.ShowSpectators && spectatorsAvailable) callContextStores.push(streamingStore);
         const callContextAvailable = lookups.callContext
             && typeof selectedChannelStore?.getVoiceChannelId === "function"
             && typeof voiceStateStore?.getVoiceStatesForChannel === "function"
-            && (!nativeEnabled.VoiceActivity || Boolean(speakingReader))
-            && (!nativeEnabled.ShowSpectators || (typeof streamingStore?.getCurrentUserActiveStream === "function" && typeof streamingStore.getViewerIds === "function"))
-            && callContextStores.every(store => typeof store?.addChangeListener === "function" && typeof store.removeChangeListener === "function");
+            && baseCallContextStores.every(store => typeof store?.addChangeListener === "function" && typeof store.removeChangeListener === "function");
         let connectedChannelId: string | undefined;
         let connectedAt = Date.now();
-        const values = (raw: unknown): unknown[] => raw instanceof Map ? [...raw.values()] : Array.isArray(raw) ? raw : raw && typeof raw === "object" ? Object.values(raw) : [];
+        const values = (raw: unknown): unknown[] => raw instanceof Map ? [...raw.values()] : raw instanceof Set ? [...raw] : Array.isArray(raw) ? raw : raw && typeof raw === "object" ? Object.values(raw) : [];
+        const callIds = (raw: unknown): string[] => {
+            const candidates: unknown[] = raw instanceof Map
+                ? [...raw.entries()].flatMap(([key, value]) => [key, value])
+                : raw instanceof Set ? [...raw]
+                    : Array.isArray(raw) ? raw
+                        : raw && typeof raw === "object" ? [...Object.keys(raw as Record<string, unknown>), ...Object.values(raw as Record<string, unknown>)] : [];
+            return [...new Set(candidates.map(candidate => {
+                if (typeof candidate === "string") return normalizeTimelineAccountId(candidate);
+                if (!candidate || typeof candidate !== "object") return;
+                const record = candidate as {id?: unknown; userId?: unknown; user_id?: unknown; user?: {id?: unknown;};};
+                return normalizeTimelineAccountId(record.userId ?? record.user_id ?? record.user?.id ?? record.id);
+            }).filter((id): id is string => Boolean(id)))].slice(0, 500);
+        };
         const currentCall = () => {
             const channelId = selectedChannelStore?.getVoiceChannelId?.();
             if (!channelId) {connectedChannelId = undefined; return;}
             if (connectedChannelId !== channelId) {connectedChannelId = channelId; connectedAt = Date.now();}
             const voiceStates = values(voiceStateStore?.getVoiceStatesForChannel?.(channelId));
-            const speaking = values(speakingReader?.());
+            const participantIds = callIds(voiceStateStore?.getVoiceStatesForChannel?.(channelId));
+            const speakerIds = voiceActivityAvailable ? callIds(speakingReader?.()).filter(id => participantIds.includes(id)) : [];
             const stream = streamingStore?.getCurrentUserActiveStream?.();
-            const viewers = stream ? normalizeAudienceGuardIds(streamingStore?.getViewerIds?.(stream)) : [];
-            return {channelId, connectedAt, participantCount: Math.min(500, voiceStates.length), speakerCount: Math.min(voiceStates.length, speaking.length), viewerCount: Math.min(voiceStates.length, viewers.length)};
+            const viewers = spectatorsAvailable && stream ? normalizeAudienceGuardIds(streamingStore?.getViewerIds?.(stream)) : [];
+            const viewerLabels = viewers.map(id => {
+                const user = userStore?.getUser?.(id);
+                return (user?.globalName || user?.username || "Viewer").slice(0, 80);
+            });
+            return {channelId, connectedAt, participantCount: Math.min(500, voiceStates.length), speakerCount: Math.min(voiceStates.length, speakerIds.length), viewerCount: Math.min(voiceStates.length, viewers.length), participantIds, speakerIds, viewerLabels};
+        };
+        const guildDetails = (guildId: string) => {
+            const guild = guildStore?.getGuild?.(guildId);
+            if (!guild || guild.id !== guildId) return;
+            const ownerId = normalizeTimelineAccountId(guild.ownerId ?? guild.owner_id);
+            const owner = ownerId ? userStore?.getUser?.(ownerId) : undefined;
+            const memberCount = memberCountStore?.getMemberCount?.(guildId) ?? guild.memberCount;
+            let createdAt: number | undefined;
+            try {createdAt = Number(BigInt(guildId) >> 22n) + 1_420_070_400_000;}
+            catch {/* malformed ids were already excluded */}
+            const rawJoinedAt = guild.joinedAt ?? guild.joined_at;
+            const joinedCandidate = rawJoinedAt instanceof Date ? rawJoinedAt.valueOf() : typeof rawJoinedAt === "number" ? rawJoinedAt : typeof rawJoinedAt === "string" ? Date.parse(rawJoinedAt) : Number.NaN;
+            const joinedAt = Number.isFinite(joinedCandidate) && joinedCandidate >= 0 ? joinedCandidate : undefined;
+            const channelIds = new Set<string>();
+            const channelGroups = guildChannelStore?.getChannels?.(guildId);
+            if (channelGroups && typeof channelGroups === "object") {
+                for (const bucket of Object.values(channelGroups)) {
+                    if (!Array.isArray(bucket)) continue;
+                    for (const entry of bucket) {
+                        const id = normalizeTimelineAccountId(entry?.channel?.id);
+                        if (id) channelIds.add(id);
+                    }
+                }
+            }
+            const roles = guildRoleStore?.getRoles?.(guildId);
+            const roleCount = roles && typeof roles === "object" ? Object.keys(roles).length : undefined;
+            const boostCount = typeof guild.premiumSubscriptionCount === "number" && Number.isSafeInteger(guild.premiumSubscriptionCount) && guild.premiumSubscriptionCount >= 0 ? guild.premiumSubscriptionCount : undefined;
+            const locale = typeof guild.preferredLocale === "string" && /^[a-z]{2,3}(?:-[A-Z]{2})?$/.test(guild.preferredLocale) ? guild.preferredLocale : undefined;
+            return {
+                name: typeof guild.name === "string" ? guild.name.slice(0, 100) : undefined,
+                ownerLabel: (owner?.globalName || owner?.username || "").slice(0, 80) || undefined,
+                memberCount: typeof memberCount === "number" && Number.isSafeInteger(memberCount) && memberCount >= 0 ? memberCount : undefined,
+                createdAt,
+                joinedAt,
+                channelCount: channelIds.size || undefined,
+                roleCount,
+                boostCount,
+                locale
+            };
+        };
+        const loadedFriends = () => {
+            if (typeof relationshipStore?.getRelationships !== "function" || typeof userStore?.getUser !== "function") return [];
+            const relationships = relationshipStore.getRelationships();
+            if (!relationships || typeof relationships !== "object") return [];
+            const statuses = new Set(["online", "idle", "dnd", "offline"]);
+            const relationshipTypes = new Map<number, "friend" | "blocked" | "incoming" | "outgoing" | "ignored">([[1, "friend"], [2, "blocked"], [3, "incoming"], [4, "outgoing"], [5, "ignored"]]);
+            return Object.entries(relationships).flatMap(([id, relationship]) => {
+                const relationshipLabel = relationshipTypes.get(relationship);
+                if (!relationshipLabel) return [];
+                const normalizedId = normalizeTimelineAccountId(id);
+                const user = normalizedId ? userStore.getUser!(normalizedId) : undefined;
+                if (!normalizedId || user?.id !== normalizedId) return [];
+                const rawStatus = presenceStore?.getStatus?.(normalizedId);
+                const status = typeof rawStatus === "string" && statuses.has(rawStatus) ? rawStatus as "online" | "idle" | "dnd" | "offline" : "unknown" as const;
+                const rawSince = relationshipStore.getRelationshipSince?.(normalizedId);
+                const sinceCandidate = rawSince instanceof Date ? rawSince.valueOf()
+                    : typeof rawSince === "number" ? rawSince
+                        : typeof rawSince === "string" ? Date.parse(rawSince)
+                            : rawSince && typeof rawSince === "object" && typeof (rawSince as {valueOf?(): unknown;}).valueOf === "function" ? Number((rawSince as {valueOf(): unknown;}).valueOf()) : Number.NaN;
+                const relationshipSince = Number.isFinite(sinceCandidate) && sinceCandidate >= 0 && sinceCandidate <= Date.now() + 86_400_000 ? sinceCandidate : undefined;
+                const rawMutualGuilds = mutualGuildStore?.getMutualGuilds?.(normalizedId);
+                const mutualGuildCount = Array.isArray(rawMutualGuilds) ? Math.min(500, rawMutualGuilds.length)
+                    : rawMutualGuilds && typeof rawMutualGuilds === "object" ? Math.min(500, Object.keys(rawMutualGuilds as Record<string, unknown>).length) : undefined;
+                return [{id: normalizedId, label: (user.globalName || user.username || "Unknown person").slice(0, 80), status, relationship: relationshipLabel, relationshipSince, mutualGuildCount}];
+            }).slice(0, 1_000);
+        };
+        const dmUnreadCount = (channelId: string): number => {
+            const count = readStateStore?.getMentionCount?.(channelId);
+            return typeof count === "number" && Number.isSafeInteger(count) && count > 0 ? Math.min(999, count) : 0;
+        };
+        const dmLastMessageTimestamp = (channelId: string): number => {
+            const messageId = normalizeTimelineAccountId(readStateStore?.lastMessageId?.(channelId));
+            if (!messageId) return 0;
+            try {return Number(BigInt(messageId) >> 22n) + 1_420_070_400_000;}
+            catch {return 0;}
+        };
+        const dmCategory = (channelId: string): "friends" | "groups" | "bots" | "blocked" | "others" => {
+            const channel = channelStore?.getChannel?.(channelId);
+            if (channel?.type === 3) return "groups";
+            let rawRecipient: unknown;
+            try {rawRecipient = channel?.getRecipientId?.() ?? channel?.recipientId ?? channel?.recipients?.[0] ?? channel?.rawRecipients?.[0];}
+            catch {return "others";}
+            const recipientId = normalizeTimelineAccountId(typeof rawRecipient === "string" ? rawRecipient : rawRecipient && typeof rawRecipient === "object" ? (rawRecipient as {id?: unknown;}).id : undefined);
+            if (!recipientId) return "others";
+            if (userStore?.getUser?.(recipientId)?.bot === true) return "bots";
+            const relationship = relationshipStore?.getRelationships?.()?.[recipientId];
+            if (relationship === 2) return "blocked";
+            if (relationship === 1) return "friends";
+            return "others";
         };
         const cachedGuildChannelIds = (guildIds: readonly string[]): string[] => {
             if (typeof guildChannelStore?.getChannels !== "function") return [];
@@ -2365,18 +2625,27 @@ class SolcordRuntimeStore extends Store {
         const notificationIds = (notificationScope: "guild" | "mentions" | "all"): string[] => {
             if (typeof readStateStore?.hasUnread !== "function" || typeof readStateStore.getMentionCount !== "function" || typeof readStateStore.lastMessageId !== "function") return [];
             const selectedGuildId = normalizeTimelineAccountId(selectedGuildStore?.getGuildId?.());
-            const knownGuildIds = notificationScope === "guild"
+            const notificationPreferences = nativePreferences.notifications;
+            const knownGuildIds = !notificationPreferences.includeGuilds ? [] : notificationScope === "guild"
                 ? (selectedGuildId ? [selectedGuildId] : [])
                 : Object.keys(guildStore?.getGuilds?.() ?? {}).map(normalizeTimelineAccountId).filter((id): id is string => Boolean(id));
-            const ids = cachedGuildChannelIds(knownGuildIds);
-            if (notificationScope !== "guild" && typeof channelStore?.getSortedPrivateChannels === "function") {
+            const channelIds = cachedGuildChannelIds(knownGuildIds);
+            if (notificationPreferences.includeDms && notificationScope !== "guild" && typeof channelStore?.getSortedPrivateChannels === "function") {
                 for (const channel of channelStore.getSortedPrivateChannels()) {
                     const id = normalizeTimelineAccountId(channel?.id);
-                    if (id) ids.push(id);
-                    if (ids.length >= 500) break;
+                    if (id) channelIds.push(id);
+                    if (channelIds.length >= 500) break;
                 }
             }
-            return [...new Set(ids)].filter(id => notificationScope === "mentions" ? readStateStore.getMentionCount!(id) > 0 : readStateStore.hasUnread!(id) || readStateStore.getMentionCount!(id) > 0).slice(0, 500);
+            return [...new Set(channelIds)].filter(id => {
+                const channel = channelStore?.getChannel?.(id);
+                const guildId = normalizeTimelineAccountId(channel?.guild_id);
+                if (!notificationPreferences.includeMuted && guildId && (
+                    notificationMuteStore?.isChannelMuted?.(guildId, id) === true
+                    || notificationMuteStore?.isGuildOrCategoryOrChannelMuted?.(guildId, id) === true
+                )) return false;
+                return notificationScope === "mentions" ? readStateStore.getMentionCount!(id) > 0 : readStateStore.hasUnread!(id) || readStateStore.getMentionCount!(id) > 0;
+            }).slice(0, 500);
         };
         const markNotificationsRead = (_scope: "guild" | "mentions" | "all", reviewedIds: readonly string[]): void => {
             if (typeof readStateStore?.lastMessageId !== "function" || typeof DiscordModules.Dispatcher?.dispatch !== "function") throw new Error("Discord's reviewed notification action is unavailable.");
@@ -2388,13 +2657,41 @@ class SolcordRuntimeStore extends Store {
             if (!channels.length) return;
             DiscordModules.Dispatcher.dispatch({type: "BULK_ACK", context: "APP", channels});
         };
+        const notificationMuteReviewAvailable = nativePreferences.notifications.includeMuted
+            || typeof notificationMuteStore?.isChannelMuted === "function"
+            || typeof notificationMuteStore?.isGuildOrCategoryOrChannelMuted === "function";
         const notificationAdapterAvailable = typeof guildChannelStore?.getChannels === "function"
             && typeof readStateStore?.hasUnread === "function"
             && typeof readStateStore.getMentionCount === "function"
             && typeof readStateStore.lastMessageId === "function"
-            && typeof DiscordModules.Dispatcher?.dispatch === "function";
+            && typeof DiscordModules.Dispatcher?.dispatch === "function"
+            && notificationMuteReviewAvailable;
+        const promptToUpload = DiscordModules.promptToUpload;
+        const saveVoiceNoteFile = lookups.voiceNoteStudio && typeof URL.createObjectURL === "function" && typeof URL.revokeObjectURL === "function"
+            ? (file: File) => {
+                const url = URL.createObjectURL(file);
+                const releaseUrl = scope.own(() => URL.revokeObjectURL(url), "object-url");
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = file.name;
+                link.rel = "noopener";
+                link.hidden = true;
+                try {
+                    document.body.append(link);
+                    link.click();
+                }
+                catch (error) {
+                    releaseUrl();
+                    throw error;
+                }
+                finally {link.remove();}
+                scope.timeout(releaseUrl, 60_000);
+            }
+            : undefined;
         return {
             currentCall: callContextAvailable ? currentCall : undefined,
+            voiceActivityAvailable: callContextAvailable && voiceActivityAvailable,
+            spectatorsAvailable: callContextAvailable && spectatorsAvailable,
             currentChannelId: lookups.voiceNoteStudio && typeof selectedChannelStore?.getChannelId === "function" ? () => normalizeTimelineAccountId(selectedChannelStore.getChannelId?.()) : undefined,
             subscribeCall: callContextAvailable ? listener => subscribeSolcordChangeStores(scope, callContextStores as Array<Required<FluxStore>>, listener) : undefined,
             setLocalVolume: typeof volumeActions?.setLocalVolume === "function" ? (userId, percent) => volumeActions.setLocalVolume!(userId, percent) : undefined,
@@ -2412,20 +2709,48 @@ class SolcordRuntimeStore extends Store {
             notificationIds: notificationAdapterAvailable ? notificationIds : undefined,
             markNotificationsRead: notificationAdapterAvailable ? markNotificationsRead : undefined,
             voiceHealthSample,
-            prepareVoiceNoteUpload: typeof DiscordModules.promptToUpload === "function" && typeof channelStore?.getChannel === "function" ? (channelId, file) => {
+            prepareVoiceNoteUpload: typeof promptToUpload === "function" && typeof channelStore?.getChannel === "function" ? (channelId, file) => {
                 const channel = channelStore.getChannel!(channelId);
                 if (!channel) throw new Error("The selected channel is unavailable.");
-                DiscordModules.promptToUpload?.([file], channel as never, 0);
+                promptToUpload([file], channel as never, 0);
             } : undefined,
+            saveVoiceNoteFile,
+            guildDetails: lookups.peopleAndSpaces && typeof guildStore?.getGuild === "function" ? guildDetails : undefined,
+            loadedFriends: lookups.peopleAndSpaces && typeof relationshipStore?.getRelationships === "function" && typeof userStore?.getUser === "function" ? loadedFriends : undefined,
+            dmUnreadCount: lookups.peopleAndSpaces && typeof readStateStore?.getMentionCount === "function" ? dmUnreadCount : undefined,
+            dmLastMessageTimestamp: lookups.peopleAndSpaces && typeof readStateStore?.lastMessageId === "function" ? dmLastMessageTimestamp : undefined,
+            dmCategory: lookups.peopleAndSpaces && typeof channelStore?.getChannel === "function" ? dmCategory : undefined,
             peopleState: this.#sessionPeopleState,
+            peopleStatePersistence: this.#peopleStatePersistent ? "encrypted" : "session",
             savePeopleState: state => {
-                this.#sessionPeopleState = {pinnedDmIds: [...state.pinnedDmIds], hiddenGuildIds: [...state.hiddenGuildIds], guildAliases: {...state.guildAliases}};
+                const next = normalizePrivatePeopleState(state);
+                this.#sessionPeopleState = next;
+                this.#peopleStatePersistent = false;
                 this.emitChange();
+                void this.#persistPeopleState(next);
             },
             focusChannelIds: this.#sessionFocusChannelIds,
             voiceHealthEnabled,
-            saveFocusChannelIds: ids => {
-                this.#sessionFocusChannelIds = [...ids];
+            composerPreferences: nativePreferences.composer,
+            timestampPreferences: nativePreferences.timestamps,
+            peoplePreferences: nativePreferences.people,
+            voiceActivityPreferences: nativePreferences.voiceActivity,
+            voiceActivityCurrentUserId: normalizeTimelineAccountId(userStore?.getCurrentUser?.()?.id),
+            currentVoiceContext: lookups.callContext && typeof selectedChannelStore?.getVoiceChannelId === "function" && typeof channelStore?.getChannel === "function" ? () => {
+                const channelId = normalizeTimelineAccountId(selectedChannelStore.getVoiceChannelId?.());
+                if (!channelId) return;
+                const channel = channelStore.getChannel!(channelId);
+                return {channelId, ...(normalizeTimelineAccountId(channel?.guild_id) ? {guildId: normalizeTimelineAccountId(channel?.guild_id)} : {})};
+            } : undefined,
+            streamerModeActive: lookups.peopleAndSpaces ? () => streamerModeStore?.enabled === true || streamerModeStore?.getSettings?.()?.enabled === true : undefined,
+            subscribeStreamerMode: lookups.peopleAndSpaces && typeof streamerModeStore?.addChangeListener === "function" && typeof streamerModeStore.removeChangeListener === "function"
+                ? listener => subscribeSolcordChangeStores(scope, [streamerModeStore as Required<FluxStore>], listener)
+                : undefined,
+            voiceNotePreferences: nativePreferences.voiceNotes,
+            notificationPreferences: nativePreferences.notifications,
+            motionPreferences: nativePreferences.motion,
+            saveFocusChannelIds: channelIds => {
+                this.#sessionFocusChannelIds = [...channelIds];
                 this.emitChange();
             },
             identityNotesAvailable: Boolean(this.#privateCapability),
@@ -2467,6 +2792,16 @@ class SolcordRuntimeStore extends Store {
                 document.addEventListener("dblclick", handler, false);
                 return () => document.removeEventListener("dblclick", handler, false);
             },
+            installAltClickSuppressor: () => {
+                const handler = (event: MouseEvent) => {
+                    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0 || !(event.target instanceof Element)) return;
+                    if (!messageIdentity(event.target)) return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                };
+                document.addEventListener("click", handler, true);
+                return () => document.removeEventListener("click", handler, true);
+            },
             inspect: event => {
                 if (!(event instanceof MouseEvent) || !(event.target instanceof Element)) return null;
                 const identity = messageIdentity(event.target);
@@ -2507,8 +2842,16 @@ class SolcordRuntimeStore extends Store {
 
     #showGuardedSplitReview(scope: SolcordDisposalScope, content: string): void {
         if (this.#splitReviewOpen) return;
-        const preview = splitLargeMessage(content, 2_000, 1_200);
-        if (preview.parts.length < 2) return;
+        const settings = SolcordSettings.snapshot().productPreferences.nativeSuite.composer;
+        const preview = planLargeMessage(content, {
+            limit: settings.splitLimit,
+            delayMs: 1_200,
+            boundary: settings.splitBoundary,
+            preserveBlankLines: settings.preserveBlankLines,
+            maxParts: settings.maxSplitParts,
+            attachmentThreshold: settings.attachmentThreshold
+        });
+        if (!preview.attachment && preview.parts.length < 2) return;
         this.#splitReviewOpen = true;
         const summaries = preview.parts.map((part, index) => {
             const sample = part.slice(0, 140).replace(/[`*_~|]/g, " ").replace(/\s+/g, " ");
@@ -2537,17 +2880,33 @@ class SolcordRuntimeStore extends Store {
             release();
         };
         try {
-            const openedModal = Modals.showConfirmationModal("Guarded message split", [
-                `${preview.parts.length} parts · ${preview.delayMs} ms planned spacing · ${preview.totalDelayMs} ms total delay.`,
-                "Solcord will not send automatically. Confirm to copy the ordered parts, then review and send each part yourself.",
+            const attachment = preview.attachment;
+            const openedModal = Modals.showConfirmationModal(attachment ? "Save reviewed text file" : "Guarded message split", [
+                attachment
+                    ? `${attachment.text.length.toLocaleString("en-US")} characters reached your local text-file threshold.`
+                    : `${preview.parts.length} parts · ${preview.delayMs} ms planned spacing · ${preview.totalDelayMs} ms total delay.`,
+                attachment
+                    ? "Solcord will save a local .txt file. It will not attach or send it."
+                    : "Solcord will not send automatically. Confirm to copy the ordered parts, then review and send each part yourself.",
+                ...(preview.truncated ? [`Your ${preview.maxParts}-part cap omits ${preview.omittedCharacters.toLocaleString("en-US")} characters. Nothing omitted will be sent or copied.`] : []),
                 ...summaries
             ], {
                 key: "solcord-guarded-split-review",
-                confirmText: "Copy ordered parts",
+                confirmText: attachment ? "Save .txt locally" : "Copy ordered parts",
                 cancelText: "Keep editing",
                 onConfirm: () => {
                     finish();
-                    void navigator.clipboard.writeText(preview.parts.join("\n\n--- Solcord part break ---\n\n")).catch(() => Logger.warn("Solcord", "Guarded splitter clipboard write was unavailable."));
+                    if (attachment) {
+                        const url = URL.createObjectURL(new Blob([attachment.text], {type: attachment.mime}));
+                        try {
+                            const anchor = document.createElement("a");
+                            anchor.href = url;
+                            anchor.download = attachment.fileName;
+                            anchor.click();
+                        }
+                        finally {URL.revokeObjectURL(url);}
+                    }
+                    else {void navigator.clipboard.writeText(preview.parts.join("\n\n--- Solcord part break ---\n\n")).catch(() => Logger.warn("Solcord", "Guarded splitter clipboard write was unavailable."));}
                 },
                 onCancel: finish,
                 onClose: finish
@@ -3554,16 +3913,57 @@ class SolcordRuntimeStore extends Store {
     }
 
     async #startMessageTimeline(scope: SolcordDisposalScope): Promise<void> {
-        type Dispatcher = {subscribe(type: string, callback: (payload: Record<string, unknown>) => void): void; unsubscribe(type: string, callback: (payload: Record<string, unknown>) => void): void; dispatch(payload: unknown): void;};
-        type Channel = {id?: string; type?: number; guild_id?: string;};
-        const dispatcher = getByKeys<Dispatcher>(["subscribe", "unsubscribe", "dispatch"]);
+        type Dispatcher = {
+            subscribe?(type: string, callback: (payload: Record<string, unknown>) => void): void;
+            unsubscribe?(type: string, callback: (payload: Record<string, unknown>) => void): void;
+            register?(callback: (payload: Record<string, unknown>) => void): string;
+            unregister?(token: string): void;
+            dispatch(payload: unknown): void;
+        };
+        type Channel = {id?: string; type?: number; guild_id?: string; nsfw?: boolean; isNSFW?(): boolean;};
+        type Message = {id?: string; channel_id?: string; channelId?: string; content?: string; attachments?: unknown[]; mentions?: unknown[]; author?: {id?: string; bot?: boolean; global_name?: string; globalName?: string; username?: string;};};
+        type MessageCollection = {toArray?(): Message[];};
+        const dispatcherIsUsable = (candidate: Dispatcher | undefined): candidate is Dispatcher => Boolean(candidate && typeof candidate.dispatch === "function" && (
+            (typeof candidate.subscribe === "function" && typeof candidate.unsubscribe === "function")
+            || (typeof candidate.register === "function" && typeof candidate.unregister === "function")
+        ));
+        let dispatcher = DiscordModules.Dispatcher as unknown as Dispatcher | undefined;
+        if (!dispatcherIsUsable(dispatcher)) {
+            const controller = new AbortController();
+            const releaseAbort = scope.own(() => controller.abort(), "other");
+            let timeout = 0;
+            const releaseTimeout = scope.own(() => globalThis.clearTimeout(timeout), "timer");
+            timeout = globalThis.setTimeout(() => controller.abort(), 2_000) as unknown as number;
+            try {
+                dispatcher = await getLazy<Dispatcher>(Filters.byKeys(["dispatch", "subscribe", "register"]), {searchExports: true, signal: controller.signal, cacheId: "solcord-timeline-dispatcher"});
+            }
+            finally {
+                releaseTimeout();
+                releaseAbort();
+            }
+        }
         const channelStore = getStore("ChannelStore") as {getChannel?: (id: string) => Channel | undefined;} | undefined;
+        const messageStore = getStore("MessageStore") as {getMessage?: (channelId: string, messageId: string) => Message | undefined; getMessages?: (channelId: string) => Message[] | MessageCollection | undefined;} | undefined;
+        const selectedChannelStore = getStore("SelectedChannelStore") as {
+            getChannelId?: () => string | undefined;
+            addChangeListener?: (callback: () => void) => void;
+            removeChangeListener?: (callback: () => void) => void;
+        } | undefined;
         const userStore = getStore("UserStore") as {
             getCurrentUser?: () => {id?: string;} | undefined;
             addChangeListener?: (callback: () => void) => void;
             removeChangeListener?: (callback: () => void) => void;
         } | undefined;
-        if (!dispatcher || typeof dispatcher.subscribe !== "function" || typeof dispatcher.unsubscribe !== "function" || typeof channelStore?.getChannel !== "function") {
+        const relationshipStore = getStore("RelationshipStore") as {
+            getRelationshipType?: (userId: string) => number | undefined;
+            getRelationships?: () => Record<string, number>;
+        } | undefined;
+        const muteStore = getStore("UserGuildSettingsStore") as {
+            isChannelMuted?: (guildId: string | null | undefined, channelId: string) => boolean;
+            isGuildOrCategoryOrChannelMuted?: (guildId: string, channelId: string) => boolean;
+            isGuildMuted?: (guildId: string) => boolean;
+        } | undefined;
+        if (!dispatcherIsUsable(dispatcher) || typeof channelStore?.getChannel !== "function") {
             throw new Error("TimelineAdapterUnavailable");
         }
 
@@ -3575,12 +3975,14 @@ class SolcordRuntimeStore extends Store {
         let accountReady = false;
         let storageReadComplete = true;
         let storageAttention = "";
+        const seededChannels = new Set<string>();
+        let seedSelectedChannel = () => {};
 
         const updateHealth = () => {
             const status = this.#timeline.status();
             this.#setHealth("message-timeline", {
                 maturity: storageReadComplete ? "ready" : "preview",
-                detail: `${status.records} observed message record(s); ${status.deleted} deleted and ${status.edited} edited. ${this.#timelinePersistent ? "AES-256-GCM persistence is active through safeStorage." : "Session-only mode is active."}${storageAttention ? ` ${storageAttention}` : ""}`
+                detail: `${status.records} observed message record(s); ${status.deleted} deleted, ${status.edited} edited, and ${status.ghostPings} ghost ping(s). ${this.#timelinePersistent ? "AES-256-GCM persistence is active through safeStorage." : "Session-only mode is active."}${storageAttention ? ` ${storageAttention}` : ""}`
             });
             this.emitChange();
         };
@@ -3595,6 +3997,7 @@ class SolcordRuntimeStore extends Store {
             accountReady = false;
             storageReadComplete = true;
             storageAttention = "";
+            seededChannels.clear();
             accountGeneration = identity.generation;
             const generation = identity.generation;
             this.#timeline.clear();
@@ -3628,12 +4031,14 @@ class SolcordRuntimeStore extends Store {
                 this.#timeline.hydrate(opened.loaded.events, policy);
                 accountReady = true;
                 updateHealth();
+                seedSelectedChannel();
             }
             catch (error) {
                 if (scope.disposed || generation !== accountGeneration || !identityIsCurrent()) return;
                 this.#timelinePersistent = false;
                 accountReady = true;
                 this.#setHealth("message-timeline", {maturity: "preview", detail: `Persistent timeline opened in fail-closed session mode (${errorName(error)}).`});
+                seedSelectedChannel();
             }
         };
 
@@ -3642,31 +4047,38 @@ class SolcordRuntimeStore extends Store {
             return `${kind}-${Date.now().toString(36)}-${random}`;
         };
         const scopedChannel = (channelId: unknown): channelId is string => typeof channelId === "string" && /^\d{1,32}$/.test(channelId) && channelIsInTimelineScope(channelStore.getChannel!(channelId), policy);
-        const attachmentMetadata = (value: unknown): TimelineAttachmentMetadata[] | undefined => {
-            if (policy.content === "text-only" || !Array.isArray(value)) return;
-            return value.flatMap(item => {
-                if (!item || typeof item !== "object") return [];
-                const attachment = item as Record<string, unknown>;
-                const name = typeof attachment.filename === "string" ? attachment.filename : typeof attachment.name === "string" ? attachment.name : undefined;
-                if (!name) return [];
-                return [{
-                    name: name.slice(0, 260),
-                    ...(typeof attachment.content_type === "string" ? {contentType: attachment.content_type.slice(0, 160)} : {}),
-                    ...(typeof attachment.size === "number" && Number.isSafeInteger(attachment.size) && attachment.size >= 0 ? {size: attachment.size} : {})
-                }];
-            }).slice(0, 20);
+        const relationshipType = (userId: string): number | undefined => relationshipStore?.getRelationshipType?.(userId) ?? relationshipStore?.getRelationships?.()?.[userId];
+        const observedEventAllowed = (event: ReturnType<typeof normalizeDiscordTimelineDispatch>[number]): boolean => {
+            if (event.kind === "delete" || event.kind === "bulk-delete") return true;
+            if (policy.filters.alwaysLogGhostPings && event.mentionedCurrentUser) return true;
+            if (policy.filters.ignoreSelf && event.authorId === accountId) return false;
+            if (policy.filters.ignoreBots && event.authorIsBot) return false;
+            if (policy.filters.ignoreBlockedUsers && event.authorId && relationshipType(event.authorId) === 2) return false;
+            const channel = channelStore.getChannel!(event.channelId);
+            if (!channel) return false;
+            const dm = channel.type === 1 || channel.type === 3;
+            if (dm && policy.filters.alwaysLogDms) return true;
+            const guildId = normalizeTimelineAccountId(channel.guild_id);
+            if (policy.filters.ignoreNsfw && (channel.nsfw === true || channel.isNSFW?.() === true)) return false;
+            if (policy.filters.ignoreMutedGuilds && guildId && muteStore?.isGuildMuted?.(guildId) === true) return false;
+            if (policy.filters.ignoreMutedChannels && (
+                muteStore?.isChannelMuted?.(guildId, event.channelId) === true
+                || Boolean(guildId && muteStore?.isGuildOrCategoryOrChannelMuted?.(guildId, event.channelId) === true)
+            )) return false;
+            return true;
         };
-        const persist = (event: TimelineEvent) => {
+        const persistMany = (events: readonly TimelineEvent[]) => {
             const current = currentAccountId();
             if (!timelineEventAccountMatches(accountId, current, accountReady)) {
                 if (current !== accountId) void activateAccount();
                 return;
             }
-            if (!this.#timeline.apply(event, policy)) return;
+            const changed = events.filter(event => this.#timeline.apply(event, policy));
+            if (!changed.length) return;
             updateHealth();
             void this.#withPrivateCapability(capability => {
                 if (this.#boundTimelineAccountId !== current) throw new Error("TimelineAccountChangedBeforeAppend");
-                return TIMELINE_IPC.append(capability, {events: [event], policy});
+                return TIMELINE_IPC.append(capability, {events: changed, policy});
             }).then(raw => {
                 if (current !== currentAccountId() || this.#boundTimelineAccountId !== current) return;
                 const result = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
@@ -3679,52 +4091,54 @@ class SolcordRuntimeStore extends Store {
                 this.#setHealth("message-timeline", {maturity: "preview", detail: `A timeline segment failed closed (${errorName(error)}); renderer memory remains session-only.`});
             });
         };
-
-        const onCreate = (payload: Record<string, unknown>) => {
-            const message = payload.message as Record<string, unknown> | undefined;
-            const messageId = message?.id;
-            const channelId = message?.channel_id ?? message?.channelId;
-            if (typeof messageId !== "string" || !/^\d{1,32}$/.test(messageId) || !scopedChannel(channelId)) return;
-            const author = message?.author as Record<string, unknown> | undefined;
-            const authorLabel = typeof author?.global_name === "string" ? author.global_name : typeof author?.username === "string" ? author.username : undefined;
-            persist({
+        const createFromLoadedMessage = (message: Message | undefined, channelId: string): TimelineEvent | undefined => {
+            if (!message) return;
+            const normalized = normalizeDiscordTimelineDispatch("MESSAGE_CREATE", {message, channelId}, accountId)[0];
+            if (!normalized || !scopedChannel(normalized.channelId) || !observedEventAllowed(normalized)) return;
+            return {
+                ...normalized,
                 eventId: eventId("create"),
-                kind: "create",
                 observedAt: Date.now(),
-                messageId,
-                channelId,
-                ...(authorLabel ? {authorLabel: authorLabel.slice(0, 160)} : {}),
-                content: typeof message?.content === "string" ? message.content : "",
-                ...(attachmentMetadata(message?.attachments) ? {attachments: attachmentMetadata(message?.attachments)} : {})
-            });
+                ...(policy.content === "text-only" ? {attachments: []} : {})
+            };
         };
-        const onUpdate = (payload: Record<string, unknown>) => {
-            const message = payload.message as Record<string, unknown> | undefined;
-            const messageId = message?.id;
-            const channelId = message?.channel_id ?? message?.channelId;
-            if (typeof messageId !== "string" || !/^\d{1,32}$/.test(messageId) || !scopedChannel(channelId)) return;
-            persist({
-                eventId: eventId("edit"),
-                kind: "edit",
+        const prepareObservedEvent = (event: ReturnType<typeof normalizeDiscordTimelineDispatch>[number]): TimelineEvent[] => {
+            if (!scopedChannel(event.channelId) || !observedEventAllowed(event)) return [];
+            const normalized: TimelineEvent = {
+                ...event,
+                eventId: eventId(event.kind),
                 observedAt: Date.now(),
-                messageId,
-                channelId,
-                ...(typeof message?.content === "string" ? {content: message.content} : {}),
-                ...(attachmentMetadata(message?.attachments) ? {attachments: attachmentMetadata(message?.attachments)} : {})
+                ...(policy.content === "text-only" ? {attachments: []} : {})
+            };
+            if (event.kind === "create" || this.#timeline.has(event.messageId)) return [normalized];
+            const seed = createFromLoadedMessage(messageStore?.getMessage?.(event.channelId, event.messageId), event.channelId);
+            if (seed) return [seed, normalized];
+            if (event.kind === "edit" && event.content !== undefined) return [{...normalized, eventId: eventId("create"), kind: "create"}];
+            return [normalized];
+        };
+        const handleDispatch = (type: DiscordTimelineDispatchType, payload: Record<string, unknown>) => {
+            const events = normalizeDiscordTimelineDispatch(type, payload, accountId).flatMap(prepareObservedEvent);
+            if (events.length) persistMany(events);
+        };
+        seedSelectedChannel = () => {
+            if (!accountReady) return;
+            const channelId = normalizeTimelineAccountId(selectedChannelStore?.getChannelId?.());
+            if (!channelId || !scopedChannel(channelId) || seededChannels.has(channelId)) return;
+            const collection = messageStore?.getMessages?.(channelId);
+            const messages = Array.isArray(collection) ? collection : collection?.toArray?.();
+            if (!Array.isArray(messages)) return;
+            seededChannels.add(channelId);
+            const events = messages.slice(-250).flatMap(message => {
+                const seed = createFromLoadedMessage(message, channelId);
+                return seed && !this.#timeline.has(seed.messageId) ? [seed] : [];
             });
+            if (events.length) persistMany(events);
         };
-        const onDelete = (payload: Record<string, unknown>) => {
-            const messageId = payload.id ?? payload.messageId;
-            const channelId = payload.channelId ?? payload.channel_id;
-            if (typeof messageId !== "string" || !/^\d{1,32}$/.test(messageId) || !scopedChannel(channelId)) return;
-            persist({eventId: eventId("delete"), kind: "delete", observedAt: Date.now(), messageId, channelId});
-        };
-        const onBulkDelete = (payload: Record<string, unknown>) => {
-            const channelId = payload.channelId ?? payload.channel_id;
-            if (!scopedChannel(channelId)) return;
-            const ids = boundedTimelineMessageIds(Array.isArray(payload.ids) ? payload.ids : payload.messageIds);
-            for (const messageId of ids) persist({eventId: eventId("bulk-delete"), kind: "bulk-delete", observedAt: Date.now(), messageId, channelId});
-        };
+
+        const onCreate = (payload: Record<string, unknown>) => handleDispatch("MESSAGE_CREATE", payload);
+        const onUpdate = (payload: Record<string, unknown>) => handleDispatch("MESSAGE_UPDATE", payload);
+        const onDelete = (payload: Record<string, unknown>) => handleDispatch("MESSAGE_DELETE", payload);
+        const onBulkDelete = (payload: Record<string, unknown>) => handleDispatch("MESSAGE_DELETE_BULK", payload);
 
         const subscriptions: Array<[string, (payload: Record<string, unknown>) => void]> = [
             ["MESSAGE_CREATE", onCreate],
@@ -3732,9 +4146,23 @@ class SolcordRuntimeStore extends Store {
             ["MESSAGE_DELETE", onDelete],
             ["MESSAGE_DELETE_BULK", onBulkDelete]
         ];
-        for (const [type, callback] of subscriptions) {
-            dispatcher.subscribe(type, callback);
-            scope.own(() => dispatcher.unsubscribe(type, callback), "listener");
+        if (typeof dispatcher.subscribe === "function" && typeof dispatcher.unsubscribe === "function") {
+            for (const [type, callback] of subscriptions) {
+                dispatcher.subscribe(type, callback);
+                scope.own(() => dispatcher.unsubscribe?.(type, callback), "listener");
+            }
+        }
+        else if (typeof dispatcher.register === "function" && typeof dispatcher.unregister === "function") {
+            const callbackByType = new Map(subscriptions);
+            const token = dispatcher.register(payload => {
+                const type = typeof payload?.type === "string" ? payload.type : "";
+                callbackByType.get(type)?.(payload);
+            });
+            scope.own(() => dispatcher.unregister?.(token), "listener");
+        }
+        if (typeof selectedChannelStore?.addChangeListener === "function" && typeof selectedChannelStore.removeChangeListener === "function") {
+            selectedChannelStore.addChangeListener(seedSelectedChannel);
+            scope.own(() => selectedChannelStore.removeChangeListener?.(seedSelectedChannel), "listener");
         }
         if (typeof userStore?.addChangeListener === "function" && typeof userStore.removeChangeListener === "function") {
             const onAccountChange = () => {
@@ -3750,6 +4178,7 @@ class SolcordRuntimeStore extends Store {
             accountGeneration = -1;
             accountInitialized = false;
             accountReady = false;
+            seededChannels.clear();
             this.#timeline.clear();
             this.#timelinePersistent = false;
             void this.#releaseTimelineAccount();

@@ -68,6 +68,7 @@ export interface SolcordNativeSuiteLookupPlan {
     callContext: boolean;
     audioConsole: boolean;
     voiceNoteStudio: boolean;
+    peopleAndSpaces: boolean;
     channelGlance: boolean;
     notificationReview: boolean;
     voiceHealth: boolean;
@@ -83,6 +84,7 @@ export function planSolcordNativeSuiteLookups(addons: Readonly<Record<string, bo
         callContext: enabled.has("call-context"),
         audioConsole: enabled.has("audio-console"),
         voiceNoteStudio: enabled.has("voice-note-studio"),
+        peopleAndSpaces: enabled.has("people-and-spaces"),
         channelGlance: enabled.has("channel-glance"),
         notificationReview: enabled.has("notification-review"),
         voiceHealth
@@ -127,6 +129,40 @@ export interface SolcordProviderAdapterResult {
 const MESSAGE_LOGGER_PROVIDER = Object.freeze({name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js"});
 const FAKE_DEAFEN_PROVIDER = Object.freeze({name: "FakeDeafen", fileName: "FakeDeafen.plugin.js"});
 const MAX_PROVIDER_MIGRATIONS = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS.length + 2;
+
+/**
+ * Runtime health and source parity are separate gates. A broad native suite can
+ * start successfully while one community provider's secondary controls are
+ * still being rebuilt. Only this reviewed list may enter the source archive;
+ * every other provider remains installed until its own parity contract closes.
+ */
+export const SOLCORD_SOURCE_COMPLETE_PROVIDER_REPLACEMENTS = Object.freeze([
+    "BetterAnimations",
+    "BetterFriendList",
+    "BetterVolume",
+    "CallTimeCounter",
+    "CharCounter",
+    "CompleteTimestamps",
+    "DiscordEffects",
+    "DoNotTrack",
+    "DoubleClickToReply",
+    "EditServers",
+    "InvisibleTyping",
+    "MessagePeek",
+    "PinDMs",
+    "ReadAllNotificationsButton",
+    "ServerDetails",
+    "ServerHider",
+    "ShowSpectators",
+    "SplitLargeMessages",
+    "Translator",
+    "VoiceActivity",
+    "VoiceMessages"
+] as const);
+
+export function solcordProviderSourceParityComplete(name: string): boolean {
+    return (SOLCORD_SOURCE_COMPLETE_PROVIDER_REPLACEMENTS as readonly string[]).includes(name);
+}
 
 export function solcordStandaloneProviderFileName(name: string): string | undefined {
     if (name === MESSAGE_LOGGER_PROVIDER.name) return MESSAGE_LOGGER_PROVIDER.fileName;
@@ -225,7 +261,7 @@ export function solcordProviderReplacementIsReady(
 ): boolean {
     if (migration.name === MESSAGE_LOGGER_PROVIDER.name) return !migration.enabled || timelineEnabled && timelineRuntimeReady;
     if (migration.name === FAKE_DEAFEN_PROVIDER.name) return !migration.enabled;
-    return adapter?.enabled === true && adapter.provider === "solcord";
+    return solcordProviderSourceParityComplete(migration.name) && adapter?.enabled === true && adapter.provider === "solcord";
 }
 
 export function solcordProviderMigrationPlansMatch(left: unknown, right: unknown): boolean {

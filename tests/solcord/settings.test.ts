@@ -223,12 +223,14 @@ describe("Solcord settings schema", () => {
             quarantineReason: "machine-local hold"
         };
         document.productPreferences.nativeSuite = {
+            ...document.productPreferences.nativeSuite,
             pinnedDmIds: ["123456789012345670"],
             hiddenGuildIds: ["123456789012345671"],
             guildAliases: {"123456789012345671": "Private workshop"},
             focusChannelIds: ["123456789012345672"],
             voiceHealthEnabled: true,
-            translation: {provider: "libretranslate", endpoint: "https://private.example/translate"}
+            translation: {provider: "libretranslate", endpoint: "https://private.example/translate", sourceLanguage: "auto", targetLanguage: "EN"},
+            composer: {doubleClickReplyModifier: "shift", splitBoundary: "newlines", preserveBlankLines: true, splitLimit: 1_800, maxSplitParts: 8, attachmentThreshold: 12_000, counterWarningPercent: 75, timestampFormat: "compact"}
         };
 
         const exported = serializeSolcordSettingsExport(document);
@@ -361,19 +363,19 @@ describe("Solcord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v7 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v10 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSolcordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(7);
+        expect(document.schemaVersion).toBe(10);
         expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 7}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 10}));
     });
 
     test("starts a genuinely new profile in Strict Privacy without a false migration receipt", () => {
@@ -397,7 +399,7 @@ describe("Solcord settings schema", () => {
             profile: "standard",
             migrationPending: true
         }));
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 6, toSchema: 7}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 6, toSchema: 10}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -421,7 +423,7 @@ describe("Solcord settings schema", () => {
             powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
         });
 
-        expect(document.schemaVersion).toBe(7);
+        expect(document.schemaVersion).toBe(10);
         expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-solcord");
         expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
     });

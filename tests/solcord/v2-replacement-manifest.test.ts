@@ -18,7 +18,7 @@ const EXPECTED_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
     "EditServers.plugin.js": ["BDFDB"],
     "FakeDeafen.plugin.js": [],
     "InvisibleTyping.plugin.js": [],
-    "MessageLoggerV2.plugin.js": [],
+    "MessageLoggerV2.plugin.js": ["XenoLib", "ZeresPluginLibrary"],
     "MessagePeek.plugin.js": [],
     "PinDMs.plugin.js": ["BDFDB"],
     "ReadAllNotificationsButton.plugin.js": ["BDFDB"],
@@ -38,6 +38,7 @@ describe("Solcord V2 provider replacement manifest", () => {
         expect(Object.fromEntries(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => [entry.fileName, entry.dependencies]))).toEqual(EXPECTED_DEPENDENCIES);
         expect(new Set(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.map(entry => entry.fileName)).size).toBe(24);
         expect(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.every(entry => entry.requiresHashBinding && entry.archiveScope === "source-file-only")).toBeTrue();
+        expect(SOLCORD_V2_REPLACEMENT_MANIFEST.entries.filter(entry => entry.implementation === "licensed-adaptation")).toEqual([]);
         expect(findSolcordV2Replacement("FakeDeafen.plugin.js")).toMatchObject({replacement: "power-lab", archiveScope: "source-file-only"});
     });
 

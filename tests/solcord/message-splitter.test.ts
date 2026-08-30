@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
 
-import {splitLargeMessage} from "../../src/betterdiscord/modules/solcord/message-splitter";
+import {planLargeMessage, splitLargeMessage} from "../../src/betterdiscord/modules/solcord/message-splitter";
 
 
 function containsUnpairedSurrogate(value: string): boolean {
@@ -69,5 +69,32 @@ describe("guarded large-message splitter", () => {
         expect(preview.parts).toHaveLength(2);
         expect(preview.parts.some(containsUnpairedSurrogate)).toBeFalse();
         expect(preview.parts[1].startsWith("😀")).toBeTrue();
+    });
+
+    test("supports newline preference, blank-line preservation, and an explicit part cap", () => {
+        const source = `${"a".repeat(650)}\n\n${"b".repeat(650)}\n${"c".repeat(650)}`;
+        const preview = planLargeMessage(source, {limit: 1_000, boundary: "newlines", preserveBlankLines: true, maxParts: 2});
+        expect(preview.boundary).toBe("newlines");
+        expect(preview.preserveBlankLines).toBeTrue();
+        expect(preview.parts).toHaveLength(2);
+        expect(preview.parts[0].endsWith("\n\n")).toBeTrue();
+        expect(preview.truncated).toBeTrue();
+        expect(preview.omittedCharacters).toBeGreaterThan(0);
+    });
+
+    test("plans a local text-file fallback without uploading or splitting", () => {
+        const source = "private draft ".repeat(200);
+        const preview = planLargeMessage(source, {attachmentThreshold: 1_000});
+        expect(preview.parts).toEqual([]);
+        expect(preview.attachment).toEqual({fileName: "Solcord-message.txt", mime: "text/plain", text: source.trim()});
+        expect(preview.truncated).toBeFalse();
+    });
+
+    test("bounds every extended policy value", () => {
+        const preview = planLargeMessage("x".repeat(5_000), {limit: 99_999, delayMs: -5, maxParts: 99, attachmentThreshold: 99_999});
+        expect(preview.limit).toBe(4_000);
+        expect(preview.delayMs).toBe(500);
+        expect(preview.maxParts).toBe(20);
+        expect(preview.attachment).toBeUndefined();
     });
 });

@@ -43,7 +43,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 7;
+    schemaVersion: 10;
     kind: "solcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -157,8 +157,9 @@ interface AsarEnvelope {
 interface OwnedStagingDirectory {
     path: string;
     realPath: string;
-    dev: number;
-    ino: number;
+    dev: bigint;
+    ino: bigint;
+    birthtimeNs: bigint;
 }
 
 
@@ -875,7 +876,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 7,
+        schemaVersion: 10,
         kind: "solcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -988,20 +989,21 @@ function neutralizeCopiedDesktopCoreInjector(runtime: string, expectedRelativeEn
 }
 
 function captureOwnedStagingDirectory(directory: string, expectedParent: string): OwnedStagingDirectory {
-    const stat = fs.lstatSync(directory);
+    const stat = fs.lstatSync(directory, {bigint: true});
     if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error("Solcord staging root is not an owned plain directory.");
     const realPath = fs.realpathSync.native(directory);
     if (!windowsPathsEqual(path.dirname(realPath), expectedParent)) {
         throw new Error("Solcord staging root escaped its canonical destination parent.");
     }
-    return {path: directory, realPath, dev: stat.dev, ino: stat.ino};
+    return {path: directory, realPath, dev: stat.dev, ino: stat.ino, birthtimeNs: stat.birthtimeNs};
 }
 
 function isOwnedStagingDirectory(identity: OwnedStagingDirectory): boolean {
     try {
-        const stat = fs.lstatSync(identity.path);
+        const stat = fs.lstatSync(identity.path, {bigint: true});
         return stat.isDirectory() && !stat.isSymbolicLink()
             && stat.dev === identity.dev && stat.ino === identity.ino
+            && stat.birthtimeNs === identity.birthtimeNs
             && windowsPathsEqual(fs.realpathSync.native(identity.path), identity.realPath);
     }
     catch {return false;}

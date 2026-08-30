@@ -65,6 +65,13 @@ export default function MessageTimelinePanel() {
         const included = !state.currentChannel.included;
         setStatusMessage(await SolcordRuntime.setCurrentChannelInTimeline(included) ? `Current server channel ${included ? "added to" : "removed from"} Timeline scope.` : "Open a server text channel before changing its Timeline scope.");
     };
+    const visibleEntries = state.entries.filter(entry => {
+        if (entry.purged && !state.policy.display.showPurgedMessages) return false;
+        if (entry.deletedAt && !state.policy.display.showDeletedMessages) return false;
+        if (entry.edits.length && !state.policy.display.showEditedMessages && !entry.deletedAt) return false;
+        return true;
+    });
+    if (state.policy.display.reverseOrder) visibleEntries.reverse();
     return <section className="solcord-section">
         <div className="solcord-section-heading"><h2>Message Timeline</h2><p>A private local journal for messages this running client actually observes. Persistent segments are encrypted when secure storage is available; DMs are the default and servers require channel-by-channel opt-in.</p></div>
         <div className="solcord-timeline-toolbar">
@@ -75,19 +82,31 @@ export default function MessageTimelinePanel() {
             <button type="button" className="solcord-action" onClick={() => void exportTimeline()}>Export JSON</button>
             <button type="button" className="solcord-action solcord-action-danger" onClick={() => void clear()}>Clear Timeline</button>
         </div>
+        <details className="solcord-secondary-tools"><summary>Filters and display</summary>
+            <div className="solcord-control-grid">
+                {([[
+                    "ignoreSelf", "Ignore my messages"
+                ], ["ignoreBots", "Ignore bots"], ["ignoreBlockedUsers", "Ignore blocked users"], ["ignoreMutedChannels", "Ignore muted channels"], ["ignoreMutedGuilds", "Ignore muted servers"], ["ignoreNsfw", "Ignore age-restricted channels"], ["alwaysLogDms", "Always include DMs"], ["alwaysLogGhostPings", "Keep ghost pings"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={state.policy.filters[key]} onChange={event => update({filters: {...state.policy.filters, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                {([[
+                    "showDeletedMessages", "Show deleted"
+                ], ["showEditedMessages", "Show edited"], ["showPurgedMessages", "Show bulk-deleted"], ["showDeletedCount", "Show deleted count"], ["showEditedCount", "Show edited count"], ["reverseOrder", "Oldest first"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={state.policy.display[key]} onChange={event => update({display: {...state.policy.display, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                <label>Edit versions<input type="number" min="1" max="100" value={state.policy.display.maxShownEdits} onChange={event => update({display: {...state.policy.display, maxShownEdits: Number(event.currentTarget.value)}})} /></label>
+            </div>
+        </details>
         <dl className="solcord-facts solcord-timeline-facts">
             <div><dt>Storage</dt><dd>{storageLabel(state.policy.enabled, state.policy.retention, state.status.persistent)}</dd></div>
             <div><dt>Observed records</dt><dd>{state.status.records}</dd></div>
-            <div><dt>Deleted / edited</dt><dd>{state.status.deleted} / {state.status.edited}</dd></div>
+            {(state.policy.display.showDeletedCount || state.policy.display.showEditedCount) && <div><dt>Deleted / edited</dt><dd>{state.policy.display.showDeletedCount ? state.status.deleted : "—"} / {state.policy.display.showEditedCount ? state.status.edited : "—"}</dd></div>}
+            <div><dt>Ghost pings</dt><dd>{state.status.ghostPings}</dd></div>
             <div><dt>Text used</dt><dd>{bytesLabel(state.status.textBytes)} of 250 MiB</dd></div>
             <div><dt>Server opt-ins</dt><dd>{state.policy.serverChannelIds.length}</dd></div>
         </dl>
         {statusMessage && <p className="solcord-import-status" role="status">{statusMessage}</p>}
         <div className="solcord-timeline-list" aria-label="Observed Message Timeline records">
-            {state.entries.slice(0, 100).map(entry => <article key={entry.messageId} className={`solcord-timeline-entry ${entry.deletedAt ? "solcord-timeline-deleted" : ""}`}>
-                <header><strong>{entry.authorLabel || "Observed user"}</strong><time>{time(entry.updatedAt)}</time>{entry.deletedAt && <span className="solcord-deleted-label">Deleted</span>}{entry.edits.length > 0 && <span className="solcord-edited-label">Edited · {entry.edits.length}</span>}</header>
+            {visibleEntries.slice(0, 100).map(entry => <article key={entry.messageId} className={`solcord-timeline-entry ${entry.deletedAt ? "solcord-timeline-deleted" : ""}`}>
+                <header><strong>{entry.authorLabel || "Observed user"}</strong><time>{time(entry.updatedAt)}</time>{entry.deletedAt && <span className="solcord-deleted-label">{entry.purged ? "Bulk deleted" : "Deleted"}</span>}{entry.ghostPingAt && <span className="solcord-deleted-label">Ghost ping</span>}{entry.edits.length > 0 && <span className="solcord-edited-label">Edited · {entry.edits.length}</span>}</header>
                 <p>{entry.content || <em>No text content</em>}</p>
-                {entry.edits.length > 0 && <details><summary>Edit history</summary><ol>{entry.edits.slice().reverse().map((edit, index) => <li key={`${edit.at}-${index}`}><time>{time(edit.at)}</time><p>{edit.content || <em>Empty text</em>}</p></li>)}</ol></details>}
+                {entry.edits.length > 0 && <details><summary>Edit history</summary><ol>{entry.edits.slice(-state.policy.display.maxShownEdits).reverse().map((edit, index) => <li key={`${edit.at}-${index}`}><time>{time(edit.at)}</time><p>{edit.content || <em>Empty text</em>}</p></li>)}</ol></details>}
                 {entry.attachments.length > 0 && <ul className="solcord-attachment-metadata">{entry.attachments.map((attachment, index) => <li key={`${attachment.name}-${index}`}>{attachment.name}{attachment.contentType ? ` · ${attachment.contentType}` : ""}{typeof attachment.size === "number" ? ` · ${bytesLabel(attachment.size)}` : ""}</li>)}</ul>}
             </article>)}
             {!state.entries.length && <p className="solcord-empty">No in-scope message event has been observed in this session. Solcord does not backfill history.</p>}

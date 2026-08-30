@@ -15,7 +15,10 @@ export interface TimelineEvent {
     observedAt: number;
     messageId: string;
     channelId: string;
+    authorId?: string;
     authorLabel?: string;
+    authorIsBot?: boolean;
+    mentionedCurrentUser?: boolean;
     content?: string;
     attachments?: TimelineAttachmentMetadata[];
 }
@@ -23,14 +26,22 @@ export interface TimelineEvent {
 export interface TimelineMessageState {
     messageId: string;
     channelId: string;
+    authorId?: string;
     authorLabel?: string;
+    authorIsBot: boolean;
+    mentionedCurrentUser: boolean;
     content: string;
     createdAt: number;
     updatedAt: number;
     deletedAt?: number;
+    ghostPingAt?: number;
+    purged?: boolean;
     edits: Array<{at: number; content: string;}>;
     attachments: TimelineAttachmentMetadata[];
 }
+
+export type DiscordTimelineDispatchType = "MESSAGE_CREATE" | "MESSAGE_UPDATE" | "MESSAGE_DELETE" | "MESSAGE_DELETE_BULK";
+export type NormalizedDiscordTimelineEvent = Omit<TimelineEvent, "eventId" | "observedAt">;
 
 const MAX_CONTENT_CHARS = 64_000;
 const MAX_AUTHOR_CHARS = 160;
@@ -119,6 +130,78 @@ function safeAttachments(value: unknown): TimelineAttachmentMetadata[] {
     }).slice(0, MAX_ATTACHMENTS);
 }
 
+function safeDiscordAttachments(value: unknown): TimelineAttachmentMetadata[] {
+    if (!Array.isArray(value)) return [];
+    return safeAttachments(value.map(item => {
+        if (!item || typeof item !== "object") return item;
+        const candidate = item as Record<string, unknown>;
+        return {
+            name: candidate.filename ?? candidate.name,
+            contentType: candidate.content_type ?? candidate.contentType,
+            size: candidate.size
+        };
+    }));
+}
+
+function discordMessageRecord(payload: Record<string, unknown>): Record<string, unknown> | undefined {
+    const nested = payload.message ?? payload.messageRecord;
+    if (nested && typeof nested === "object") return nested as Record<string, unknown>;
+    return typeof payload.id === "string" && (typeof payload.channel_id === "string" || typeof payload.channelId === "string") ? payload : undefined;
+}
+
+/**
+ * Normalize only the dispatcher shapes Solcord has reviewed. This deliberately
+ * stays source-independent and content-bounded so storage/runtime code does not
+ * need to depend on a community message logger or Discord model prototype.
+ */
+export function normalizeDiscordTimelineDispatch(type: DiscordTimelineDispatchType, value: unknown, currentUserId?: string): NormalizedDiscordTimelineEvent[] {
+    if (!value || typeof value !== "object") return [];
+    const payload = value as Record<string, unknown>;
+    const message = discordMessageRecord(payload);
+    const channelId = safeId(message?.channel_id ?? message?.channelId ?? payload.channel_id ?? payload.channelId);
+
+    if (type === "MESSAGE_DELETE_BULK") {
+        if (!channelId) return [];
+        const rawIds = payload.ids ?? payload.messageIds ?? (Array.isArray(payload.messages)
+            ? payload.messages.map(entry => entry && typeof entry === "object" ? (entry as Record<string, unknown>).id : entry)
+            : undefined);
+        return boundedTimelineMessageIds(rawIds).map(messageId => ({kind: "bulk-delete", messageId, channelId}));
+    }
+
+    const messageId = safeId(message?.id ?? payload.id ?? payload.messageId);
+    if (!messageId || !channelId) return [];
+    if (type === "MESSAGE_DELETE") return [{kind: "delete", messageId, channelId}];
+    if (!message) return [];
+
+    const author = message.author && typeof message.author === "object" ? message.author as Record<string, unknown> : undefined;
+    const authorId = safeId(author?.id);
+    const authorLabel = typeof author?.global_name === "string"
+        ? author.global_name
+        : typeof author?.globalName === "string"
+            ? author.globalName
+            : typeof author?.username === "string"
+                ? author.username
+                : undefined;
+    const attachments = safeDiscordAttachments(message.attachments);
+    const hasMentionList = Array.isArray(message.mentions);
+    const mentions = hasMentionList ? message.mentions as unknown[] : [];
+    const mentionedCurrentUser = Boolean(currentUserId && mentions.some(item => {
+        if (typeof item === "string") return item === currentUserId;
+        return item && typeof item === "object" && (item as Record<string, unknown>).id === currentUserId;
+    }));
+    return [{
+        kind: type === "MESSAGE_CREATE" ? "create" : "edit",
+        messageId,
+        channelId,
+        ...(authorId ? {authorId} : {}),
+        ...(authorLabel ? {authorLabel: authorLabel.slice(0, MAX_AUTHOR_CHARS)} : {}),
+        ...(typeof author?.bot === "boolean" ? {authorIsBot: author.bot} : {}),
+        ...(currentUserId && hasMentionList ? {mentionedCurrentUser} : {}),
+        ...(typeof message.content === "string" ? {content: safeContent(message.content)} : {}),
+        ...(attachments.length ? {attachments} : {})
+    }];
+}
+
 function retentionCutoff(policy: SolcordTimelinePolicy, now: number): number {
     const duration = {
         "session": 0,
@@ -155,18 +238,22 @@ export function normalizeTimelineEvent(value: unknown): TimelineEvent | undefine
         observedAt: typeof candidate.observedAt === "number" && Number.isSafeInteger(candidate.observedAt) && candidate.observedAt >= 0 ? candidate.observedAt : Date.now(),
         messageId,
         channelId,
+        ...(safeId(candidate.authorId) ? {authorId: safeId(candidate.authorId)} : {}),
         ...(typeof candidate.authorLabel === "string" ? {authorLabel: candidate.authorLabel.slice(0, MAX_AUTHOR_CHARS)} : {}),
+        ...(typeof candidate.authorIsBot === "boolean" ? {authorIsBot: candidate.authorIsBot} : {}),
+        ...(typeof candidate.mentionedCurrentUser === "boolean" ? {mentionedCurrentUser: candidate.mentionedCurrentUser} : {}),
         ...(typeof candidate.content === "string" ? {content: safeContent(candidate.content)} : {}),
         ...(Array.isArray(candidate.attachments) ? {attachments: safeAttachments(candidate.attachments)} : {})
     };
 }
 
 export function boundedTimelineMessageIds(value: unknown, limit = MAX_TIMELINE_BULK_EVENTS): string[] {
-    if (!Array.isArray(value)) return [];
+    const values = Array.isArray(value) ? value : value instanceof Set ? [...value] : undefined;
+    if (!values) return [];
     const boundedLimit = Math.min(MAX_TIMELINE_BULK_EVENTS, Math.max(0, Math.floor(Number.isFinite(limit) ? limit : MAX_TIMELINE_BULK_EVENTS)));
     if (boundedLimit === 0) return [];
     const ids = new Set<string>();
-    for (const valueId of value) {
+    for (const valueId of values) {
         const id = safeId(valueId);
         if (!id) continue;
         ids.add(id);
@@ -187,6 +274,7 @@ function estimatedStateBytes(state: TimelineMessageState): number {
     let used = RECORD_OVERHEAD_BYTES;
     used += textBytes(state.messageId);
     used += textBytes(state.channelId);
+    used += textBytes(state.authorId ?? "");
     used += textBytes(state.authorLabel ?? "");
     used += stateTextBytes(state);
     used += state.edits.length * EDIT_OVERHEAD_BYTES;
@@ -236,7 +324,10 @@ export class MessageTimelineJournal {
             this.#setMessage({
                 messageId: event.messageId,
                 channelId: event.channelId,
+                authorId: event.authorId,
                 authorLabel: event.authorLabel,
+                authorIsBot: event.authorIsBot === true,
+                mentionedCurrentUser: event.mentionedCurrentUser === true,
                 content: safeContent(event.content),
                 createdAt: event.observedAt,
                 updatedAt: event.observedAt,
@@ -251,6 +342,10 @@ export class MessageTimelineJournal {
             if (event.content !== undefined && event.content !== current.content) current.edits.push({at: event.observedAt, content: current.content});
             if (current.edits.length > this.#limits.editsPerRecord) current.edits.splice(0, current.edits.length - this.#limits.editsPerRecord);
             if (event.content !== undefined) current.content = safeContent(event.content);
+            if (event.mentionedCurrentUser !== undefined) {
+                if (current.mentionedCurrentUser && !event.mentionedCurrentUser) current.ghostPingAt = event.observedAt;
+                current.mentionedCurrentUser = event.mentionedCurrentUser;
+            }
             if (event.attachments) current.attachments = policy.content === "text-only" ? [] : safeAttachments(event.attachments);
             current.updatedAt = event.observedAt;
             this.#touchMessage(current, previousTextBytes, previousEstimatedBytes);
@@ -260,6 +355,8 @@ export class MessageTimelineJournal {
             const previousTextBytes = stateTextBytes(current);
             const previousEstimatedBytes = estimatedStateBytes(current);
             current.deletedAt = event.observedAt;
+            current.purged = event.kind === "bulk-delete";
+            if (current.mentionedCurrentUser) current.ghostPingAt = event.observedAt;
             current.updatedAt = event.observedAt;
             this.#touchMessage(current, previousTextBytes, previousEstimatedBytes);
             changed = true;
@@ -304,17 +401,24 @@ export class MessageTimelineJournal {
             .map(state => structuredClone(state));
     }
 
-    status(): {records: number; deleted: number; edited: number; textBytes: number;} {
+    has(messageId: string): boolean {
+        return this.#messages.has(messageId);
+    }
+
+    status(): {records: number; deleted: number; edited: number; ghostPings: number; textBytes: number;} {
         let deleted = 0;
         let edited = 0;
+        let ghostPings = 0;
         for (const state of this.#messages.values()) {
             if (state.deletedAt !== undefined) deleted++;
             if (state.edits.length > 0) edited++;
+            if (state.ghostPingAt !== undefined) ghostPings++;
         }
         return {
             records: this.#messages.size,
             deleted,
             edited,
+            ghostPings,
             textBytes: this.#textBytes
         };
     }

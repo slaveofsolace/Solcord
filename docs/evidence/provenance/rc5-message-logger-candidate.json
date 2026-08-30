@@ -1,0 +1,206 @@
+{
+  "records": [
+    {
+      "acquisition": {
+        "acquired_at": "",
+        "evidence": "",
+        "original_archive_unchanged": false,
+        "quarantine_root": "",
+        "status": "not-started"
+      },
+      "adaptation_plan": {
+        "acceptance_evidence": [
+          "tests/solcord/message-timeline.test.ts",
+          "tests/solcord/storage-security.test.ts",
+          "tests/solcord/renderer-security.test.ts"
+        ],
+        "actions": [
+          "Extract only observable create, edit, delete, bulk-delete, retention, and red/amber state behavior.",
+          "Use Solcord dispatcher, disposal, bounded journal, and safeStorage infrastructure instead of XenoLib or ZeresPluginLibrary.",
+          "Do not import, translate, minify, rename, or structurally adapt the supplied source.",
+          "Validate behavior with independent fixtures and exact-client runtime acceptance."
+        ],
+        "clean_room_required": true,
+        "status": "completed",
+        "summary": "Reference observable behavior only; Solcord Message Timeline remains an independently structured, dependency-free implementation."
+      },
+      "ai_flags": {
+        "evidence": "No controlling metadata grants reuse or external transformation; the source remains reference-only.",
+        "external_ai_input_allowed": "no",
+        "generated_ai": "no",
+        "no_ai": "no"
+      },
+      "archive_scan": {
+        "active_content_executed": false,
+        "active_content_review": {
+          "evidence": "",
+          "reviewed_at": "",
+          "reviewer": "",
+          "scope": "",
+          "status": "not-reviewed"
+        },
+        "encrypted_entries": [],
+        "executables_or_active_content": [],
+        "inventory_path": "",
+        "path_traversal_detected": false,
+        "review_disposition": "pending",
+        "scanned_at": "",
+        "status": "not-started",
+        "suspicious_entries": [],
+        "symlinks_detected": false
+      },
+      "attribution": {
+        "placement": "docs/PROVENANCE_REGISTRY.md",
+        "required": "yes",
+        "text": "Behavior reference: MessageLoggerV2 by Lighty; no source adaptation or redistribution."
+      },
+      "brief_id": "solcord-message-timeline",
+      "candidate_id": "rc5-message-logger-local",
+      "checksums": {
+        "1XenoLib.plugin.js": "8d227a7c0c40dd0a8c499dc34703054ac4d50bd7d1e8cf67ddc84076b2c00377",
+        "LICENCE": "46963bf89663fc685ac581ad0f80bd77a57fc97c17240f0e70c0603060cfd086",
+        "MessageLoggerV2.plugin.js": "b4e275086d35d7cc7bb73a4d45d8946e807fbb52024394e414b804403eea6e27",
+        "README.md": "c036f7c728586ced45f6e2a7aa212a72d6613bf32c7933c207a3b4f39d09502c"
+      },
+      "comparison": {
+        "abandonment_risk_inverse": null,
+        "adaptation_cost_inverse": null,
+        "coherence": null,
+        "fit": null,
+        "provenance_confidence": null,
+        "representative_group": "",
+        "runtime_cost_inverse": null,
+        "weighted_score": null
+      },
+      "downloaded_paths": [
+        "owner-supplied:1XenoLib.plugin.js",
+        "owner-supplied:LICENCE",
+        "owner-supplied:MessageLoggerV2.plugin.js",
+        "owner-supplied:README.md"
+      ],
+      "entitlement": {
+        "account_or_ownership_basis": "",
+        "action_time_confirmation": {
+          "confirmed_at": "",
+          "evidence": "",
+          "required": false,
+          "scope": "",
+          "status": "not-evaluated"
+        },
+        "confirmed_at": "",
+        "evidence": "",
+        "status": "unknown"
+      },
+      "formats": [
+        "BetterDiscord .plugin.js",
+        "plain-text metadata"
+      ],
+      "human": {
+        "evidence": "",
+        "reviewed_at": "",
+        "reviewer": "",
+        "verdict": "pending"
+      },
+      "inspection": {
+        "delivered_payload_inspected": true,
+        "embedded_urls": [
+          "https://github.com/1Lighty/BetterDiscordPlugins/blob/master/Plugins/MessageLoggerV2/MessageLoggerV2.plugin.js",
+          "https://betterdiscord.app/Download?id=9",
+          "https://betterdiscord.app/Download?id=1"
+        ],
+        "evidence_paths": [
+          "docs/PROVENANCE_REGISTRY.md",
+          "tests/solcord/message-timeline.test.ts"
+        ],
+        "external_services": [],
+        "generative_tools_used": false,
+        "hidden_dependencies": [
+          "XenoLib >= 1.4.11",
+          "ZeresPluginLibrary >= 2.0.3",
+          "automatic network download path for both libraries",
+          "optional local HTTP image cache and mime-types"
+        ],
+        "metrics": {
+          "MessageLoggerV2.plugin.js_bytes": 330367,
+          "XenoLib.plugin.js_bytes": 127476
+        },
+        "result": "Completed with concerns: MessageLoggerV2 has no supplied controlling license; XenoLib explicitly reserves modification and redistribution rights; the separately supplied MIT LICENCE does not identify either file. Source is excluded from Solcord and used only to enumerate observable behavior.",
+        "route": "human-engine-only",
+        "status": "completed-with-concerns",
+        "tools_and_versions": [
+          "PowerShell Get-FileHash SHA-256",
+          "bounded static text inspection"
+        ]
+      },
+      "isolation": {
+        "candidate_path": "",
+        "evidence_paths": [],
+        "product_tree_unchanged": true,
+        "status": "not-started"
+      },
+      "known_nonclaims": [
+        "The supplied MIT LICENCE is not evidence that MessageLoggerV2 or XenoLib is MIT-licensed.",
+        "Solcord does not copy, adapt, import, or redistribute MessageLoggerV2 or XenoLib.",
+        "Passing model and storage tests does not yet prove exact-client deleted-message rendering or restart acceptance."
+      ],
+      "license": {
+        "name_version": "No controlling MessageLoggerV2 license; XenoLib all-rights-reserved notice",
+        "snapshot_path": "owner-supplied:MessageLoggerV2.plugin.js#header-and-XenoLib.plugin.js#header",
+        "snapshot_sha256": "b4e275086d35d7cc7bb73a4d45d8946e807fbb52024394e414b804403eea6e27",
+        "status": "rejected",
+        "text": "No controlling license was supplied for MessageLoggerV2. XenoLib states that redistribution and modification require explicit permission. The separate MIT LICENCE names Ashesh3 and does not establish rights for either plugin.",
+        "url": "https://github.com/1Lighty/BetterDiscordPlugins/blob/master/Plugins/MessageLoggerV2/MessageLoggerV2.plugin.js",
+        "verified_at": "2026-08-29"
+      },
+      "next_action": "Continue the independent Solcord Message Timeline implementation and exact-client acceptance without importing the reference payload or its libraries.",
+      "permitted_uses": [],
+      "recommendation": "REFERENCE ONLY",
+      "release": {
+        "attribution_delivery_path": "",
+        "ledger_path": "",
+        "released_at": "",
+        "status": "not-recorded"
+      },
+      "required_owner_decision": "None for clean-room implementation; direct source adaptation remains unavailable without separate rights evidence.",
+      "runtime": {
+        "disposition": "not-tested",
+        "environment": "",
+        "evidence_paths": [],
+        "measured_budgets": {}
+      },
+      "schema_version": "1.0",
+      "source": {
+        "access_scope": "public",
+        "author_publisher": "Lighty / 1Lighty",
+        "canonical_url": "https://github.com/1Lighty/BetterDiscordPlugins/blob/master/Plugins/MessageLoggerV2/MessageLoggerV2.plugin.js",
+        "kind": "repository",
+        "listing_date": "not stated in supplied metadata",
+        "listing_snapshot_path": "",
+        "listing_version": "1.10.3",
+        "local_path": "owner-supplied:MessageLoggerV2.plugin.js",
+        "metadata_checked_at": "2026-08-29",
+        "price": {
+          "amount": null,
+          "currency": "",
+          "label": "free",
+          "tier": "public source reference"
+        }
+      },
+      "stage": "metadata-verified",
+      "stage_history": [
+        {
+          "at": "2026-08-29",
+          "evidence": "Registry initialized; no rights or entitlement inferred.",
+          "stage": "discovered"
+        },
+        {
+          "at": "2026-08-29",
+          "evidence": "Owner-supplied payload hashes, embedded headers, canonical source URL, hidden dependencies, and the unrelated MIT LICENCE were inspected; disposition is reference-only.",
+          "stage": "metadata-verified"
+        }
+      ],
+      "title": "Owner-supplied MessageLoggerV2 and XenoLib behavior reference"
+    }
+  ],
+  "schema_version": "1.0"
+}

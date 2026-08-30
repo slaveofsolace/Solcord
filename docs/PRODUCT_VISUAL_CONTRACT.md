@@ -1,31 +1,43 @@
 # Solcord product visual contract
 
-## Information architecture
+## Control Center
 
-Solcord owns five Control Center workspaces and no duplicate top-level destinations:
+Solcord owns one Control Center with nine destinations. Features live where a person would look for them; technical state stays secondary.
 
-| Workspace | Canonical owner |
+| Workspace | What belongs here |
 | --- | --- |
-| Home | resumable setup, Session Pulse, Activity Bridge |
-| Appearance | visual mode, accent, density, message shape, motion, accessibility |
-| Safety | Privacy Mode, Link Lens and Domain Memory, Attachment Guard, Screenshot Scrubber |
-| People | Friend Watch, Message Timeline, Return Later |
-| Tools | module status, Add-ons and quarantine, Profiles and Recovery, Performance HUD, catalog evidence, Power Lab status, About |
+| Overview | current state, up to three genuine actions, Activity readiness |
+| Appearance & Accessibility | theme, mode, accent, density, motion, message shape, reading aids |
+| Performance | Lean, Balanced, and Visual policies; bounded diagnostics |
+| Privacy & Safety | Strict Privacy, outbound capability state, local safety and opt-in history |
+| Chat & Composer | replies, counters, guarded splitting, previews, drafts |
+| Voice & Activities | call context, Audience Guard, Activity health, collapsed experiments |
+| Friends & Spaces | local organization and opt-in relationship history |
+| Extensions | optional community software and transactional provider migration |
+| Recovery | setup, rollback, quarantine, snapshots, About, technical details |
 
-At widths above 900 px the workspace rail and content are side by side. At 900 px and below, the rail becomes five horizontal tabs. At 520 px and below, controls and facts become one column. The content panel, not the Discord window, is the responsive boundary. Ordinary corners remain at or below 6 px.
+The rail stays beside content while the panel is wider than 720 CSS pixels. At 720 pixels and below it becomes a compact search-and-section row. At 520 pixels and below settings, facts, footer actions, and status rows use one column. At a 320-pixel content boundary the Discord settings rail may collapse only while the Solcord panel is active. There is one scroll owner and route changes return focus to the workspace heading.
 
-## Semantic presentation
+## First setup
 
-The appearance layer is a semantic token system, not five competing themes. Modes are Follow Discord, Soul Dark, Soul Light, and OLED. Accents are Discord/system, Glacier, Signal, Coral, and Forest. Density is Comfortable or Compact; motion is Follow Discord/Windows, Full, or Reduced. Focus, normal text, muted text, success, warning, and danger remain separate tokens and never rely on hue alone.
+First setup is a dedicated five-step flow: Welcome, Privacy, Appearance, Features, and Review and Apply. Its footer has exactly three actions: Back, Continue or Apply, and Finish later. Choices persist as a draft, but no runtime or file state changes before Apply. Deferring setup leaves one small Overview reminder and never blocks another workspace.
 
-The Control Center inherits Discord typography and native form behavior. It avoids remote CSS, remote fonts, decorative gradients, ornamental effects, nested dashboards, invented telemetry, and repeated status cards. Empty states name what was actually observed and the available next action.
+## Type, color, and structure
+
+The Control Center inherits Discord's body type and native control behavior. Hanken Grotesk is bundled for Solcord theme surfaces; there are no remote fonts or imports. Titles use one clear scale, setting rows use short outcome-first copy, and implementation language stays inside Technical details.
+
+Follow Discord, Solcord Dark, Solcord Light, and OLED are renderer modes. Accent, density, message shape, and motion are independent semantic preferences. Eleven optional full-shell themes remain available: Solcord Default, Obsidian Thread, Carbon Ember, Midnight Glass, Paper Signal, Threadline, Signal Block, Relay Classic, Workshop, Quiet Read, and Night Transit. Only one Solcord theme may be active at a time.
+
+Normal text, muted text, links, success, warning, danger, selection, and focus use separate tokens. Meaning never depends on color alone. Visible body and muted copy must meet a 4.5:1 contrast target in the Control Center. Reduced motion removes nonessential transitions and always follows the operating-system preference.
+
+The interface avoids remote imagery, decorative gradients, fake telemetry, ambient motion, nested dashboards, and walls of cards. Borders separate regions or state; they are not decoration. Healthy state collapses to a single All clear row. Empty headings and empty collections do not render.
 
 ## Launch identity
 
-Solcord does not draw a second product splash. Discord's updater and bootstrap window retain full ownership of the familiar spinning Discord mark, background, motion preferences, startup text, and handoff into the client. Solcord's loading adapter is an intentional no-op kept only to preserve the inherited startup call contract. It bundles no Discord mark, creates no renderer overlay, adds no timer, and cannot cover a recovery or authentication surface.
+Discord owns its updater and bootstrap window, including the familiar spinner and authentication handoff. Solcord does not draw a second splash or cover recovery and sign-in surfaces. Its loading adapter remains a no-op solely to preserve the inherited startup call contract.
 
-## Human Eye matrix
+## Acceptance boundary
 
-Source-frozen review must confirm that Discord's native spinner is unobstructed and that no Solcord launch overlay survives into the client. Home, Appearance, Safety, People, Tools, setup, recovery, and error/empty states remain required at 1280×720, 1142×1440, 1920×1080, ultrawide, and a narrow settings column. Required checks are clipping, focus order, keyboard operation, 100/125/150/200% scaling, dark/light/OLED contrast, high contrast, and reduced motion.
+Source acceptance covers the production stylesheet in a representative static shell at dark, light, OLED, 320-pixel content width, reduced motion, long copy, setup, degraded privacy, experimental voice, Extensions, and Recovery states. It checks visible overflow, focusability, contrast, responsive containment, and duplicate workspace headings.
 
-Technical render success is not Human Eye acceptance. Each surface receives `ACCEPT`, `REVISE`, `REJECT`, or `BLOCKED` with an observed reason. Real-profile appearance changes remain an owner gate.
+That fixture does not prove Discord selector compatibility, live popouts, theme interactions with a new client build, installer behavior, or the owner's profile. Live Discord acceptance remains a separate final gate.

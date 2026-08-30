@@ -110,6 +110,9 @@ describe("Solcord renderer security contracts", () => {
         const product = source("src/common/solcord/product.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
         expect(runtime).toContain("#sessionPeopleState");
+        expect(runtime).toContain("await this.#loadPeopleState()");
+        expect(runtime).toContain("TIMELINE_IPC.peopleWrite(capability, {state})");
+        expect(runtime).toContain("peopleStatePersistence: this.#peopleStatePersistent ? \"encrypted\" : \"session\"");
         expect(runtime).toContain("#sessionFocusChannelIds");
         expect(runtime).toContain("this.#returnLater = new SolcordReturnLaterJournal()");
         expect(runtime).toContain("JsonStore.delete(\"misc\", \"solcordReturnLater\")");
@@ -130,6 +133,7 @@ describe("Solcord renderer security contracts", () => {
             "SolcordTimeline.append", "SolcordTimeline.read", "SolcordTimeline.clear",
             "SolcordFriendWatch.append", "SolcordFriendWatch.read", "SolcordFriendWatch.clear",
             "SolcordAudienceGuard.read", "SolcordAudienceGuard.write", "SolcordAudienceGuard.clear",
+            "SolcordPeopleState.read", "SolcordPeopleState.write", "SolcordPeopleState.clear",
             "SolcordTranslationCredentials.read", "SolcordTranslationCredentials.write", "SolcordTranslationCredentials.clear",
             "SolcordLocalIdentityNotes.read", "SolcordLocalIdentityNotes.write", "SolcordLocalIdentityNotes.remove", "SolcordLocalIdentityNotes.clear"
         ]) {
@@ -261,7 +265,9 @@ describe("Solcord renderer security contracts", () => {
         expect(runtime).toContain("const callContextAvailable = lookups.callContext");
         expect(runtime).toContain("typeof selectedChannelStore?.getVoiceChannelId === \"function\"");
         expect(runtime).toContain("typeof voiceStateStore?.getVoiceStatesForChannel === \"function\"");
-        expect(runtime).toContain("callContextStores.every(store => typeof store?.addChangeListener === \"function\" && typeof store.removeChangeListener === \"function\")");
+        expect(runtime).toContain("baseCallContextStores.every(store => typeof store?.addChangeListener === \"function\" && typeof store.removeChangeListener === \"function\")");
+        expect(runtime).toContain("voiceActivityAvailable: callContextAvailable && voiceActivityAvailable");
+        expect(runtime).toContain("spectatorsAvailable: callContextAvailable && spectatorsAvailable");
         expect(runtime).toContain("currentCall: callContextAvailable ? currentCall : undefined");
         expect(runtime).toContain("subscribeCall: callContextAvailable ? listener =>");
     });
@@ -412,7 +418,7 @@ describe("Solcord renderer security contracts", () => {
         expect(timeline).toContain("estimatedStateBytes");
         expect(timeline).toContain("while (this.#messages.size > this.#limits.records");
         expect(timeline).toContain("while (this.#seenEvents.size > this.#limits.seenEvents)");
-        expect(runtime).toContain("boundedTimelineMessageIds");
+        expect(timeline).toContain("boundedTimelineMessageIds");
         expect(runtime).toContain("this.#timeline.snapshot(channelId, 250)");
     });
 

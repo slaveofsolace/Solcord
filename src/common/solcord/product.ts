@@ -86,7 +86,75 @@ export interface SolcordProductPreferences {
         guildAliases: Record<string, string>;
         focusChannelIds: string[];
         voiceHealthEnabled: boolean;
-        translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string;};
+        translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string; sourceLanguage: string; targetLanguage: string;};
+        people: {
+            showRelationshipDates: boolean;
+            showMutualGuildCounts: boolean;
+            pinIcon: boolean;
+            pinUnreadAmount: boolean;
+            pinChannelAmount: boolean;
+            sortPinnedByRecent: boolean;
+            serverHiderStreamOnly: boolean;
+            pinCategories: {
+                friends: boolean;
+                groups: boolean;
+                bots: boolean;
+                blocked: boolean;
+                others: boolean;
+            };
+        };
+        voiceActivity: {
+            memberList: boolean;
+            dmList: boolean;
+            peopleList: boolean;
+            highlightCurrentChannel: boolean;
+            statusIcons: boolean;
+            currentUser: boolean;
+        };
+        notifications: {
+            includeDms: boolean;
+            includeGuilds: boolean;
+            includeMuted: boolean;
+        };
+        timestamps: {
+            chat: boolean;
+            embeds: boolean;
+            markup: boolean;
+            auditLogs: boolean;
+            chatTooltips: boolean;
+            editedTooltips: boolean;
+            markupTooltips: boolean;
+        };
+        voiceNotes: {downloadButton: boolean; stripMetadata: boolean;};
+        motion: {
+            effect: "off" | "signal" | "snow" | "rain" | "stars";
+            particleCount: number;
+            color: string;
+            opacityPercent: number;
+            speedPercent: number;
+            starAngleDegrees: number;
+            surfaces: {
+                messages: boolean;
+                channels: boolean;
+                servers: boolean;
+                members: boolean;
+                modals: boolean;
+                popouts: boolean;
+                settings: boolean;
+                tooltips: boolean;
+                threads: boolean;
+            };
+        };
+        composer: {
+            doubleClickReplyModifier: "none" | "ctrl" | "shift" | "alt";
+            splitBoundary: "balanced" | "newlines";
+            preserveBlankLines: boolean;
+            splitLimit: number;
+            maxSplitParts: number;
+            attachmentThreshold: number;
+            counterWarningPercent: number;
+            timestampFormat: "full" | "compact" | "iso";
+        };
     };
     baseline: SolcordBaselinePreferences;
 }
@@ -140,7 +208,21 @@ export function defaultSolcordProductPreferences(): SolcordProductPreferences {
         privacy: defaultStrictPrivacyPreferences(),
         friendWatch: {enabled: false, retentionDays: 30, includeDisplaySnapshot: true, digest: "daily"},
         returnLaterRetentionDays: 30,
-        nativeSuite: {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: [], voiceHealthEnabled: false, translation: {provider: "off", endpoint: ""}},
+        nativeSuite: {
+            pinnedDmIds: [],
+            hiddenGuildIds: [],
+            guildAliases: {},
+            focusChannelIds: [],
+            voiceHealthEnabled: false,
+            translation: {provider: "off", endpoint: "", sourceLanguage: "auto", targetLanguage: "EN"},
+            people: {showRelationshipDates: true, showMutualGuildCounts: true, pinIcon: true, pinUnreadAmount: true, pinChannelAmount: true, sortPinnedByRecent: false, serverHiderStreamOnly: false, pinCategories: {friends: true, groups: true, bots: true, blocked: true, others: true}},
+            voiceActivity: {memberList: true, dmList: true, peopleList: true, highlightCurrentChannel: true, statusIcons: true, currentUser: true},
+            notifications: {includeDms: true, includeGuilds: true, includeMuted: false},
+            timestamps: {chat: true, embeds: true, markup: true, auditLogs: true, chatTooltips: true, editedTooltips: true, markupTooltips: true},
+            voiceNotes: {downloadButton: true, stripMetadata: false},
+            motion: {effect: "signal", particleCount: 10, color: "#9fb8ff", opacityPercent: 42, speedPercent: 100, starAngleDegrees: -28, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}},
+            composer: {doubleClickReplyModifier: "none", splitBoundary: "balanced", preserveBlankLines: false, splitLimit: 2_000, maxSplitParts: 0, attachmentThreshold: 0, counterWarningPercent: 80, timestampFormat: "full"}
+        },
         baseline: {layoutCollapse: false, collapsedRegions: [], embedControls: false, crossPlatformAutoscroll: false, messageLinkPreview: false, mediaShelf: []}
     };
 }
@@ -170,6 +252,15 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     const friendWatch = record(source.friendWatch);
     const nativeSuite = record(source.nativeSuite);
     const translation = record(nativeSuite.translation);
+    const people = record(nativeSuite.people);
+    const pinCategories = record(people.pinCategories);
+    const voiceActivity = record(nativeSuite.voiceActivity);
+    const notifications = record(nativeSuite.notifications);
+    const timestamps = record(nativeSuite.timestamps);
+    const voiceNotes = record(nativeSuite.voiceNotes);
+    const motion = record(nativeSuite.motion);
+    const motionSurfaces = record(motion.surfaces);
+    const composer = record(nativeSuite.composer);
     const baseline = record(source.baseline);
     let endpoint = "";
     if (typeof translation.endpoint === "string" && translation.endpoint.length <= 500) {
@@ -210,7 +301,80 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             guildAliases: {},
             focusChannelIds: [],
             voiceHealthEnabled: nativeSuite.voiceHealthEnabled === true,
-            translation: {provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"), endpoint}
+            translation: {
+                provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"),
+                endpoint,
+                sourceLanguage: typeof translation.sourceLanguage === "string" && /^(?:auto|[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?)$/.test(translation.sourceLanguage) ? translation.sourceLanguage : "auto",
+                targetLanguage: typeof translation.targetLanguage === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(translation.targetLanguage) ? translation.targetLanguage : "EN"
+            },
+            people: {
+                showRelationshipDates: people.showRelationshipDates !== false,
+                showMutualGuildCounts: people.showMutualGuildCounts !== false,
+                pinIcon: people.pinIcon !== false,
+                pinUnreadAmount: people.pinUnreadAmount !== false,
+                pinChannelAmount: people.pinChannelAmount !== false,
+                sortPinnedByRecent: people.sortPinnedByRecent === true,
+                serverHiderStreamOnly: people.serverHiderStreamOnly === true,
+                pinCategories: {
+                    friends: pinCategories.friends !== false,
+                    groups: pinCategories.groups !== false,
+                    bots: pinCategories.bots !== false,
+                    blocked: pinCategories.blocked !== false,
+                    others: pinCategories.others !== false
+                }
+            },
+            voiceActivity: {
+                memberList: voiceActivity.memberList !== false,
+                dmList: voiceActivity.dmList !== false,
+                peopleList: voiceActivity.peopleList !== false,
+                highlightCurrentChannel: voiceActivity.highlightCurrentChannel !== false,
+                statusIcons: voiceActivity.statusIcons !== false,
+                currentUser: voiceActivity.currentUser !== false
+            },
+            notifications: {
+                includeDms: notifications.includeDms !== false,
+                includeGuilds: notifications.includeGuilds !== false,
+                includeMuted: notifications.includeMuted === true
+            },
+            timestamps: {
+                chat: timestamps.chat !== false,
+                embeds: timestamps.embeds !== false,
+                markup: timestamps.markup !== false,
+                auditLogs: timestamps.auditLogs !== false,
+                chatTooltips: timestamps.chatTooltips !== false,
+                editedTooltips: timestamps.editedTooltips !== false,
+                markupTooltips: timestamps.markupTooltips !== false
+            },
+            voiceNotes: {downloadButton: voiceNotes.downloadButton !== false, stripMetadata: voiceNotes.stripMetadata === true},
+            motion: {
+                effect: choice(motion.effect, ["off", "signal", "snow", "rain", "stars"] as const, "signal"),
+                particleCount: Math.max(1, Math.min(24, Number.isFinite(motion.particleCount) ? Math.floor(motion.particleCount as number) : 10)),
+                color: typeof motion.color === "string" && /^#[0-9a-f]{6}$/i.test(motion.color) ? motion.color.toLowerCase() : "#9fb8ff",
+                opacityPercent: Math.max(10, Math.min(100, Number.isFinite(motion.opacityPercent) ? Math.floor(motion.opacityPercent as number) : 42)),
+                speedPercent: Math.max(25, Math.min(300, Number.isFinite(motion.speedPercent) ? Math.floor(motion.speedPercent as number) : 100)),
+                starAngleDegrees: Math.max(-75, Math.min(75, Number.isFinite(motion.starAngleDegrees) ? Math.floor(motion.starAngleDegrees as number) : -28)),
+                surfaces: {
+                    messages: motionSurfaces.messages !== false,
+                    channels: motionSurfaces.channels !== false,
+                    servers: motionSurfaces.servers !== false,
+                    members: motionSurfaces.members !== false,
+                    modals: motionSurfaces.modals !== false,
+                    popouts: motionSurfaces.popouts !== false,
+                    settings: motionSurfaces.settings !== false,
+                    tooltips: motionSurfaces.tooltips !== false,
+                    threads: motionSurfaces.threads !== false
+                }
+            },
+            composer: {
+                doubleClickReplyModifier: choice(composer.doubleClickReplyModifier, ["none", "ctrl", "shift", "alt"] as const, "none"),
+                splitBoundary: choice(composer.splitBoundary, ["balanced", "newlines"] as const, "balanced"),
+                preserveBlankLines: composer.preserveBlankLines === true,
+                splitLimit: Math.max(1_000, Math.min(4_000, Number.isFinite(composer.splitLimit) ? Math.floor(composer.splitLimit as number) : 2_000)),
+                maxSplitParts: Math.max(0, Math.min(20, Number.isFinite(composer.maxSplitParts) ? Math.floor(composer.maxSplitParts as number) : 0)),
+                attachmentThreshold: Math.max(0, Math.min(64_000, Number.isFinite(composer.attachmentThreshold) ? Math.floor(composer.attachmentThreshold as number) : 0)),
+                counterWarningPercent: Math.max(50, Math.min(100, Number.isFinite(composer.counterWarningPercent) ? Math.floor(composer.counterWarningPercent as number) : 80)),
+                timestampFormat: choice(composer.timestampFormat, ["full", "compact", "iso"] as const, "full")
+            }
         },
         baseline: {
             layoutCollapse: baseline.layoutCollapse === true,

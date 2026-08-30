@@ -1,9 +1,9 @@
 # Solcord quick start
 
-This guide uses the verified `v2.0.0-rc.5` release. It is designed for someone who has never installed a Discord client mod.
+This guide applies only after `v2.0.0-rc.5` appears on the official Solcord release page with matching installer and checksum assets. Until then, RC5 is a candidate under review—not a downloadable release. The steps are written for someone who has never installed a Discord client mod.
 
 > [!WARNING]
-> Solcord RC5 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord` and compare its SHA-256 value with the release manifest before opening it.
+> Solcord RC5 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord`, confirm that the release is actually published, and compare its SHA-256 value with the release manifest before opening it.
 
 ## 1. Download
 

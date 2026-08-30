@@ -28,7 +28,7 @@ import type {
 } from "./contracts";
 
 
-export const SOLCORD_SCHEMA_VERSION = 7;
+export const SOLCORD_SCHEMA_VERSION = 10;
 export const SOLCORD_CONSENT_VERSION = 3;
 export const SOLCORD_ONBOARDING_VERSION = 5;
 const MAX_SNAPSHOTS = 20;
@@ -110,12 +110,33 @@ export function defaultTimelinePolicy(): SolcordTimelinePolicy {
         retention: "7-days",
         content: "text-only",
         textBudgetBytes: 262_144_000,
-        mediaBudgetBytes: 1_073_741_824
+        mediaBudgetBytes: 1_073_741_824,
+        filters: {
+            ignoreSelf: false,
+            ignoreBots: false,
+            ignoreBlockedUsers: false,
+            ignoreMutedChannels: false,
+            ignoreMutedGuilds: false,
+            ignoreNsfw: false,
+            alwaysLogDms: true,
+            alwaysLogGhostPings: true
+        },
+        display: {
+            showDeletedMessages: true,
+            showEditedMessages: true,
+            showPurgedMessages: true,
+            showDeletedCount: true,
+            showEditedCount: true,
+            reverseOrder: false,
+            maxShownEdits: 10
+        }
     };
 }
 
 function normalizeTimelinePolicy(value: unknown): SolcordTimelinePolicy {
     const record = isRecord(value) ? value : {};
+    const filters = isRecord(record.filters) ? record.filters : {};
+    const display = isRecord(record.display) ? record.display : {};
     const ids = Array.isArray(record.serverChannelIds)
         ? [...new Set(record.serverChannelIds.filter((id): id is string => typeof id === "string" && /^\d{1,32}$/.test(id)))].slice(0, 500)
         : [];
@@ -126,7 +147,26 @@ function normalizeTimelinePolicy(value: unknown): SolcordTimelinePolicy {
         retention: stringChoice(record.retention, ["session", "24-hours", "7-days", "30-days", "90-days", "manual"] as const, "7-days"),
         content: stringChoice(record.content, ["text-only", "text-and-metadata", "encrypted-media"] as const, "text-only"),
         textBudgetBytes: 262_144_000,
-        mediaBudgetBytes: stringChoice(record.mediaBudgetBytes, [268_435_456, 1_073_741_824, 5_368_709_120] as const, 1_073_741_824)
+        mediaBudgetBytes: stringChoice(record.mediaBudgetBytes, [268_435_456, 1_073_741_824, 5_368_709_120] as const, 1_073_741_824),
+        filters: {
+            ignoreSelf: filters.ignoreSelf === true,
+            ignoreBots: filters.ignoreBots === true,
+            ignoreBlockedUsers: filters.ignoreBlockedUsers === true,
+            ignoreMutedChannels: filters.ignoreMutedChannels === true,
+            ignoreMutedGuilds: filters.ignoreMutedGuilds === true,
+            ignoreNsfw: filters.ignoreNsfw === true,
+            alwaysLogDms: filters.alwaysLogDms !== false,
+            alwaysLogGhostPings: filters.alwaysLogGhostPings !== false
+        },
+        display: {
+            showDeletedMessages: display.showDeletedMessages !== false,
+            showEditedMessages: display.showEditedMessages !== false,
+            showPurgedMessages: display.showPurgedMessages !== false,
+            showDeletedCount: display.showDeletedCount !== false,
+            showEditedCount: display.showEditedCount !== false,
+            reverseOrder: display.reverseOrder === true,
+            maxShownEdits: Math.floor(boundedNumber(display.maxShownEdits, 10, 1, 100))
+        }
     };
 }
 
@@ -401,7 +441,7 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
             at: Date.now(),
             fromSchema: rawSchemaVersion,
             toSchema: SOLCORD_SCHEMA_VERSION,
-            detail: "Added the privacy-first profile, five-step setup, and content-free privacy capability state."
+            detail: "Added bounded Composer Toolkit preferences for reply modifiers and guarded split behavior."
         });
         migrationProvenance.splice(0, Math.max(0, migrationProvenance.length - MAX_MIGRATION_ENTRIES));
     }
@@ -430,7 +470,7 @@ export function normalizeSolcordDocument(raw: unknown): SolcordSettingsDocument 
     reconcileModulePreferenceBindings(modules, productPreferences, rawSchemaVersion < 5 ? "preferences" : "modules");
 
     return {
-        schemaVersion: 7,
+        schemaVersion: 10,
         consentVersion: SOLCORD_CONSENT_VERSION,
         onboarding: normalizeOnboarding(record.onboarding),
         selectedTheme: stringChoice(record.selectedTheme, SOLCORD_THEMES.map(theme => theme.id), "solcord-default"),
