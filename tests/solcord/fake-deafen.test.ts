@@ -10,8 +10,15 @@ import {
     type SolcordVoiceStatePayload
 } from "../../src/betterdiscord/modules/solcord/fake-deafen";
 
+const ACCOUNT_ID = "111111111111111111";
+const REPLACEMENT_ACCOUNT_ID = "222222222222222222";
+const CHANNEL_ID = "333333333333333333";
+const MOVED_CHANNEL_ID = "444444444444444444";
+const GUILD_ID = "555555555555555555";
+
 function harness() {
-    let channelId: string | undefined = "123";
+    let accountId: string | undefined = ACCOUNT_ID;
+    let channelId: string | undefined = CHANNEL_ID;
     let locallyDeafened = true;
     let unpatched = false;
     let failSend = false;
@@ -22,12 +29,13 @@ function harness() {
     };
     let socket: SolcordGatewaySocket = {send: originalSend};
     const dependencies: SolcordFakeDeafenDependencies = {
+        getAccountId: () => accountId,
         getSocket: () => socket,
         getVoiceChannelId: () => channelId,
         isLocallyDeafened: () => locallyDeafened,
         toggleLocalDeafen: () => {
             locallyDeafened = !locallyDeafened;
-            socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {guild_id: "456", channel_id: channelId!, self_mute: false, self_deaf: locallyDeafened});
+            socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {guild_id: GUILD_ID, channel_id: channelId!, self_mute: false, self_deaf: locallyDeafened});
         },
         patchSend: (target, observe) => {
             const original = target.send;
@@ -44,6 +52,8 @@ function harness() {
     return {
         dependencies,
         sent,
+        get accountId() {return accountId;},
+        set accountId(value: string | undefined) {accountId = value;},
         get socket() {return socket;},
         set socket(value: SolcordGatewaySocket) {socket = value;},
         get channelId() {return channelId;},
@@ -56,7 +66,7 @@ function harness() {
     };
 }
 
-const deafenedPayload = (): SolcordVoiceStatePayload => ({guild_id: "456", channel_id: "123", self_mute: false, self_deaf: true});
+const deafenedPayload = (): SolcordVoiceStatePayload => ({guild_id: GUILD_ID, channel_id: CHANNEL_ID, self_mute: false, self_deaf: true});
 
 describe("Solcord Fake Deafen", () => {
     test("tears down the live adapter when consent persistence fails", async () => {
@@ -90,8 +100,8 @@ describe("Solcord Fake Deafen", () => {
     test("accepts only bounded Discord voice-state payloads", () => {
         expect(normalizeVoiceStatePayload(deafenedPayload())).toEqual(deafenedPayload());
         expect(normalizeVoiceStatePayload({channel_id: "../bad", self_mute: false, self_deaf: true})).toBeUndefined();
-        expect(normalizeVoiceStatePayload({channel_id: "123", self_mute: false, self_deaf: "true"})).toBeUndefined();
-        expect(normalizeVoiceStatePayload({channel_id: "123", self_mute: false, self_deaf: true, self_video: "yes"})).toBeUndefined();
+        expect(normalizeVoiceStatePayload({channel_id: CHANNEL_ID, self_mute: false, self_deaf: "true"})).toBeUndefined();
+        expect(normalizeVoiceStatePayload({channel_id: CHANNEL_ID, self_mute: false, self_deaf: true, self_video: "yes"})).toBeUndefined();
     });
 
     test("arms only after a real deafened update, restores local audio, and resynchronizes on disarm", () => {
@@ -103,7 +113,7 @@ describe("Solcord Fake Deafen", () => {
         expect(controller.arm()).toBeTrue();
         expect(state.locallyDeafened).toBeFalse();
         expect((state.sent.at(-1)?.payload as SolcordVoiceStatePayload).self_deaf).toBeTrue();
-        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "armed", armed: true, connected: true, capturedVoiceState: true}));
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "armed", armed: true, connected: true, accountBound: true, capturedVoiceState: true}));
 
         expect(controller.disarm()).toBeTrue();
         expect((state.sent.at(-1)?.payload as SolcordVoiceStatePayload).self_deaf).toBeFalse();
@@ -133,16 +143,16 @@ describe("Solcord Fake Deafen", () => {
         state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
         expect(controller.arm()).toBeTrue();
 
-        state.channelId = "789";
-        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {guild_id: "456", channel_id: "789", self_mute: false, self_deaf: false});
+        state.channelId = MOVED_CHANNEL_ID;
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {guild_id: GUILD_ID, channel_id: MOVED_CHANNEL_ID, self_mute: false, self_deaf: false});
         expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "attention", armed: false}));
         expect((state.sent.at(-1)?.payload as SolcordVoiceStatePayload).self_deaf).toBeFalse();
 
-        state.channelId = "123";
+        state.channelId = CHANNEL_ID;
         state.locallyDeafened = true;
         state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
         expect(controller.arm()).toBeTrue();
-        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {channel_id: "123", self_mute: false, self_deaf: "drift"});
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {channel_id: CHANNEL_ID, self_mute: false, self_deaf: "drift"});
         expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "attention", armed: false}));
     });
 
@@ -154,6 +164,33 @@ describe("Solcord Fake Deafen", () => {
         expect(controller.validateOwnership()).toBeFalse();
         expect(state.unpatched).toBeTrue();
         expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "attention", armed: false}));
+    });
+
+    test("binds the patch to one account and never restores state into a replacement account", () => {
+        const state = harness();
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        expect(controller.start()).toBeTrue();
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
+        expect(controller.arm()).toBeTrue();
+        const sendsBeforeSwitch = state.sent.length;
+
+        state.accountId = REPLACEMENT_ACCOUNT_ID;
+        expect(controller.validateOwnership()).toBeFalse();
+
+        expect(state.unpatched).toBeTrue();
+        expect(state.sent).toHaveLength(sendsBeforeSwitch);
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "attention", armed: false, accountBound: false}));
+        expect(controller.snapshot().detail).toContain("account changed");
+    });
+
+    test("does not patch before a signed-in account identity is validated", () => {
+        const state = harness();
+        state.accountId = undefined;
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+
+        expect(controller.start()).toBeFalse();
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "attention", accountBound: false, armed: false}));
+        expect(state.unpatched).toBeFalse();
     });
 
     test("preserves resynchronization attention when stop cannot restore server-visible state", () => {

@@ -119,9 +119,12 @@ function resetFixtureDom(): void {
     document.head.replaceChildren();
     document.body.innerHTML = `
         <main id="solcord-soak-root">
+            <nav aria-label="Servers"><div data-list-id="guildsnav"></div></nav>
+            <nav aria-label="Channels"><div data-list-id="channels-200"></div></nav>
+            <aside aria-label="Members"><div data-list-id="members-200" role="list"></div></aside>
             <article id="chat-messages-1">
                 <div class="messageListItem_soak">
-                    <div class="embedWrapper_soak"><span>Loaded embed</span></div>
+                    <div class="embedWrapper_soak"><a href="https://example.invalid/loaded-embed">Loaded embed</a></div>
                     <a id="solcord-soak-link" href="https://discord.com/channels/@me/200/300">Loaded message</a>
                 </div>
             </article>
@@ -200,7 +203,7 @@ function runV2ControllerCycle(sequence: number): {owned: number; voiceHealthSamp
     controllers.push(call);
 
     const audio = new SolcordAudioConsoleController(() => now);
-    audio.previewVolume("301", 100, 125);
+    audio.previewVolume("10000000000000301", 100, 125);
     audio.confirmVolume();
     controllers.push(audio);
 
@@ -268,8 +271,8 @@ function runAudienceGuardCycle(): number {
     let stopRequests = 0;
     let startDecision: (() => boolean) | undefined;
     const adapter: SolcordAudienceGuardAdapter = {
-        currentAccountId: () => "100",
-        currentVoiceChannelId: () => "200",
+        currentAccountId: () => "10000000000000100",
+        currentVoiceChannelId: () => "10000000000000200",
         currentStream: () => undefined,
         voiceMemberIds: () => [],
         viewerIds: () => [],
@@ -291,7 +294,7 @@ function runAudienceGuardCycle(): number {
     };
     const guard = new SolcordStreamAudienceGuard(adapter);
     if (!guard.start()) throw new Error("Audience Guard rejected its structurally complete synthetic adapter.");
-    if (!guard.arm([{userId: "300", label: "Synthetic entry"}], {preventStart: true, stopOnJoin: false, stopOnWatch: false})) throw new Error("Audience Guard did not arm in the synthetic call.");
+    if (!guard.arm([{userId: "10000000000000300", label: "Synthetic entry"}], {preventStart: true, stopOnJoin: false, stopOnWatch: false})) throw new Error("Audience Guard did not arm in the synthetic call.");
     guard.synchronize();
     if (startDecision?.() !== true) throw new Error("Audience Guard blocked a start when no denied member was present.");
     const owned = listeners + patches + timers;

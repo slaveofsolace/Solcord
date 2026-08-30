@@ -133,6 +133,16 @@ export function defaultTimelinePolicy(): SolcordTimelinePolicy {
     };
 }
 
+export function deferOnboardingState(current: SolcordOnboardingState, completedAt = Date.now()): SolcordOnboardingState {
+    return {
+        version: SOLCORD_ONBOARDING_VERSION,
+        status: "skipped",
+        lastStep: current.lastStep,
+        ...(current.draft ? {draft: clone(current.draft)} : {}),
+        completedAt
+    };
+}
+
 function normalizeTimelinePolicy(value: unknown): SolcordTimelinePolicy {
     const record = isRecord(value) ? value : {};
     const filters = isRecord(record.filters) ? record.filters : {};
@@ -1030,7 +1040,7 @@ class SolcordStore extends Store {
 
     skipOnboarding(): void {
         if (this.#document.onboarding.status !== "pending") return;
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "skipped", lastStep: this.#document.onboarding.lastStep, completedAt: Date.now()};
+        this.#document.onboarding = deferOnboardingState(this.#document.onboarding);
         this.#appendLedger("schema", "Skipped Solcord setup; addon and theme state was not changed.");
         this.#save();
     }

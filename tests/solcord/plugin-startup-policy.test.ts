@@ -17,6 +17,9 @@ describe("Solcord plugin startup policy", () => {
         expect(bdfdbRequiredByEnabledAddon(addons, {})).toBeFalse();
         expect(bdfdbRequiredByEnabledAddon(addons, {Local: true})).toBeFalse();
         expect(bdfdbRequiredByEnabledAddon(addons, {Consumer: true})).toBeTrue();
+        expect(bdfdbRequiredByEnabledAddon([
+            {id: "Consumer", filename: "Consumer.plugin.js", requiresBdfdb: true}
+        ], {Consumer: true})).toBeTrue();
     });
 
     test("requests browser-wide hooks only for enabled plugin contracts", () => {
@@ -39,7 +42,11 @@ describe("Solcord plugin startup policy", () => {
         expect(setup).not.toContain("this.observer.observe(document");
         expect(setup).not.toContain("Events.on(\"navigate\"");
         expect(setup).toContain("this.#refreshRuntimeHooks()");
-        expect(source).toContain("pluginRuntimeHookRequirements(this.addonList, this.state)");
+        expect(source).toContain("pluginRuntimeHookRequirements(this.addonList, activeState)");
+        expect(source).toContain("this.#activePluginIds.has(addon.id)");
+        expect(source).toContain("if (this.#activePluginIds.has(plugin.id)) return true");
+        expect(source).toContain("this.#releaseUnusedBdfdbDependency()");
+        expect(source).toContain("requires BDFDB, but the dependency is missing, quarantined, or failed to start");
         expect(source).toContain("this.addonActivationDisposition(addon) === \"allowed\"");
         expect(source).toContain("Cleanup failed after an unsuccessful start; manual recovery is required before retrying.");
         expect(source).toContain("Cleanup failed while disabling this addon; manual recovery is required before retrying.");

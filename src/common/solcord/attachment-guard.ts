@@ -32,21 +32,14 @@ function stripControlCharacters(value: string): string {
     }).join("");
 }
 
-export function inspectSolcordAttachment(input: string, declaredMime?: string): SolcordAttachmentInspection {
-    let url: URL;
-    try {url = new URL(input);}
-    catch {return {valid: false, risk: "block", reasons: ["The attachment URL is malformed."]};}
-    if (url.protocol !== "https:") return {valid: false, risk: "block", reasons: ["Attachments require HTTPS."]};
-    let filename = "";
-    try {filename = decodeURIComponent(url.pathname.split("/").filter(Boolean).at(-1) ?? "");}
-    catch {return {valid: false, host: url.hostname.toLowerCase(), risk: "block", reasons: ["The filename encoding is malformed."]};}
-    filename = stripControlCharacters(filename).slice(0, 260);
-    if (!filename) return {valid: false, host: url.hostname.toLowerCase(), risk: "block", reasons: ["The attachment has no visible filename."]};
+function inspectAttachmentFilename(rawFilename: string, declaredMime?: string, host?: string): SolcordAttachmentInspection {
+    let filename = stripControlCharacters(rawFilename).slice(0, 260);
+    if (!filename) return {valid: false, ...(host ? {host} : {}), risk: "block", reasons: ["The attachment has no visible filename."]};
     const reasons: string[] = [];
     const windowsNormalized = filename.replace(/[ .]+$/g, "");
     if (windowsNormalized !== filename) reasons.push("Windows ignores trailing spaces and periods in this filename");
     filename = windowsNormalized;
-    if (!filename) return {valid: false, host: url.hostname.toLowerCase(), risk: "block", reasons: ["The attachment filename becomes empty after Windows normalization."]};
+    if (!filename) return {valid: false, ...(host ? {host} : {}), risk: "block", reasons: ["The attachment filename becomes empty after Windows normalization."]};
     const extension = filename.includes(".") ? filename.split(".").at(-1)!.toLowerCase() : "";
     const mime = typeof declaredMime === "string" && /^[\w.+-]+\/[\w.+-]+$/.test(declaredMime.trim()) ? declaredMime.trim().toLowerCase() : undefined;
     let risk: SolcordAttachmentInspection["risk"] = reasons.length ? "review" : "ordinary";
@@ -61,5 +54,20 @@ export function inspectSolcordAttachment(input: string, declaredMime?: string): 
         risk = "review";
         reasons.push(`Unrecognized extension .${extension}`);
     }
-    return {valid: true, host: url.hostname.toLowerCase(), filename, extension: extension || undefined, declaredMime: mime, risk, reasons};
+    return {valid: true, ...(host ? {host} : {}), filename, extension: extension || undefined, declaredMime: mime, risk, reasons};
+}
+
+export function inspectSolcordAttachment(input: string, declaredMime?: string): SolcordAttachmentInspection {
+    let url: URL;
+    try {url = new URL(input);}
+    catch {return {valid: false, risk: "block", reasons: ["The attachment URL is malformed."]};}
+    if (url.protocol !== "https:") return {valid: false, risk: "block", reasons: ["Attachments require HTTPS."]};
+    let filename = "";
+    try {filename = decodeURIComponent(url.pathname.split("/").filter(Boolean).at(-1) ?? "");}
+    catch {return {valid: false, host: url.hostname.toLowerCase(), risk: "block", reasons: ["The filename encoding is malformed."]};}
+    return inspectAttachmentFilename(filename, declaredMime, url.hostname.toLowerCase());
+}
+
+export function inspectSolcordLocalAttachment(filename: string, declaredMime?: string): SolcordAttachmentInspection {
+    return inspectAttachmentFilename(filename, declaredMime);
 }

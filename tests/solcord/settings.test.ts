@@ -18,7 +18,7 @@ import {
     SOLCORD_PRESET_ADDONS,
     verifySolcordImportAtApply
 } from "../../src/betterdiscord/modules/solcord/store";
-import {recommendedSolcordSetupAddons} from "../../src/common/solcord/setup-catalog";
+import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan} from "../../src/common/solcord/setup-catalog";
 
 
 describe("Solcord settings schema", () => {
@@ -533,7 +533,8 @@ describe("Solcord settings schema", () => {
         expect(document).toEqual(before);
 
         const allSelectedPreview = previewSetupChanges(document, {...noChangeDraft, selectedAddons: [...SOLCORD_PRESET_ADDONS]});
-        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(SOLCORD_PRESET_ADDONS.length - recommended.length);
+        const allSelectedPlan = resolveSolcordSetupPlan(SOLCORD_PRESET_ADDONS, noChangeDraft.addonModes);
+        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(allSelectedPlan.skipped.length);
         expect(allSelectedPreview).toContain("BlurNSFW: skip this run — optional · held for review");
         expect(allSelectedPreview).toContain("BetterSearchPage: skip this run — optional · dependency held");
         expect(allSelectedPreview).toContain("PermissionsViewer: skip this run — optional · runtime pending");

@@ -61,9 +61,10 @@ describe("Solcord V2 clean-room feature models", () => {
         expect(() => calls.observe({channelId: "100", connectedAt: 1_000, participantCount: 2, speakerCount: 3, viewerCount: 1})).toThrow("inconsistent");
 
         const audio = new SolcordAudioConsoleController(() => 2_000);
-        audio.previewVolume("200", 100, 135);
-        expect(audio.confirmVolume()).toMatchObject({kind: "set-local-volume", payload: {userId: "200", volumePercent: 135, localOnly: true}});
-        expect(() => audio.previewVolume("200", 100, 201)).toThrow("between 0 and 200");
+        audio.previewVolume("123456789012345678", 100, 135);
+        expect(audio.confirmVolume()).toMatchObject({kind: "set-local-volume", payload: {userId: "123456789012345678", volumePercent: 135, localOnly: true}});
+        expect(() => audio.previewVolume("123", 100, 135)).toThrow("complete Discord user ID");
+        expect(() => audio.previewVolume("123456789012345678", 100, 201)).toThrow("between 0 and 200");
     });
 
     test("Voice Note Studio requires gesture, local preview, then a separate expiring upload intent", () => {
@@ -125,8 +126,13 @@ describe("Solcord V2 clean-room feature models", () => {
     test("Notification Review never marks read until a reviewed intent is explicitly requested", () => {
         let now = 5_000;
         const notifications = new SolcordNotificationReviewController(() => now);
+        const emptyPreview = notifications.preview("guild", []);
+        expect(emptyPreview.count).toBe(0);
+        expect(() => notifications.confirm(emptyPreview.id)).toThrow("No reviewed notifications");
+        expect(() => notifications.confirm(emptyPreview.id)).toThrow("missing or stale");
+
         const preview = notifications.preview("mentions", ["700", "700", "701"]);
-        expect(preview).toEqual({id: "notification:1", scope: "mentions", notificationIds: ["700", "701"], count: 2});
+        expect(preview).toEqual({id: "notification:2", scope: "mentions", notificationIds: ["700", "701"], count: 2});
         now = 15_001;
         expect(() => notifications.confirm(preview.id)).toThrow("expired");
         expect(() => notifications.confirm(preview.id)).toThrow("missing or stale");

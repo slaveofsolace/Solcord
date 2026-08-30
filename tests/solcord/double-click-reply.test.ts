@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
+import {readFileSync} from "node:fs";
+import {resolve} from "node:path";
 
 import {
     decideDoubleClickReply,
@@ -12,6 +14,7 @@ import {
 
 const MESSAGE_ID = "1152921504606846976";
 const CHANNEL_ID = "1152921504606846977";
+const RUNTIME_SOURCE = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
 
 function context(overrides: Partial<DoubleClickReplyContext> = {}): DoubleClickReplyContext {
     return {
@@ -113,6 +116,38 @@ describe("double-click reply domain policy", () => {
 });
 
 describe("double-click reply lifecycle", () => {
+    test("captures a real synthetic dblclick on loaded message content and requests reply state only", () => {
+        const adapter = new FakeAdapter();
+        const feature = new DoubleClickReplyFeature(adapter);
+        const message = document.createElement("div");
+        const content = document.createElement("span");
+        message.dataset.listItemId = `chat-messages___${CHANNEL_ID}-${MESSAGE_ID}`;
+        message.append(content);
+        document.body.append(message);
+        adapter.installDoubleClickListener = listener => {
+            const handler = (event: Event) => listener(context({
+                eventType: event.type,
+                button: (event as MouseEvent).button,
+                detail: (event as MouseEvent).detail,
+                ancestors: [{tagName: (event.target as Element).tagName}],
+                message: {messageId: MESSAGE_ID, channelId: CHANNEL_ID}
+            }));
+            document.addEventListener("dblclick", handler, true);
+            return () => document.removeEventListener("dblclick", handler, true);
+        };
+
+        expect(feature.start()).toBeTrue();
+        content.dispatchEvent(new MouseEvent("dblclick", {bubbles: true, button: 0, detail: 2}));
+        expect(adapter.replies).toEqual([{messageId: MESSAGE_ID, channelId: CHANNEL_ID}]);
+        expect(RUNTIME_SOURCE).toContain("document.addEventListener(\"dblclick\", handler, true)");
+        expect(RUNTIME_SOURCE).toContain("[data-list-item-id^='chat-messages'], [id^='chat-messages-']");
+        expect(RUNTIME_SOURCE).toContain("CREATE_PENDING_REPLY");
+        expect(RUNTIME_SOURCE).toContain("Reflect.apply(replyFunction, replyModule");
+        expect(RUNTIME_SOURCE).not.toContain("resolved.message.author?.id === userStore");
+        feature.stop();
+        message.remove();
+    });
+
     test("installs one listener and only requests reply state on a valid double click", () => {
         const adapter = new FakeAdapter();
         const feature = new DoubleClickReplyFeature(adapter);

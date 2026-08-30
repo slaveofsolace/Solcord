@@ -11,6 +11,7 @@ import {
     defaultStrictPrivacyPreferences,
     legacyPrivacyPreferences,
     normalizePrivacyPreferences,
+    privacyCapabilityStateLabel,
     privacyReceiptTimeBucket
 } from "../../src/common/solcord/privacy";
 import {SolcordDisposalScope} from "../../src/betterdiscord/modules/solcord/disposal";
@@ -59,6 +60,13 @@ function harness() {
 }
 
 describe("Solcord privacy policy", () => {
+    test("formats capability states for people without weakening unsupported states", () => {
+        expect(privacyCapabilityStateLabel("NeedsReview")).toBe("Needs review");
+        expect(privacyCapabilityStateLabel("Protected")).toBe("Protected");
+        expect(privacyCapabilityStateLabel("Degraded")).toBe("Degraded");
+        expect(privacyCapabilityStateLabel("Unsupported")).toBe("Unsupported");
+    });
+
     test("normalizes fresh installs to strict while migrating existing profiles without silently changing them", () => {
         expect(defaultStrictPrivacyPreferences()).toEqual(expect.objectContaining({profile: "strict", telemetry: "block", crashReporting: "block-optional", activityDiscovery: "block", updates: "manual"}));
         expect(normalizePrivacyPreferences({profile: "forged", telemetry: "capture-all"})).toEqual(defaultStrictPrivacyPreferences());

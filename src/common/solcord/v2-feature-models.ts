@@ -260,6 +260,8 @@ export class SolcordCallContextController implements SolcordV2Disposable {
         return Object.freeze({connected: true, elapsedMs: Math.max(0, now - this.#current.connectedAt), participantCount: this.#current.participantCount, speakerCount: this.#current.speakerCount, viewerCount: this.#current.viewerCount, participantIds: this.#current.participantIds, speakerIds: this.#current.speakerIds, viewerLabels: this.#current.viewerLabels});
     }
 
+    clear(): void {this.#lifecycle.assertActive(); this.#current = undefined;}
+
     dispose(): void {this.#current = undefined; this.#lifecycle.dispose();}
 }
 
@@ -273,7 +275,8 @@ export class SolcordAudioConsoleController implements SolcordV2Disposable {
 
     previewVolume(userId: string, currentPercent: number, targetPercent: number): Readonly<{userId: string; currentPercent: number; targetPercent: number;}> {
         this.#lifecycle.assertActive();
-        this.#preview = Object.freeze({userId: requireToken(userId, "User ID", 32), currentPercent: boundedNumber(currentPercent, 0, 200, "Current volume"), targetPercent: boundedNumber(targetPercent, 0, 200, "Target volume")});
+        if (!/^[1-9]\d{16,19}$/.test(userId)) throw new Error("Enter a complete Discord user ID.");
+        this.#preview = Object.freeze({userId, currentPercent: boundedNumber(currentPercent, 0, 200, "Current volume"), targetPercent: boundedNumber(targetPercent, 0, 200, "Target volume")});
         return this.#preview;
     }
 
@@ -524,6 +527,7 @@ export class SolcordNotificationReviewController implements SolcordV2Disposable 
         const preview = this.#preview;
         this.#preview = undefined;
         this.#previewExpiresAt = 0;
+        if (preview.count === 0) throw new Error("No reviewed notifications are available to mark as read.");
         return this.#intents.create("notification-review", "mark-notifications-read", {scope: preview.scope, notificationIds: preview.notificationIds}, `Mark ${preview.count} reviewed notification(s) as read.`, 10_000);
     }
 

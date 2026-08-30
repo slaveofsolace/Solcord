@@ -86,7 +86,7 @@ export interface SolcordProductPreferences {
         guildAliases: Record<string, string>;
         focusChannelIds: string[];
         voiceHealthEnabled: boolean;
-        translation: {provider: "off" | "deepl" | "libretranslate"; endpoint: string; sourceLanguage: string; targetLanguage: string;};
+        translation: {provider: "off" | "local" | "deepl" | "libretranslate"; endpoint: string; sourceLanguage: string; targetLanguage: string;};
         people: {
             showRelationshipDates: boolean;
             showMutualGuildCounts: boolean;
@@ -127,7 +127,7 @@ export interface SolcordProductPreferences {
         };
         voiceNotes: {downloadButton: boolean; stripMetadata: boolean;};
         motion: {
-            effect: "off" | "signal" | "field" | "snow" | "rain" | "stars";
+            effect: "off" | "signal" | "field" | "work-field" | "embers" | "snow" | "rain" | "stars";
             particleCount: number;
             color: string;
             opacityPercent: number;
@@ -214,7 +214,7 @@ export function defaultSolcordProductPreferences(): SolcordProductPreferences {
             guildAliases: {},
             focusChannelIds: [],
             voiceHealthEnabled: false,
-            translation: {provider: "off", endpoint: "", sourceLanguage: "auto", targetLanguage: "EN"},
+            translation: {provider: "local", endpoint: "", sourceLanguage: "auto", targetLanguage: "EN"},
             people: {showRelationshipDates: true, showMutualGuildCounts: true, pinIcon: true, pinUnreadAmount: true, pinChannelAmount: true, sortPinnedByRecent: false, serverHiderStreamOnly: false, pinCategories: {friends: true, groups: true, bots: true, blocked: true, others: true}},
             voiceActivity: {memberList: true, dmList: true, peopleList: true, highlightCurrentChannel: true, statusIcons: true, currentUser: true},
             notifications: {includeDms: true, includeGuilds: true, includeMuted: false},
@@ -302,7 +302,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             focusChannelIds: [],
             voiceHealthEnabled: nativeSuite.voiceHealthEnabled === true,
             translation: {
-                provider: choice(translation.provider, ["off", "deepl", "libretranslate"] as const, "off"),
+                provider: choice(translation.provider, ["off", "local", "deepl", "libretranslate"] as const, "local"),
                 endpoint,
                 sourceLanguage: typeof translation.sourceLanguage === "string" && /^(?:auto|[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?)$/.test(translation.sourceLanguage) ? translation.sourceLanguage : "auto",
                 targetLanguage: typeof translation.targetLanguage === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(translation.targetLanguage) ? translation.targetLanguage : "EN"
@@ -349,7 +349,7 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             motion: {
                 // `stars` remains readable as a migration alias, but the UI no longer
                 // offers it and Motion Studio renders it through the owner-approved field.
-                effect: choice(motion.effect, ["off", "signal", "field", "snow", "rain", "stars"] as const, "field"),
+                effect: choice(motion.effect, ["off", "signal", "field", "work-field", "embers", "snow", "rain", "stars"] as const, "field"),
                 particleCount: Math.max(1, Math.min(24, Number.isFinite(motion.particleCount) ? Math.floor(motion.particleCount as number) : 10)),
                 color: typeof motion.color === "string" && /^#[0-9a-f]{6}$/i.test(motion.color) ? motion.color.toLowerCase() : "#9fb8ff",
                 opacityPercent: Math.max(10, Math.min(100, Number.isFinite(motion.opacityPercent) ? Math.floor(motion.opacityPercent as number) : 42)),

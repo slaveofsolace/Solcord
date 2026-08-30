@@ -2,6 +2,7 @@ interface BdfdbDependencyCandidate {
     filename: string;
     id: string;
     fileContent?: string;
+    requiresBdfdb?: boolean;
     instance?: {
         observer?: unknown;
         onSwitch?: unknown;
@@ -22,8 +23,8 @@ export interface PluginRuntimeHookRequirements {
 export function bdfdbRequiredByEnabledAddon(addons: readonly BdfdbDependencyCandidate[], state: Readonly<Record<string, boolean>>): boolean {
     return addons.some(addon => addon.filename.toLocaleLowerCase("en-US") !== "0bdfdb.plugin.js"
         && state[addon.id] === true
-        && typeof addon.fileContent === "string"
-        && /\bBDFDB_Global\b/.test(addon.fileContent));
+        && (addon.requiresBdfdb === true
+            || typeof addon.fileContent === "string" && /\bBDFDB_Global\b/.test(addon.fileContent)));
 }
 
 export function pluginRuntimeHookRequirements(addons: readonly BdfdbDependencyCandidate[], state: Readonly<Record<string, boolean>>): PluginRuntimeHookRequirements {
