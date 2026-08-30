@@ -14,6 +14,14 @@ export function solcordAutomaticUpdatesAllowed(): boolean {
     return automaticUpdatesAllowed;
 }
 
+export function solcordAutomaticCatalogRequestsAllowed(storeVisible: boolean, addonUpdatesEnabled: boolean): boolean {
+    return automaticUpdatesAllowed && (storeVisible || addonUpdatesEnabled);
+}
+
+export function solcordCatalogRetryAllowed(automaticRequest: boolean): boolean {
+    return automaticRequest && automaticUpdatesAllowed;
+}
+
 export function onSolcordUpdatePolicyChange(listener: () => void): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);

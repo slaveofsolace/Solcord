@@ -69,6 +69,7 @@ class ThemeManager extends AddonManager<Theme> {
     startAddon(idOrAddon: string | Theme) {
         const theme = this.resolveAddon(idOrAddon);
         if (!theme) return false;
+        if (!this.approveAddonActivation(theme)) return false;
 
         if (!theme.css) {
             const loaded = this.loadAddon(theme);

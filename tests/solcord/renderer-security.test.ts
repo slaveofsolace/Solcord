@@ -7,6 +7,19 @@ const ROOT = path.resolve(import.meta.dir, "../..");
 const source = (relative: string) => fs.readFileSync(path.join(ROOT, relative), "utf8");
 
 describe("Solcord renderer security contracts", () => {
+    test("uses measured startup phases instead of a broad renderer hold", () => {
+        const core = source("src/betterdiscord/modules/core.ts");
+
+        expect(core).toContain("await SolcordRuntime.initialize();");
+        expect(core).toContain("SolcordRuntime.attachControlCenter(() => {");
+        expect(core).toContain("Settings.registerPanel(\"solcord\"");
+        expect(core).toContain("const privacyPolicyReady = await SolcordRuntime.start();");
+        expect(core).toContain("const addonActivationAllowed = privacyPolicyReady && await SolcordRuntime.enforceAddonIntegrityBeforeStart();");
+        expect(core).toContain("SolcordRuntime.scheduleDeferredStartup();");
+        expect(core).not.toContain("solcordNavigationRecovery");
+        expect(core).not.toContain("navigationRecovery");
+    });
+
     test("binds renderer injection to one main-process navigation boundary and the exact main frame", () => {
         const preload = source("src/electron/preload/index.ts");
         const ipc = source("src/electron/main/modules/ipc.ts");
@@ -24,27 +37,56 @@ describe("Solcord renderer security contracts", () => {
         expect(betterDiscord).not.toContain("injectedWebContents");
     });
 
-    test("claims the private capability before plugin inventory and enforces audit before every addon start", () => {
+    test("claims private storage before addon inventory and audits the complete inventory before activation", () => {
         const core = source("src/betterdiscord/modules/core.ts");
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const runtimeInitialize = core.indexOf("await SolcordRuntime.initialize()");
         const runtimeStart = core.indexOf("await SolcordRuntime.start()");
         const pluginInitialize = core.indexOf("PluginManager.initialize()");
+        const pluginHold = core.indexOf("PluginManager.holdAddonActivation()");
         const pluginEnforce = core.indexOf("await SolcordRuntime.enforceAddonIntegrityBeforeStart()", pluginInitialize);
-        const pluginStart = core.indexOf("PluginManager.startAddons", pluginEnforce);
+        const activationGuard = core.indexOf("if (addonActivationAllowed)", pluginEnforce);
+        const pluginRelease = core.indexOf("PluginManager.releaseAddonActivation()", activationGuard);
+        const pluginStart = core.indexOf("PluginManager.startAddons", activationGuard);
         const themeInitialize = core.indexOf("ThemeManager.initialize()");
-        const themeEnforce = core.indexOf("await SolcordRuntime.enforceAddonIntegrityBeforeStart()", themeInitialize);
-        const themeStart = core.indexOf("ThemeManager.startAddons", themeEnforce);
+        const themeStart = core.indexOf("ThemeManager.startAddons", pluginEnforce);
 
+        expect(runtimeInitialize).toBeGreaterThanOrEqual(0);
         expect(runtimeStart).toBeGreaterThanOrEqual(0);
+        expect(runtimeInitialize).toBeLessThan(runtimeStart);
         expect(runtimeStart).toBeLessThan(pluginInitialize);
+        expect(pluginHold).toBeGreaterThan(runtimeStart);
+        expect(pluginHold).toBeLessThan(pluginInitialize);
+        expect(pluginInitialize).toBeLessThan(themeInitialize);
+        expect(themeInitialize).toBeLessThan(pluginEnforce);
         expect(pluginInitialize).toBeLessThan(pluginEnforce);
+        expect(pluginEnforce).toBeLessThan(activationGuard);
+        expect(activationGuard).toBeLessThan(pluginRelease);
+        expect(pluginRelease).toBeLessThan(pluginStart);
         expect(pluginEnforce).toBeLessThan(pluginStart);
-        expect(themeInitialize).toBeLessThan(themeEnforce);
-        expect(themeEnforce).toBeLessThan(themeStart);
+        expect(pluginEnforce).toBeLessThan(themeStart);
 
-        const startMethod = runtime.slice(runtime.indexOf("async start():"), runtime.indexOf("get recoveryMode"));
-        expect(startMethod).toContain("await this.#bootstrapPrivateCapability()");
-        expect(startMethod.indexOf("#bootstrapPrivateCapability")).toBeLessThan(startMethod.indexOf("for (const id of FEATURE_IDS)"));
+        expect(runtime).toContain("run(\"settings-storage\"");
+        expect(runtime).toContain("await this.#bootstrapPrivateCapability()");
+        expect(runtime).toContain("run(\"integrity-validation\"");
+        expect(runtime).toContain("startupPhases: this.startupPhaseSnapshot()");
+        expect(runtime).toContain("if (!this.#started) return false");
+        expect(runtime).toContain("return completed === true");
+        expect(core).toContain("PluginManager.setAddonActivationGuard(addon => SolcordRuntime.canActivateCommunityAddon(addon))");
+        expect(runtime).toContain("strictCommunityAddonActivationDecision({");
+    });
+
+    test("fails closed on watcher-time policy changes and cleans partial plugin starts", () => {
+        const manager = source("src/betterdiscord/modules/addonmanager.ts");
+        const plugins = source("src/betterdiscord/modules/pluginmanager.ts");
+        expect(manager).toContain("#activationGate = new AddonActivationGate<Addon>()");
+        expect(manager).toContain("if (!this.approveAddonActivation(addon)) return false");
+        expect(manager).toContain("this.readAddon(filename, true)");
+        expect(manager).toContain("this.reloadAddon(filename)");
+        expect(plugins).toContain("if (!this.approveAddonActivation(plugin))");
+        expect(plugins).toContain("try {plugin.instance.stop();}");
+        expect(plugins).toContain("cleanupAlreadyAttempted");
+        expect(plugins).toContain("plugin.sourceSha256 = communityAddonSourceSha256(plugin.fileContent ?? \"\")");
     });
 
     test("captures private IPC methods before plugins and never passes account ids in storage payloads", () => {
@@ -186,9 +228,12 @@ describe("Solcord renderer security contracts", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
         const restore = runtime.slice(runtime.indexOf("#restorePrivacyRollback"), runtime.indexOf("#privacyRollbackError"));
-        expect(restore).toContain("PluginManager.isEnabled(entry.fileName)");
+        expect(restore).toContain("entry.kind === \"theme\" ? ThemeManager : PluginManager");
+        expect(restore).toContain("manager.isEnabled(entry.fileName)");
         expect(restore).toContain("PluginDoctor.isQuarantined(entry.doctorId)");
         expect(restore).toContain("if (!SolcordSettings.rollback(snapshotId))");
+        expect(restore.indexOf("SolcordSettings.rollback(snapshotId)")).toBeLessThan(restore.indexOf("manager.enableAddon(entry.fileName)"));
+        expect(restore).toContain("if (failures.length) return failures");
         expect(runtime).toContain("automatic recovery was incomplete");
         expect(panel).toContain("error instanceof Error ? error.message");
         expect(panel).not.toContain("the previous snapshot was restored");

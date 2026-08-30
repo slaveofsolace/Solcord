@@ -9,11 +9,14 @@ import {t} from "@common/i18n";
 import Events from "./emitter";
 import PluginDoctor, {type AddonFailure} from "./solcord/doctor";
 import {checkReviewedExecution} from "./solcord/integrity";
+import {bdfdbRequiredByEnabledAddon, pluginRuntimeHookRequirements} from "./solcord/plugin-startup-policy";
+import {communityAddonSourceSha256} from "./solcord/addon-outbound-policy";
 
 type PluginLoadPoint = "connection" | "idle";
 
 export interface Plugin extends Addon {
     exports: any;
+    sourceSha256?: string;
     instance: {
         icon?: any;
         load?(): void;
@@ -40,6 +43,8 @@ class PluginManager extends AddonManager<Plugin> {
     order = 3;
 
     observer: MutationObserver;
+    #observerActive = false;
+    #navigationActive = false;
 
     constructor() {
         super();
@@ -59,9 +64,12 @@ class PluginManager extends AddonManager<Plugin> {
 
     startAddons(point: PluginLoadPoint) {
         Logger.log("PluginManager", `Loading addons at point: ${point}`);
+        const activationEligible = this.addonList.filter(addon => this.addonActivationDisposition(addon) === "allowed");
+        const bdfdbRequired = bdfdbRequiredByEnabledAddon(activationEligible, this.state);
 
         for (const addon of this.addonList) {
-            if (addon.runAt !== point || !(this.state[addon.id] || addon.filename === "0BDFDB.plugin.js")) continue;
+            const dependencyRequired = addon.filename.toLocaleLowerCase("en-US") === "0bdfdb.plugin.js" && bdfdbRequired;
+            if (addon.runAt !== point || !(this.state[addon.id] || dependencyRequired)) continue;
             if (PluginDoctor.isQuarantined(addon.id)) {
                 this.state[addon.id] = false;
                 this.saveState();
@@ -74,6 +82,7 @@ class PluginManager extends AddonManager<Plugin> {
     }
 
     initAddon(plugin: Plugin) {
+        plugin.sourceSha256 = communityAddonSourceSha256(plugin.fileContent ?? "");
         const executionCheck = checkReviewedExecution("plugin", plugin.filename, plugin.name, plugin.fileContent ?? "");
         if (executionCheck.reviewed && !executionCheck.matches) {
             const name = executionCheck.name ?? plugin.filename;
@@ -185,6 +194,10 @@ class PluginManager extends AddonManager<Plugin> {
     startAddon(idOrAddon: string | Plugin) {
         const plugin = this.resolveAddon(idOrAddon);
         if (!plugin) return false;
+        if (!this.approveAddonActivation(plugin)) {
+            this.#refreshRuntimeHooks();
+            return false;
+        }
         if (PluginDoctor.isQuarantined(plugin.id)) {
             this.state[plugin.id] = false;
             this.saveState();
@@ -194,17 +207,31 @@ class PluginManager extends AddonManager<Plugin> {
 
         if (!plugin.instance) {
             const loaded = this.loadAddon(plugin);
-            if (!loaded) return false;
+            if (!loaded) {
+                this.saveState();
+                this.#refreshRuntimeHooks();
+                return false;
+            }
         }
 
         try {
             plugin.instance.start();
         }
         catch (err) {
-            this.recordDoctorFailure(plugin, "start", err);
+            let cleanupError: unknown;
+            try {plugin.instance.stop();}
+            catch (error) {cleanupError = error;}
+            this.recordDoctorFailure(plugin, "start", err, true);
+            if (cleanupError) {
+                this.recordDoctorFailure(plugin, "stop", cleanupError);
+                PluginDoctor.quarantine(plugin.id, "Cleanup failed after an unsuccessful start; manual recovery is required before retrying.");
+                Logger.stacktrace(this.name, `${plugin.name} cleanup after a failed start also failed.`, cleanupError as Error);
+            }
             // Disable the addon if it can't be started
             this.state[plugin.id] = false;
+            this.saveState();
             this.trigger("disabled", plugin);
+            this.#refreshRuntimeHooks();
             Toasts.warning(t("Addons.couldNotStart", {name: plugin.name, version: plugin.version}));
             Logger.stacktrace(this.name, `${plugin.name} v${plugin.version} could not be started.`, err as Error);
 
@@ -218,6 +245,7 @@ class PluginManager extends AddonManager<Plugin> {
 
         this.trigger("started", plugin.id);
         PluginDoctor.recordSuccessfulStart(plugin.id);
+        this.#refreshRuntimeHooks();
         if (this.hasInitialized) Toasts.success(t("Addons.enabled", {name: plugin.name, version: plugin.version}));
         else this.initialAddonsLoaded++;
 
@@ -233,7 +261,10 @@ class PluginManager extends AddonManager<Plugin> {
         }
         catch (err) {
             this.recordDoctorFailure(plugin, "stop", err);
+            PluginDoctor.quarantine(plugin.id, "Cleanup failed while disabling this addon; manual recovery is required before retrying.");
             this.state[plugin.id] = false;
+            this.saveState();
+            this.#refreshRuntimeHooks();
             Toasts.warning(t("Addons.couldNotStop", {name: plugin.name, version: plugin.version}));
             Logger.stacktrace(this.name, `${plugin.name} v${plugin.version} could not be stopped.`, err as Error);
 
@@ -246,17 +277,34 @@ class PluginManager extends AddonManager<Plugin> {
         }
 
         this.trigger("stopped", plugin.id);
+        this.#refreshRuntimeHooks();
         Toasts.error(t("Addons.disabled", {name: plugin.name, version: plugin.version}));
 
         return true;
     }
 
     setupFunctions() {
-        Events.on("navigate", this.onSwitch);
-        this.observer.observe(document, {
-            childList: true,
-            subtree: true
-        });
+        this.#refreshRuntimeHooks();
+    }
+
+    #refreshRuntimeHooks() {
+        const required = pluginRuntimeHookRequirements(this.addonList, this.state);
+        if (required.mutationObserver !== this.#observerActive) {
+            this.#observerActive = required.mutationObserver;
+            if (required.mutationObserver) this.observer.observe(document, {childList: true, subtree: true});
+            else this.observer.disconnect();
+        }
+
+        if (required.navigationListener === this.#navigationActive) return;
+        this.#navigationActive = required.navigationListener;
+        if (required.navigationListener) Events.on("navigate", this.onSwitch);
+        else Events.off("navigate", this.onSwitch);
+    }
+
+    override unloadAddon(idOrFileOrAddon: string | Plugin, isReload = false) {
+        const unloaded = super.unloadAddon(idOrFileOrAddon, isReload);
+        this.#refreshRuntimeHooks();
+        return unloaded;
     }
 
     onSwitch() {
@@ -289,14 +337,15 @@ class PluginManager extends AddonManager<Plugin> {
                 Logger.stacktrace(this.name, `Unable to fire observer for ${this.addonList[i].name} v${this.addonList[i].version}`, err as Error);
             }
         }
+        this.#refreshRuntimeHooks();
     }
 
-    private recordDoctorFailure(plugin: Plugin, phase: AddonFailure["phase"], error: unknown) {
+    private recordDoctorFailure(plugin: Plugin, phase: AddonFailure["phase"], error: unknown, cleanupAlreadyAttempted = false) {
         const quarantined = PluginDoctor.recordFailure(plugin.id, phase, error);
         if (!quarantined) return;
         this.state[plugin.id] = false;
         this.saveState();
-        if (phase !== "stop" && typeof plugin.instance?.stop === "function") {
+        if (!cleanupAlreadyAttempted && phase !== "stop" && typeof plugin.instance?.stop === "function") {
             try {plugin.instance.stop();}
             catch (cleanupError) {
                 PluginDoctor.recordFailure(plugin.id, "stop", cleanupError);
@@ -304,6 +353,7 @@ class PluginManager extends AddonManager<Plugin> {
             }
         }
         this.trigger("disabled", plugin);
+        this.#refreshRuntimeHooks();
     }
 }
 

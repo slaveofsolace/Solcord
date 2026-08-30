@@ -112,8 +112,17 @@ export class SolcordBaselineSuite {
             .solcord-embed-host.solcord-embed-collapsed > :not(.solcord-embed-control) { display: none !important; }
         `);
         let frame = 0;
+        const controls = new Map<HTMLButtonElement, EventListener>();
+        const releaseDetachedControls = () => {
+            for (const [button, listener] of controls) {
+                if (button.isConnected) continue;
+                button.removeEventListener("click", listener);
+                controls.delete(button);
+            }
+        };
         const scan = () => {
             frame = 0;
+            releaseDetachedControls();
             for (const candidate of document.querySelectorAll<HTMLElement>("[class*=\"embedWrapper_\"]")) {
                 const message = candidate.closest("[id^=\"chat-messages-\"], [data-list-item-id^=\"chat-messages\"], [class*=\"messageListItem_\"]");
                 if (!message || candidate.querySelector(":scope > .solcord-embed-control")) continue;
@@ -124,14 +133,16 @@ export class SolcordBaselineSuite {
                 button.textContent = "−";
                 button.title = "Collapse this embed locally";
                 button.setAttribute("aria-label", "Collapse this embed locally");
-                button.addEventListener("click", event => {
+                const toggle: EventListener = event => {
                     event.preventDefault();
                     event.stopPropagation();
                     const collapsed = candidate.classList.toggle("solcord-embed-collapsed");
                     button.textContent = collapsed ? "+" : "−";
                     button.title = collapsed ? "Expand this embed locally" : "Collapse this embed locally";
                     button.setAttribute("aria-label", button.title);
-                });
+                };
+                button.addEventListener("click", toggle);
+                controls.set(button, toggle);
                 candidate.prepend(button);
             }
         };
@@ -141,7 +152,11 @@ export class SolcordBaselineSuite {
         scope.observe(observer, document.body, {childList: true, subtree: true});
         scope.own(() => {
             if (frame) cancelAnimationFrame(frame);
-            for (const control of document.querySelectorAll(".solcord-embed-control")) control.remove();
+            for (const [button, listener] of controls) {
+                button.removeEventListener("click", listener);
+                button.remove();
+            }
+            controls.clear();
             for (const host of document.querySelectorAll(".solcord-embed-host")) host.classList.remove("solcord-embed-host", "solcord-embed-collapsed");
         }, "element");
     }
