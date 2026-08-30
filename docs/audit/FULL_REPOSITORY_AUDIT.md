@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 556 |
-| Text files scanned | 542 |
+| Persistent tracked files | 577 |
+| Text files scanned | 563 |
 | Binary files classified | 14 |
-| Text lines scanned | 119,226 |
-| Custom Solcord lines | 28,523 |
+| Text lines scanned | 121,829 |
+| Custom Solcord lines | 30,254 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -25,12 +25,12 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Signal | Whole tree | Custom Solcord surfaces |
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 0 |
-| Timer calls | 45 | 3 |
-| Mutation observers | 17 | 1 |
-| DOM queries | 110 | 29 |
+| Timer calls | 46 | 4 |
+| Mutation observers | 20 | 4 |
+| DOM queries | 153 | 70 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
-| Synchronous filesystem calls | 672 | 606 |
+| Synchronous filesystem calls | 681 | 615 |
 | Console calls | 77 | 51 |
 | Empty catch blocks | 3 | 1 |
 
