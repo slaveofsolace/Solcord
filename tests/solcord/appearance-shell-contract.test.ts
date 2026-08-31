@@ -145,4 +145,11 @@ describe("Solcord full-shell appearance contract", () => {
         }
         expect(CSS).toContain("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode]");
     });
+
+    test("does not reserve the voice panel height twice in the channel rail", () => {
+        for (const fileName of THEMES) {
+            const source = readFileSync(resolve(ROOT, "assets/themes", fileName), "utf8");
+            expect(source, fileName).not.toMatch(/\[class\*="sidebarList_"\]\s*\{[^}]*--custom-app-panels-height/);
+        }
+    });
 });
