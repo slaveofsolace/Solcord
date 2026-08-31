@@ -79,7 +79,12 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
         expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > aside[class*=\"sidebar_\"] { display: none; }");
         expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { flex: 1 1 auto; min-width: 0; }");
-        expect(WIZARD_CSS).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"] { width: 100%; min-width: 0; max-width: 100%; }");
+        expect(WIZARD_CSS).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"],");
+        expect(WIZARD_CSS).toContain("[class*=\"contentRegion_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"contentRegionScroller_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"contentColumn_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"customColumn_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }");
     });
 
     test("applies explicit appearance modes to Discord instead of only recoloring the Solcord panel", () => {

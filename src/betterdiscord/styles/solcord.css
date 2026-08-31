@@ -1114,7 +1114,11 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
  * the native rail remains available until the genuinely narrow breakpoint. */
 #app-mount [class*="container_"]:has(.solcord-panel) > [class*="content_"] { flex: 1 1 auto; min-width: 0; }
 #app-mount [class*="content_"]:has(.solcord-panel) [class*="contentBody_"],
-#app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] { width: 100%; min-width: 0; max-width: 100%; }
+#app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"],
+#app-mount [class*="contentRegion_"]:has(.solcord-panel),
+#app-mount [class*="contentRegionScroller_"]:has(.solcord-panel),
+#app-mount [class*="contentColumn_"]:has(.solcord-panel),
+#app-mount [class*="customColumn_"]:has(.solcord-panel) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }
 #app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] > :is([class*="panel_"], :has(> .solcord-panel)) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }
 
 /* Discord's settings rail otherwise consumes nearly the entire 320px viewport.
