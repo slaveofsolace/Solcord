@@ -725,6 +725,66 @@ describe("Solcord setup transaction security", () => {
         expect(isReviewedLegacySolcordTheme("../Solcord-Default.theme.css", reviewed["Solcord-Default.theme.css"])).toBeFalse();
     });
 
+    test("recognizes the complete exact prior V2 theme generation without accepting adjacent hashes", () => {
+        const reviewed = {
+            "Solcord-Default.theme.css": "50aaa06cf3dc7ee910e6049035224d960fdf0b51c47dd4b1adecce01d148000b",
+            "Solcord-ObsidianThread.theme.css": "2f45ef7e3588100a23a63d026620ab71781dbb51e2dddaa5a4edb2b37f8b4938",
+            "Solcord-CarbonEmber.theme.css": "7ef521640e254c42d1ac33de3938ce65b897183c5e8ff134713bcf7fde9d459d",
+            "Solcord-MidnightGlass.theme.css": "3ba5ee16dd488292cbbbb87a7472285a58347d745d2a8ca765e341376cc6d11b",
+            "Solcord-PaperSignal.theme.css": "db3ec833356f7f44c3d18ab3396c52d69ab8f9c7ba2500e7d6dbac9741f90482",
+            "Solcord-Threadline.theme.css": "722537b7bde7146a00b8ed4ae7f407a36b65a8f877208ae967a2da3132e3c26e",
+            "Solcord-SignalBlock.theme.css": "02d28e95a841743bb2e8e63d43b20618e71afdda33e2cfc89dacd68504afdac0",
+            "Solcord-RelayClassic.theme.css": "e7e78d4995cfc233a92dd2c10135e76ec918eb86dac0cae70cbafeab7cce1faa",
+            "Solcord-Workshop.theme.css": "ceb581b50dd0fc51aeb76359a8a68ae532996c4e4774917ea7196584fcb6067c",
+            "Solcord-QuietRead.theme.css": "dc8d3e5eab2e599785d9b5bd997f1183e2937113c7bd864bd7a5b96525635e47",
+            "Solcord-NightTransit.theme.css": "36bfabf3f165e5db9cd7abd16c42413f6d601a5169d660bbd90e8b06fc07b625"
+        } as const;
+        for (const [fileName, sha256] of Object.entries(reviewed)) {
+            expect(isReviewedLegacySolcordTheme(fileName, sha256)).toBeTrue();
+            const adjacent = `${sha256.slice(0, -1)}${sha256.endsWith("0") ? "1" : "0"}`;
+            expect(isReviewedLegacySolcordTheme(fileName, adjacent)).toBeFalse();
+        }
+    });
+
+    test("reconciles the exact completed prior V2 transaction after its staging directory is gone", async () => {
+        const transactionId = "mtdpz4ge-c611de3c9350d8f4";
+        const journalRoot = path.join(appDataPath, "BetterDiscord", "solcord-transactions-v1");
+        fs.mkdirSync(journalRoot, {recursive: true});
+        const priorThemes = [
+            ["Solcord-Default.theme.css", "50aaa06cf3dc7ee910e6049035224d960fdf0b51c47dd4b1adecce01d148000b"],
+            ["Solcord-ObsidianThread.theme.css", "2f45ef7e3588100a23a63d026620ab71781dbb51e2dddaa5a4edb2b37f8b4938"],
+            ["Solcord-CarbonEmber.theme.css", "7ef521640e254c42d1ac33de3938ce65b897183c5e8ff134713bcf7fde9d459d"],
+            ["Solcord-MidnightGlass.theme.css", "3ba5ee16dd488292cbbbb87a7472285a58347d745d2a8ca765e341376cc6d11b"],
+            ["Solcord-PaperSignal.theme.css", "db3ec833356f7f44c3d18ab3396c52d69ab8f9c7ba2500e7d6dbac9741f90482"],
+            ["Solcord-Threadline.theme.css", "722537b7bde7146a00b8ed4ae7f407a36b65a8f877208ae967a2da3132e3c26e"],
+            ["Solcord-SignalBlock.theme.css", "02d28e95a841743bb2e8e63d43b20618e71afdda33e2cfc89dacd68504afdac0"],
+            ["Solcord-RelayClassic.theme.css", "e7e78d4995cfc233a92dd2c10135e76ec918eb86dac0cae70cbafeab7cce1faa"],
+            ["Solcord-Workshop.theme.css", "ceb581b50dd0fc51aeb76359a8a68ae532996c4e4774917ea7196584fcb6067c"],
+            ["Solcord-QuietRead.theme.css", "dc8d3e5eab2e599785d9b5bd997f1183e2937113c7bd864bd7a5b96525635e47"],
+            ["Solcord-NightTransit.theme.css", "36bfabf3f165e5db9cd7abd16c42413f6d601a5169d660bbd90e8b06fc07b625"]
+        ] as const;
+        const journal = {
+            version: 1,
+            transactionId,
+            createdAt: 1_787_967_987_323,
+            added: priorThemes.map(([fileName, sha256]) => ({kind: "theme", fileName, sha256})),
+            reused: [],
+            legacyThemes: [],
+            selectedAddons: [],
+            selectedTheme: "solcord-default"
+        };
+        const serialized = `${JSON.stringify(journal, null, 2)}\n`;
+        fs.writeFileSync(path.join(journalRoot, `${transactionId}.json`), serialized, {encoding: "utf8", flag: "wx"});
+        fs.writeFileSync(
+            path.join(journalRoot, `${transactionId}.complete`),
+            `${crypto.createHash("sha256").update(serialized).digest("hex")}\n`,
+            {encoding: "utf8", flag: "wx"}
+        );
+
+        await expect(new SolcordSetupTransactions().reconcile([])).resolves.toEqual({committed: [], rolledBack: []});
+        expect(fs.existsSync(path.join(appDataPath, "BetterDiscord", "solcord-staging-v1", transactionId))).toBeFalse();
+    });
+
     test("accepts a completed transaction containing an exact reviewed historical theme after a catalog upgrade", async () => {
         const setup = new SolcordSetupTransactions();
         const historical = await setup.apply({selectedAddons: [], selectedTheme: recoveryTheme.id});

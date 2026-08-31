@@ -466,8 +466,9 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-media-list small { color: var(--sc-muted); }
 .solcord-pulse-list { display: grid; border: 1px solid var(--sc-border); }
 .solcord-pulse { display: flex; justify-content: space-between; align-items: center; gap: var(--sc-space-4); padding: var(--sc-space-3); background: var(--sc-surface-1); border-left: 3px solid var(--sc-success); }
+.solcord-pulse > div { min-width: 0; }
 .solcord-pulse + .solcord-pulse { border-top: 1px solid var(--sc-border); }
-.solcord-pulse p { margin: 4px 0 0; color: var(--sc-muted); }
+.solcord-pulse p { margin: 4px 0 0; color: var(--sc-muted); overflow-wrap: anywhere; white-space: normal; }
 .solcord-pulse-attention { border-left-color: var(--sc-warning); }
 .solcord-pulse-danger { border-left-color: var(--sc-danger); }
 .solcord-appearance-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-space-3); }
@@ -839,6 +840,10 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 
 @container solcord-panel (max-width: 720px) {
     .solcord-setup-banner { align-items: stretch; flex-direction: column; }
+    .solcord-setup-reminder,
+    .solcord-pulse { align-items: flex-start; flex-direction: column; }
+    .solcord-setup-reminder > span,
+    .solcord-pulse > div { width: 100%; max-width: 100%; }
     .solcord-control-center { grid-template-columns: 1fr; }
     .solcord-workspace-nav { position: sticky; z-index: 4; isolation: isolate; top: 0; grid-template-columns: minmax(0, 1fr); max-height: none; padding: 8px 0 10px; overflow: visible; background: var(--sc-surface-0); border-right: 0; border-bottom: 1px solid var(--sc-border); box-shadow: 0 12px 0 var(--sc-surface-0); }
     .solcord-workspace-search { display: none; }
@@ -973,9 +978,11 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-all-clear { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 0; margin: 4px 0 12px; padding: 8px 0; border: 0; }
 .solcord-setup-reminder > span,
 .solcord-all-clear { color: var(--sc-text); }
-.solcord-setup-reminder > span { display: grid; gap: 8px; }
+.solcord-setup-reminder > span { display: grid; gap: 8px; min-width: 0; }
 .solcord-setup-reminder small,
 .solcord-all-clear span { color: var(--sc-muted); }
+.solcord-setup-reminder small { overflow-wrap: anywhere; white-space: normal; }
+.solcord-setup-reminder > .solcord-action { flex: 0 0 auto; }
 .solcord-all-clear { justify-content: flex-start; border-left: 3px solid var(--sc-success); padding: 6px 0 6px 12px; }
 .solcord-setting-list { display: grid; gap: 4px; max-width: 700px; }
 .solcord-setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; min-height: 56px; padding: 9px 8px; border: 0; border-radius: 4px; }
@@ -1102,14 +1109,20 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     .solcord-timeline-toolbar select { width: 100%; }
 }
 
+/* Let Discord's settings content wrappers shrink with the active window.
+ * These selectors only match while Solcord owns the current settings pane;
+ * the native rail remains available until the genuinely narrow breakpoint. */
+#app-mount [class*="container_"]:has(.solcord-panel) > [class*="content_"] { flex: 1 1 auto; min-width: 0; }
+#app-mount [class*="content_"]:has(.solcord-panel) [class*="contentBody_"],
+#app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] { width: 100%; min-width: 0; max-width: 100%; }
+#app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] > :is([class*="panel_"], :has(> .solcord-panel)) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }
+
 /* Discord's settings rail otherwise consumes nearly the entire 320px viewport.
  * Collapse it only while the Solcord panel is active; other settings pages keep
  * Discord's native responsive behavior. */
 @media (max-width: 640px) {
     #app-mount [class*="container_"]:has(.solcord-panel) > aside[class*="sidebar_"] { display: none; }
-    #app-mount [class*="container_"]:has(.solcord-panel) > [class*="content_"] { width: 100%; min-width: 0; }
-    #app-mount [class*="content_"]:has(.solcord-panel) [class*="contentBody_"] { width: 100%; min-width: 0; }
-    #app-mount [class*="contentBody_"]:has(.solcord-panel) > [class*="scroller_"] > [class*="panel_"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }
+    #app-mount [class*="container_"]:has(.solcord-panel) > [class*="content_"] { width: 100%; }
     .solcord-panel { box-sizing: border-box; width: 100%; max-width: 100%; padding-right: 12px; padding-left: 12px; }
 }
 

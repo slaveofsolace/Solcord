@@ -78,7 +78,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
         expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
         expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > aside[class*=\"sidebar_\"] { display: none; }");
-        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { width: 100%; min-width: 0; }");
+        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { flex: 1 1 auto; min-width: 0; }");
+        expect(WIZARD_CSS).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"] { width: 100%; min-width: 0; max-width: 100%; }");
     });
 
     test("applies explicit appearance modes to Discord instead of only recoloring the Solcord panel", () => {

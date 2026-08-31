@@ -82,11 +82,20 @@ const TRANSACTION_JOURNAL = /^([a-z0-9]+-[0-9a-f]{16})\.json$/;
 const TRANSACTION_INTENT = /^([a-z0-9]+-[0-9a-f]{16})\.intent\.json$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const LEGACY_SOLCORD_THEME_SHA256: Readonly<Record<string, ReadonlySet<string>>> = {
-    "Solcord-Default.theme.css": new Set(["411c277ccfecd53c28a344f22f66c2ac28a6ea16533d4365ddd9a24e80e5f536", "0056bcf888af2f5c9e43ae14ae299fa63dfa6ef0f1f29ece9af6e42536ac0765"]),
-    "Solcord-ObsidianThread.theme.css": new Set(["da8058f1f0ad765654d11906cff1e2e71c13e1c60bf8d79f6a110435557b3ff8", "7cdb781861ec59bab0378b8b0e64dda97ba2eb43531b7fdcd2888e4350a2c128"]),
-    "Solcord-CarbonEmber.theme.css": new Set(["6b4bd267a172f2eaf2c5847d47305862e411e5b3b35a025169d796caf914de8d", "ac8bcca42f1712538d840f669551ddb119b36d9490978bfb9fd07e1dbb826184"]),
-    "Solcord-MidnightGlass.theme.css": new Set(["2f29872d7e225e71e03810805f7033b43930f9d9e02840fe37d2014c4c835801", "1d7ff58696b495a6a3cd67d0702ef95f8d3e90d77993e95ab2143e3992ccb483"]),
-    "Solcord-PaperSignal.theme.css": new Set(["23ec183af6391d2dbc7ec73fd36b953ebe39735965203ce7d2b4b59df66c0cd4", "9c6fc63aa4299881ebf3b7f6a442a7e27aca376e751f7e5f0b82900c6e9c46b9", "8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d"])
+    // Exact hashes from shipped, completed setup generations. A completed
+    // journal remains verifiable after an upgrade without accepting arbitrary
+    // files or weakening the current catalog policy.
+    "Solcord-Default.theme.css": new Set(["411c277ccfecd53c28a344f22f66c2ac28a6ea16533d4365ddd9a24e80e5f536", "0056bcf888af2f5c9e43ae14ae299fa63dfa6ef0f1f29ece9af6e42536ac0765", "50aaa06cf3dc7ee910e6049035224d960fdf0b51c47dd4b1adecce01d148000b"]),
+    "Solcord-ObsidianThread.theme.css": new Set(["da8058f1f0ad765654d11906cff1e2e71c13e1c60bf8d79f6a110435557b3ff8", "7cdb781861ec59bab0378b8b0e64dda97ba2eb43531b7fdcd2888e4350a2c128", "2f45ef7e3588100a23a63d026620ab71781dbb51e2dddaa5a4edb2b37f8b4938"]),
+    "Solcord-CarbonEmber.theme.css": new Set(["6b4bd267a172f2eaf2c5847d47305862e411e5b3b35a025169d796caf914de8d", "ac8bcca42f1712538d840f669551ddb119b36d9490978bfb9fd07e1dbb826184", "7ef521640e254c42d1ac33de3938ce65b897183c5e8ff134713bcf7fde9d459d"]),
+    "Solcord-MidnightGlass.theme.css": new Set(["2f29872d7e225e71e03810805f7033b43930f9d9e02840fe37d2014c4c835801", "1d7ff58696b495a6a3cd67d0702ef95f8d3e90d77993e95ab2143e3992ccb483", "3ba5ee16dd488292cbbbb87a7472285a58347d745d2a8ca765e341376cc6d11b"]),
+    "Solcord-PaperSignal.theme.css": new Set(["23ec183af6391d2dbc7ec73fd36b953ebe39735965203ce7d2b4b59df66c0cd4", "9c6fc63aa4299881ebf3b7f6a442a7e27aca376e751f7e5f0b82900c6e9c46b9", "8f135c69e61499b660850016a6acbee7b92cf971264de5fd4bf595622690e00d", "db3ec833356f7f44c3d18ab3396c52d69ab8f9c7ba2500e7d6dbac9741f90482"]),
+    "Solcord-Threadline.theme.css": new Set(["722537b7bde7146a00b8ed4ae7f407a36b65a8f877208ae967a2da3132e3c26e"]),
+    "Solcord-SignalBlock.theme.css": new Set(["02d28e95a841743bb2e8e63d43b20618e71afdda33e2cfc89dacd68504afdac0"]),
+    "Solcord-RelayClassic.theme.css": new Set(["e7e78d4995cfc233a92dd2c10135e76ec918eb86dac0cae70cbafeab7cce1faa"]),
+    "Solcord-Workshop.theme.css": new Set(["ceb581b50dd0fc51aeb76359a8a68ae532996c4e4774917ea7196584fcb6067c"]),
+    "Solcord-QuietRead.theme.css": new Set(["dc8d3e5eab2e599785d9b5bd997f1183e2937113c7bd864bd7a5b96525635e47"]),
+    "Solcord-NightTransit.theme.css": new Set(["36bfabf3f165e5db9cd7abd16c42413f6d601a5169d660bbd90e8b06fc07b625"])
 };
 
 function digest(value: Buffer | string): string {

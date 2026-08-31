@@ -320,9 +320,17 @@ describe("Solcord Control Center clarity", () => {
         expect(timeline).not.toContain("session only · secure storage unavailable or disabled");
     });
 
-    test("removes Discord's 300px settings-panel floor at a 320px viewport", () => {
-        expect(styles).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"] > [class*=\"panel_\"]");
-        expect(styles).toMatch(/\[class\*="panel_"\].*min-width: 0; max-width: 100%; margin: 0; padding: 0;/);
+    test("keeps the Discord wrapper and long status copy inside the visible settings column", () => {
+        expect(styles).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { flex: 1 1 auto; min-width: 0; }");
+        expect(styles).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"] { width: 100%; min-width: 0; max-width: 100%; }");
+        expect(styles).toContain(":is([class*=\"panel_\"], :has(> .solcord-panel)) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }");
+        expect(styles).toContain(".solcord-pulse > div { min-width: 0; }");
+        expect(styles).toContain(".solcord-pulse p { margin: 4px 0 0; color: var(--sc-muted); overflow-wrap: anywhere; white-space: normal; }");
+        expect(styles).toContain(".solcord-setup-reminder > span { display: grid; gap: 8px; min-width: 0; }");
+        expect(styles).toContain(".solcord-setup-reminder small { overflow-wrap: anywhere; white-space: normal; }");
+        expect(styles).toContain(".solcord-setup-reminder > .solcord-action { flex: 0 0 auto; }");
+        expect(styles).toMatch(/@container solcord-panel \(max-width: 720px\)[\s\S]*?\.solcord-setup-reminder,[\s\S]*?\.solcord-pulse \{ align-items: flex-start; flex-direction: column; \}/);
+        expect(styles).toMatch(/@container solcord-panel \(max-width: 720px\)[\s\S]*?\.solcord-setup-reminder > span,[\s\S]*?\.solcord-pulse > div \{ width: 100%; max-width: 100%; \}/);
         expect(styles).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.solcord-panel \{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*padding-right: 12px;[^}]*padding-left: 12px;/);
     });
 
