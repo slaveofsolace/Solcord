@@ -39,7 +39,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).not.toContain("wizardRef.current?.scrollIntoView");
         expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; min-width: 0; max-width: 100%");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps li { box-sizing: border-box; width: auto; min-width: 0; max-width: 100%; overflow: hidden; }");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps button { position: relative; box-sizing: border-box;");
         expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { display: flex");
         expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { overflow-x: auto");
         expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
@@ -59,6 +61,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
         expect(WIZARD_CSS).toContain("padding: 0 clamp(20px, 2.8vw, 34px) 52px");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-search { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
@@ -75,6 +78,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 28px); margin-right: 14px; margin-left: 14px; }");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
         expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
         expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > aside[class*=\"sidebar_\"] { display: none; }");
@@ -231,8 +235,9 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("uses one setup rail and whitespace instead of nested divider boxes", () => {
-        expect(WIZARD_CSS).toContain(".solcord-wizard { overflow: hidden; color: var(--text-normal); background: var(--background-primary); border: 0; }");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid;");
+        expect(WIZARD_CSS).toContain(".solcord-wizard {\n    box-sizing: border-box;\n    width: 100%;\n    min-width: 0;\n    max-width: 100%;\n    overflow: hidden;\n    contain: inline-size;");
+        expect(WIZARD_CSS).toContain(".solcord-wizard > *,\n.solcord-wizard-current-step,\n.solcord-wizard-body,\n.solcord-wizard-body > * { box-sizing: border-box; min-width: 0; max-width: 100%; }");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { box-sizing: border-box; display: grid;");
         expect(WIZARD_CSS).toContain("border-bottom: 1px solid var(--border-subtle)");
         expect(WIZARD_CSS).toContain(".solcord-control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }");
         expect(WIZARD_CSS).toContain(".solcord-control-grid label:hover { background: var(--sc-surface-1); }");

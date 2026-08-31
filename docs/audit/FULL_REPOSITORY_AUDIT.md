@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 582 |
 | Text files scanned | 568 |
 | Binary files classified | 14 |
-| Text lines scanned | 124,125 |
-| Custom Solcord lines | 32,400 |
+| Text lines scanned | 124,146 |
+| Custom Solcord lines | 32,420 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -45,11 +45,11 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 5 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
 | 6 | `bun.lock` | 1,297 | 140.0 KiB |
 | 7 | `tests/solcord/native-suite-security.test.ts` | 1,293 | 67.5 KiB |
-| 8 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
-| 9 | `src/betterdiscord/styles/solcord.css` | 1,162 | 88.2 KiB |
+| 8 | `src/betterdiscord/styles/solcord.css` | 1,177 | 88.9 KiB |
+| 9 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 10 | `tests/solcord/disposable-acceptance.test.ts` | 1,160 | 56.1 KiB |
 | 11 | `src/betterdiscord/modules/solcord/store.ts` | 1,113 | 58.2 KiB |
-| 12 | `CHANGELOG.md` | 1,070 | 34.1 KiB |
+| 12 | `CHANGELOG.md` | 1,071 | 34.4 KiB |
 | 13 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
 | 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |
 | 15 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
@@ -67,7 +67,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 2 | `tests/solcord/storage-security.test.ts` | 1,529 | 89.4 KiB |
 | 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
 | 4 | `tests/solcord/native-suite-security.test.ts` | 1,293 | 67.5 KiB |
-| 5 | `src/betterdiscord/styles/solcord.css` | 1,162 | 88.2 KiB |
+| 5 | `src/betterdiscord/styles/solcord.css` | 1,177 | 88.9 KiB |
 | 6 | `tests/solcord/disposable-acceptance.test.ts` | 1,160 | 56.1 KiB |
 | 7 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
 | 8 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |

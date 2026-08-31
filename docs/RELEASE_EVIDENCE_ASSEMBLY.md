@@ -23,7 +23,7 @@ Create a JSON evidence-input manifest and record its SHA-256 separately:
 {
   "schemaVersion": 1,
   "kind": "solcord-release-evidence-inputs",
-  "candidateLabel": "v2.0.0-rc.9",
+  "candidateLabel": "v2.0.0-rc.10",
   "sourceCommit": "<40-character lowercase commit>",
   "files": [
     {
@@ -70,7 +70,7 @@ Every `source` is a single file name in the manifest directory. Every backup, ro
 ```powershell
 bun run release:evidence -- assemble `
   --source-commit <commit> `
-  --candidate-label v2.0.0-rc.9 `
+  --candidate-label v2.0.0-rc.10 `
   --installer-bundle <installer-directory> `
   --installer-receipt-sha256 <externally-recorded-receipt-sha256> `
   --evidence-manifest <evidence-inputs.json> `
@@ -100,7 +100,7 @@ Record the `manifestSha256` printed by assembly outside the output directory. St
 ```powershell
 bun run release:evidence -- validate `
   --source-commit <commit> `
-  --candidate-label v2.0.0-rc.9 `
+  --candidate-label v2.0.0-rc.10 `
   --release-directory <assembled-directory> `
   --release-manifest-sha256 <externally-recorded-manifest-sha256>
 ```

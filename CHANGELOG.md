@@ -1,17 +1,18 @@
 # Solcord Changelog
 
-## 2.0.0-rc.9 - Live-width settings containment
+## 2.0.0-rc.10 - Setup-width containment
 
 ### Fixed
 
 - Control Center and First Setup now shrink with Discord's current settings wrappers instead of retaining a desktop-width inner column that clips copy and controls in smaller owner windows.
+- First Setup now contains every internal step, paragraph, choice, and action within the live settings column. The five-step rail always remains visible without horizontal scrolling.
 - Current `contentRegion`, scroller, content-column, and custom-column wrappers stay inside the visible Solcord settings column without changing non-Solcord settings pages.
 
 ### Verification boundary
 
-- The source matrix passes 950 tests and 6,322 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, circular audit, and whitespace checks.
+- The source matrix passes 950 tests and 6,327 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, circular audit, and whitespace checks.
 - Twenty-seven isolated UI fixtures pass, and the formal CSS-only security diff review reports zero findings.
-- Installed-client visual acceptance remains required on the exact RC9 bytes before merge or publication.
+- Installed-client visual acceptance remains required on the exact RC10 bytes before merge or publication. RC9 is preserved as the superseded candidate that exposed the setup-specific defect.
 
 ## 2.0.0-rc.4 - Provider consolidation hotfix
 
