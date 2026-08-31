@@ -3,6 +3,7 @@ import solcordMark from "@assets/branding/solcord-mark.svg";
 
 import {useStateFromStores} from "@ui/hooks";
 import Toasts from "@stores/toasts";
+import Config from "@stores/config";
 import PluginManager from "@modules/pluginmanager";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings, {SOLCORD_PRESET_ADDONS} from "@modules/solcord/store";
@@ -1195,6 +1196,7 @@ function ScreenshotScrubber() {
 
 function AboutSolcord() {
     return <Section title="About Solcord" summary="A private, local-first BetterDiscord fork.">
+        <dl className="solcord-facts" aria-label="Installed Solcord identity"><div><dt>Candidate</dt><dd>{Config.get("candidate")}</dd></div><div><dt>Status</dt><dd>{Config.isCleanCandidateBuild ? "Clean release candidate" : "Diagnostic build"}</dd></div><div><dt>Build</dt><dd>{Config.get("build") || "Unidentified"}</dd></div><div><dt>Core</dt><dd>{Config.get("version")}</dd></div><div><dt>Source</dt><dd>{Config.get("commit")}</dd></div></dl>
         <div className="solcord-about-grid">
             <p><strong>Why it exists.</strong> Solcord keeps the BetterDiscord plugin and theme ecosystem while tightening recovery behavior and restoring Discord Activities through a bounded same-package preload policy.</p>
             <p><strong>What it does not do.</strong> It does not grant Nitro, forge entitlements, extract tokens, backfill messages, access hidden channels, send on your behalf, send Solcord telemetry, or enable the global unrestricted preload override.</p>
@@ -1530,7 +1532,7 @@ export default function SolcordPanel() {
     return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
             <div className="solcord-mark" aria-hidden="true"><img src={solcordMark} alt="" /></div>
-            <div><h1>Solcord</h1><p>Control Center</p></div>
+            <div className="solcord-header-copy"><h1>Solcord</h1><p>Control Center</p>{!Config.isCleanCandidateBuild && <span className="solcord-build-warning" role="status">Diagnostic build</span>}</div>
         </header>
         {recoveryMode && <div className="solcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>

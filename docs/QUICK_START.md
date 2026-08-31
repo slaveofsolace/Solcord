@@ -2,25 +2,31 @@
 
 This guide applies only after `v2.0.0-rc.5` appears on the official Solcord release page with matching installer and checksum assets. Until then, RC5 is a candidate under review—not a downloadable release. The steps are written for someone who has never installed a Discord client mod.
 
+On a typical Windows PC, the normal install is designed to take about one minute after the files are downloaded. That is a usability target, not a guarantee; Windows review prompts, Discord shutdown, recovery, and first-run choices can take longer.
+
 > [!WARNING]
-> Solcord RC5 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord`, confirm that the release is actually published, and compare its SHA-256 value with the release manifest before opening it.
+> Solcord RC5 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord`, confirm that the release is actually published, and compare its SHA-256 value with `SHA256SUMS.txt` before opening it. `release-manifest.json` is the separate machine-readable evidence manifest.
 
 ## 1. Download
 
 Download both files into the same folder:
 
-- [SolcordSetup-v2.0.0-rc.5-win-x64.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/SolcordSetup-v2.0.0-rc.5-win-x64.exe)
+- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/SolcordInstaller.exe)
 - [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/SHA256SUMS.txt)
+
+The assembled candidate stores the executable at `installer/SolcordInstaller.exe` inside its local evidence directory. Release publishing maps that exact hash-verified file to the root GitHub asset name `SolcordInstaller.exe`; it does not rebuild or change its bytes. `release-manifest.json` records this mapping and the installer build-receipt hash.
+
+The six walkthrough images in this guide are optional release assets captured only after exact-candidate acceptance. When published, their exact names are `01-download.png`, `02-quit-discord.png`, `03-install.png`, `04-verified.png`, `05-first-setup.png`, and `06-recovery.png`; each published image must also appear as a hash-bound evidence file. A missing image never weakens checksum or installer verification.
 
 ![Download Solcord and its checksum list](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/01-download.png)
 
 Optional verification in PowerShell:
 
 ```powershell
-Get-FileHash .\SolcordSetup-v2.0.0-rc.5-win-x64.exe -Algorithm SHA256
+Get-FileHash .\SolcordInstaller.exe -Algorithm SHA256
 ```
 
-Compare the result with the exact installer entry in `SHA256SUMS.txt`. Stop if it differs.
+Compare the result with the `installer/SolcordInstaller.exe` entry in `SHA256SUMS.txt`; that nested evidence name applies byte-for-byte to the root-published `SolcordInstaller.exe`. Stop if it differs.
 
 ## 2. Quit Discord
 

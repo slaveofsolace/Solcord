@@ -89,7 +89,7 @@
         <main class="solcord-panel solcord-density-comfortable solcord-motion-subtle" data-critical="panel">
             <header class="solcord-header" data-critical="header">
                 <div class="solcord-mark" aria-hidden="true"><img class="fixture-mark" src="../../assets/branding/solcord-mark.svg" alt=""></div>
-                <div><h1>Solcord</h1><p>Control Center</p></div>
+                <div class="solcord-header-copy"><h1>Solcord</h1><p>Control Center</p></div>
             </header>
             <div class="solcord-control-center" data-critical="control-center">
                 <nav class="solcord-workspace-nav" aria-label="Solcord settings" data-critical="navigation">
@@ -112,9 +112,11 @@
     const params = new URLSearchParams(location.search);
     const workspace = params.get("workspace") || "overview";
     const state = params.get("state") || "healthy";
+    const diagnostic = params.get("diagnostic") === "1";
     const longCopy = params.get("long") === "1";
     const fixtureWidth = Number(params.get("fixtureWidth"));
     if (Number.isFinite(fixtureWidth) && fixtureWidth >= 280) document.querySelector(".fixture-shell").style.width = `${fixtureWidth}px`;
+    if (diagnostic) document.querySelector(".solcord-header-copy").insertAdjacentHTML("beforeend", `<span class="solcord-build-warning" role="status">Diagnostic build</span>`);
     const content = document.querySelector("#workspace");
     const workspaceNames = {
         overview: ["Overview", "Current state and the next useful action."],
@@ -237,14 +239,16 @@
             opaqueBackground: rgba(getComputedStyle(navElement).backgroundColor)[3] === 1,
             singleColumn: getComputedStyle(navElement).gridTemplateColumns.trim().split(/\s+/).length === 1
         } : null;
+        const diagnosticWarning = document.querySelector(".solcord-build-warning");
         const result = {
-            scenario: {workspace, state, mode: document.documentElement.dataset.solcordMode, theme: document.documentElement.dataset.solcordFixtureTheme, motion: document.documentElement.dataset.solcordEffectiveMotion, scale: Number(document.documentElement.dataset.solcordFixtureScale), width: innerWidth, height: innerHeight, devicePixelRatio},
+            scenario: {workspace, state, diagnostic, mode: document.documentElement.dataset.solcordMode, theme: document.documentElement.dataset.solcordFixtureTheme, motion: document.documentElement.dataset.solcordEffectiveMotion, scale: Number(document.documentElement.dataset.solcordFixtureScale), width: innerWidth, height: innerHeight, devicePixelRatio},
             horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
             clippedOrOverflowingElements: overflow,
             focusableCount: focusables.length,
             focusFailures,
             workspaceHeadingCount: content.querySelectorAll(":scope > .solcord-workspace-heading").length,
             nativeRowSpacingFailures,
+            diagnosticIdentity: {requested: diagnostic, warningVisible: Boolean(diagnosticWarning && visible(diagnosticWarning))},
             navigationRelationship: {sideBySide, stacked, horizontalOverlap: Number(horizontalOverlap.toFixed(2)), verticalOverlap: Number(verticalOverlap.toFixed(2))},
             compactNavigationGeometry,
             contrast: {
@@ -259,7 +263,7 @@
         const expectedHeadingCount = state === "wizard" ? 0 : 1;
         const contrastSamples = Object.values(result.contrast).filter(value => value !== null);
         const compactNavigationPass = !compactNavigationGeometry || Object.values(compactNavigationGeometry).every(Boolean);
-        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && result.workspaceHeadingCount === expectedHeadingCount && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
+        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && result.workspaceHeadingCount === expectedHeadingCount && result.diagnosticIdentity.warningVisible === diagnostic && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(result))));
         document.body.dataset.fixtureResult = encoded;
         document.querySelector("#fixture-result").textContent = JSON.stringify(result, null, 2);

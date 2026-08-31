@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Solcord.Installer;
 
@@ -46,6 +47,7 @@ internal sealed class InstallerForm : Form
     internal InstallerForm(string bundleRoot)
     {
         _engine = new InstallerEngine(bundleRoot, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+        ReleaseManifest manifest = _engine.LoadManifest();
         Text = "Solcord Installer";
         Width = 620;
         Height = 340;
@@ -53,11 +55,11 @@ internal sealed class InstallerForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 10);
 
-        var title = new Label {Text = "Solcord", Font = new Font("Segoe UI Semibold", 22), AutoSize = true, Dock = DockStyle.Top};
+        var title = new Label {Text = $"Solcord {manifest.CandidateLabel}", Font = new Font("Segoe UI Semibold", 22), AutoSize = true, Dock = DockStyle.Top};
         var subtitle = new Label {Text = "Install, verify, repair, or roll back one hash-bound desktop core. Plugins, themes, settings, and custom CSS are never deleted.", AutoSize = true, MaximumSize = new Size(560, 0), Dock = DockStyle.Top, Padding = new Padding(0, 5, 0, 16)};
         var buttons = new FlowLayoutPanel {Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Padding = new Padding(0, 14, 0, 0)};
         AddButton(buttons, "Install", () => Install(false));
-        AddButton(buttons, "Verify", () => Report(_engine.VerifyInstalled() ? "Installed artifact matches the manifest." : "Installed artifact does not match this bundle."));
+        AddButton(buttons, "Verify", () => Report(_engine.VerifyInstalled() ? $"Installed artifact matches {manifest.CandidateLabel}." : $"Installed artifact does not match {manifest.CandidateLabel}."));
         AddButton(buttons, "Repair / Update", () => Install(true));
         AddButton(buttons, "Roll Back / Uninstall", () => Report($"Restored backup from {_engine.RollBack(Target())}."));
         AddButton(buttons, "Launch selected Discord", () => {_engine.Launch(Target()); Report("Discord launch requested. Solcord does not authenticate or act on the account.");});
@@ -86,7 +88,7 @@ internal sealed class InstallerForm : Form
     private void Install(bool repair)
     {
         InstallReceipt receipt = _engine.Install(Target(), repair);
-        Report($"Solcord {receipt.Version} installed and hash verified for Discord {receipt.Channel} {receipt.DiscordVersion}. Launch remains your choice.");
+        Report($"Solcord {receipt.CandidateLabel ?? "unlabeled legacy candidate"} (core {receipt.Version}) installed and hash verified for Discord {receipt.Channel} {receipt.DiscordVersion}. Launch remains your choice.");
     }
 
     private void AddButton(Control parent, string label, Action action)
@@ -101,6 +103,13 @@ internal sealed class InstallerForm : Form
 
 internal static class InstallerSelfTest
 {
+    private static string SerializeLegacyWithoutCandidateLabel<T>(T value)
+    {
+        JsonObject document = JsonSerializer.SerializeToNode(value)?.AsObject() ?? throw new InvalidDataException("fixture legacy document");
+        if (!document.Remove("CandidateLabel") || document.ContainsKey("CandidateLabel")) throw new InvalidDataException("fixture legacy candidate-label removal");
+        return document.ToJsonString();
+    }
+
     internal static int Run(string embeddedBundleRoot)
     {
         string root = Path.Combine(Path.GetTempPath(), $"solcord-installer-test-{Guid.NewGuid():N}");
@@ -135,14 +144,48 @@ internal static class InstallerSelfTest
             string currentReceipt = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");
             string currentReceiptText = File.ReadAllText(currentReceipt);
             InstallReceipt installedReceipt = JsonSerializer.Deserialize<InstallReceipt>(currentReceiptText) ?? throw new InvalidDataException("fixture receipt");
-            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "1.0.0"}));
+            if (installedReceipt.CandidateLabel != manifest.CandidateLabel) return 18;
+            string backupStateFile = Path.Combine(receipt.BackupDirectory ?? throw new InvalidDataException("fixture backup"), "backup-state.json");
+            BackupState installedBackup = JsonSerializer.Deserialize<BackupState>(File.ReadAllText(backupStateFile)) ?? throw new InvalidDataException("fixture backup state");
+            if (installedBackup.CandidateLabel != manifest.CandidateLabel) return 19;
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "1.0.0", CandidateLabel = null}));
             stage = "upgrade-repair";
             engine.Install(target, repair: true);
             if (!engine.VerifyInstalled()) return 14;
+            if (!InstallerEngine.TryGetReleaseCandidateOrdinal(manifest.CandidateLabel, manifest.Version, out ulong candidateOrdinal) || candidateOrdinal == 0 || candidateOrdinal == ulong.MaxValue) return 21;
+            string previousCandidate = $"v{manifest.Version}-rc.{candidateOrdinal - 1}";
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), SourceCommit = new string('b', 40), CandidateLabel = previousCandidate}));
+            stage = "same-core-rc-upgrade";
+            engine.Install(target, repair: true);
+            if (!engine.VerifyInstalled()) return 24;
             stage = "same-version-repair";
             engine.Install(target, repair: true);
             if (!engine.VerifyInstalled()) return 15;
-            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "999.0.0"}));
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {CandidateLabel = null}));
+            stage = "legacy-same-core-exact-adoption";
+            engine.Install(target, repair: true);
+            InstallReceipt adoptedReceipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(currentReceipt)) ?? throw new InvalidDataException("fixture adopted receipt");
+            if (adoptedReceipt.CandidateLabel != manifest.CandidateLabel || adoptedReceipt.ArtifactSha256 != manifest.ArtifactSha256 || adoptedReceipt.SourceCommit != manifest.SourceCommit) return 28;
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), CandidateLabel = null}));
+            stage = "legacy-same-core-hold";
+            try {engine.Install(target, repair: true); return 20;}
+            catch (InvalidOperationException error) when (error.Message.Contains("predates candidate labels", StringComparison.Ordinal)) {/* expected */}
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {CandidateLabel = $"v{manifest.Version}-rc.-1"}));
+            stage = "malformed-candidate-label-refusal";
+            try {engine.Install(target, repair: true); return 25;}
+            catch (InvalidDataException error) when (error.Message.Contains("version provenance is malformed", StringComparison.Ordinal)) {/* expected */}
+            if (!InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}-rc.{ulong.MaxValue}", manifest.Version, out ulong maximumOrdinal) || maximumOrdinal != ulong.MaxValue) return 26;
+            if (InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}-rc.18446744073709551616", manifest.Version, out _)) return 27;
+            string newerCandidate = $"v{manifest.Version}-rc.{candidateOrdinal + 1}";
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), CandidateLabel = newerCandidate}));
+            stage = "same-core-rc-downgrade-refusal";
+            try {engine.Install(target, repair: true); return 22;}
+            catch (InvalidOperationException error) when (error.Message.Contains("older than the recorded Solcord release candidate", StringComparison.Ordinal)) {/* expected */}
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('a', 64)}));
+            stage = "candidate-label-reuse-refusal";
+            try {engine.Install(target, repair: true); return 23;}
+            catch (InvalidOperationException error) when (error.Message.Contains("Candidate labels are immutable", StringComparison.Ordinal)) {/* expected */}
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {Version = "999.0.0", CandidateLabel = "v999.0.0-rc.1"}));
             stage = "downgrade-refusal";
             try {engine.Install(target, repair: true); return 16;}
             catch (InvalidOperationException error) when (error.Message.Contains("older than the recorded Solcord install", StringComparison.Ordinal)) {/* expected */}
@@ -174,6 +217,12 @@ internal static class InstallerSelfTest
             Directory.CreateDirectory(rogue);
             File.WriteAllText(Path.Combine(rogue, "backup-state.json"), "{}");
             if (receipt.BackupDirectory is null) return 6;
+            string backupStateText = File.ReadAllText(backupStateFile);
+            File.WriteAllText(backupStateFile, JsonSerializer.Serialize(installedBackup with {CandidateLabel = previousCandidate}));
+            stage = "rollback-candidate-label-mismatch-refusal";
+            try {engine.RollBack(target); return 29;}
+            catch (InvalidDataException error) when (error.Message.Contains("rollback state does not match", StringComparison.Ordinal)) {/* expected */}
+            File.WriteAllText(backupStateFile, backupStateText);
             string injectorIndex = Path.Combine(receipt.BackupDirectory, "injector-app", "index.js");
             string originalInjector = File.ReadAllText(injectorIndex);
             File.AppendAllText(injectorIndex, "tampered");
@@ -181,6 +230,10 @@ internal static class InstallerSelfTest
             try {engine.RollBack(target); return 7;}
             catch (InvalidDataException) {/* expected hash-bound refusal */}
             File.WriteAllText(injectorIndex, originalInjector);
+            File.WriteAllText(currentReceipt, SerializeLegacyWithoutCandidateLabel(installedReceipt));
+            File.WriteAllText(backupStateFile, SerializeLegacyWithoutCandidateLabel(installedBackup));
+            if (File.ReadAllText(currentReceipt).Contains("CandidateLabel", StringComparison.Ordinal) || File.ReadAllText(backupStateFile).Contains("CandidateLabel", StringComparison.Ordinal)) return 30;
+            stage = "legacy-receipt-backup-rollback-compatibility";
             File.Copy(currentReceipt, pendingReceipt, overwrite: false);
             bool interrupted = false;
             var interruptingEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0, point =>
@@ -190,6 +243,10 @@ internal static class InstallerSelfTest
             stage = "partial-rollback";
             try {interruptingEngine.RollBack(target); return 9;}
             catch (IOException) {/* retry must finish from the mixed restored state */}
+            if (!interrupted) return 31;
+            if (!InstallerEngine.HashFile(installedCore).Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase)
+                || File.ReadAllText(Path.Combine(priorApp, "index.js")) != priorIndex
+                || File.ReadAllText(Path.Combine(priorApp, "package.json")) != priorPackage) return 32;
             stage = "rollback";
             engine.RollBack(target);
             if (File.ReadAllText(Path.Combine(data, "betterdiscord.asar")) != "previous-core") return 3;

@@ -126,10 +126,11 @@ function snapshotTree(root: string): Record<string, string> {
 function validBuildProvenance(sourceCommit: string): Record<string, unknown> {
     const digest = "1".repeat(64);
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         kind: "solcord-build-provenance",
         product: "Solcord",
         version: "1.0.0-test",
+        candidateLabel: "v1.0.0-test-rc.0",
         mode: "production",
         buildLabel: "production-clean",
         buildTimestamp: "2026-08-23T00:00:00.000Z",

@@ -23,6 +23,7 @@ if (!existsSync(fixture)) throw new Error(`Fixture is missing: ${fixture}`);
 
 const scenarios = [
     {name: "overview-dark-1366x768", width: 1366, height: 768, query: "workspace=overview&state=healthy&mode=solcord-dark&scale=100"},
+    {name: "diagnostic-overview-dark-320-container", width: 500, height: 720, query: "workspace=overview&state=healthy&mode=solcord-dark&diagnostic=1&fixtureWidth=320&scale=100"},
     {name: "setup-dark-1280x720", width: 1280, height: 720, query: "workspace=overview&state=wizard&mode=solcord-dark&scale=100"},
     {name: "privacy-light-1920x1080", width: 1920, height: 1080, query: "workspace=privacy&state=degraded&mode=solcord-light&scale=100"},
     {name: "voice-oled-1280x720", width: 1280, height: 720, query: "workspace=voice&state=healthy&mode=oled&scale=100"},

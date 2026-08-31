@@ -82,7 +82,7 @@ export function getAddonList(manager: AddonManager) {
 
 export function getCoreInfo() {
     const channel = config.isCanary ? "Canary" : "Stable";
-    return `${channel} ${config.get("version")} (${config.get("commit")?.substring(0, 7)})\n`;
+    return `${channel} ${config.candidateIdentity} · core ${config.get("version")} (${config.get("commit")?.substring(0, 7)})\n`;
 }
 
 export function getAddonInfo() {

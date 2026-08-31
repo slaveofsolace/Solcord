@@ -9,6 +9,7 @@ import doSanityChecks from "./helpers/validate";
 import buildPackage from "./helpers/package";
 import {assertSolcordBuildStillCurrent, assertSolcordPackagingAllowed, captureSolcordBuildProvenance, createSolcordPostBuildManifest, readSolcordBuildProvenance, writeSolcordPostBuildManifest} from "./helpers/build-provenance";
 import pkg from "../package.json";
+import {assertSolcordPackageVersion, SOLCORD_PRODUCT_IDENTITY} from "../src/common/solcord/product-identity";
 
 
 const dist = path.resolve(__dirname, "..", "dist");
@@ -17,6 +18,7 @@ const checksumsFile = path.join(dist, "checksums.txt");
 const buildProvenanceFile = path.join(dist, "build-provenance.json");
 const postBuildManifestFile = path.join(dist, "solcord-build-manifest.json");
 const diagnostic = process.argv.includes("--diagnostic");
+assertSolcordPackageVersion(pkg.version);
 
 const files = [
     "dist/main.js",
@@ -60,7 +62,8 @@ const makeBundle = async function () {
 const builtProvenance = readSolcordBuildProvenance(buildProvenanceFile);
 assertSolcordPackagingAllowed(builtProvenance, diagnostic);
 const currentProvenance = captureSolcordBuildProvenance(path.resolve(__dirname, ".."), {
-    version: pkg.version,
+    version: SOLCORD_PRODUCT_IDENTITY.numericVersion,
+    candidateLabel: SOLCORD_PRODUCT_IDENTITY.candidateLabel,
     mode: builtProvenance.mode,
     modules: builtProvenance.modules,
     buildTimestamp: builtProvenance.buildTimestamp

@@ -19,6 +19,7 @@ const gitignore = fs.readFileSync(path.join(root, ".gitignore"), "utf8").split(/
 describe("Solcord installer security contracts", () => {
     test("routes candidate builds through the tested embedded-resource builder", () => {
         expect(packageJson.scripts["installer:candidate"]).toBe("bun scripts/build-solcord-v2-installer.mjs");
+        expect(packageJson.scripts["release:evidence"]).toBe("bun scripts/assemble-solcord-release-evidence.mjs");
         expect(fs.existsSync(builderPath)).toBeTrue();
         expect(fs.existsSync(obsoleteBuilderPath)).toBeFalse();
     });
@@ -48,6 +49,20 @@ describe("Solcord installer security contracts", () => {
         expect(builder).toContain("SHA256SUMS.txt");
         expect(builder).toContain("solcord-build-manifest.json");
         expect(builder).toContain("solcord-installer-manifest.json");
+        expect(builder).toContain("solcord-installer-build-receipt.json");
+        expect(builder).toContain("installerReceiptSha256");
+        expect(builder).toContain("candidateLabel: postBuild.build.candidateLabel");
+        expect(builder).toContain("schemaVersion: 7");
+        expect(engine).toContain("build.GetProperty(\"candidateLabel\").GetString() == manifest.CandidateLabel");
+        expect(engine).toContain("same-core install predates candidate labels");
+        expect(engine).toContain("TryGetReleaseCandidateOrdinal");
+        expect(engine).toContain("Candidate labels are immutable");
+        expect(selfTest).toContain("same-core-rc-upgrade");
+        expect(selfTest).toContain("same-core-rc-downgrade-refusal");
+        expect(selfTest).toContain("candidate-label-reuse-refusal");
+        expect(selfTest).toContain("malformed-candidate-label-refusal");
+        expect(selfTest).toContain("rc.18446744073709551616");
+        expect(selfTest).toContain("ulong.MaxValue");
         expect(builder).toContain("The release-candidate directory contains an unexpected file set");
         expect(builder.indexOf("const selfTest = spawnSync")).toBeLessThan(builder.indexOf("const publishedFiles"));
     });
@@ -58,9 +73,10 @@ describe("Solcord installer security contracts", () => {
             "solcord.asar",
             "solcord-build-manifest.json",
             "solcord-installer-manifest.json",
+            "solcord-installer-build-receipt.json",
             "SHA256SUMS.txt"
         ]) expect(installerReadme).toContain(file);
-        expect(installerReadme).toContain("five-file review bundle");
+        expect(installerReadme).toContain("six-file review bundle");
         expect(gitignore).toContain("outputs/");
     });
 

@@ -7,6 +7,7 @@ import path from "node:path";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 import * as asar from "@electron/asar";
+import {SOLCORD_PRODUCT_IDENTITY} from "../src/common/solcord/product-identity.ts";
 
 const [artifactInput, outputInput, sourceCommit] = process.argv.slice(2);
 if (!artifactInput || !outputInput || !/^[0-9a-f]{40}$/.test(sourceCommit ?? "")) {
@@ -60,9 +61,11 @@ requireRegularFile(sourceBuildManifest, 256 * 1024, "The authoritative Solcord b
 const postBuild = JSON.parse(fs.readFileSync(sourceBuildManifest, "utf8"));
 const artifactHash = hashFile(artifact);
 const artifactBytes = fs.statSync(artifact).size;
-if (postBuild?.schemaVersion !== 1
+if (postBuild?.schemaVersion !== 2
     || postBuild?.kind !== "solcord-post-build-manifest"
     || postBuild?.build?.product !== "Solcord"
+    || postBuild?.build?.version !== SOLCORD_PRODUCT_IDENTITY.numericVersion
+    || postBuild?.build?.candidateLabel !== SOLCORD_PRODUCT_IDENTITY.candidateLabel
     || !["production", "release"].includes(postBuild?.build?.mode)
     || postBuild?.build?.source?.clean !== true
     || postBuild?.build?.source?.commit !== sourceCommit
@@ -88,11 +91,12 @@ try {
     if (hashFile(stagedArtifact) !== artifactHash || hashFile(stagedBuildManifest) !== sourceBuildManifestHash) throw new Error("The private installer inputs differ from the fresh build.");
     const manifest = {
         version: postBuild.build.version,
+        candidateLabel: postBuild.build.candidateLabel,
         sourceCommit,
         artifactSha256: artifactHash,
         artifactFile: "solcord.asar",
         buildManifestSha256: sourceBuildManifestHash,
-        schemaVersion: 6,
+        schemaVersion: 7,
         supportedDiscord: "Stable/PTB/Canary; exact installed target shown at runtime",
         releaseNotes: "Unsigned Solcord V2 release candidate with hash-bound resources embedded in the executable. Explicit install, verify, repair/update, rollback/uninstall, and launch only."
     };
@@ -134,13 +138,32 @@ try {
     const checksumNames = ["SolcordInstaller.exe", ...publishedFiles.map(([, name]) => name)];
     const checksumText = checksumNames.map(name => `${hashFile(path.join(staging, name))}  ${name}`).join("\n");
     fs.writeFileSync(path.join(staging, "SHA256SUMS.txt"), `${checksumText}\n`, {encoding: "utf8", flag: "wx"});
+    const receiptName = "solcord-installer-build-receipt.json";
+    const receiptFiles = [...checksumNames, "SHA256SUMS.txt"].sort().map(name => ({
+        name,
+        bytes: fs.statSync(path.join(staging, name)).size,
+        sha256: hashFile(path.join(staging, name))
+    }));
+    const receipt = {
+        schemaVersion: 1,
+        kind: "solcord-installer-build-receipt",
+        product: "Solcord",
+        productVersion: postBuild.build.version,
+        candidateLabel: postBuild.build.candidateLabel,
+        sourceCommit,
+        sourceClean: true,
+        selfTest: {result: "PASS", isolatedWorkingDirectory: true},
+        files: receiptFiles
+    };
+    fs.writeFileSync(path.join(staging, receiptName), `${JSON.stringify(receipt, null, 2)}\n`, {encoding: "utf8", flag: "wx"});
+    const installerReceiptSha256 = hashFile(path.join(staging, receiptName));
     const finalEntries = fs.readdirSync(staging).sort();
-    const expectedEntries = [...checksumNames, "SHA256SUMS.txt"].sort();
+    const expectedEntries = [...checksumNames, "SHA256SUMS.txt", receiptName].sort();
     if (JSON.stringify(finalEntries) !== JSON.stringify(expectedEntries)) throw new Error("The release-candidate directory contains an unexpected file set.");
 
     fs.renameSync(staging, output);
     published = true;
-    console.log(JSON.stringify({output, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), embeddedResources: "PASS", selfTest: "PASS", releaseFiles: finalEntries}, null, 2));
+    console.log(JSON.stringify({output, version: postBuild.build.version, candidateLabel: postBuild.build.candidateLabel, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), installerReceiptFile: receiptName, installerReceiptSha256, embeddedResources: "PASS", selfTest: "PASS", releaseFiles: finalEntries}, null, 2));
 } finally {
     removeGeneratedDirectory(inputRoot, os.tmpdir(), "solcord-installer-input-");
     removeGeneratedDirectory(validationRoot, os.tmpdir(), "solcord-installer-validation-");

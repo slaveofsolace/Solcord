@@ -15,6 +15,7 @@ const DISCORD_VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){1,7}$/;
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
 const CANONICAL_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FULL_COMMIT_PATTERN = /^[a-f0-9]{40}$/;
+const CANDIDATE_SUFFIX_PATTERN = /^[0-9a-z]+(?:[.-][0-9a-z]+)*$/i;
 const EMPTY_SHA256 = crypto.createHash("sha256").digest("hex");
 const MAX_JSON_METADATA_BYTES = 128 * 1024;
 const MAX_SOLCORD_ASAR_BYTES = 512 * 1024 * 1024;
@@ -216,14 +217,14 @@ function validateEmbeddedBuildProvenance(value: Record<string, unknown>, expecte
         toolchain.packScriptSha256
     ];
 
-    if (!exactKeys(value, ["schemaVersion", "kind", "product", "version", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
+    if (!exactKeys(value, ["schemaVersion", "kind", "product", "version", "candidateLabel", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
         || !exactKeys(source, ["commit", "branch", "clean", "digest", "statusDigest"])
         || !exactKeys(inputs, ["lockfile", "toolchain"])
         || !exactKeys(lockfile, ["file", "sha256"])
         || !exactKeys(toolchain, ["bunVersion", "bunExecutableSha256", "packageJsonSha256", "buildScriptSha256", "packScriptSha256"])
-        || value.schemaVersion !== 1
+        || value.schemaVersion !== 2
         || value.kind !== "solcord-build-provenance") {
-        throw new Error("Solcord ASAR build provenance does not match schema v1.");
+        throw new Error("Solcord ASAR build provenance does not match schema v2.");
     }
     if (value.product !== "Solcord") {
         throw new Error("Solcord ASAR build provenance product must be Solcord.");
@@ -240,8 +241,12 @@ function validateEmbeddedBuildProvenance(value: Record<string, unknown>, expecte
     if (source.commit !== expectedSourceCommit) {
         throw new Error("Solcord ASAR source commit does not match the caller-provided expected source commit.");
     }
+    const candidateVersion = typeof value.version === "string" ? value.version : "";
+    const candidatePrefix = `v${candidateVersion}-`;
     if (typeof value.version !== "string" || !value.version || value.version.length > 128
         || [...value.version].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+        || typeof value.candidateLabel !== "string" || !value.candidateLabel.startsWith(candidatePrefix)
+        || !CANDIDATE_SUFFIX_PATTERN.test(value.candidateLabel.slice(candidatePrefix.length)) || value.candidateLabel.length > 128
         || typeof source.branch !== "string" || !source.branch || source.branch.length > 256
         || [...source.branch].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
         || !isCanonicalTimestamp(value.buildTimestamp)

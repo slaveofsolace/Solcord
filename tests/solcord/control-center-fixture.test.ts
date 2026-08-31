@@ -7,6 +7,7 @@ import {resolve} from "node:path";
 const root = resolve(import.meta.dir, "../..");
 const fixture = readFileSync(resolve(root, "tests/fixtures/solcord-control-center.html"), "utf8");
 const renderer = readFileSync(resolve(root, "scripts/render-solcord-ui-fixture.mjs"), "utf8");
+const css = readFileSync(resolve(root, "src/betterdiscord/styles/solcord.css"), "utf8");
 
 describe("Solcord isolated Control Center fixture", () => {
     test("covers every canonical workspace and the dedicated setup state", () => {
@@ -44,6 +45,22 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(renderer).toContain(`theme=${theme}`);
             expect(fixture).toContain(`"${theme}"`);
         }
+    });
+
+    test("keeps the normal header quiet and qualifies diagnostic builds without narrow overflow", () => {
+        const normalHeader = `<div class="solcord-header-copy"><h1>Solcord</h1><p>Control Center</p></div>`;
+        expect(fixture.match(new RegExp(normalHeader, "g"))).toHaveLength(1);
+        expect(fixture).not.toContain("Control Center ·");
+        expect(fixture).not.toContain(`<p>Control Center <span`);
+        expect(fixture).toContain(`params.get("diagnostic") === "1"`);
+        expect(fixture).toContain("insertAdjacentHTML(\"beforeend\", `<span class=\"solcord-build-warning\" role=\"status\">Diagnostic build</span>`);");
+        expect(fixture).toContain("diagnosticIdentity: {requested: diagnostic");
+        expect(renderer).toContain("diagnostic-overview-dark-320-container");
+        expect(renderer).toContain("diagnostic=1&fixtureWidth=320");
+        expect(css).toContain(".solcord-build-warning");
+        expect(css).toContain("max-width: 100%");
+        expect(css).toContain("white-space: normal");
+        expect(css).toContain("overflow-wrap: anywhere");
     });
 
     test("uses an isolated browser profile with background networking disabled", () => {
