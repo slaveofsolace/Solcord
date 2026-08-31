@@ -44,9 +44,9 @@ function entry(
 
 const ENTRIES: ReadonlyArray<Readonly<SolcordV2ReplacementEntry>> = [
     entry("BDFDB", "0BDFDB.plugin.js", [], "dependency-retirement", "dependency-only"),
-    entry("BetterAnimations", "BetterAnimations.plugin.js", [], "motion-studio", "licensed-adaptation"),
+    entry("BetterAnimations", "BetterAnimations.plugin.js", [], "motion-studio", "new-clean-room"),
     entry("BetterFriendList", "BetterFriendList.plugin.js", ["BDFDB"], "people-and-spaces", "new-clean-room"),
-    entry("BetterVolume", "BetterVolume.plugin.js", [], "audio-console", "licensed-adaptation"),
+    entry("BetterVolume", "BetterVolume.plugin.js", [], "audio-console", "new-clean-room"),
     entry("CallTimeCounter", "CallTimeCounter.plugin.js", [], "call-context", "new-clean-room"),
     entry("CharCounter", "CharCounter.plugin.js", ["BDFDB"], "composer-toolkit", "new-clean-room"),
     entry("CompleteTimestamps", "CompleteTimestamps.plugin.js", ["BDFDB"], "composer-toolkit", "new-clean-room"),
@@ -56,7 +56,7 @@ const ENTRIES: ReadonlyArray<Readonly<SolcordV2ReplacementEntry>> = [
     entry("EditServers", "EditServers.plugin.js", ["BDFDB"], "people-and-spaces", "new-clean-room"),
     entry("FakeDeafen", "FakeDeafen.plugin.js", [], "power-lab", "existing-clean-room"),
     entry("InvisibleTyping", "InvisibleTyping.plugin.js", [], "privacy-controls", "existing-clean-room"),
-    entry("MessageLoggerV2", "MessageLoggerV2.plugin.js", [], "message-timeline", "existing-clean-room", "leave-untouched"),
+    entry("MessageLoggerV2", "MessageLoggerV2.plugin.js", ["XenoLib", "ZeresPluginLibrary"], "message-timeline", "existing-clean-room", "leave-untouched"),
     entry("MessagePeek", "MessagePeek.plugin.js", [], "channel-glance", "new-clean-room"),
     entry("PinDMs", "PinDMs.plugin.js", ["BDFDB"], "people-and-spaces", "new-clean-room"),
     entry("ReadAllNotificationsButton", "ReadAllNotificationsButton.plugin.js", ["BDFDB"], "notification-review", "new-clean-room"),
@@ -65,7 +65,7 @@ const ENTRIES: ReadonlyArray<Readonly<SolcordV2ReplacementEntry>> = [
     entry("ShowSpectators", "ShowSpectators.plugin.js", [], "call-context", "new-clean-room"),
     entry("SplitLargeMessages", "SplitLargeMessages.plugin.js", ["BDFDB"], "composer-toolkit", "existing-clean-room"),
     entry("Translator", "Translator.plugin.js", ["BDFDB"], "translation-desk", "new-clean-room"),
-    entry("VoiceActivity", "VoiceActivity.plugin.js", [], "call-context", "licensed-adaptation"),
+    entry("VoiceActivity", "VoiceActivity.plugin.js", [], "call-context", "new-clean-room"),
     entry("VoiceMessages", "VoiceMessages.plugin.js", [], "voice-note-studio", "new-clean-room")
 ];
 

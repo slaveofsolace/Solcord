@@ -57,13 +57,14 @@ describe("Solcord V2 clean-room feature models", () => {
     test("Call Context and Audio Console remain local, consistent, and bounded", () => {
         const calls = new SolcordCallContextController();
         calls.observe({channelId: "100", connectedAt: 1_000, participantCount: 5, speakerCount: 2, viewerCount: 1});
-        expect(calls.summary(2_500)).toEqual({connected: true, elapsedMs: 1_500, participantCount: 5, speakerCount: 2, viewerCount: 1});
+        expect(calls.summary(2_500)).toEqual({connected: true, elapsedMs: 1_500, participantCount: 5, speakerCount: 2, viewerCount: 1, participantIds: [], speakerIds: [], viewerLabels: []});
         expect(() => calls.observe({channelId: "100", connectedAt: 1_000, participantCount: 2, speakerCount: 3, viewerCount: 1})).toThrow("inconsistent");
 
         const audio = new SolcordAudioConsoleController(() => 2_000);
-        audio.previewVolume("200", 100, 135);
-        expect(audio.confirmVolume()).toMatchObject({kind: "set-local-volume", payload: {userId: "200", volumePercent: 135, localOnly: true}});
-        expect(() => audio.previewVolume("200", 100, 201)).toThrow("between 0 and 200");
+        audio.previewVolume("123456789012345678", 100, 135);
+        expect(audio.confirmVolume()).toMatchObject({kind: "set-local-volume", payload: {userId: "123456789012345678", volumePercent: 135, localOnly: true}});
+        expect(() => audio.previewVolume("123", 100, 135)).toThrow("complete Discord user ID");
+        expect(() => audio.previewVolume("123456789012345678", 100, 201)).toThrow("between 0 and 200");
     });
 
     test("Voice Note Studio requires gesture, local preview, then a separate expiring upload intent", () => {
@@ -71,7 +72,7 @@ describe("Solcord V2 clean-room feature models", () => {
         expect(() => voice.beginFromUserGesture(false)).toThrow("user gesture");
         const begin = voice.beginFromUserGesture(true);
         expect(begin).toMatchObject({kind: "begin-local-recording", payload: {localOnly: true}});
-        voice.attachPreview({recordingId: "recording-1", durationMs: 2_500, sizeBytes: 50_000, mime: "audio/webm"});
+        voice.attachPreview({recordingId: "recording-1", durationMs: 2_500, sizeBytes: 50_000, mime: "audio/webm", waveform: [0, 64, 255]});
         const upload = voice.confirmUpload("300");
         expect(upload).toMatchObject({kind: "upload-voice-note", expiresAt: 18_000, payload: {channelId: "300", recordingId: "recording-1", sizeBytes: 50_000}});
         expect(voice.confirmUpload("300")).toMatchObject({kind: "upload-voice-note", payload: {recordingId: "recording-1"}});
@@ -79,7 +80,7 @@ describe("Solcord V2 clean-room feature models", () => {
         expect(() => voice.confirmUpload("300")).toThrow("Preview");
 
         voice.beginFromUserGesture(true);
-        expect(() => voice.attachPreview({recordingId: "recording-2", durationMs: 2_500, sizeBytes: SOLCORD_VOICE_NOTE_MAX_BYTES + 1, mime: "audio/webm"})).toThrow("Recording size");
+        expect(() => voice.attachPreview({recordingId: "recording-2", durationMs: 2_500, sizeBytes: SOLCORD_VOICE_NOTE_MAX_BYTES + 1, mime: "audio/webm", waveform: []})).toThrow("Recording size");
         expect(() => voice.beginFromUserGesture(true)).not.toThrow();
     });
 
@@ -100,7 +101,19 @@ describe("Solcord V2 clean-room feature models", () => {
         people.pinDm("400");
         people.hideGuild("500");
         people.aliasGuild("500", "Workshop");
-        expect(people.snapshot()).toEqual({pinnedDmIds: ["400"], hiddenGuildIds: ["500"], guildAliases: {500: "Workshop"}});
+        people.favoriteFriend("600");
+        people.hideFriend("700");
+        people.ignoreVoiceChannel("800");
+        people.ignoreVoiceGuild("900");
+        expect(people.snapshot()).toEqual({pinnedDmIds: ["400"], hiddenGuildIds: ["500"], guildAliases: {500: "Workshop"}, favoriteFriendIds: ["600"], hiddenFriendIds: ["700"], ignoredVoiceChannelIds: ["800"], ignoredVoiceGuildIds: ["900"]});
+        people.unpinDm("400");
+        people.showGuild("500");
+        people.clearGuildAlias("500");
+        people.unfavoriteFriend("600");
+        people.showFriend("700");
+        people.includeVoiceChannel("800");
+        people.includeVoiceGuild("900");
+        expect(people.snapshot()).toEqual({pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []});
 
         const glance = new SolcordChannelGlanceController();
         expect(() => glance.showAlreadyLoaded(false, [])).toThrow("cannot fetch");
@@ -113,8 +126,13 @@ describe("Solcord V2 clean-room feature models", () => {
     test("Notification Review never marks read until a reviewed intent is explicitly requested", () => {
         let now = 5_000;
         const notifications = new SolcordNotificationReviewController(() => now);
+        const emptyPreview = notifications.preview("guild", []);
+        expect(emptyPreview.count).toBe(0);
+        expect(() => notifications.confirm(emptyPreview.id)).toThrow("No reviewed notifications");
+        expect(() => notifications.confirm(emptyPreview.id)).toThrow("missing or stale");
+
         const preview = notifications.preview("mentions", ["700", "700", "701"]);
-        expect(preview).toEqual({id: "notification:1", scope: "mentions", notificationIds: ["700", "701"], count: 2});
+        expect(preview).toEqual({id: "notification:2", scope: "mentions", notificationIds: ["700", "701"], count: 2});
         now = 15_001;
         expect(() => notifications.confirm(preview.id)).toThrow("expired");
         expect(() => notifications.confirm(preview.id)).toThrow("missing or stale");

@@ -23,6 +23,30 @@ export function normalizeSolcordReturnRoute(input: string): string | undefined {
     return route;
 }
 
+export function solcordReturnLaterTarget(input: string): string | undefined {
+    const route = normalizeSolcordReturnRoute(input);
+    return route ? `https://discord.com${route}` : undefined;
+}
+
+export class SolcordReturnRouteMemory {
+    #route?: string;
+
+    remember(input: string): boolean {
+        const route = normalizeSolcordReturnRoute(input);
+        if (!route) return false;
+        this.#route = route;
+        return true;
+    }
+
+    current(): string | undefined {
+        return this.#route;
+    }
+
+    clear(): void {
+        this.#route = undefined;
+    }
+}
+
 function normalizeItem(value: unknown, now: number): SolcordReturnLaterItem | undefined {
     if (!value || typeof value !== "object") return;
     const item = value as Record<string, unknown>;

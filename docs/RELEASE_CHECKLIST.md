@@ -1,12 +1,12 @@
 # Solcord V2 RC release checklist
 
-This checklist governs the owner-ready unsigned candidate. Historical candidates remain immutable. The exact release manifest is authoritative for hashes and runtime identities.
+This checklist governs the owner-ready unsigned candidate. Historical candidates remain immutable. `release-manifest.json` is authoritative for artifact and runtime identities; `SHA256SUMS.txt` is the human-readable checksum list.
 
 ## Source and provenance
 
 - [ ] The final source commit is clean, reachable from `development`, pushed, and remote SHA verified.
 - [ ] The exact source/delivery ZIPs and their SHA-256 values are recorded outside the source archive.
-- [ ] The catalog still contains 209 plugins and 114 themes, or drift has been reviewed rather than silently accepted.
+- [ ] Record the current plugin/theme catalog counts and API hashes, compare them with the last reviewed 209-plugin/114-theme snapshot, and explicitly disposition any drift rather than silently accepting it.
 - [ ] Current raw catalog hashes and generated registry hashes match `PROVENANCE_REGISTRY.md`.
 - [ ] VoiceMessages is identified as GPL-3.0, not AGPL; no GPL or unresolved-license implementation was copied into the Apache-2.0 core.
 - [ ] Every adapted source retains its controlling license, header, authorship, pinned revision, file list, and modification note.
@@ -34,9 +34,10 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 
 ## Installer and human acceptance
 
-- [ ] The RC directory contains one self-contained `SolcordInstaller.exe`, `solcord.asar`, both manifests, and `SHA256SUMS.txt`; every hash matches.
+- [ ] The assembled release contains root `release-manifest.json`, release-level `SHA256SUMS.txt`, source and delivery ZIPs, hash-bound `evidence/`, and an `installer/` directory containing exactly `SolcordInstaller.exe`, `solcord.asar`, both installer/build manifests, installer-only `SHA256SUMS.txt`, and `solcord-installer-build-receipt.json`.
+- [ ] The installer receipt hash and release-manifest hash are preserved outside their respective directories and standalone validation succeeds with those external pins.
 - [ ] The executable is labeled unsigned and Windows unknown-publisher behavior is stated without advising users to disable security.
-- [ ] Six privacy-clean screenshots come from this exact RC: download/hash, Discord closed, target review, installed/verified, first setup, and rollback/recovery.
+- [ ] Six privacy-clean screenshots come from this exact RC with the documented names: Download/hash, Quit Discord, Install/target review, Verified, First Setup, and Recovery.
 - [ ] The quick guide says “about one minute on a typical Windows PC after download,” not a guarantee.
 - [ ] Install, Verify, Repair/Update, Roll Back/Uninstall, and explicit Launch pass against a disposable target.
 - [ ] Settings, About, Activity Bridge, Audience Guard, Friend Watch, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery receive Human Eye `ACCEPT`.
@@ -45,6 +46,6 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 ## Release decision
 
 - [ ] The core updater still fails closed without Solcord-owned integrity metadata.
-- [ ] Exact commit, ASAR hash, installer hash, test summary, runtime nonclaims, backup location, and rollback route are in the external release manifest.
+- [ ] Exact commit, ASAR and installer hashes, runtime nonclaims, backup identity, rollback route, and acceptance receipts are bound by `release-manifest.json`; test and hosted-check receipts are present as hash-bound evidence files.
 - [ ] The tag, GitHub prerelease, documentation, source, installer, ASAR, and installed About surface identify the same final source SHA.
 - [ ] Stable publication remains blocked until authentic signing or an independently authenticated distribution mechanism and a fresh stable decision exist.

@@ -3,10 +3,13 @@ import solcordMark from "@assets/branding/solcord-mark.svg";
 
 import {useStateFromStores} from "@ui/hooks";
 import Toasts from "@stores/toasts";
+import Config from "@stores/config";
 import PluginManager from "@modules/pluginmanager";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings, {SOLCORD_PRESET_ADDONS} from "@modules/solcord/store";
 import PluginDoctor from "@modules/solcord/doctor";
+import type {SolcordLocalTranslationAvailability} from "@modules/solcord/local-translation";
+import type {SolcordVoiceNotePhase} from "@modules/solcord/native-suite";
 import {CoreUpdater, PluginUpdater, ThemeUpdater} from "@modules/updater";
 import type {SolcordModuleId, SolcordSetupDraft} from "@modules/solcord/contracts";
 import type {LinkInspection} from "@modules/solcord/link-lens";
@@ -14,10 +17,12 @@ import type {LinkInspection} from "@modules/solcord/link-lens";
 import SetupWizard from "./setup-wizard";
 import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
-import {SOLCORD_POWER_LAB} from "./catalog";
+import {SOLCORD_ADDON_PRESENTATION, SOLCORD_POWER_LAB} from "./catalog";
 import {normalizeSolcordMediaShelfUrl, prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
-import {isSolcordBuiltInAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS, solcordNativeSuiteFeatureForAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
+import {presentSolcordChannelGlance, type SolcordChannelGlancePresentation} from "@common/solcord/chat-output";
+import {privacyCapabilityStateLabel} from "@common/solcord/privacy";
 
 const {useEffect, useRef, useState} = React;
 
@@ -37,7 +42,7 @@ function timestamp(value?: number | string): string {
 function Section({title, summary, children}: {title: string; summary?: string; children: React.ReactNode;}) {
     return <section className="solcord-section">
         <div className="solcord-section-heading">
-            <h2>{title}</h2>
+            <h3>{title}</h3>
             {summary && <p>{summary}</p>}
         </div>
         {children}
@@ -48,33 +53,16 @@ function ActionButton({children, onClick, tone = "neutral", disabled = false}: {
     return <button type="button" className={`solcord-action solcord-action-${tone}`} onClick={onClick} disabled={disabled}>{children}</button>;
 }
 
-function ModuleTable() {
-    const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({settings: SolcordSettings.snapshot(), health: SolcordRuntime.health()}));
-    return <div className="solcord-module-table" role="table" aria-label="Solcord module status">
-        {state.health.length ? state.health.map(health => {
-            const module = state.settings.modules[health.id];
-            return <div className="solcord-module-row" role="row" key={health.id}>
-                <div className="solcord-module-primary" role="cell">
-                    <div className="solcord-module-name">
-                        <strong>{health.name}</strong>
-                        <span className={`solcord-status solcord-status-${health.status}`}>{health.status}</span>
-                        <span className="solcord-maturity">{health.maturity}</span>
-                    </div>
-                    <p>{health.detail}</p>
-                    <small>{health.startupDurationMs === undefined ? "Not timed" : `${health.startupDurationMs} ms startup`} · {Object.values(health.resources).reduce((sum, value) => sum + value, 0)} owned resources</small>
-                </div>
-                <label className="solcord-toggle" role="cell">
-                    <input
-                        type="checkbox"
-                        aria-label={`Enable ${health.name}`}
-                        checked={module.enabled}
-                        disabled={health.id === "plugin-doctor"}
-                        onChange={event => void SolcordRuntime.setEnabled(health.id, event.currentTarget.checked)}
-                    />
-                    <span>{module.enabled ? "On" : "Off"}</span>
-                </label>
-            </div>;
-        }) : <p className="solcord-empty" role="status">Module health will appear after Solcord finishes starting.</p>}
+function RuntimeStatusDetails() {
+    const health = useStateFromStores(SolcordRuntime, () => SolcordRuntime.health());
+    return <div className="solcord-module-table" role="list" aria-label="Read-only Solcord runtime status">
+        {health.length ? health.map(item => <div className="solcord-module-row" role="listitem" key={item.id}>
+            <div className="solcord-module-primary">
+                <div className="solcord-module-name"><strong>{item.name}</strong><span className={`solcord-status solcord-status-${item.status}`}>{item.status}</span></div>
+                <p>{item.detail}</p>
+                <small>{item.startupDurationMs === undefined ? "Not timed" : `${item.startupDurationMs} ms startup`} · {Object.values(item.resources).reduce((sum, value) => sum + value, 0)} owned resources</small>
+            </div>
+        </div>) : <p className="solcord-empty" role="status">Runtime status will appear after Solcord finishes starting.</p>}
     </div>;
 }
 
@@ -285,10 +273,10 @@ function PrivacyProtectionPanel() {
     return <Section title="Privacy protection" summary="Optional data collection is controlled without intercepting Discord's essential traffic.">
         <div className="solcord-privacy-command">
             <div><p className="solcord-eyebrow">Current profile</p><strong>{state.preferences.profile === "strict" ? "Strict Privacy" : state.preferences.profile === "standard" ? "Standard" : "Custom"}</strong><p>{state.preferences.profile === "strict" ? "Verified optional reporting is blocked; unsupported categories stay visible; updates are manual." : "Some optional Discord reporting may remain available."}</p></div>
-            <span className={`solcord-status ${state.preferences.migrationPending ? "solcord-status-starting" : "solcord-status-active"}`}>{state.preferences.migrationPending ? "Needs review" : state.preferences.profile}</span>
+            {state.preferences.migrationPending && <span className="solcord-status solcord-status-starting">Needs review</span>}
         </div>
         <div className="solcord-actions"><ActionButton tone="accent" onClick={() => void applyProfile("strict")}>Use Strict Privacy</ActionButton><ActionButton onClick={() => void applyProfile("standard")}>Use Standard</ActionButton><ActionButton onClick={() => void checkUpdates()}>Check for updates</ActionButton></div>
-        <div className="solcord-privacy-capabilities" role="list" aria-label="Privacy capability status">{state.capabilities.map(capability => <div key={capability.dataClass} role="listitem"><span><strong>{capability.dataClass.replaceAll("-", " ")}</strong><small>{capability.summary}</small></span><span className={`solcord-privacy-state solcord-privacy-state-${capability.state.toLowerCase()}`}>{capability.state}</span></div>)}</div>
+        <div className="solcord-privacy-capabilities" role="list" aria-label="Privacy capability status">{state.capabilities.map(capability => <div key={capability.dataClass} role="listitem"><span><strong>{capability.dataClass.replaceAll("-", " ")}</strong><small>{capability.summary}</small></span><span className={`solcord-privacy-state solcord-privacy-state-${capability.state.toLowerCase()}`}>{privacyCapabilityStateLabel(capability.state)}</span></div>)}</div>
         <p className="solcord-key-hint">Discord account privacy settings are separate. Solcord reports unsupported or drifting protection honestly and never claims zero tracking without an exact-build network audit.</p>
         {status && <p role="status" className="solcord-import-status">{status}</p>}
         <details className="solcord-secondary-tools"><summary>Technical details</summary><p>{state.receipts.length} content-free local decision receipt(s). Receipts contain only category, decision, coarse time, and result—never URLs, payloads, account IDs, messages, attachments, or file paths.</p></details>
@@ -318,7 +306,8 @@ function StreamAudienceGuardControls() {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
         settings: SolcordSettings.snapshot().modules["stream-audience-guard"],
         runtime: SolcordRuntime.audienceGuardStatus(),
-        privateState: SolcordRuntime.audienceGuardPrivatePolicy()
+        privateState: SolcordRuntime.audienceGuardPrivatePolicy(),
+        armReadiness: SolcordRuntime.audienceGuardArmReadiness()
     }));
     const [userId, setUserId] = useState("");
     const [label, setLabel] = useState("");
@@ -329,8 +318,8 @@ function StreamAudienceGuardControls() {
     };
     const add = async () => {
         const normalizedId = userId.trim();
-        if (!/^\d{1,32}$/.test(normalizedId)) {
-            setActionStatus("Enter a Discord user ID containing digits only.");
+        if (!/^[1-9]\d{16,19}$/.test(normalizedId)) {
+            setActionStatus("Enter a complete Discord user ID (17 to 20 digits).");
             return;
         }
         const complete = await SolcordRuntime.setAudienceGuardEntries([...state.privateState.policy.entries, {userId: normalizedId, label: label.trim()}]);
@@ -339,6 +328,10 @@ function StreamAudienceGuardControls() {
         setLabel("");
     };
     const arm = () => {
+        if (!state.armReadiness.ready) {
+            setActionStatus(state.armReadiness.detail);
+            return;
+        }
         if (!window.confirm("Arm Stream Audience Guard for the current voice call? Solcord will prevent or stop your own Go Live when a denied user is detected. This cannot make a normal Discord stream invisible to one person or guarantee zero-frame exposure.")) return;
         setActionStatus(SolcordRuntime.armAudienceGuard() ? "Audience Guard is armed for this call." : "Audience Guard could not arm. Join a voice channel, add a denied user, enable at least one mode, and confirm the adapter is available.");
     };
@@ -366,16 +359,15 @@ function StreamAudienceGuardControls() {
             <label><input type="checkbox" checked={state.settings.values.stopOnWatch === true} disabled={!state.settings.enabled || state.runtime.armed} onChange={event => setMode("stopOnWatch", event.currentTarget.checked)} /> Stop on Watch</label>
         </div>
         <div className="solcord-inline-field solcord-audience-add">
-            <input value={userId} inputMode="numeric" maxLength={32} placeholder="Discord user ID" aria-label="Denied Discord user ID" onChange={event => setUserId(event.currentTarget.value.replace(/\D/g, ""))} />
+            <input value={userId} inputMode="numeric" maxLength={20} placeholder="Discord user ID" aria-label="Denied Discord user ID" onChange={event => setUserId(event.currentTarget.value.replace(/\D/g, ""))} />
             <input value={label} maxLength={80} placeholder="Private label (optional)" aria-label="Private label for denied user" onChange={event => setLabel(event.currentTarget.value)} />
             <ActionButton onClick={() => void add()} disabled={!state.settings.enabled || entries.length >= 100 || !userId.trim()}>Add locally</ActionButton>
         </div>
-        <div className="solcord-audience-list" aria-label="Denied stream audience">
+        {entries.length > 0 ? <div className="solcord-audience-list" aria-label="Denied stream audience">
             {entries.map(entry => <div key={entry.userId} className="solcord-audience-row"><div><strong>{entry.label || `Discord user •${entry.userId.slice(-4)}`}</strong><small>Account-private entry · ID ending {entry.userId.slice(-4)}</small></div><ActionButton disabled={state.runtime.armed} onClick={() => void SolcordRuntime.setAudienceGuardEntries(entries.filter(item => item.userId !== entry.userId))}>Remove</ActionButton></div>)}
-            {!entries.length && <p className="solcord-empty">No denied users are stored for this Discord account.</p>}
-        </div>
+        </div> : <p className="solcord-empty">No denied users are stored for this Discord account.</p>}
         <div className="solcord-actions">
-            {state.runtime.armed ? <ActionButton tone="danger" onClick={() => {SolcordRuntime.disarmAudienceGuard(); setActionStatus("Audience Guard disarmed.");}}>Disarm</ActionButton> : <ActionButton tone="accent" disabled={!state.runtime.available || !entries.length} onClick={arm}>Arm for this call</ActionButton>}
+            {state.runtime.armed ? <ActionButton tone="danger" onClick={() => {SolcordRuntime.disarmAudienceGuard(); setActionStatus("Audience Guard disarmed.");}}>Disarm</ActionButton> : <ActionButton tone="accent" disabled={!state.armReadiness.ready} onClick={arm}>Arm for this call</ActionButton>}
             <ActionButton tone="danger" disabled={!entries.length || state.runtime.armed} onClick={() => {if (window.confirm("Clear this account's private Stream Audience Guard denylist?")) void SolcordRuntime.clearAudienceGuardEntries();}}>Clear private list</ActionButton>
         </div>
         <p className="solcord-key-hint">{storageMessage} {state.runtime.detail}</p>
@@ -384,24 +376,91 @@ function StreamAudienceGuardControls() {
 }
 
 type NativeSuiteScope = "status" | "chat" | "voice" | "friends";
+type BuiltInWorkspaceScope = "privacy" | "appearance" | Exclude<NativeSuiteScope, "status">;
+
+const BUILTIN_FEATURES_BY_WORKSPACE = Object.freeze({
+    privacy: ["privacy-controls"],
+    appearance: ["motion-studio"],
+    chat: ["composer-toolkit", "translation-desk", "channel-glance", "notification-review"],
+    voice: ["call-context", "audio-console", "voice-note-studio"],
+    friends: ["people-and-spaces"]
+} as const);
+
+function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
+    const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
+        onboarding: SolcordSettings.snapshot().onboarding,
+        addons: SolcordSettings.snapshot().curatedAddons,
+        adapters: SolcordRuntime.curatedAdapterStatus()
+    }));
+    const [busy, setBusy] = useState<string>();
+    const [message, setMessage] = useState("");
+    const featureIds = BUILTIN_FEATURES_BY_WORKSPACE[scope] as readonly string[];
+    const rows = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS
+        .filter(name => featureIds.includes(solcordNativeSuiteFeatureForAddon(name) ?? ""))
+        .map(name => ({name, presentation: SOLCORD_ADDON_PRESENTATION.get(name)!}));
+    const toggle = async (name: string, enabled: boolean) => {
+        setBusy(name);
+        setMessage("");
+        const succeeded = await SolcordRuntime.setCuratedAddonEnabled(name, enabled);
+        const label = SOLCORD_ADDON_PRESENTATION.get(name)?.label ?? name;
+        const adapter = SolcordRuntime.curatedAdapterStatus()[name];
+        setMessage(!succeeded
+            ? `${label} stayed off because its setup, integrity, or runtime gate is not ready.`
+            : !enabled
+                ? `${label} disabled.`
+                : adapter?.enabled
+                    ? `${label} enabled${adapter.provider === "community" ? " through the reviewed community provider" : ""}.`
+                    : `${label} is selected but unavailable${adapter?.reason ? `: ${adapter.reason}` : "."}`);
+        setBusy(undefined);
+    };
+    const title = scope === "privacy" ? "Privacy built-ins" : scope === "appearance" ? "Motion built-ins" : scope === "chat" ? "Message built-ins" : scope === "voice" ? "Voice built-ins" : "People built-ins";
+    return <Section title={title} summary="Owned Solcord features; each switch starts and stops only its matching behavior.">
+        <div className="solcord-setting-rows solcord-builtin-switches">
+            {rows.map(({name, presentation}) => {
+                const enabled = state.addons[name]?.enabled === true;
+                const adapter = state.adapters[name];
+                const maturity = !enabled ? "off" : adapter?.enabled ? "ready" : "unsupported";
+                const status = maturity === "ready" ? "Ready" : maturity === "unsupported" ? "Unavailable" : "Off";
+                return <label key={name}>
+                    <span><strong>{presentation.label}</strong><small>{presentation.summary}</small></span>
+                    <span className="solcord-builtin-control">
+                        <small className={`solcord-capability solcord-capability-${maturity}`} title={adapter?.reason}>{status}</small>
+                        <span className="solcord-switch">
+                            <input type="checkbox" aria-label={`${enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={enabled} disabled={state.onboarding.status !== "complete" || busy === name} onChange={event => void toggle(name, event.currentTarget.checked)} />
+                            <i aria-hidden="true" />
+                        </span>
+                    </span>
+                </label>;
+            })}
+        </div>
+        {state.onboarding.status !== "complete" && <p className="solcord-key-hint">Complete First Setup once to establish a rollback point before enabling built-ins here.</p>}
+        {message && <p className="solcord-import-status" role="status">{message}</p>}
+    </Section>;
+}
 
 function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
-    const state = useStateFromStores([SolcordRuntime, SolcordSettings], () => ({statuses: SolcordRuntime.nativeSuiteStatus(), preferences: SolcordSettings.snapshot().productPreferences, accountGeneration: SolcordRuntime.privateAccountGeneration()}));
+    const state = useStateFromStores([SolcordRuntime, SolcordSettings], () => ({statuses: SolcordRuntime.nativeSuiteStatus(), preferences: SolcordSettings.snapshot().productPreferences, onboarding: SolcordSettings.snapshot().onboarding, accountGeneration: SolcordRuntime.privateAccountGeneration()}));
     const controller = SolcordRuntime.nativeSuiteController();
+    const nativePreferences = state.preferences.nativeSuite;
+    const initialObjectId = scope === "friends" ? SolcordRuntime.currentPeopleObjectId() ?? "" : controller?.currentChannelId() ?? "";
     const [actionStatus, setActionStatus] = useState("");
     const [audioUserId, setAudioUserId] = useState("");
     const [audioPercent, setAudioPercent] = useState(100);
-    const [channelId, setChannelId] = useState(() => controller?.currentChannelId() ?? "");
+    const [channelId, setChannelId] = useState(initialObjectId);
+    const [peopleTarget, setPeopleTarget] = useState(() => scope === "friends" ? SolcordRuntime.resolvePeopleObject(initialObjectId) : undefined);
     const [serverAlias, setServerAlias] = useState("");
-    const [glance, setGlance] = useState<Array<{id: string; authorLabel: string; text: string; timestamp: number;}>>([]);
+    const [glance, setGlance] = useState<SolcordChannelGlancePresentation>(() => presentSolcordChannelGlance([]));
     const [translationText, setTranslationText] = useState("");
     const [translationResult, setTranslationResult] = useState("");
     const [translationCredential, setTranslationCredential] = useState("");
-    const [voiceStarting, setVoiceStarting] = useState(false);
-    const [voiceRecording, setVoiceRecording] = useState(false);
-    const [voicePreview, setVoicePreview] = useState<{recordingId: string; durationMs: number; sizeBytes: number; url: string;} | undefined>();
+    const [localTranslationState, setLocalTranslationState] = useState(() => controller?.localTranslationState());
+    const [localPairAvailability, setLocalPairAvailability] = useState<"idle" | "checking" | "auto" | SolcordLocalTranslationAvailability | "failed">("idle");
+    const translationAbort = useRef<AbortController | undefined>(undefined);
+    const translationAvailabilityAbort = useRef<AbortController | undefined>(undefined);
+    const [voicePhase, setVoicePhase] = useState<SolcordVoiceNotePhase>(() => controller?.voiceNotePhase() ?? "idle");
+    const [voicePreview, setVoicePreview] = useState<{recordingId: string; durationMs: number; sizeBytes: number; waveform: readonly number[]; url: string;} | undefined>();
     const [composerDraft, setComposerDraft] = useState("");
-    const [composerProof, setComposerProof] = useState<{characterCount: number; partCount: number; warnings: string[];} | undefined>();
+    const [composerProof, setComposerProof] = useState<{reviewedDraft: string; characterCount: number; partCount: number; warnings: string[];} | undefined>();
     const [timeValue, setTimeValue] = useState("");
     const [timeStyle, setTimeStyle] = useState<"t" | "T" | "d" | "D" | "f" | "F" | "R">("F");
     const [timeMarkup, setTimeMarkup] = useState("");
@@ -413,20 +472,38 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const [identityTags, setIdentityTags] = useState("");
     const [identityNotes, setIdentityNotes] = useState<Array<{subjectId: string; text: string; tags: string[]; updatedAt: number;}>>([]);
     const [identityPersistent, setIdentityPersistent] = useState(false);
+    const [friendQuery, setFriendQuery] = useState("");
+    const [friendSort, setFriendSort] = useState<"name" | "status">("name");
+    const [friendCategory, setFriendCategory] = useState<"visible" | "favorites" | "hidden" | "blocked" | "incoming" | "outgoing" | "ignored">("visible");
+    const [friendRows, setFriendRows] = useState<Array<{id: string; label: string; status: "online" | "idle" | "dnd" | "offline" | "unknown"; relationship: "friend" | "blocked" | "incoming" | "outgoing" | "ignored"; favorite: boolean; hidden: boolean; relationshipSince?: number; mutualGuildCount?: number;}>>([]);
+    const [peopleSnapshot, setPeopleSnapshot] = useState(() => controller?.peopleSnapshot());
     const accountGeneration = useRef(state.accountGeneration);
+    useEffect(() => {
+        if (scope !== "voice" || !controller) return;
+        setVoicePhase(controller.voiceNotePhase());
+        const unsubscribe = controller.subscribeVoiceNotePhase(setVoicePhase);
+        return () => {
+            unsubscribe();
+            controller.cancelVoiceNote();
+        };
+    }, [controller, scope]);
+    useEffect(() => setPeopleSnapshot(controller?.peopleSnapshot()), [controller, state.accountGeneration]);
     useEffect(() => {
         if (accountGeneration.current === state.accountGeneration) return;
         accountGeneration.current = state.accountGeneration;
         setActionStatus("Discord account changed. Account-private drafts, credentials, previews, notes, and session-only space rules were cleared.");
         setAudioUserId("");
-        setChannelId("");
+        const nextObjectId = scope === "friends" ? SolcordRuntime.currentPeopleObjectId() ?? "" : "";
+        setChannelId(nextObjectId);
+        setPeopleTarget(scope === "friends" ? SolcordRuntime.resolvePeopleObject(nextObjectId) : undefined);
         setServerAlias("");
-        setGlance([]);
+        setGlance(presentSolcordChannelGlance([]));
         setTranslationText("");
         setTranslationResult("");
         setTranslationCredential("");
-        setVoiceStarting(false);
-        setVoiceRecording(false);
+        translationAbort.current?.abort();
+        controller?.cancelVoiceNote();
+        setVoicePhase("idle");
         setVoicePreview(undefined);
         setComposerDraft("");
         setComposerProof(undefined);
@@ -436,15 +513,71 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
         setIdentityTags("");
         setIdentityNotes([]);
         setIdentityPersistent(false);
-    }, [state.accountGeneration]);
-    const nativePreferences = state.preferences.nativeSuite;
-    const stateLabel = {"off": "Off", "needs-setup": "Needs setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unavailable"} as const;
+        setFriendQuery("");
+        setFriendCategory("visible");
+        setFriendRows([]);
+    }, [controller, scope, state.accountGeneration]);
+    useEffect(() => {
+        if (!controller) return;
+        const unsubscribe = controller.subscribeLocalTranslation(setLocalTranslationState);
+        return () => {
+            translationAbort.current?.abort();
+            translationAvailabilityAbort.current?.abort();
+            unsubscribe();
+        };
+    }, [controller]);
+    useEffect(() => {
+        translationAvailabilityAbort.current?.abort();
+        if (scope !== "chat" || !controller || nativePreferences.translation.provider !== "local") {
+            setLocalPairAvailability("idle");
+            return;
+        }
+        const source = nativePreferences.translation.sourceLanguage.trim();
+        const target = nativePreferences.translation.targetLanguage.trim();
+        if (source.toLocaleLowerCase() === "auto") {
+            setLocalPairAvailability("auto");
+            return;
+        }
+        const abort = new AbortController();
+        translationAvailabilityAbort.current = abort;
+        setLocalPairAvailability("checking");
+        void controller.localTranslationAvailability(source, target, abort.signal).then(availability => {
+            if (!abort.signal.aborted) setLocalPairAvailability(availability);
+        }).catch(error => {
+            if (!abort.signal.aborted && (!(error instanceof Error) || error.name !== "AbortError")) setLocalPairAvailability("failed");
+        });
+        return () => abort.abort();
+    }, [controller, nativePreferences.translation.provider, nativePreferences.translation.sourceLanguage, nativePreferences.translation.targetLanguage, scope]);
+    const stateLabel = {"off": "Off", "needs-setup": "Optional setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unavailable"} as const;
     const statusById = new Map(state.statuses.map(item => [item.id, item]));
     const visibleStatuses = state.statuses.filter(item => item.maturity !== "off");
     const unavailableStatuses = state.statuses.filter(item => item.maturity === "unsupported");
     const statusFor = (...ids: Array<(typeof state.statuses)[number]["id"]>) => state.statuses.filter(item => ids.includes(item.id));
     const available = (id: (typeof state.statuses)[number]["id"]) => ["ready", "needs-setup", "degraded"].includes(statusById.get(id)?.maturity ?? "off");
+    const voiceDeliveryMode = controller?.voiceNoteDeliveryMode() ?? "unavailable";
+    const voiceContext = controller?.currentVoiceContext();
+    const audioReadiness = controller?.localVolumeReviewState(audioUserId.trim()) ?? {ready: false, detail: "Audio Console is unavailable on this Discord build."};
+    const voiceStarting = voicePhase === "requesting-permission";
+    const voiceRecording = voicePhase === "recording";
+    const voicePhaseLabel: Record<SolcordVoiceNotePhase, string> = {"idle": "idle", "requesting-permission": "waiting for microphone permission", "recording": "recording locally", "processing": "building local preview", "preview-ready": "local preview ready"};
+    const externalTranslation = nativePreferences.translation.provider === "deepl" || nativePreferences.translation.provider === "libretranslate";
     const translationEndpoint = nativePreferences.translation.provider === "deepl" ? "https://api-free.deepl.com/v2/translate" : nativePreferences.translation.endpoint;
+    const localPairMessage = localTranslationState?.phase === "downloading"
+        ? `Downloading the local language pack · ${Math.round((localTranslationState.progress ?? 0) * 100)}%`
+        : localTranslationState?.phase === "unsupported"
+            ? "On-device translation is unsupported in this Discord/Electron build. No cloud fallback will run automatically."
+            : localTranslationState?.phase === "degraded" || localPairAvailability === "failed"
+                ? "The local engine failed closed. No text left Discord."
+                : localPairAvailability === "checking"
+                    ? "Checking this language pair on device…"
+                    : localPairAvailability === "unavailable"
+                        ? "This language pair is unavailable in the installed Discord/Electron build."
+                        : localPairAvailability === "downloadable" || localPairAvailability === "downloading"
+                            ? "Available on device after Chromium downloads this language pack."
+                            : localPairAvailability === "available"
+                                ? "Available on device. Text stays on this device."
+                                : "Automatic detection and the exact language pair are checked locally when you translate.";
+    const localPairBlocked = localPairAvailability === "checking" || localPairAvailability === "unavailable" || localPairAvailability === "failed" || localTranslationState?.phase === "unsupported";
     const updateNativePreferences = (next: typeof nativePreferences) => void SolcordRuntime.setProductPreferences({...state.preferences, nativeSuite: next});
     const requireController = () => {
         if (!controller) throw new Error("Solcord's built-in controls are unavailable on this Discord build.");
@@ -462,17 +595,28 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     };
     const reviewChannel = () => {
         try {
-            setGlance([...requireController().previewLoadedChannel(channelId.trim())]);
-            setActionStatus("Channel Glance read the already-loaded local store without fetching or marking anything read.");
+            const presentation = presentSolcordChannelGlance(requireController().previewLoadedChannel(channelId.trim()));
+            setGlance(presentation);
+            setActionStatus(presentation.totalCount
+                ? `Showing ${presentation.rows.length} of ${presentation.totalCount} already-loaded message${presentation.totalCount === 1 ? "" : "s"}. Nothing was fetched, marked read, or persisted.`
+                : "No already-loaded messages are available for that channel. Nothing was fetched, marked read, or persisted.");
         }
-        catch (error) {setGlance([]); setActionStatus(error instanceof Error ? error.message : "Channel Glance stayed unavailable.");}
+        catch (error) {setGlance(presentSolcordChannelGlance([])); setActionStatus(error instanceof Error ? error.message : "Channel Glance stayed unavailable.");}
     };
     const translate = async () => {
         try {
             const provider = nativePreferences.translation.provider;
-            if (provider === "off") throw new Error("Choose a translation provider first.");
             const activeController = requireController();
-            const preview = activeController.previewTranslation(provider, nativePreferences.translation.endpoint || undefined, "auto", "EN", translationText);
+            if (provider === "local") {
+                translationAbort.current?.abort();
+                const abort = new AbortController();
+                translationAbort.current = abort;
+                setTranslationResult(await activeController.translateLocally(nativePreferences.translation.sourceLanguage, nativePreferences.translation.targetLanguage, translationText, abort.signal));
+                setActionStatus("Translated on this device. No message text was sent to a Solcord or third-party server.");
+                return;
+            }
+            if (provider === "off") throw new Error("Translation Desk is ready, but every provider is off. Choose On-device, DeepL, or LibreTranslate when you want to translate.");
+            const preview = activeController.previewTranslation(provider, nativePreferences.translation.endpoint || undefined, nativePreferences.translation.sourceLanguage, nativePreferences.translation.targetLanguage, translationText);
             if (!window.confirm(`${preview.disclosure}\n\nContinue with this reviewed text?`)) return;
             setTranslationResult(await activeController.executeReviewedTranslation(preview.id, translationCredential));
             setActionStatus("Translation returned to this local panel. It was not inserted or sent to Discord.");
@@ -482,34 +626,43 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const startVoice = async () => {
         try {
             if (!controller) throw new Error("Voice Note Studio is unavailable on this Discord build.");
-            setVoiceStarting(true);
+            setVoicePhase("requesting-permission");
             await controller.beginVoiceNoteFromUserGesture();
-            setVoiceRecording(true);
             setVoicePreview(undefined);
             setActionStatus("Recording locally. Nothing is uploading.");
         }
-        catch (error) {setVoiceRecording(false); setActionStatus(error instanceof Error ? error.message : "Voice Note Studio stayed unavailable.");}
-        finally {setVoiceStarting(false);}
+        catch (error) {setVoicePhase(controller?.voiceNotePhase() ?? "idle"); setActionStatus(error instanceof Error ? error.message : "Voice Note Studio stayed unavailable.");}
+        finally {setVoicePhase(controller?.voiceNotePhase() ?? "idle");}
     };
     const stopVoice = async () => {
         try {
             if (!controller || !voiceRecording) throw new Error("No local recording is active.");
             const preview = await controller.stopVoiceNoteForPreview();
-            setVoiceRecording(false);
             setVoicePreview(preview);
-            setActionStatus("Recording stopped. Review it before opening Discord's ordinary upload composer.");
+            setActionStatus(voiceDeliveryMode === "discord-composer"
+                ? "Recording stopped. Review it before opening Discord's ordinary upload composer."
+                : "Recording stopped. Review it before saving the local file to attach manually.");
         }
-        catch (error) {setVoiceRecording(false); setActionStatus(error instanceof Error ? error.message : "No local recording could be previewed.");}
+        catch (error) {setVoicePhase(controller?.voiceNotePhase() ?? "idle"); setActionStatus(error instanceof Error ? error.message : "No local recording could be previewed.");}
     };
     const prepareVoiceUpload = () => {
         if (!voicePreview || !window.confirm("Open Discord's normal upload composer with this reviewed voice note? This prepares the file but does not press Send.")) return;
-        try {requireController().prepareReviewedVoiceNoteUpload(channelId.trim()); setVoiceRecording(false); setVoicePreview(undefined); setActionStatus("The reviewed file was handed to Discord's normal upload composer. You still control Send.");}
+        try {requireController().prepareReviewedVoiceNoteUpload(channelId.trim()); setVoicePreview(undefined); setActionStatus("The reviewed file was handed to Discord's normal upload composer. You still control Send.");}
         catch (error) {setActionStatus(error instanceof Error ? error.message : "The native upload composer stayed unavailable.");}
+    };
+    const saveVoiceFile = () => {
+        if (!voicePreview || !window.confirm("Save this reviewed voice note as a local file? Solcord will not attach or send it; you choose where and whether to upload it.")) return;
+        try {requireController().saveReviewedVoiceNoteFile(); setVoicePreview(undefined); setActionStatus("Voice note saved locally. Attach it through Discord yourself when ready.");}
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "The local voice-note file could not be saved.");}
     };
     const previewNotifications = (notificationScope: "guild" | "mentions" | "all") => {
         try {
             const activeController = requireController();
             const preview = activeController.previewNotifications(notificationScope);
+            if (preview.count === 0) {
+                setActionStatus("Nothing to review in the already-loaded notification state. No confirmation opened and no read state changed.");
+                return;
+            }
             if (!window.confirm(`Mark ${preview.count} reviewed ${notificationScope} notification item(s) as read? This changes account read state and cannot be undone by Solcord.`)) return;
             activeController.applyReviewedNotifications(preview.id);
             setActionStatus(`${preview.count} reviewed notification item(s) were marked read.`);
@@ -519,15 +672,72 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const addLocalSpaceRule = (kind: "pin" | "hide" | "alias") => {
         try {
             const activeController = requireController();
-            if (kind === "pin") activeController.pinDm(channelId.trim());
-            else if (kind === "hide") activeController.hideGuild(channelId.trim());
-            else activeController.aliasGuild(channelId.trim(), serverAlias.trim());
-            setActionStatus("The People and Spaces rule is active for this account session. No Discord server, profile, or settings file was edited.");
+            const target = SolcordRuntime.resolvePeopleObject(channelId.trim());
+            if (kind === "pin" && !target.canPinDm) throw new Error(target.label);
+            if ((kind === "hide" || kind === "alias") && !target.canManageServer) throw new Error(target.label);
+            const before = activeController.peopleSnapshot();
+            if (kind === "pin") {
+                if (before?.pinnedDmIds.includes(target.id)) activeController.unpinDm(target.id);
+                else activeController.pinDm(target.id);
+            }
+            else if (kind === "hide") {
+                if (before?.hiddenGuildIds.includes(target.id)) activeController.showGuild(target.id);
+                else activeController.hideGuild(target.id);
+            }
+            else {activeController.aliasGuild(target.id, serverAlias.trim());}
+            const next = activeController.peopleSnapshot();
+            const pinChanged = kind !== "pin" || next?.pinnedDmIds.includes(target.id) !== before?.pinnedDmIds.includes(target.id);
+            const hideChanged = kind !== "hide" || next?.hiddenGuildIds.includes(target.id) !== before?.hiddenGuildIds.includes(target.id);
+            const aliasChanged = kind !== "alias" || next?.guildAliases[target.id] === serverAlias.trim();
+            if (!next || !pinChanged || !hideChanged || !aliasChanged) throw new Error("The local People and Spaces transaction did not complete; no success was reported.");
+            setPeopleSnapshot(next);
+            setPeopleTarget(target);
+            setActionStatus(kind === "pin"
+                ? next.pinnedDmIds.includes(target.id) ? "DM pinned locally for this account." : "DM unpinned locally for this account."
+                : kind === "hide"
+                    ? next.hiddenGuildIds.includes(target.id) ? "Server hidden locally for this account." : "Server shown locally for this account."
+                    : "Local server alias saved for this account. Discord server state was not edited.");
         }
         catch (error) {setActionStatus(error instanceof Error ? error.message : "The local preference was not changed.");}
     };
+    const removeLocalSpaceRule = (kind: "pin" | "hide" | "alias", id: string) => {
+        try {
+            const activeController = requireController();
+            if (kind === "pin") activeController.unpinDm(id);
+            else if (kind === "hide") activeController.showGuild(id);
+            else activeController.clearGuildAlias(id);
+            const next = activeController.peopleSnapshot();
+            if (!next
+                || (kind === "pin" && next.pinnedDmIds.includes(id))
+                || (kind === "hide" && next.hiddenGuildIds.includes(id))
+                || (kind === "alias" && Object.hasOwn(next.guildAliases, id))) throw new Error("The local removal did not complete; no success was reported.");
+            setPeopleSnapshot(next);
+            setActionStatus("The account-local People and Spaces rule was removed. Discord state was not changed.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "The local preference was not removed.");}
+    };
+    const refreshFriendList = () => {
+        try {
+            const rows = requireController().loadedFriendList(friendQuery, friendSort, friendCategory);
+            setFriendRows(rows);
+            setActionStatus(`${rows.length} already-loaded relationship row${rows.length === 1 ? "" : "s"} matched. Nothing was fetched or changed.`);
+        }
+        catch (error) {setFriendRows([]); setActionStatus(error instanceof Error ? error.message : "Better Friend List stayed unavailable.");}
+    };
+    const updateFriendGroup = (id: string, action: "favorite" | "unfavorite" | "hide" | "show") => {
+        try {
+            const activeController = requireController();
+            if (action === "favorite") activeController.favoriteFriend(id);
+            else if (action === "unfavorite") activeController.unfavoriteFriend(id);
+            else if (action === "hide") activeController.hideFriend(id);
+            else activeController.showFriend(id);
+            refreshFriendList();
+            setActionStatus("The account-local friend group was updated. Discord's relationship state was not changed.");
+        }
+        catch (error) {setActionStatus(error instanceof Error ? error.message : "The local friend group was not changed.");}
+    };
     const reviewComposer = () => {
-        try {setComposerProof(requireController().composerProof(composerDraft)); setActionStatus("Composer Proof reviewed this local draft. Nothing was inserted or sent.");}
+        try {setComposerProof({reviewedDraft: composerDraft, ...requireController().composerProof(composerDraft)}); setActionStatus("Composer Proof reviewed this local draft. Nothing was inserted or sent.");}
         catch (error) {setComposerProof(undefined); setActionStatus(error instanceof Error ? error.message : "Composer Proof stayed unavailable.");}
     };
     const composeTime = () => {
@@ -595,29 +805,75 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const sectionSummary = scope === "status" ? "Built-ins replacing the old plugin cards." : "Only validated controls appear below.";
     return <Section title={sectionTitle} summary={sectionSummary}>
         {scope === "status" && <>
-            <div className="solcord-native-summary" aria-label="Built-in feature summary"><strong>{visibleStatuses.filter(item => item.maturity === "ready").length} ready</strong><span>{visibleStatuses.filter(item => item.maturity === "needs-setup").length} need setup</span><span>{unavailableStatuses.length} unsupported on this build</span></div>
-            <details className="solcord-state-help"><summary>What these states mean</summary><p>Ready means an implemented adapter passed its current startup validation. Off means it does no Discord lookup or patch work. Unsupported means the current Discord build did not expose a verified adapter.</p></details>
+            <div className="solcord-native-summary" aria-label="Built-in feature summary"><strong>{visibleStatuses.filter(item => item.maturity === "ready").length} ready</strong><span>{visibleStatuses.filter(item => item.maturity === "needs-setup").length} optional setup</span><span>{visibleStatuses.filter(item => item.maturity === "degraded").length} degraded</span><span>{unavailableStatuses.length} unsupported on this build</span></div>
+            <details className="solcord-state-help"><summary>What these states mean</summary><p>Ready passed startup validation. Optional setup means the tool is available but an external provider or preference is still off. Degraded means part of a running tool drifted or could not clean up completely. Off performs no Discord lookup or patch work. Unavailable means this Discord build exposed no verified adapter.</p></details>
             <div className="solcord-native-ledger" role="list" aria-label="Solcord built-in features">
-                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row"><div><strong>{item.title}</strong>{item.enabledProviders.length > 0 && <small>Replaces {item.enabledProviders.join(", ")}</small>}</div><span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
-                {!scopeStatus.length && <p className="solcord-empty">No built-in feature has been selected yet. Finish setup to choose the replacements you want.</p>}
+                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row" aria-label={`${item.title}: ${stateLabel[item.maturity]}. ${item.detail}`} title={item.detail}><strong className="solcord-native-title">{item.title}</strong>{item.enabledProviders.length > 0 && <small className="solcord-native-replaces">Replaces {item.enabledProviders.join(", ")}</small>}<span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
+                {!scopeStatus.length && <p className="solcord-empty">No built-in status is available yet.</p>}
             </div>
             {unavailableStatuses.length > 0 && <details className="solcord-native-unavailable-list"><summary>{unavailableStatuses.length} unavailable on this Discord build</summary>{unavailableStatuses.map(item => <div key={item.id}><strong>{item.title}</strong><span>{item.detail}</span></div>)}</details>}
         </>}
         {scope !== "status" && <>
-            {scope === "voice" && <div className="solcord-setting-list"><label className="solcord-setting-row"><span><strong>Voice Health</strong><small>Samples cached connection quality every five seconds while enabled. Never records audio.</small></span><span className="solcord-switch"><input type="checkbox" checked={nativePreferences.voiceHealthEnabled} onChange={event => updateNativePreferences({...nativePreferences, voiceHealthEnabled: event.currentTarget.checked})} /><i aria-hidden="true" /></span></label></div>}
+            {scope === "voice" && <div className="solcord-setting-list"><label className="solcord-setting-row"><span><strong>Voice Health</strong><small>Samples cached connection quality every five seconds while enabled. Never records audio.</small></span><span className="solcord-switch"><input type="checkbox" checked={nativePreferences.voiceHealthEnabled} onChange={event => updateNativePreferences({...nativePreferences, voiceHealthEnabled: event.currentTarget.checked})} /><i aria-hidden="true" /></span></label><details className="solcord-secondary-tools"><summary>Voice indicator surfaces</summary><div className="solcord-control-grid">{([["memberList", "Member list"], ["dmList", "DM list"], ["peopleList", "Friends list"], ["highlightCurrentChannel", "Highlight current call"], ["statusIcons", "Speaking/status detail"], ["currentUser", "Show my indicator"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.voiceActivity[key]} onChange={event => updateNativePreferences({...nativePreferences, voiceActivity: {...nativePreferences.voiceActivity, [key]: event.currentTarget.checked}})} /> {label}</label>)}</div>{voiceContext && <div className="solcord-actions">{peopleSnapshot?.ignoredVoiceChannelIds.includes(voiceContext.channelId) ? <ActionButton onClick={() => {controller?.includeVoiceChannel(voiceContext.channelId); setActionStatus("Voice indicators restored for this call.");}}>Show this call</ActionButton> : <ActionButton onClick={() => {controller?.ignoreVoiceChannel(voiceContext.channelId); setActionStatus("Voice indicators hidden for this call on this account.");}}>Hide this call</ActionButton>}{voiceContext.guildId && (peopleSnapshot?.ignoredVoiceGuildIds.includes(voiceContext.guildId) ? <ActionButton onClick={() => {controller?.includeVoiceGuild(voiceContext.guildId!); setActionStatus("Voice indicators restored for this server.");}}>Show this server</ActionButton> : <ActionButton onClick={() => {controller?.ignoreVoiceGuild(voiceContext.guildId!); setActionStatus("Voice indicators hidden for this server on this account.");}}>Hide this server</ActionButton>)}</div>}</details></div>}
             {usableScopeStatus.length > 0 && <div className="solcord-native-context-status" role="list" aria-label={`${sectionTitle} availability`}>{usableScopeStatus.map(item => <div role="listitem" key={item.id}><span>{item.title}</span><strong className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</strong></div>)}</div>}
-            {scopeStatus.every(item => item.maturity === "off") && <p className="solcord-empty">Finish setup to turn on these built-in tools and archive the matching community files.</p>}
+            {scopeStatus.every(item => item.maturity === "off") && <p className="solcord-empty">{state.onboarding.status === "complete" ? "No built-in tools are on. Use the switches above to enable only what you want." : "Complete First Setup once to create a rollback point before enabling these tools."}</p>}
             {!usableScopeStatus.length && unsupportedScopeStatus.length > 0 && <p className="solcord-empty">These tools are unavailable on this Discord build, so no inactive controls are shown.</p>}
             <div className={`solcord-native-tools solcord-native-tools-${scope}`}>
-            {scope === "chat" && available("composer-toolkit") && <details><summary>Composer Proof and Time Composer</summary><div className="solcord-composer-lab"><textarea value={composerDraft} maxLength={64000} placeholder="Review a draft locally before sending" onChange={event => setComposerDraft(event.currentTarget.value)} /><div className="solcord-actions"><ActionButton onClick={reviewComposer}>Review draft</ActionButton></div>{composerProof && <div className="solcord-native-preview"><p><strong>{composerProof.characterCount.toLocaleString()} characters</strong><span>{composerProof.partCount} guarded part(s)</span></p>{composerProof.warnings.length ? composerProof.warnings.map(warning => <p key={warning}>{warning}</p>) : <p>No broad-mention, length, or unclosed-code-block warnings found.</p>}</div>}<div className="solcord-catalog-tools"><label>Local date and time<input type="datetime-local" value={timeValue} onChange={event => setTimeValue(event.currentTarget.value)} /></label><label>Discord display style<select value={timeStyle} onChange={event => setTimeStyle(event.currentTarget.value as typeof timeStyle)}><option value="F">Full date and time</option><option value="f">Short date and time</option><option value="R">Relative</option><option value="D">Long date</option><option value="d">Short date</option><option value="T">Time with seconds</option><option value="t">Short time</option></select></label></div><div className="solcord-inline-field"><ActionButton disabled={!timeValue} onClick={composeTime}>Generate timestamp</ActionButton>{timeMarkup && <><output>{timeMarkup}</output><ActionButton onClick={() => void navigator.clipboard?.writeText(timeMarkup).then(() => setActionStatus("Reviewed timestamp copied. Solcord did not insert or send it."))}>Copy</ActionButton></>}</div></div></details>}
-            {scope === "voice" && available("audio-console") && <details><summary>Audio Console</summary><div className="solcord-inline-field"><input value={audioUserId} inputMode="numeric" placeholder="Discord user ID" aria-label="Audio Console user ID" onChange={event => setAudioUserId(event.currentTarget.value.replace(/\D/g, ""))} /><input type="number" min="0" max="200" value={audioPercent} aria-label="Local volume percent" onChange={event => setAudioPercent(Math.max(0, Math.min(200, Number(event.currentTarget.value))))} /><ActionButton disabled={!audioUserId} onClick={volume}>Review and apply</ActionButton></div></details>}
-            {scope === "chat" && available("channel-glance") && <details><summary>Channel Glance</summary><div className="solcord-inline-field"><input value={channelId} inputMode="numeric" placeholder="Loaded channel ID" aria-label="Loaded channel ID" onChange={event => setChannelId(event.currentTarget.value.replace(/\D/g, ""))} /><ActionButton disabled={!channelId} onClick={reviewChannel}>Glance</ActionButton></div><p className="solcord-key-hint">Reads only the already-loaded message store. It never fetches history, marks messages read, or persists content.</p>{glance.length > 0 && <div className="solcord-native-preview">{glance.map(message => <p key={message.id}><strong>{message.authorLabel}</strong> <span>{message.text || "No text content"}</span><small>{timestamp(message.timestamp)}</small></p>)}</div>}</details>}
-            {scope === "friends" && available("people-and-spaces") && <details><summary>People and Spaces</summary><div className="solcord-inline-field"><input value={channelId} inputMode="numeric" placeholder="Loaded DM, server, or user ID" aria-label="Local Discord object ID" onChange={event => setChannelId(event.currentTarget.value.replace(/\D/g, ""))} /><ActionButton disabled={!channelId} onClick={() => addLocalSpaceRule("pin")}>Pin DM locally</ActionButton><ActionButton disabled={!channelId} onClick={() => addLocalSpaceRule("hide")}>Hide server locally</ActionButton></div><div className="solcord-inline-field solcord-alias-field"><input value={serverAlias} maxLength={48} placeholder="Local server alias" aria-label="Local server alias" onChange={event => setServerAlias(event.currentTarget.value)} /><ActionButton disabled={!channelId || !serverAlias.trim()} onClick={() => addLocalSpaceRule("alias")}>Save local alias</ActionButton></div><p className="solcord-key-hint">Pins, hidden servers, and aliases stay only in memory for this account session.</p></details>}
-            {scope === "chat" && available("translation-desk") && <details><summary>Translation Desk</summary><div className="solcord-translation-grid"><label>Provider<select value={nativePreferences.translation.provider} onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, provider: event.currentTarget.value as typeof nativePreferences.translation.provider}});}}><option value="off">Off</option><option value="deepl">DeepL Free</option><option value="libretranslate">LibreTranslate</option></select></label><label>HTTPS endpoint<input value={nativePreferences.translation.endpoint} disabled={nativePreferences.translation.provider !== "libretranslate"} placeholder="https://translate.example/translate" onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, endpoint: event.currentTarget.value}});}} /></label><label>Credential<input type="password" autoComplete="off" value={translationCredential} placeholder="Stored only through encrypted private storage" onChange={event => setTranslationCredential(event.currentTarget.value)} /></label><div className="solcord-actions solcord-translation-credentials"><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint} onClick={() => void SolcordRuntime.readTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(result.credential); setActionStatus(result.complete ? (result.credential ? "Credential loaded from account-bound private storage." : "No credential is stored for this provider and endpoint.") : "Credential storage could not be read completely.");})}>Load credential</ActionButton><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint || !translationCredential} onClick={() => void SolcordRuntime.writeTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint, translationCredential).then(result => setActionStatus(result.complete ? (result.persistent ? "Credential encrypted through Electron safeStorage." : "Encryption is unavailable; the credential remains memory-only for this session.") : "Credential could not be persisted and was not added to normal settings."))}>Save securely</ActionButton><ActionButton disabled={nativePreferences.translation.provider === "off" || !translationEndpoint} tone="danger" onClick={() => void SolcordRuntime.clearTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(""); setActionStatus(result.complete ? "Stored credential cleared for this provider and endpoint." : "Credential cleanup needs attention.");})}>Clear credential</ActionButton></div><textarea value={translationText} maxLength={16000} placeholder="Text to review before translation" onChange={event => setTranslationText(event.currentTarget.value)} /><ActionButton disabled={!translationText || nativePreferences.translation.provider === "off"} onClick={() => void translate()}>Review destination and translate</ActionButton>{translationResult && <output>{translationResult}</output>}</div></details>}
-            {scope === "voice" && available("voice-note-studio") && <details><summary>Voice Note Studio</summary><div className="solcord-actions"><ActionButton disabled={voiceStarting || voiceRecording || Boolean(voicePreview)} onClick={() => void startVoice()}>{voiceStarting ? "Waiting for microphone" : "Record"}</ActionButton><ActionButton disabled={voiceStarting || !voiceRecording} onClick={() => void stopVoice()}>Stop and preview</ActionButton><ActionButton disabled={voiceStarting || voiceRecording || !voicePreview || !channelId} onClick={prepareVoiceUpload}>Open normal upload composer</ActionButton><ActionButton disabled={!voiceStarting && !voiceRecording && !voicePreview} tone="danger" onClick={() => {controller?.cancelVoiceNote(); setVoiceStarting(false); setVoiceRecording(false); setVoicePreview(undefined); setActionStatus("Local voice-note recording and preview cleared.");}}>Cancel</ActionButton></div>{voicePreview && <div className="solcord-native-preview"><audio controls src={voicePreview.url} /><small>{Math.ceil(voicePreview.durationMs / 1000)} seconds · {(voicePreview.sizeBytes / 1024).toFixed(1)} KiB · not uploaded</small></div>}</details>}
-            {scope === "chat" && available("notification-review") && <details><summary>Notification Review</summary><div className="solcord-actions"><ActionButton onClick={() => previewNotifications("mentions")}>Review mentions</ActionButton><ActionButton onClick={() => previewNotifications("guild")}>Review current server</ActionButton><ActionButton onClick={() => previewNotifications("all")}>Review all</ActionButton></div><p className="solcord-key-hint">Every action previews a bounded count and asks again before changing read state.</p></details>}
+            {scope === "chat" && available("composer-toolkit") && <details><summary>Composer Toolkit</summary><div className="solcord-composer-lab">
+                <div className="solcord-catalog-tools">
+                    <label>Reply modifier<select value={nativePreferences.composer.doubleClickReplyModifier} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, doubleClickReplyModifier: event.currentTarget.value as typeof nativePreferences.composer.doubleClickReplyModifier}})}><option value="none">None</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="alt">Alt</option></select></label>
+                    <label>Split boundary<select value={nativePreferences.composer.splitBoundary} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, splitBoundary: event.currentTarget.value as typeof nativePreferences.composer.splitBoundary}})}><option value="balanced">Newlines, then words</option><option value="newlines">Prefer newlines</option></select></label>
+                    <label>Part limit<input type="number" min="1000" max="4000" value={nativePreferences.composer.splitLimit} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, splitLimit: Number(event.currentTarget.value)}})} /></label>
+                    <label>Maximum parts<input type="number" min="0" max="20" value={nativePreferences.composer.maxSplitParts} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, maxSplitParts: Number(event.currentTarget.value)}})} /></label>
+                    <label>Text-file threshold<input type="number" min="0" max="64000" value={nativePreferences.composer.attachmentThreshold} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, attachmentThreshold: Number(event.currentTarget.value)}})} /></label>
+                    <label>Counter warning %<input type="number" min="50" max="100" value={nativePreferences.composer.counterWarningPercent} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, counterWarningPercent: Number(event.currentTarget.value)}})} /></label>
+                    <label>Timestamp tooltip<select value={nativePreferences.composer.timestampFormat} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, timestampFormat: event.currentTarget.value as typeof nativePreferences.composer.timestampFormat}})}><option value="full">Full</option><option value="compact">Compact</option><option value="iso">ISO</option></select></label>
+                    <label className="solcord-setting-row"><span><strong>Preserve blank lines</strong></span><span className="solcord-switch"><input type="checkbox" checked={nativePreferences.composer.preserveBlankLines} onChange={event => updateNativePreferences({...nativePreferences, composer: {...nativePreferences.composer, preserveBlankLines: event.currentTarget.checked}})} /><i aria-hidden="true" /></span></label>
+                </div>
+                <details className="solcord-secondary-tools"><summary>Timestamp surfaces</summary><div className="solcord-control-grid">
+                    {([["chat", "Chat"], ["embeds", "Embeds"], ["markup", "Timestamp markup"], ["auditLogs", "Audit logs"], ["chatTooltips", "Chat tooltips"], ["editedTooltips", "Edited tooltips"], ["markupTooltips", "Markup tooltips"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.timestamps[key]} onChange={event => updateNativePreferences({...nativePreferences, timestamps: {...nativePreferences.timestamps, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                </div></details>
+                <textarea value={composerDraft} maxLength={64000} placeholder="Review a draft locally before sending" aria-label="Draft to review locally" onChange={event => {setComposerDraft(event.currentTarget.value); setComposerProof(undefined); setActionStatus("Draft changed. Review again for updated counts and warnings.");}} /><div className="solcord-actions"><ActionButton onClick={reviewComposer}>Review draft</ActionButton></div>{composerProof?.reviewedDraft === composerDraft && <div className="solcord-native-preview" role="status" aria-live="polite"><p><strong>{composerProof.characterCount.toLocaleString()} characters</strong><span>{composerProof.partCount} guarded part(s)</span></p>{composerProof.warnings.length ? composerProof.warnings.map(warning => <p key={warning}>{warning}</p>) : <p>No broad-mention, length, or unclosed-code-block warnings found.</p>}</div>}
+                <div className="solcord-catalog-tools"><label>Local date and time<input type="datetime-local" value={timeValue} onChange={event => setTimeValue(event.currentTarget.value)} /></label><label>Discord display style<select value={timeStyle} onChange={event => setTimeStyle(event.currentTarget.value as typeof timeStyle)}><option value="F">Full date and time</option><option value="f">Short date and time</option><option value="R">Relative</option><option value="D">Long date</option><option value="d">Short date</option><option value="T">Time with seconds</option><option value="t">Short time</option></select></label></div><div className="solcord-inline-field"><ActionButton disabled={!timeValue} onClick={composeTime}>Generate timestamp</ActionButton>{timeMarkup && <><output>{timeMarkup}</output><ActionButton onClick={() => void navigator.clipboard?.writeText(timeMarkup).then(() => setActionStatus("Reviewed timestamp copied. Solcord did not insert or send it."))}>Copy</ActionButton></>}</div>
+            </div></details>}
+            {scope === "voice" && available("audio-console") && <details><summary>Audio Console</summary><div className="solcord-inline-field"><input value={audioUserId} inputMode="numeric" maxLength={20} placeholder="Discord user ID" aria-label="Audio Console user ID" onChange={event => setAudioUserId(event.currentTarget.value.replace(/\D/g, ""))} /><input type="number" min="0" max="200" value={audioPercent} aria-label="Local volume percent" onChange={event => setAudioPercent(Math.max(0, Math.min(200, Number(event.currentTarget.value))))} /><ActionButton disabled={!audioReadiness.ready} onClick={volume}>Review and apply</ActionButton></div><p className="solcord-key-hint">{audioReadiness.detail}</p></details>}
+            {scope === "chat" && available("channel-glance") && <details><summary>Channel Glance</summary><div className="solcord-inline-field"><input value={channelId} inputMode="numeric" placeholder="Loaded channel ID" aria-label="Loaded channel ID" onChange={event => {setChannelId(event.currentTarget.value.replace(/\D/g, "")); setGlance(presentSolcordChannelGlance([])); setActionStatus("Channel changed. Run Glance to review the new already-loaded state.");}} /><ActionButton disabled={!channelId} onClick={reviewChannel}>Glance</ActionButton></div><p className="solcord-key-hint">Reads only the already-loaded message store. It never fetches history, marks messages read, or persists content.</p>{glance.rows.length > 0 && <div className="solcord-native-preview" role="list" aria-label={`Channel Glance: ${glance.rows.length} of ${glance.totalCount} already-loaded messages`}>{glance.rows.map(message => <article key={message.key} role="listitem" className="solcord-glance-row"><strong>{message.author}</strong><span>{message.excerpt}</span><time dateTime={new Date(message.timestamp).toISOString()}>{timestamp(message.timestamp)}</time></article>)}{glance.hiddenCount > 0 && <p className="solcord-key-hint">{glance.hiddenCount} additional loaded message{glance.hiddenCount === 1 ? "" : "s"} hidden by the preview limit.</p>}</div>}</details>}
+            {scope === "friends" && available("people-and-spaces") && <details><summary>People and Spaces</summary>
+                <details className="solcord-secondary-tools"><summary>Display options</summary><div className="solcord-control-grid">
+                    {([["showRelationshipDates", "Relationship dates"], ["showMutualGuildCounts", "Mutual-server counts"], ["pinIcon", "Pinned label"], ["pinUnreadAmount", "Pinned unread count"], ["pinChannelAmount", "Pinned total"], ["sortPinnedByRecent", "Recent-first pins"], ["serverHiderStreamOnly", "Hide servers only in Streamer Mode"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.people[key]} onChange={event => updateNativePreferences({...nativePreferences, people: {...nativePreferences.people, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                </div><strong className="solcord-subheading">Pinned DM groups</strong><div className="solcord-control-grid">{([["friends", "Friends"], ["groups", "Group DMs"], ["bots", "Bots"], ["blocked", "Blocked"], ["others", "Other DMs"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.people.pinCategories[key]} onChange={event => updateNativePreferences({...nativePreferences, people: {...nativePreferences.people, pinCategories: {...nativePreferences.people.pinCategories, [key]: event.currentTarget.checked}}})} /> {label}</label>)}</div></details>
+                <div className="solcord-inline-field"><input value={channelId} inputMode="numeric" placeholder="Loaded DM, server, or user ID" aria-label="Local Discord object ID" onChange={event => {const value = event.currentTarget.value.replace(/\D/g, ""); setChannelId(value); setPeopleTarget(SolcordRuntime.resolvePeopleObject(value)); setServerAlias(""); setActionStatus("");}} /><ActionButton disabled={!peopleTarget?.canPinDm} onClick={() => addLocalSpaceRule("pin")}>{peopleSnapshot?.pinnedDmIds.includes(peopleTarget?.id ?? "") ? "Unpin DM" : "Pin DM"}</ActionButton><ActionButton disabled={!peopleTarget?.canManageServer} onClick={() => addLocalSpaceRule("hide")}>{peopleSnapshot?.hiddenGuildIds.includes(peopleTarget?.id ?? "") ? "Show server" : "Hide server"}</ActionButton></div>
+                {peopleTarget && channelId && <div className="solcord-inline-status" role="status" aria-live="polite"><span>{peopleTarget.label}</span>{peopleTarget.kind === "server-channel" && peopleTarget.serverId && <ActionButton onClick={() => {const target = SolcordRuntime.resolvePeopleObject(peopleTarget.serverId!); setChannelId(peopleTarget.serverId!); setPeopleTarget(target); setServerAlias(""); setActionStatus("");}}>Use server</ActionButton>}</div>}
+                <div className="solcord-inline-field solcord-alias-field"><input value={serverAlias} maxLength={48} placeholder="Local server alias" aria-label="Local server alias" disabled={!peopleTarget?.canManageServer} onChange={event => setServerAlias(event.currentTarget.value)} /><ActionButton disabled={!peopleTarget?.canManageServer || !serverAlias.trim()} onClick={() => addLocalSpaceRule("alias")}>Save alias</ActionButton></div>
+                {(peopleSnapshot?.pinnedDmIds.length || peopleSnapshot?.hiddenGuildIds.length || Object.keys(peopleSnapshot?.guildAliases ?? {}).length) ? <div className="solcord-native-preview" role="list" aria-label="Account-local People and Spaces rules">
+                    {peopleSnapshot?.pinnedDmIds.map(id => <p key={`pin:${id}`} role="listitem"><strong>Pinned DM •{id.slice(-4)}</strong><small><button type="button" className="solcord-text-button" onClick={() => removeLocalSpaceRule("pin", id)}>Unpin</button></small></p>)}
+                    {peopleSnapshot?.hiddenGuildIds.map(id => <p key={`hidden:${id}`} role="listitem"><strong>Hidden server •{id.slice(-4)}</strong><small><button type="button" className="solcord-text-button" onClick={() => removeLocalSpaceRule("hide", id)}>Show server</button></small></p>)}
+                    {Object.entries(peopleSnapshot?.guildAliases ?? {}).map(([id, alias]) => <p key={`alias:${id}`} role="listitem"><strong>{alias}</strong><span>Server •{id.slice(-4)}</span><small><button type="button" className="solcord-text-button" onClick={() => removeLocalSpaceRule("alias", id)}>Clear alias</button></small></p>)}
+                </div> : <p className="solcord-empty">No pinned DMs, hidden servers, or local aliases are saved for this account.</p>}
+                <div className="solcord-inline-field"><input value={friendQuery} maxLength={80} placeholder="Filter loaded people" aria-label="Filter loaded relationships" onChange={event => setFriendQuery(event.currentTarget.value)} /><select value={friendCategory} aria-label="Relationship group" onChange={event => setFriendCategory(event.currentTarget.value as typeof friendCategory)}><option value="visible">Friends</option><option value="favorites">Favorites</option><option value="hidden">Hidden</option><option value="blocked">Blocked</option><option value="incoming">Incoming</option><option value="outgoing">Outgoing</option><option value="ignored">Ignored</option></select><select value={friendSort} aria-label="Relationship sort" onChange={event => setFriendSort(event.currentTarget.value as "name" | "status")}><option value="name">Name</option><option value="status">Status</option></select><ActionButton onClick={refreshFriendList}>Review loaded</ActionButton></div>
+                {friendRows.length > 0 && <div className="solcord-native-preview" role="list" aria-label="Loaded relationship results">{friendRows.map(friend => <p key={friend.id} role="listitem"><strong>{friend.label}</strong> <span>{friend.status} · {friend.relationship}{friend.relationshipSince ? ` · since ${new Date(friend.relationshipSince).toLocaleDateString()}` : ""}{friend.mutualGuildCount !== undefined ? ` · ${friend.mutualGuildCount} mutual server${friend.mutualGuildCount === 1 ? "" : "s"}` : ""}</span>{friend.relationship === "friend" && <small>{friend.hidden ? <button type="button" className="solcord-text-button" onClick={() => updateFriendGroup(friend.id, "show")}>Show</button> : <><button type="button" className="solcord-text-button" onClick={() => updateFriendGroup(friend.id, friend.favorite ? "unfavorite" : "favorite")}>{friend.favorite ? "Unfavorite" : "Favorite"}</button> <button type="button" className="solcord-text-button" onClick={() => updateFriendGroup(friend.id, "hide")}>Hide</button></>}</small>}</p>)}</div>}
+                <p className="solcord-key-hint">Pins, hidden servers, aliases, Favorites, and Hidden are encrypted for this account when Windows secure storage is available. Relationship rows come only from Discord&apos;s already-loaded store.</p>
+            </details>}
+            {scope === "chat" && available("translation-desk") && <details>
+                <summary>Translation Desk</summary>
+                <div className="solcord-translation-grid">
+                    <label>Engine<select value={nativePreferences.translation.provider} onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, provider: event.currentTarget.value as typeof nativePreferences.translation.provider}});}}><option value="local">On-device</option><option value="off">Provider off</option><option value="deepl">DeepL Free</option><option value="libretranslate">LibreTranslate</option></select></label>
+                    <p className="solcord-key-hint" role="status">{nativePreferences.translation.provider === "local" ? localPairMessage : nativePreferences.translation.provider === "off" ? "Provider off. Nothing will be transmitted." : "External provider selected. Solcord shows the destination and asks before each request."}</p>
+                    <div className="solcord-translation-languages"><label>From<input value={nativePreferences.translation.sourceLanguage} maxLength={16} placeholder="auto" onChange={event => updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, sourceLanguage: event.currentTarget.value}})} /></label><label>To<input value={nativePreferences.translation.targetLanguage} maxLength={16} placeholder="EN" onChange={event => updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, targetLanguage: event.currentTarget.value}})} /></label></div>
+                    {externalTranslation && <details className="solcord-secondary-tools"><summary>External provider settings</summary>
+                        {nativePreferences.translation.provider === "libretranslate" && <label>HTTPS endpoint<input value={nativePreferences.translation.endpoint} placeholder="https://translate.example/translate" onChange={event => {setTranslationCredential(""); updateNativePreferences({...nativePreferences, translation: {...nativePreferences.translation, endpoint: event.currentTarget.value}});}} /></label>}
+                        <label>Credential<input type="password" autoComplete="off" value={translationCredential} placeholder="Stored only through encrypted private storage" onChange={event => setTranslationCredential(event.currentTarget.value)} /></label>
+                        <div className="solcord-actions solcord-translation-credentials"><ActionButton disabled={!translationEndpoint} onClick={() => void SolcordRuntime.readTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(result.credential); setActionStatus(result.complete ? (result.credential ? "Credential loaded from account-bound private storage." : "No credential is stored for this provider and endpoint.") : "Credential storage could not be read completely.");})}>Load credential</ActionButton><ActionButton disabled={!translationEndpoint || !translationCredential} onClick={() => void SolcordRuntime.writeTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint, translationCredential).then(result => setActionStatus(result.complete ? (result.persistent ? "Credential encrypted through Electron safeStorage." : "Encryption is unavailable; the credential remains memory-only for this session.") : "Credential could not be persisted and was not added to normal settings."))}>Save securely</ActionButton><ActionButton disabled={!translationEndpoint} tone="danger" onClick={() => void SolcordRuntime.clearTranslationCredential(nativePreferences.translation.provider as "deepl" | "libretranslate", translationEndpoint).then(result => {setTranslationCredential(""); setActionStatus(result.complete ? "Stored credential cleared for this provider and endpoint." : "Credential cleanup needs attention.");})}>Clear credential</ActionButton></div>
+                    </details>}
+                    <textarea value={translationText} maxLength={16000} placeholder="Text to translate" aria-label="Text to translate" onChange={event => setTranslationText(event.currentTarget.value)} />
+                    <div className="solcord-actions"><ActionButton disabled={!translationText || nativePreferences.translation.provider === "off" || (nativePreferences.translation.provider === "local" && localPairBlocked)} onClick={() => void translate()}>{nativePreferences.translation.provider === "local" ? "Translate on device" : "Review destination and translate"}</ActionButton>{nativePreferences.translation.provider === "local" && (localTranslationState?.queued ?? 0) > 0 && <ActionButton tone="danger" onClick={() => requireController().cancelLocalTranslations()}>Cancel local translation</ActionButton>}</div>
+                    {translationResult && <output>{translationResult}</output>}
+                </div>
+            </details>}
+            {scope === "voice" && available("voice-note-studio") && <details><summary>Voice Note Studio</summary><div className="solcord-control-grid"><label><input type="checkbox" checked={nativePreferences.voiceNotes.downloadButton} onChange={event => updateNativePreferences({...nativePreferences, voiceNotes: {...nativePreferences.voiceNotes, downloadButton: event.currentTarget.checked}})} /> Download loaded voice messages</label><label><input type="checkbox" checked={nativePreferences.voiceNotes.stripMetadata} onChange={event => updateNativePreferences({...nativePreferences, voiceNotes: {...nativePreferences.voiceNotes, stripMetadata: event.currentTarget.checked}})} /> Minimal local file metadata</label></div><p role="status" aria-live="polite" className="solcord-key-hint">Voice Note Studio state: {voicePhaseLabel[voicePhase]}.</p><div className="solcord-actions"><ActionButton disabled={voicePhase !== "idle" || Boolean(voicePreview)} onClick={() => void startVoice()}>{voiceStarting ? "Waiting for microphone" : voicePhase === "processing" ? "Building preview" : "Record"}</ActionButton><ActionButton disabled={!voiceRecording} onClick={() => void stopVoice()}>Stop and preview</ActionButton>{voiceDeliveryMode === "discord-composer" ? <ActionButton disabled={voicePhase !== "preview-ready" || !voicePreview || !channelId} onClick={prepareVoiceUpload}>Open normal upload composer</ActionButton> : <ActionButton disabled={voicePhase !== "preview-ready" || !voicePreview} onClick={saveVoiceFile}>Save local voice file</ActionButton>}<ActionButton disabled={voicePhase === "idle" && !voicePreview} tone="danger" onClick={() => {controller?.cancelVoiceNote(); setVoicePreview(undefined); setActionStatus("Local voice-note recording and preview cleared.");}}>Cancel</ActionButton></div>{voicePreview && <div className="solcord-native-preview"><audio controls src={voicePreview.url} />{voicePreview.waveform.length > 0 && <div className="solcord-voice-waveform" aria-label="Locally analyzed voice-note waveform">{voicePreview.waveform.filter((_, index) => index % Math.max(1, Math.ceil(voicePreview.waveform.length / 64)) === 0).map((sample, index) => <i key={index} style={{height: `${Math.max(2, Math.round(sample / 255 * 28))}px`}} />)}</div>}<small>{Math.ceil(voicePreview.durationMs / 1000)} seconds · {(voicePreview.sizeBytes / 1024).toFixed(1)} KiB · not uploaded{voiceDeliveryMode === "local-file" ? " · manual attachment fallback" : ""}</small></div>}</details>}
+            {scope === "chat" && available("notification-review") && <details><summary>Notification Review</summary><div className="solcord-control-grid">{([["includeDms", "Include DMs"], ["includeGuilds", "Include servers"], ["includeMuted", "Include muted channels"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.notifications[key]} onChange={event => updateNativePreferences({...nativePreferences, notifications: {...nativePreferences.notifications, [key]: event.currentTarget.checked}})} /> {label}</label>)}</div><div className="solcord-actions"><ActionButton onClick={() => previewNotifications("mentions")}>Review mentions</ActionButton><ActionButton onClick={() => previewNotifications("guild")}>Review current server</ActionButton><ActionButton onClick={() => previewNotifications("all")}>Review all</ActionButton></div><p className="solcord-key-hint">Every action previews a bounded count and asks again before changing read state. Muted channels stay excluded unless you opt in.</p></details>}
             {scope === "friends" && available("permission-lens") && <details><summary>Permission Lens and Focus Channels</summary><div className="solcord-catalog-tools"><label>Cached permission names<input value={permissionInput} onChange={event => setPermissionInput(event.currentTarget.value)} /></label><div className="solcord-actions"><ActionButton disabled={!permissionInput.trim()} onClick={reviewPermissions}>Explain locally</ActionButton></div><label>Focus channel IDs<input value={focusInput} placeholder="Comma-separated loaded channel IDs" onChange={event => setFocusInput(event.currentTarget.value.replace(/[^\d,\s]/g, ""))} /></label><div className="solcord-actions"><ActionButton onClick={applyFocus}>{focusInput.trim() ? "Apply focus" : "Clear focus"}</ActionButton></div></div>{permissionResults.length > 0 && <div className="solcord-native-preview">{permissionResults.map(result => <p key={result.permission}><strong>{result.permission}</strong><span>{result.explanation}</span></p>)}</div>}<p className="solcord-key-hint">Permission Lens uses only supplied cached names. Focus Channels changes only the loaded local channel rail, stays session-only, and clears on account switch.</p></details>}
-            {scope === "friends" && available("local-identity-notes") && <details><summary>Encrypted Local Identity Notes</summary><div className="solcord-composer-lab"><p className="solcord-key-hint">Default-off and account-isolated. Notes never edit profiles, sync to cloud, enter diagnostics, or appear in portable settings exports.</p><div className="solcord-catalog-tools"><label>Discord user ID<input value={identitySubject} inputMode="numeric" maxLength={32} placeholder="User ID" onChange={event => setIdentitySubject(event.currentTarget.value.replace(/\D/g, ""))} /></label><label>Private tags<input value={identityTags} maxLength={199} placeholder="friend, project" onChange={event => setIdentityTags(event.currentTarget.value)} /></label></div><textarea value={identityText} maxLength={280} placeholder="Private local note" onChange={event => setIdentityText(event.currentTarget.value)} /><div className="solcord-actions"><ActionButton disabled={!identitySubject || !identityText} onClick={() => void saveIdentityNote()}>Review and store</ActionButton><ActionButton onClick={() => void loadIdentityNotes()}>Load account notes</ActionButton><ActionButton tone="danger" disabled={!identityNotes.length} onClick={() => {if (window.confirm("Clear every Local Identity Note for the current Discord account?")) void SolcordRuntime.clearLocalIdentityNotes().then(() => loadIdentityNotes());}}>Clear all</ActionButton></div>{identityNotes.length > 0 && <div className="solcord-native-preview">{identityNotes.map(note => <p key={note.subjectId}><strong>User •{note.subjectId.slice(-4)}</strong><span>{note.text}{note.tags.length ? ` · ${note.tags.join(", ")}` : ""}</span><small>{timestamp(note.updatedAt)} <button type="button" className="solcord-text-button" onClick={() => void removeIdentityNote(note.subjectId)}>Remove</button></small></p>)}</div>}<p className="solcord-key-hint">{identityPersistent ? "Encrypted persistence is active." : "No persistence claim: until loaded, or when safeStorage is unavailable, notes are session-only."}</p></div></details>}
+            {scope === "friends" && available("local-identity-notes") && <details><summary>Encrypted Local Identity Notes</summary><div className="solcord-composer-lab"><p className="solcord-key-hint">Default-off and account-isolated. Notes never edit profiles, sync to cloud, enter diagnostics, or appear in portable settings exports.</p><div className="solcord-catalog-tools"><label>Discord user ID<input value={identitySubject} inputMode="numeric" maxLength={32} placeholder="User ID" onChange={event => setIdentitySubject(event.currentTarget.value.replace(/\D/g, ""))} /></label><label>Private tags<input value={identityTags} maxLength={199} placeholder="friend, project" onChange={event => setIdentityTags(event.currentTarget.value)} /></label></div><textarea value={identityText} maxLength={280} placeholder="Private local note" aria-label="Private local identity note" onChange={event => setIdentityText(event.currentTarget.value)} /><div className="solcord-actions"><ActionButton disabled={!identitySubject || !identityText} onClick={() => void saveIdentityNote()}>Review and store</ActionButton><ActionButton onClick={() => void loadIdentityNotes()}>Load account notes</ActionButton><ActionButton tone="danger" disabled={!identityNotes.length} onClick={() => {if (window.confirm("Clear every Local Identity Note for the current Discord account?")) void SolcordRuntime.clearLocalIdentityNotes().then(() => loadIdentityNotes());}}>Clear all</ActionButton></div>{identityNotes.length > 0 && <div className="solcord-native-preview">{identityNotes.map(note => <p key={note.subjectId}><strong>User •{note.subjectId.slice(-4)}</strong><span>{note.text}{note.tags.length ? ` · ${note.tags.join(", ")}` : ""}</span><small>{timestamp(note.updatedAt)} <button type="button" className="solcord-text-button" onClick={() => void removeIdentityNote(note.subjectId)}>Remove</button></small></p>)}</div>}<p className="solcord-key-hint">{identityPersistent ? "Encrypted persistence is active." : "No persistence claim: until loaded, or when safeStorage is unavailable, notes are session-only."}</p></div></details>}
             </div>
         </>}
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
@@ -683,7 +939,7 @@ function BaselineToolsPanel() {
     };
     return <Section title="Layout and message tools" summary="Local controls for layout, embeds, scrolling, message previews, and saved media references. When every switch is off, these tools stay out of Discord.">
         <div className="solcord-setting-rows">
-            <label><span><strong>Layout Collapse</strong><small>Hide selected Discord regions locally. Every region remains restorable here.</small></span><input type="checkbox" checked={baseline.layoutCollapse} onChange={event => update({layoutCollapse: event.currentTarget.checked})} /></label>
+            <label><span><strong>Layout Collapse</strong><small>Hide selected Discord regions locally. Use the floating restore control or Ctrl+Shift+L to show every panel.</small></span><input type="checkbox" checked={baseline.layoutCollapse} onChange={event => update({layoutCollapse: event.currentTarget.checked})} /></label>
             {baseline.layoutCollapse && <div className="solcord-inline-options" aria-label="Layout regions"><label><input type="checkbox" checked={baseline.collapsedRegions.includes("guilds")} onChange={event => toggleRegion("guilds", event.currentTarget.checked)} /> Servers</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("channels")} onChange={event => toggleRegion("channels", event.currentTarget.checked)} /> Channels</label><label><input type="checkbox" checked={baseline.collapsedRegions.includes("members")} onChange={event => toggleRegion("members", event.currentTarget.checked)} /> Members</label></div>}
             <label><span><strong>Embed Controls</strong><small>Add local collapse and expand buttons without changing message data.</small></span><input type="checkbox" checked={baseline.embedControls} onChange={event => update({embedControls: event.currentTarget.checked})} /></label>
             <label><span><strong>Cross-platform Autoscroll</strong><small>Middle-click a scrollable Discord region; release the middle button or press Escape to stop.</small></span><input type="checkbox" checked={baseline.crossPlatformAutoscroll} onChange={event => update({crossPlatformAutoscroll: event.currentTarget.checked})} /></label>
@@ -746,15 +1002,23 @@ function LinkWorkbench() {
 function AttachmentGuardWorkbench() {
     const [input, setInput] = useState("");
     const [mime, setMime] = useState("");
+    const [source, setSource] = useState<"url" | "local-file">("url");
     const [inspection, setInspection] = useState<ReturnType<typeof SolcordRuntime.inspectAttachment>>();
-    return <Section title="Attachment Guard" summary="Review a visible attachment URL, filename, extension, declared MIME, and risk reason locally. This tool never downloads, opens, scans, or uploads the file.">
+    const inspectLocalFile = (file?: File) => {
+        if (!file) return;
+        setSource("local-file");
+        setMime(file.type);
+        setInspection(SolcordRuntime.inspectLocalAttachment(file));
+    };
+    return <Section title="Attachment Guard" summary="Review a visible attachment URL or choose a local file to inspect only its filename, extension, and browser-declared MIME. This tool never reads file contents, downloads, opens, scans, or uploads the file.">
         <div className="solcord-inline-field">
-            <input type="url" value={input} placeholder="https://cdn.example/file.zip" aria-label="Attachment URL to inspect" onChange={event => setInput(event.currentTarget.value)} />
+            <input type="url" value={input} placeholder="https://cdn.example/file.zip" aria-label="Attachment URL to inspect" onChange={event => {setInput(event.currentTarget.value); setSource("url");}} />
             <input value={mime} placeholder="Optional MIME type" aria-label="Declared attachment MIME type" onChange={event => setMime(event.currentTarget.value)} />
-            <ActionButton tone="accent" onClick={() => setInspection(SolcordRuntime.inspectAttachment(input, mime || undefined))} disabled={!input.trim()}>Inspect locally</ActionButton>
+            <ActionButton tone="accent" onClick={() => {setSource("url"); setInspection(SolcordRuntime.inspectAttachment(input, mime || undefined));}} disabled={!input.trim()}>Inspect URL locally</ActionButton>
         </div>
+        <label className="solcord-inline-field"><span>Choose a local file (metadata only)</span><input type="file" aria-label="Local file to inspect" onChange={event => {inspectLocalFile(event.currentTarget.files?.[0]); event.currentTarget.value = "";}} /></label>
         {inspection && <div className={`solcord-link-result ${inspection.risk === "block" ? "solcord-link-invalid" : ""}`} role="status">
-            <dl className="solcord-facts"><div><dt>Source host</dt><dd>{inspection.host ?? "invalid"}</dd></div><div><dt>Filename</dt><dd>{inspection.filename ?? "unavailable"}</dd></div><div><dt>Extension</dt><dd>{inspection.extension ?? "none"}</dd></div><div><dt>Local result</dt><dd>{inspection.risk}</dd></div></dl>
+            <dl className="solcord-facts"><div><dt>Source</dt><dd>{source === "local-file" ? "Local file metadata" : inspection.host ?? "invalid URL"}</dd></div><div><dt>Filename</dt><dd>{inspection.filename ?? "unavailable"}</dd></div><div><dt>Extension</dt><dd>{inspection.extension ?? "none"}</dd></div><div><dt>Local result</dt><dd>{inspection.risk}</dd></div></dl>
             {inspection.reasons.length ? <ul>{inspection.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul> : <p>No high-risk filename signal was found. This is not a malware verdict.</p>}
         </div>}
     </Section>;
@@ -939,6 +1203,7 @@ function ScreenshotScrubber() {
 
 function AboutSolcord() {
     return <Section title="About Solcord" summary="A private, local-first BetterDiscord fork.">
+        <dl className="solcord-facts" aria-label="Installed Solcord identity"><div><dt>Candidate</dt><dd>{Config.get("candidate")}</dd></div><div><dt>Status</dt><dd>{Config.isCleanCandidateBuild ? "Clean release candidate" : "Diagnostic build"}</dd></div><div><dt>Build</dt><dd>{Config.get("build") || "Unidentified"}</dd></div><div><dt>Core</dt><dd>{Config.get("version")}</dd></div><div><dt>Source</dt><dd>{Config.get("commit")}</dd></div></dl>
         <div className="solcord-about-grid">
             <p><strong>Why it exists.</strong> Solcord keeps the BetterDiscord plugin and theme ecosystem while tightening recovery behavior and restoring Discord Activities through a bounded same-package preload policy.</p>
             <p><strong>What it does not do.</strong> It does not grant Nitro, forge entitlements, extract tokens, backfill messages, access hidden channels, send on your behalf, send Solcord telemetry, or enable the global unrestricted preload override.</p>
@@ -1045,10 +1310,28 @@ function ProviderMigrationStatus() {
     </Section>;
 }
 
+const SOLCORD_EFFECT_COLORS = Object.freeze([
+    {label: "Glacier", value: "#9fb8ff"},
+    {label: "Oxidized teal", value: "#76a891"},
+    {label: "Ember", value: "#ff755f"},
+    {label: "Warm bone", value: "#f3eee5"},
+    {label: "Signal amber", value: "#f0b44d"}
+] as const);
+
 function AppearanceWorkspace() {
     const preferences = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().productPreferences);
     const appearance = preferences.appearance;
     const update = (next: SolcordAppearancePreferences) => void SolcordRuntime.setProductPreferences({...preferences, appearance: next});
+    const updateMotionEffect = (next: Partial<typeof preferences.nativeSuite.motion>) => void SolcordRuntime.setProductPreferences({...preferences, nativeSuite: {...preferences.nativeSuite, motion: {...preferences.nativeSuite.motion, ...next}}});
+    const updateAnimatedBackground = (effect: typeof preferences.nativeSuite.motion.effect) => {
+        const ambient = effect !== "off" && effect !== "signal";
+        const motion = ambient && appearance.motion !== "reduced" ? "full" : appearance.motion;
+        void SolcordRuntime.setProductPreferences({
+            ...preferences,
+            appearance: {...appearance, motion},
+            nativeSuite: {...preferences.nativeSuite, motion: {...preferences.nativeSuite.motion, effect}}
+        });
+    };
     return <>
         <Section title="Theme and layout" summary="Theme the whole Discord shell, not only this panel.">
             <div className="solcord-appearance-controls">
@@ -1056,8 +1339,19 @@ function AppearanceWorkspace() {
                 <label>Accent<select value={appearance.accent} onChange={event => update({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
                 <label>Density<select value={appearance.density} onChange={event => update({...appearance, density: event.currentTarget.value as SolcordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
                 <label>Motion<select value={appearance.motion} onChange={event => update({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Use performance profile</option><option value="full">Full</option><option value="subtle">Subtle</option><option value="reduced">Reduced</option></select></label>
+                <label>Animated background<select value={preferences.nativeSuite.motion.effect === "stars" ? "field" : preferences.nativeSuite.motion.effect} onChange={event => updateAnimatedBackground(event.currentTarget.value as typeof preferences.nativeSuite.motion.effect)}><option value="off">Off</option><option value="field">SOL Flow</option><option value="work-field">Work Field</option><option value="embers">Ember Drift</option><option value="snow">Quiet Snow</option><option value="rain">Signal Rain</option><option value="signal">Click Signal only</option></select></label>
+                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <label>Effect amount<input type="number" min="1" max="24" value={preferences.nativeSuite.motion.particleCount} onChange={event => updateMotionEffect({particleCount: Number(event.currentTarget.value)})} /></label>}
+                {preferences.nativeSuite.motion.effect !== "off" && <fieldset className="solcord-effect-color">
+                    <legend>Effect color</legend>
+                    <div role="radiogroup" aria-label="Effect color">
+                        {[...SOLCORD_EFFECT_COLORS, ...(SOLCORD_EFFECT_COLORS.some(option => option.value === preferences.nativeSuite.motion.color) ? [] : [{label: "Current custom", value: preferences.nativeSuite.motion.color}])].map(option => <button key={option.value} type="button" role="radio" aria-checked={preferences.nativeSuite.motion.color === option.value} aria-label={`Use ${option.label} effect color`} title={option.label} onClick={() => updateMotionEffect({color: option.value})}><i aria-hidden="true" style={{backgroundColor: option.value}} /></button>)}
+                    </div>
+                </fieldset>}
+                {preferences.nativeSuite.motion.effect !== "off" && <label>Effect opacity %<input type="number" min="10" max="100" value={preferences.nativeSuite.motion.opacityPercent} onChange={event => updateMotionEffect({opacityPercent: Number(event.currentTarget.value)})} /></label>}
+                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <label>Effect speed %<input type="number" min="25" max="300" value={preferences.nativeSuite.motion.speedPercent} onChange={event => updateMotionEffect({speedPercent: Number(event.currentTarget.value)})} /></label>}
                 <label>Message shape<select value={appearance.messageShape} onChange={event => update({...appearance, messageShape: event.currentTarget.value as SolcordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
             </div>
+            <details className="solcord-secondary-tools"><summary>Animation surfaces</summary><div className="solcord-control-grid">{([["messages", "Messages"], ["channels", "Channels"], ["servers", "Servers"], ["members", "Members"], ["modals", "Dialogs"], ["popouts", "Menus and popouts"], ["settings", "Settings"], ["tooltips", "Tooltips"], ["threads", "Threads"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={preferences.nativeSuite.motion.surfaces[key]} onChange={event => updateMotionEffect({surfaces: {...preferences.nativeSuite.motion.surfaces, [key]: event.currentTarget.checked}})} /> {label}</label>)}</div></details>
             <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent}`}><span>Appearance preview</span><strong>Reply context stays readable at every density.</strong><small>Focus, warning, success, and danger keep distinct semantic colors.</small><button type="button">Keyboard focus sample</button></div>
         </Section>
         <AccessibilityControls />
@@ -1068,10 +1362,10 @@ function FriendWatchPanel() {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({preferences: SolcordSettings.snapshot().productPreferences, events: SolcordRuntime.friendWatchEvents(), persistent: SolcordRuntime.friendWatchPersistent()}));
     const policy = state.preferences.friendWatch;
     const storageDescription = !policy.enabled
-        ? "unopened while Friend Watch is off. Enabling negotiates encrypted account-isolated storage and otherwise fails closed to session-only memory."
+        ? "Off. No relationship history is stored."
         : state.persistent
-            ? "AES-256-GCM account-isolated persistence; its random key is wrapped by Electron safeStorage."
-            : "session-only fallback; no plaintext persistence.";
+            ? "On. History is encrypted, local, and isolated to this account."
+            : "On for this session only. Persistent storage is unavailable.";
     const update = (next: Partial<typeof policy>) => {
         const productPreferences: SolcordProductPreferences = {...state.preferences, friendWatch: {...policy, ...next}};
         void SolcordRuntime.setProductPreferences(productPreferences).then(() => SolcordRuntime.setEnabled("friend-watch", productPreferences.friendWatch.enabled));
@@ -1079,15 +1373,17 @@ function FriendWatchPanel() {
     return <Section title="Friend Watch" summary="Optional local history for relationship changes already seen by Discord.">
         <div className="solcord-setting-list">
             <label className="solcord-setting-row"><span><strong>Keep relationship history</strong><small>Off by default. Records only relationship changes already loaded in this client.</small></span><span className="solcord-switch"><input type="checkbox" checked={policy.enabled} onChange={event => update({enabled: event.currentTarget.checked})} /><i aria-hidden="true" /></span></label>
-            <p className="solcord-privacy-summary">Storage is {storageDescription} Disabling it or changing accounts clears renderer memory.</p>
-            {policy.enabled && <>
+        </div>
+        <p className="solcord-privacy-summary">{storageDescription} Changing accounts clears in-memory history.</p>
+        {policy.enabled && <>
+            <details className="solcord-secondary-tools"><summary>Retention and notifications</summary><div className="solcord-setting-list">
                 <label className="solcord-setting-row"><span><strong>Display snapshots</strong><small>Keep the already-loaded display name in encrypted history.</small></span><span className="solcord-switch"><input type="checkbox" checked={policy.includeDisplaySnapshot} onChange={event => update({includeDisplaySnapshot: event.currentTarget.checked})} /><i aria-hidden="true" /></span></label>
                 <label className="solcord-setting-row"><span><strong>Retention</strong><small>Older entries are removed automatically.</small></span><select value={policy.retentionDays} onChange={event => update({retentionDays: Number(event.currentTarget.value) as 7 | 30 | 90})}><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select></label>
                 <label className="solcord-setting-row"><span><strong>Notifications</strong><small>Local summaries only.</small></span><select value={policy.digest} onChange={event => update({digest: event.currentTarget.value as typeof policy.digest})}><option value="off">Off</option><option value="daily">Daily</option><option value="per-event">Per event</option></select></label>
-            </>}
-        </div>
-        <div className="solcord-actions"><ActionButton disabled={!state.events.length} onClick={() => void SolcordRuntime.exportFriendWatch("json")}>Export JSON</ActionButton><ActionButton disabled={!state.events.length} onClick={() => void SolcordRuntime.exportFriendWatch("csv")}>Export CSV</ActionButton><ActionButton tone="danger" disabled={!state.events.length} onClick={() => {if (window.confirm("Clear this account's local Friend Watch history?")) void SolcordRuntime.clearFriendWatch();}}>Clear history</ActionButton></div>
-        <div className="solcord-people-history" aria-label="Friend Watch relationship history">{state.events.slice(-100).reverse().map(event => <article key={event.eventId}><div><strong>{event.transition === "reconciled" ? "Account scope" : event.displayLabel ?? `Local relationship •${(event.subjectKey ?? event.subjectId).slice(-4)}`}</strong><span>{event.label}</span></div><small>{timestamp(event.observedAt)} · {event.source} · {event.confidence}</small></article>)}{!state.events.length && <p className="solcord-empty">No relationship transition has been observed in this session.</p>}</div>
+            </div></details>
+            {state.events.length > 0 && <div className="solcord-actions"><ActionButton onClick={() => void SolcordRuntime.exportFriendWatch("json")}>Export JSON</ActionButton><ActionButton onClick={() => void SolcordRuntime.exportFriendWatch("csv")}>Export CSV</ActionButton><ActionButton tone="danger" onClick={() => {if (window.confirm("Clear this account's local Friend Watch history?")) void SolcordRuntime.clearFriendWatch();}}>Clear history</ActionButton></div>}
+            <div className="solcord-people-history" aria-label="Friend Watch relationship history">{state.events.slice(-100).reverse().map(event => <article key={event.eventId}><div><strong>{event.transition === "reconciled" ? "Account scope" : event.displayLabel ?? `Local relationship •${(event.subjectKey ?? event.subjectId).slice(-4)}`}</strong><span>{event.label}</span></div><small>{timestamp(event.observedAt)} · {event.source} · {event.confidence}</small></article>)}{!state.events.length && <p className="solcord-empty">No relationship change has been observed yet.</p>}</div>
+        </>}
     </Section>;
 }
 
@@ -1098,17 +1394,17 @@ function ReturnLaterPanel() {
     const [status, setStatus] = useState("");
     const add = () => {
         const added = SolcordRuntime.addCurrentViewToReturnLater(label, Date.now() + delay);
-        setStatus(added ? "Saved for this account session. It clears on account switch or Discord restart." : "Open a DM or channel, then use Return Later from that view. No reminder was saved from Settings.");
+        setStatus(added ? "Saved the last visible DM or channel for this account session. It clears on account switch or Discord restart." : "Nothing was saved. Open a specific DM or channel and use Ctrl+Alt+K, then choose Save current DM or channel for later.");
         if (added) setLabel("");
     };
-    return <Section title="Return Later" summary="Keep a session-only reminder for the channel or DM you are viewing.">
+    return <Section title="Return Later" summary="Keep a session-only reminder for a DM or channel without sending or marking anything read.">
         <div className="solcord-inline-field">
             <input value={label} maxLength={80} placeholder="Optional private label" aria-label="Return Later label" onChange={event => setLabel(event.currentTarget.value)} />
             <select aria-label="Return Later due time" value={delay} onChange={event => setDelay(Number(event.currentTarget.value))}><option value={60 * 60 * 1_000}>In one hour</option><option value={24 * 60 * 60 * 1_000}>Tomorrow</option><option value={7 * 24 * 60 * 60 * 1_000}>In seven days</option></select>
             <ActionButton tone="accent" onClick={add}>Save current view</ActionButton>
         </div>
         {status && <p role="status" className="solcord-import-status">{status}</p>}
-        <p className="solcord-key-hint">Routes and labels stay only in memory for the current Discord account and clear on account switch or restart.</p>
+        <p className="solcord-key-hint">From any specific DM or channel, press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> and choose Save current DM or channel for later. Routes and labels stay only in memory for this account.</p>
         <div className="solcord-people-history" aria-label="Return Later reminders">{items.map(item => <article key={item.id}><div><strong>{item.label}</strong><span>Due {timestamp(item.dueAt)}</span></div><div className="solcord-actions"><ActionButton onClick={() => SolcordRuntime.openReturnLater(item.id)}>Open</ActionButton><ActionButton onClick={() => SolcordRuntime.snoozeReturnLater(item.id, 24 * 60 * 60 * 1_000)}>Snooze one day</ActionButton><ActionButton onClick={() => SolcordRuntime.completeReturnLater(item.id)}>Complete</ActionButton></div></article>)}{!items.length && <p className="solcord-empty">No session reminder is due. Open a DM or channel and save that view when you want to return.</p>}</div>
     </Section>;
 }
@@ -1162,6 +1458,10 @@ function PowerLabStatus() {
         });
     };
     const arm = () => {
+        if (!state.status.connected || !state.status.accountBound) {
+            setActionStatus("Join a voice call before arming Fake Deafen.");
+            return;
+        }
         if (!window.confirm("Arm Fake Deafen for the current voice connection? First use Discord's normal Deafen control once. Arming restores local audio while keeping server-visible self-deafen on until you disarm, change channels, disconnect, or the adapter detects drift.")) return;
         setActionStatus(SolcordRuntime.armFakeDeafen() ? "Fake Deafen is armed for this voice connection." : SolcordRuntime.fakeDeafenStatus().detail);
     };
@@ -1170,14 +1470,24 @@ function PowerLabStatus() {
     const communityProvider = state.provider === "community";
     return <Section title="Fake Deafen" summary="Manual, call-bound, and off by default.">
         <div className="solcord-power-control"><div><div className="solcord-module-name"><strong>{experiment.name}</strong><span className="solcord-maturity">account risk · manual</span><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span></div><p>{communityProvider ? "Solcord leaves it untouched and keeps the built-in off so the two providers never stack." : state.status.detail}</p></div><label className="solcord-toggle"><input type="checkbox" aria-label="Enable Solcord Fake Deafen" checked={state.consent.enabled} disabled={communityProvider} onChange={event => toggleFakeDeafen(event.currentTarget.checked)} /><span>{communityProvider ? "Plugin on" : state.consent.enabled ? "Built-in on" : "Off"}</span></label></div>
-        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton onClick={arm}>Arm for this call</ActionButton>}</div>}
+        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton disabled={!state.status.connected || !state.status.accountBound} onClick={arm}>Arm for this call</ActionButton>}</div>}
         <details className="solcord-secondary-tools"><summary>Risk and automatic disarm rules</summary><p>{experiment.summary} Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
 
+function stickyNavigationOffset(target: HTMLElement, navigation: HTMLElement | null): number {
+    if (!navigation || getComputedStyle(navigation).position !== "sticky") return 0;
+    const navigationRect = navigation.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const horizontallyOverlaps = navigationRect.left < targetRect.right && navigationRect.right > targetRect.left;
+    return horizontallyOverlaps ? Math.ceil(navigationRect.height) + 12 : 0;
+}
+
 function scrollSolcordTarget(target: HTMLElement | null): void {
     if (!target) return;
+    const navigation = target.closest(".solcord-control-center")?.querySelector<HTMLElement>(".solcord-workspace-nav") ?? null;
+    const stickyOffset = stickyNavigationOffset(target, navigation);
     let scrollOwner: HTMLElement | null = target.parentElement;
     while (scrollOwner) {
         const overflowY = getComputedStyle(scrollOwner).overflowY;
@@ -1186,12 +1496,9 @@ function scrollSolcordTarget(target: HTMLElement | null): void {
     }
     if (!scrollOwner) {
         target.scrollIntoView({block: "start"});
+        if (stickyOffset) globalThis.scrollBy?.({top: -stickyOffset, behavior: "auto"});
         return;
     }
-    const navigation = target.closest(".solcord-control-center")?.querySelector<HTMLElement>(".solcord-workspace-nav");
-    const stickyOffset = navigation && getComputedStyle(navigation).position === "sticky"
-        ? navigation.getBoundingClientRect().height + 8
-        : 0;
     const targetOffset = target.getBoundingClientRect().top - scrollOwner.getBoundingClientRect().top;
     scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: "auto"});
 }
@@ -1207,6 +1514,11 @@ export default function SolcordPanel() {
     const workspaceRef = useRef<HTMLDivElement | null>(null);
     const selectedWorkspace = SOLCORD_WORKSPACES.find(item => item.id === workspace)!;
     const visibleWorkspaces = SOLCORD_WORKSPACES.filter(item => `${item.label} ${item.summary}`.toLowerCase().includes(workspaceQuery.trim().toLowerCase()));
+    const navigateFromSearch = (next: SolcordWorkspaceId) => {
+        setWorkspace(next);
+        setWorkspaceQuery("");
+        setWorkspaceFocus(undefined);
+    };
     useEffect(() => {
         const focusCatalog = workspace === "extensions" && workspaceFocus === "catalog";
         const focusSetup = workspace === "overview" && workspaceFocus === "setup";
@@ -1236,7 +1548,7 @@ export default function SolcordPanel() {
     return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
             <div className="solcord-mark" aria-hidden="true"><img src={solcordMark} alt="" /></div>
-            <div><h1>Solcord</h1><p>Control Center</p></div>
+            <div className="solcord-header-copy"><h1>Solcord</h1><p>Control Center</p>{!Config.isCleanCandidateBuild && <span className="solcord-build-warning" role="status">Diagnostic build</span>}</div>
         </header>
         {recoveryMode && <div className="solcord-recovery-banner" role="alert">
             <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
@@ -1245,11 +1557,11 @@ export default function SolcordPanel() {
         <div className="solcord-control-center">
             <nav className="solcord-workspace-nav" aria-label="Solcord settings">
                 <label className="solcord-workspace-search"><span className="sr-only">Filter Solcord settings</span><input type="search" value={workspaceQuery} placeholder="Find a setting" onChange={event => setWorkspaceQuery(event.currentTarget.value)} /></label>
-                <div className="solcord-workspace-nav-list">{WORKSPACE_GROUPS.map(group => {
+                <div className="solcord-workspace-nav-list" aria-label={workspaceQuery.trim() ? `${visibleWorkspaces.length} matching Solcord sections` : undefined}>{WORKSPACE_GROUPS.map(group => {
                     const items = visibleWorkspaces.filter(item => group.ids.includes(item.id));
-                    return items.length ? <section key={group.label} aria-label={group.label}><p>{group.label}</p>{items.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => setWorkspace(item.id)}><strong>{item.label}</strong></button>)}</section> : null;
+                    return items.length ? <section key={group.label} aria-label={group.label}><p>{group.label}</p>{items.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => navigateFromSearch(item.id)}><strong>{item.label}</strong></button>)}</section> : null;
                 })}{!visibleWorkspaces.length && <p className="solcord-nav-empty">No matching setting</p>}</div>
-                <label className="solcord-workspace-switcher"><span>Section</span><select value={workspace} onChange={event => setWorkspace(event.currentTarget.value as SolcordWorkspaceId)}>{visibleWorkspaces.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+                <label className="solcord-workspace-switcher"><span>Section</span><select value={workspace} onChange={event => navigateFromSearch(event.currentTarget.value as SolcordWorkspaceId)}>{SOLCORD_WORKSPACES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
             </nav>
             <div ref={workspaceRef} className="solcord-workspace" data-workspace={workspace}>
                 {workspace === "overview" && onboarding.status === "pending" ? <SetupWizard /> : <>
@@ -1259,16 +1571,18 @@ export default function SolcordPanel() {
                     <SessionPulse openWorkspace={setWorkspace} openSetup={openSetup} />
                     <ActivityBridge />
                 </>}
-                {workspace === "appearance" && <AppearanceWorkspace />}
+                {workspace === "appearance" && <><AppearanceWorkspace /><BuiltInFeatureSwitches scope="appearance" /></>}
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
-                {workspace === "privacy" && <><PrivacyProtectionPanel /><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
-                {workspace === "chat" && <><BaselineToolsPanel /><NativeSuitePanel scope="chat" /><ReturnLaterPanel /></>}
-                {workspace === "voice" && <><ActivityBridge /><NativeSuitePanel scope="voice" /><StreamAudienceGuardControls /><details className="solcord-experimental"><summary>Experimental</summary><PowerLabStatus /></details></>}
-                {workspace === "friends" && <><FriendWatchPanel /><NativeSuitePanel scope="friends" /><ReturnLaterPanel /></>}
+                {workspace === "privacy" && <><PrivacyProtectionPanel /><BuiltInFeatureSwitches scope="privacy" /><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
+                {workspace === "chat" && <><BaselineToolsPanel /><BuiltInFeatureSwitches scope="chat" /><NativeSuitePanel key="chat" scope="chat" /><ReturnLaterPanel /></>}
+                {workspace === "voice" && <><ActivityBridge /><BuiltInFeatureSwitches scope="voice" /><NativeSuitePanel key="voice" scope="voice" /><StreamAudienceGuardControls /><div className="solcord-experimental"><p className="solcord-eyebrow">Experimental · account risk</p><PowerLabStatus /></div></>}
+                {workspace === "friends" && <><FriendWatchPanel /><BuiltInFeatureSwitches scope="friends" /><NativeSuitePanel key="friends" scope="friends" /></>}
                 {workspace === "extensions" && <>
                     <ProviderMigrationStatus />
                     <div className="solcord-all-clear"><strong>Built-ins live with their features</strong><span>Message, voice, privacy, and people tools are managed in the matching workspace.</span></div>
-                    <details className="solcord-extension-disclosure"><summary>Community software and technical state</summary><p>Open this only when troubleshooting a module or reviewing optional community software.</p><NativeSuitePanel scope="status" /><Section title="Core runtime" summary="Lifecycle and owned-resource details."><ModuleTable /></Section><CuratedAddonSet /><CatalogBrowser /></details>
+                    <NativeSuitePanel key="status" scope="status" />
+                    <details className="solcord-secondary-tools"><summary>Technical details</summary><p>Read-only lifecycle and owned-resource status. Feature controls stay in their matching workspace.</p><RuntimeStatusDetails /></details>
+                    <details className="solcord-extension-disclosure"><summary>Community plugins</summary><p>Optional plugins, migration, and troubleshooting details stay here until you need them.</p><CuratedAddonSet /><CatalogBrowser /></details>
                 </>}
                 {workspace === "recovery" && <><SetupManagement openSetup={openSetup} /><PluginRecovery /><ProfilesAndHistory /><details className="solcord-secondary-tools"><summary>About and technical information</summary><AboutSolcord /></details></>}
                 </>}

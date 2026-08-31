@@ -63,6 +63,25 @@ export interface SolcordTimelinePolicy {
     content: "text-only" | "text-and-metadata" | "encrypted-media";
     textBudgetBytes: 262_144_000;
     mediaBudgetBytes: 268_435_456 | 1_073_741_824 | 5_368_709_120;
+    filters: {
+        ignoreSelf: boolean;
+        ignoreBots: boolean;
+        ignoreBlockedUsers: boolean;
+        ignoreMutedChannels: boolean;
+        ignoreMutedGuilds: boolean;
+        ignoreNsfw: boolean;
+        alwaysLogDms: boolean;
+        alwaysLogGhostPings: boolean;
+    };
+    display: {
+        showDeletedMessages: boolean;
+        showEditedMessages: boolean;
+        showPurgedMessages: boolean;
+        showDeletedCount: boolean;
+        showEditedCount: boolean;
+        reverseOrder: boolean;
+        maxShownEdits: number;
+    };
 }
 
 export interface SolcordPowerConsent {
@@ -135,7 +154,7 @@ export interface SolcordUpdateEntry {
 }
 
 export interface SolcordSettingsDocument {
-    schemaVersion: 7;
+    schemaVersion: 10;
     consentVersion: 3;
     onboarding: SolcordOnboardingState;
     selectedTheme: SolcordThemeId;

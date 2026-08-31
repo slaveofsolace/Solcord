@@ -97,6 +97,25 @@ describe("Solcord BetterDiscord data-root isolation", () => {
             .toBe(path.join(acceptanceRoot, "profile", "Roaming", "BetterDiscord"));
     });
 
+    test("accepts equivalent Windows short and long path spellings after canonical containment", () => {
+        if (process.platform !== "win32") return;
+        const acceptanceRoot = temporaryRoot();
+        const userData = path.join(acceptanceRoot, "profile", "Roaming", "discord");
+        fs.mkdirSync(userData, {recursive: true});
+        fs.mkdirSync(path.join(acceptanceRoot, "profile", "Roaming", "BetterDiscord"));
+        const rootAlias = path.join(path.dirname(acceptanceRoot), "SOLCOR~1");
+        const canonical = (target: string) => path.win32.normalize(target).toLowerCase() === path.win32.normalize(rootAlias).toLowerCase()
+            ? acceptanceRoot
+            : target;
+        const fileSystem = {
+            lstatSync: (target: string) => fs.lstatSync(canonical(target)),
+            realpathNative: (target: string) => fs.realpathSync.native(canonical(target))
+        };
+        const environment = {SOLCORD_ACCEPTANCE_MODE: "1", SOLCORD_ACCEPTANCE_ROOT: rootAlias};
+        expect(resolveSolcordBetterDiscordRoot(userData, environment, fileSystem))
+            .toBe(path.join(acceptanceRoot, "profile", "Roaming", "BetterDiscord"));
+    });
+
     test("enables acceptance mode only for the exact opt-in value", () => {
         expect(isSolcordAcceptanceMode({SOLCORD_ACCEPTANCE_MODE: "1"})).toBeTrue();
         for (const value of [undefined, "", "0", "true", "yes"]) {

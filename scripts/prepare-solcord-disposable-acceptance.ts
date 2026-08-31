@@ -15,6 +15,7 @@ const DISCORD_VERSION_PATTERN = /^[0-9]+(?:\.[0-9]+){1,7}$/;
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
 const CANONICAL_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FULL_COMMIT_PATTERN = /^[a-f0-9]{40}$/;
+const CANDIDATE_SUFFIX_PATTERN = /^[0-9a-z]+(?:[.-][0-9a-z]+)*$/i;
 const EMPTY_SHA256 = crypto.createHash("sha256").digest("hex");
 const MAX_JSON_METADATA_BYTES = 128 * 1024;
 const MAX_SOLCORD_ASAR_BYTES = 512 * 1024 * 1024;
@@ -43,7 +44,7 @@ export interface DisposableAcceptanceOptions {
 }
 
 export interface DisposableAcceptanceManifest {
-    schemaVersion: 7;
+    schemaVersion: 10;
     kind: "solcord-disposable-acceptance";
     platform: "win32";
     discordVersion: string;
@@ -157,8 +158,9 @@ interface AsarEnvelope {
 interface OwnedStagingDirectory {
     path: string;
     realPath: string;
-    dev: number;
-    ino: number;
+    dev: bigint;
+    ino: bigint;
+    birthtimeNs: bigint;
 }
 
 
@@ -215,14 +217,14 @@ function validateEmbeddedBuildProvenance(value: Record<string, unknown>, expecte
         toolchain.packScriptSha256
     ];
 
-    if (!exactKeys(value, ["schemaVersion", "kind", "product", "version", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
+    if (!exactKeys(value, ["schemaVersion", "kind", "product", "version", "candidateLabel", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
         || !exactKeys(source, ["commit", "branch", "clean", "digest", "statusDigest"])
         || !exactKeys(inputs, ["lockfile", "toolchain"])
         || !exactKeys(lockfile, ["file", "sha256"])
         || !exactKeys(toolchain, ["bunVersion", "bunExecutableSha256", "packageJsonSha256", "buildScriptSha256", "packScriptSha256"])
-        || value.schemaVersion !== 1
+        || value.schemaVersion !== 2
         || value.kind !== "solcord-build-provenance") {
-        throw new Error("Solcord ASAR build provenance does not match schema v1.");
+        throw new Error("Solcord ASAR build provenance does not match schema v2.");
     }
     if (value.product !== "Solcord") {
         throw new Error("Solcord ASAR build provenance product must be Solcord.");
@@ -239,8 +241,12 @@ function validateEmbeddedBuildProvenance(value: Record<string, unknown>, expecte
     if (source.commit !== expectedSourceCommit) {
         throw new Error("Solcord ASAR source commit does not match the caller-provided expected source commit.");
     }
+    const candidateVersion = typeof value.version === "string" ? value.version : "";
+    const candidatePrefix = `v${candidateVersion}-`;
     if (typeof value.version !== "string" || !value.version || value.version.length > 128
         || [...value.version].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+        || typeof value.candidateLabel !== "string" || !value.candidateLabel.startsWith(candidatePrefix)
+        || !CANDIDATE_SUFFIX_PATTERN.test(value.candidateLabel.slice(candidatePrefix.length)) || value.candidateLabel.length > 128
         || typeof source.branch !== "string" || !source.branch || source.branch.length > 256
         || [...source.branch].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
         || !isCanonicalTimestamp(value.buildTimestamp)
@@ -875,7 +881,7 @@ export function createDisposableAcceptanceManifest(
     }
 
     return {
-        schemaVersion: 7,
+        schemaVersion: 10,
         kind: "solcord-disposable-acceptance",
         platform: "win32",
         discordVersion,
@@ -988,20 +994,21 @@ function neutralizeCopiedDesktopCoreInjector(runtime: string, expectedRelativeEn
 }
 
 function captureOwnedStagingDirectory(directory: string, expectedParent: string): OwnedStagingDirectory {
-    const stat = fs.lstatSync(directory);
+    const stat = fs.lstatSync(directory, {bigint: true});
     if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error("Solcord staging root is not an owned plain directory.");
     const realPath = fs.realpathSync.native(directory);
     if (!windowsPathsEqual(path.dirname(realPath), expectedParent)) {
         throw new Error("Solcord staging root escaped its canonical destination parent.");
     }
-    return {path: directory, realPath, dev: stat.dev, ino: stat.ino};
+    return {path: directory, realPath, dev: stat.dev, ino: stat.ino, birthtimeNs: stat.birthtimeNs};
 }
 
 function isOwnedStagingDirectory(identity: OwnedStagingDirectory): boolean {
     try {
-        const stat = fs.lstatSync(identity.path);
+        const stat = fs.lstatSync(identity.path, {bigint: true});
         return stat.isDirectory() && !stat.isSymbolicLink()
             && stat.dev === identity.dev && stat.ino === identity.ino
+            && stat.birthtimeNs === identity.birthtimeNs
             && windowsPathsEqual(fs.realpathSync.native(identity.path), identity.realPath);
     }
     catch {return false;}
@@ -1257,12 +1264,64 @@ function renderLauncher(): string {
     return `@echo off\r
 setlocal\r
 set "SOLCORD_ACCEPTANCE_ROOT=%~dp0"\r
+set "SOLCORD_ACCEPTANCE_LEDGER=%SOLCORD_ACCEPTANCE_ROOT%${RUNTIME_LEDGER_FILE}"\r
+set "SOLCORD_ACCEPTANCE_LAUNCH_GUARD=%SOLCORD_ACCEPTANCE_ROOT%.launch-attempt"\r
+set "SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT=%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%\\discord-processes.txt"\r
+if not exist "%SOLCORD_ACCEPTANCE_ROOT%runtime\\Discord.exe" goto :missing_runtime\r
+if exist "%SOLCORD_ACCEPTANCE_LEDGER%" goto :already_attempted\r
+if exist "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%" goto :already_attempted\r
+2>nul mkdir "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%"\r
+if errorlevel 1 goto :already_attempted\r
+if exist "%SOLCORD_ACCEPTANCE_LEDGER%" goto :ledger_race\r
+if not exist "%SystemRoot%\\System32\\tasklist.exe" goto :process_check_failed\r
+if not exist "%SystemRoot%\\System32\\findstr.exe" goto :process_check_failed\r
+for %%P in (Discord.exe DiscordPTB.exe DiscordCanary.exe) do (\r
+    "%SystemRoot%\\System32\\tasklist.exe" /FI "IMAGENAME eq %%P" /NH > "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%"\r
+    if errorlevel 1 goto :process_check_failed\r
+    "%SystemRoot%\\System32\\findstr.exe" /I /B /C:"%%P " "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul\r
+    if not errorlevel 1 goto :discord_running\r
+)\r
+del /q "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul 2>nul\r
 set "APPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming"\r
 set "LOCALAPPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Local"\r
 set "DISCORD_USER_DATA_DIR=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming"\r
 set "SOLCORD_ACCEPTANCE_MODE=1"\r
 start "" "%SOLCORD_ACCEPTANCE_ROOT%runtime\\Discord.exe" --multi-instance\r
-endlocal\r
+if errorlevel 1 goto :launch_failed\r
+endlocal & exit /b 0\r
+\r
+:missing_runtime\r
+echo Solcord acceptance runtime is incomplete. Prepare a new disposable lane.\r
+endlocal & exit /b 20\r
+\r
+:already_attempted\r
+echo This disposable lane is single-use and already has launch evidence. Prepare a new lane.\r
+endlocal & exit /b 21\r
+\r
+:ledger_race\r
+call :release_launch_guard\r
+echo Runtime evidence appeared while the launcher was acquiring ownership. Nothing was started.\r
+endlocal & exit /b 22\r
+\r
+:discord_running\r
+call :release_launch_guard\r
+echo Another Discord desktop channel is running. Close it before isolated acceptance.\r
+endlocal & exit /b 23\r
+\r
+:process_check_failed\r
+call :release_launch_guard\r
+echo Discord process inspection failed closed. Nothing was started.\r
+endlocal & exit /b 24\r
+\r
+:launch_failed\r
+call :release_launch_guard\r
+echo The disposable Discord process could not be started.\r
+endlocal & exit /b 25\r
+\r
+:release_launch_guard\r
+if exist "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" del /q "%SOLCORD_ACCEPTANCE_PROCESS_SNAPSHOT%" >nul 2>nul\r
+2>nul rmdir "%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%"\r
+exit /b 0\r
 `;
 }
 

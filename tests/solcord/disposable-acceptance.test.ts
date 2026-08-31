@@ -126,10 +126,11 @@ function snapshotTree(root: string): Record<string, string> {
 function validBuildProvenance(sourceCommit: string): Record<string, unknown> {
     const digest = "1".repeat(64);
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         kind: "solcord-build-provenance",
         product: "Solcord",
         version: "1.0.0-test",
+        candidateLabel: "v1.0.0-test-rc.0",
         mode: "production",
         buildLabel: "production-clean",
         buildTimestamp: "2026-08-23T00:00:00.000Z",
@@ -257,7 +258,7 @@ windowsDescribe("Solcord disposable Windows acceptance preparation", () => {
         expect(manifestText).not.toContain(fixture.sourceApp);
         expect(manifestText).not.toContain(fixture.destination);
         expect(manifestText).not.toContain(fixture.solcordAsar);
-        expect(result.manifest.schemaVersion).toBe(7);
+        expect(result.manifest.schemaVersion).toBe(10);
         expect(result.manifest.discordReleaseChannel).toBe("stable");
         expect(result.manifest.solcordSourceCommit).toBe(fixture.expectedSourceCommit);
         expect(result.manifest.solcordBuildMode).toBe("production");
@@ -373,6 +374,16 @@ windowsDescribe("Solcord disposable Windows acceptance preparation", () => {
         expect(launcher).toContain("APPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming");
         expect(launcher).toContain("LOCALAPPDATA=%SOLCORD_ACCEPTANCE_ROOT%profile\\Local");
         expect(launcher).toContain("DISCORD_USER_DATA_DIR=%SOLCORD_ACCEPTANCE_ROOT%profile\\Roaming");
+        expect(launcher).toContain("SOLCORD_ACCEPTANCE_LEDGER=%SOLCORD_ACCEPTANCE_ROOT%acceptance-runtime-ledger.jsonl");
+        expect(launcher).toContain("SOLCORD_ACCEPTANCE_LAUNCH_GUARD=%SOLCORD_ACCEPTANCE_ROOT%.launch-attempt");
+        expect(launcher).toContain("if exist \"%SOLCORD_ACCEPTANCE_LEDGER%\" goto :already_attempted");
+        expect(launcher).toContain("mkdir \"%SOLCORD_ACCEPTANCE_LAUNCH_GUARD%\"");
+        expect(launcher).toContain("for %%P in (Discord.exe DiscordPTB.exe DiscordCanary.exe)");
+        expect(launcher).toContain("goto :process_check_failed");
+        expect(launcher).toContain("goto :discord_running");
+        expect(launcher).toContain("This disposable lane is single-use");
+        expect(launcher.match(/start ""/g)).toHaveLength(1);
+        expect(launcher).not.toContain("taskkill");
         expect(launcher).toContain("--multi-instance");
         expect(launcher).not.toContain("--user-data-dir");
 

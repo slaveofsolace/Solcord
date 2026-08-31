@@ -7,6 +7,19 @@ const ROOT = path.resolve(import.meta.dir, "../..");
 const source = (relative: string) => fs.readFileSync(path.join(ROOT, relative), "utf8");
 
 describe("Solcord renderer security contracts", () => {
+    test("uses measured startup phases instead of a broad renderer hold", () => {
+        const core = source("src/betterdiscord/modules/core.ts");
+
+        expect(core).toContain("await SolcordRuntime.initialize();");
+        expect(core).toContain("SolcordRuntime.attachControlCenter(() => {");
+        expect(core).toContain("Settings.registerPanel(\"solcord\"");
+        expect(core).toContain("const privacyPolicyReady = await SolcordRuntime.start();");
+        expect(core).toContain("const addonActivationAllowed = privacyPolicyReady && await SolcordRuntime.enforceAddonIntegrityBeforeStart();");
+        expect(core).toContain("SolcordRuntime.scheduleDeferredStartup();");
+        expect(core).not.toContain("solcordNavigationRecovery");
+        expect(core).not.toContain("navigationRecovery");
+    });
+
     test("binds renderer injection to one main-process navigation boundary and the exact main frame", () => {
         const preload = source("src/electron/preload/index.ts");
         const ipc = source("src/electron/main/modules/ipc.ts");
@@ -24,27 +37,56 @@ describe("Solcord renderer security contracts", () => {
         expect(betterDiscord).not.toContain("injectedWebContents");
     });
 
-    test("claims the private capability before plugin inventory and enforces audit before every addon start", () => {
+    test("claims private storage before addon inventory and audits the complete inventory before activation", () => {
         const core = source("src/betterdiscord/modules/core.ts");
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const runtimeInitialize = core.indexOf("await SolcordRuntime.initialize()");
         const runtimeStart = core.indexOf("await SolcordRuntime.start()");
         const pluginInitialize = core.indexOf("PluginManager.initialize()");
+        const pluginHold = core.indexOf("PluginManager.holdAddonActivation()");
         const pluginEnforce = core.indexOf("await SolcordRuntime.enforceAddonIntegrityBeforeStart()", pluginInitialize);
-        const pluginStart = core.indexOf("PluginManager.startAddons", pluginEnforce);
+        const activationGuard = core.indexOf("if (addonActivationAllowed)", pluginEnforce);
+        const pluginRelease = core.indexOf("PluginManager.releaseAddonActivation()", activationGuard);
+        const pluginStart = core.indexOf("PluginManager.startAddons", activationGuard);
         const themeInitialize = core.indexOf("ThemeManager.initialize()");
-        const themeEnforce = core.indexOf("await SolcordRuntime.enforceAddonIntegrityBeforeStart()", themeInitialize);
-        const themeStart = core.indexOf("ThemeManager.startAddons", themeEnforce);
+        const themeStart = core.indexOf("ThemeManager.startAddons", pluginEnforce);
 
+        expect(runtimeInitialize).toBeGreaterThanOrEqual(0);
         expect(runtimeStart).toBeGreaterThanOrEqual(0);
+        expect(runtimeInitialize).toBeLessThan(runtimeStart);
         expect(runtimeStart).toBeLessThan(pluginInitialize);
+        expect(pluginHold).toBeGreaterThan(runtimeStart);
+        expect(pluginHold).toBeLessThan(pluginInitialize);
+        expect(pluginInitialize).toBeLessThan(themeInitialize);
+        expect(themeInitialize).toBeLessThan(pluginEnforce);
         expect(pluginInitialize).toBeLessThan(pluginEnforce);
+        expect(pluginEnforce).toBeLessThan(activationGuard);
+        expect(activationGuard).toBeLessThan(pluginRelease);
+        expect(pluginRelease).toBeLessThan(pluginStart);
         expect(pluginEnforce).toBeLessThan(pluginStart);
-        expect(themeInitialize).toBeLessThan(themeEnforce);
-        expect(themeEnforce).toBeLessThan(themeStart);
+        expect(pluginEnforce).toBeLessThan(themeStart);
 
-        const startMethod = runtime.slice(runtime.indexOf("async start():"), runtime.indexOf("get recoveryMode"));
-        expect(startMethod).toContain("await this.#bootstrapPrivateCapability()");
-        expect(startMethod.indexOf("#bootstrapPrivateCapability")).toBeLessThan(startMethod.indexOf("for (const id of FEATURE_IDS)"));
+        expect(runtime).toContain("run(\"settings-storage\"");
+        expect(runtime).toContain("await this.#bootstrapPrivateCapability()");
+        expect(runtime).toContain("run(\"integrity-validation\"");
+        expect(runtime).toContain("startupPhases: this.startupPhaseSnapshot()");
+        expect(runtime).toContain("if (!this.#started) return false");
+        expect(runtime).toContain("return completed === true");
+        expect(core).toContain("PluginManager.setAddonActivationGuard(addon => SolcordRuntime.canActivateCommunityAddon(addon))");
+        expect(runtime).toContain("strictCommunityAddonActivationDecision({");
+    });
+
+    test("fails closed on watcher-time policy changes and cleans partial plugin starts", () => {
+        const manager = source("src/betterdiscord/modules/addonmanager.ts");
+        const plugins = source("src/betterdiscord/modules/pluginmanager.ts");
+        expect(manager).toContain("#activationGate = new AddonActivationGate<Addon>()");
+        expect(manager).toContain("if (!this.approveAddonActivation(addon)) return false");
+        expect(manager).toContain("this.readAddon(filename, true)");
+        expect(manager).toContain("this.reloadAddon(filename)");
+        expect(plugins).toContain("if (!this.approveAddonActivation(plugin))");
+        expect(plugins).toContain("try {plugin.instance.stop();}");
+        expect(plugins).toContain("cleanupAlreadyAttempted");
+        expect(plugins).toContain("plugin.sourceSha256 = communityAddonSourceSha256(plugin.fileContent ?? \"\")");
     });
 
     test("captures private IPC methods before plugins and never passes account ids in storage payloads", () => {
@@ -68,6 +110,9 @@ describe("Solcord renderer security contracts", () => {
         const product = source("src/common/solcord/product.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
         expect(runtime).toContain("#sessionPeopleState");
+        expect(runtime).toContain("await this.#loadPeopleState()");
+        expect(runtime).toContain("TIMELINE_IPC.peopleWrite(capability, {state})");
+        expect(runtime).toContain("peopleStatePersistence: this.#peopleStatePersistent ? \"encrypted\" : \"session\"");
         expect(runtime).toContain("#sessionFocusChannelIds");
         expect(runtime).toContain("this.#returnLater = new SolcordReturnLaterJournal()");
         expect(runtime).toContain("JsonStore.delete(\"misc\", \"solcordReturnLater\")");
@@ -76,7 +121,7 @@ describe("Solcord renderer security contracts", () => {
         expect(product).toContain("pinnedDmIds: []");
         expect(product).toContain("focusChannelIds: []");
         expect(panel).toContain("accountGeneration: SolcordRuntime.privateAccountGeneration()");
-        for (const reset of ["setTranslationCredential(\"\")", "setTranslationText(\"\")", "setTranslationResult(\"\")", "setIdentityNotes([])", "setComposerDraft(\"\")", "setGlance([])", "setVoicePreview(undefined)"]) expect(panel).toContain(reset);
+        for (const reset of ["setTranslationCredential(\"\")", "setTranslationText(\"\")", "setTranslationResult(\"\")", "setIdentityNotes([])", "setComposerDraft(\"\")", "setGlance(presentSolcordChannelGlance([]))", "setVoicePreview(undefined)"]) expect(panel).toContain(reset);
     });
 
     test("revalidates every queued account-scoped main-process storage result before returning it", () => {
@@ -88,6 +133,7 @@ describe("Solcord renderer security contracts", () => {
             "SolcordTimeline.append", "SolcordTimeline.read", "SolcordTimeline.clear",
             "SolcordFriendWatch.append", "SolcordFriendWatch.read", "SolcordFriendWatch.clear",
             "SolcordAudienceGuard.read", "SolcordAudienceGuard.write", "SolcordAudienceGuard.clear",
+            "SolcordPeopleState.read", "SolcordPeopleState.write", "SolcordPeopleState.clear",
             "SolcordTranslationCredentials.read", "SolcordTranslationCredentials.write", "SolcordTranslationCredentials.clear",
             "SolcordLocalIdentityNotes.read", "SolcordLocalIdentityNotes.write", "SolcordLocalIdentityNotes.remove", "SolcordLocalIdentityNotes.clear"
         ]) {
@@ -186,9 +232,12 @@ describe("Solcord renderer security contracts", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
         const restore = runtime.slice(runtime.indexOf("#restorePrivacyRollback"), runtime.indexOf("#privacyRollbackError"));
-        expect(restore).toContain("PluginManager.isEnabled(entry.fileName)");
+        expect(restore).toContain("entry.kind === \"theme\" ? ThemeManager : PluginManager");
+        expect(restore).toContain("manager.isEnabled(entry.fileName)");
         expect(restore).toContain("PluginDoctor.isQuarantined(entry.doctorId)");
         expect(restore).toContain("if (!SolcordSettings.rollback(snapshotId))");
+        expect(restore.indexOf("SolcordSettings.rollback(snapshotId)")).toBeLessThan(restore.indexOf("manager.enableAddon(entry.fileName)"));
+        expect(restore).toContain("if (failures.length) return failures");
         expect(runtime).toContain("automatic recovery was incomplete");
         expect(panel).toContain("error instanceof Error ? error.message");
         expect(panel).not.toContain("the previous snapshot was restored");
@@ -211,14 +260,66 @@ describe("Solcord renderer security contracts", () => {
         expect(runtime).toContain("integrity.attention + integrity.unavailable");
     });
 
+    test("holds genuine Solcord built-in quarantines while recovering only the classified legacy capability miss", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
+        expect(synchronize).toContain("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))");
+        for (const name of ["SplitLargeMessages", "DoNotTrack", "InvisibleTyping", "DoubleClickToReply"]) {
+            expect(synchronize).toContain(`PluginDoctor.isQuarantined(solcordBuiltInDoctorId("${name}"))`);
+        }
+        expect(synchronize).toContain("Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds.");
+        const retryDecision = runtime.slice(runtime.indexOf("const retryable ="), runtime.indexOf("if (retryable)", runtime.indexOf("const retryable =")));
+        expect(retryDecision).toContain("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))");
+    });
+
+    test("treats unavailable Discord capabilities as readiness misses rather than crash-loop failures", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
+        expect(synchronize).toContain("PluginDoctor.recordCapabilityMiss");
+        expect(synchronize).not.toContain("PluginDoctor.recordFailure");
+        expect(synchronize).not.toContain("NativeSuiteAdapterUnavailable");
+        expect(synchronize).toContain("if (!this.#communityAddonInstalled(name)) PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
+        expect(synchronize.indexOf("clearLegacyCapabilityMissQuarantine(name)")).toBeLessThan(synchronize.indexOf("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))"));
+        expect(synchronize).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(solcordBuiltInDoctorId(name))");
+        expect(synchronize).toContain("nativeSuite.providerAvailable(name)");
+        expect(synchronize).toContain("Ready is withheld until a matching live interaction succeeds");
+
+        const setup = runtime.slice(runtime.indexOf("const adapterResults = this.#synchronizeCuratedAdapters(requestedCurated)"), runtime.indexOf("const replacementFiles", runtime.indexOf("const adapterResults = this.#synchronizeCuratedAdapters(requestedCurated)")));
+        expect(setup).toContain("PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name))");
+        expect(setup).not.toContain("PluginDoctor.quarantine(name, reason)");
+
+        const toggle = runtime.slice(runtime.indexOf("async setCuratedAddonEnabled"), runtime.indexOf("async retryQuarantinedAddon"));
+        expect(toggle).toContain("const guardedCanRunIndependently = guardedBuiltIn && !this.#communityAddonEnabled(name)");
+        expect(toggle).toContain("const doctorId = guardedBuiltIn ? solcordBuiltInDoctorId(name) : name");
+        expect(toggle).toContain("const communityAddonPresent = Boolean(resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName))");
+        expect(toggle).toContain("if (!communityAddonPresent) PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
+        expect(toggle).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(doctorId)");
+        expect(toggle).toContain("PluginDoctor.recordCapabilityMiss(doctorId)");
+        expect(toggle).not.toContain("PluginDoctor.quarantine(name, reason)");
+        expect(toggle).not.toContain("SolcordSettings.setCuratedAddonEnabled(name, false, reason)");
+    });
+
+    test("treats the selected animated background as a first-party Appearance setting", () => {
+        const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
+        expect(synchronize).toContain("productPreferences.nativeSuite.motion.effect !== \"off\"");
+        expect(synchronize).toContain(`!PluginDoctor.isQuarantined(solcordBuiltInDoctorId("DiscordEffects"))`);
+        expect(synchronize).toContain(`!this.#communityAddonEnabled("DiscordEffects")`);
+        expect(synchronize).toContain("nativeEnabled.DiscordEffects = true");
+        expect(synchronize).toContain("Active as the selected first-party Appearance background.");
+    });
+
     test("exposes Call Context only after its selected-channel, voice-state, optional provider, and subscription contracts validate", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
-        expect(runtime).toContain("const callContextAvailable = lookups.callContext");
-        expect(runtime).toContain("typeof selectedChannelStore?.getVoiceChannelId === \"function\"");
-        expect(runtime).toContain("typeof voiceStateStore?.getVoiceStatesForChannel === \"function\"");
-        expect(runtime).toContain("callContextStores.every(store => typeof store?.addChangeListener === \"function\" && typeof store.removeChangeListener === \"function\")");
-        expect(runtime).toContain("currentCall: callContextAvailable ? currentCall : undefined");
-        expect(runtime).toContain("subscribeCall: callContextAvailable ? listener =>");
+        expect(runtime).toContain("const voiceParticipantContextAvailable = voiceParticipantsNeeded");
+        expect(runtime).toContain("voiceChannelCapability.state !== \"unavailable\"");
+        expect(runtime).toContain("voiceStateCapability.state !== \"unavailable\"");
+        expect(runtime).toContain("baseCallContextStores.every(store => typeof store?.addChangeListener === \"function\" && typeof store.removeChangeListener === \"function\")");
+        expect(runtime).toContain("const callContextAvailable = lookups.callContext && voiceParticipantContextAvailable");
+        expect(runtime).toContain("voiceActivityAvailable: callContextAvailable && voiceActivityAvailable");
+        expect(runtime).toContain("spectatorsAvailable: callContextAvailable && spectatorsAvailable");
+        expect(runtime).toContain("currentCall: voiceParticipantContextAvailable ? currentCall : undefined");
+        expect(runtime).toContain("subscribeCall: voiceParticipantContextAvailable ? listener =>");
     });
 
     test("does not let stale asynchronous feature starts resurrect disabled or unavailable modules", () => {
@@ -294,7 +395,7 @@ describe("Solcord renderer security contracts", () => {
 
     test("rolls back partial Call Context subscriptions before exposing the adapter", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
-        const start = runtime.indexOf("subscribeCall: callContextAvailable");
+        const start = runtime.indexOf("subscribeCall: voiceParticipantContextAvailable");
         const subscription = runtime.slice(start, runtime.indexOf("setLocalVolume:", start));
         expect(subscription).toContain("subscribeSolcordChangeStores(scope, callContextStores");
         const helper = source("src/betterdiscord/modules/solcord/native-suite.ts");
@@ -345,7 +446,8 @@ describe("Solcord renderer security contracts", () => {
         expect(panel).toContain("SolcordRuntime.prepareProviderMigrationPlan(state.draft)");
         expect(panel).toContain("SolcordRuntime.finishSetup(state.draft, confirmedPlan)");
         expect(wizard).toContain("active community provider changed after review");
-        const restore = runtime.slice(runtime.indexOf("async #restoreAddonStates"), runtime.indexOf("#communityAddonEnabled"));
+        const restoreStart = runtime.indexOf("async #restoreAddonStates");
+        const restore = runtime.slice(restoreStart, runtime.indexOf("#communityAddonEnabled", restoreStart));
         expect(restore).toContain("for (const [fileName, desired] of Object.entries(priorAddonStates))");
         expect(restore).toContain("PluginManager.resolveAddon(fileName)");
         expect(restore).toContain("Object.hasOwn(priorAddonStates, addon.filename)");
@@ -367,7 +469,7 @@ describe("Solcord renderer security contracts", () => {
         expect(timeline).toContain("estimatedStateBytes");
         expect(timeline).toContain("while (this.#messages.size > this.#limits.records");
         expect(timeline).toContain("while (this.#seenEvents.size > this.#limits.seenEvents)");
-        expect(runtime).toContain("boundedTimelineMessageIds");
+        expect(timeline).toContain("boundedTimelineMessageIds");
         expect(runtime).toContain("this.#timeline.snapshot(channelId, 250)");
     });
 
@@ -404,9 +506,11 @@ describe("Solcord renderer security contracts", () => {
 
     test("keeps Stream Shield and Timeline copy within structural and storage evidence", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
+        const streamShield = source("src/betterdiscord/modules/solcord/stream-shield.ts");
         const timelinePanel = source("src/betterdiscord/ui/solcord/timeline.tsx");
-        expect(runtime).toContain("structural Go Live store lookup connected; live transition acceptance is still pending");
-        expect(runtime).not.toContain("verified Go Live store connected");
+        expect(runtime).toContain("describeSolcordStreamShieldResolution(resolution, automaticAvailable, source())");
+        expect(streamShield).toContain("structural store match; live transition acceptance remains pending");
+        expect(streamShield).not.toContain("verified Go Live store connected");
         expect(timelinePanel).toContain("Persistent segments are encrypted when secure storage is available");
         expect(timelinePanel).not.toContain("A private, encrypted journal");
         expect(timelinePanel).toContain("complete bounded local event set only when its read succeeds");
@@ -415,7 +519,8 @@ describe("Solcord renderer security contracts", () => {
     test("separates code maturity, running status, and the bounded profile payload", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
-        expect(panel).toContain("Ready means an implemented adapter passed its current startup validation");
+        expect(panel).toContain("Ready passed startup validation");
+        expect(panel).toContain("Degraded means part of a running tool drifted or could not clean up completely");
         expect(panel).not.toContain("Ready modules are connected to Discord now");
         expect(panel).toContain("Profiles save Solcord module settings");
         expect(panel).toContain("They do not capture Timeline policy or curated-addon choices");

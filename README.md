@@ -20,10 +20,10 @@
 
 Solcord V2 is an unsigned release candidate with a self-contained Windows installer, one task-oriented Control Center, a resumable first run, local full-shell themes, recovery tooling, and a bounded compatibility layer for Discord Activities. Lean, Balanced, and Visual profiles control real sampling and motion policy. Optional tools start only after their current Discord adapter validates.
 
-**New user?** Start with the [one-minute Windows guide](docs/QUICK_START.md). It covers download verification, installation, first setup, and rollback without requiring Git or a development toolchain.
+**New user?** Start with the [quick Windows guide](docs/QUICK_START.md). It covers download verification, installation, first setup, and rollback without requiring Git or a development toolchain.
 
 > [!IMPORTANT]
-> The release page preserves every published candidate. Use the newest Solcord-named prerelease and verify its SHA-256 manifest before installation. Older candidates remain immutable for provenance and rollback.
+> The release page preserves every published candidate. Use the newest Solcord-named prerelease and verify it against `SHA256SUMS.txt` before installation. Older candidates remain immutable for provenance and rollback.
 
 ## Why Solcord exists
 
@@ -64,7 +64,7 @@ When the four runtime switches are off, they perform no Webpack lookup, patching
 
 ## Interface system
 
-The Control Center is organized around Overview, Appearance, Performance, Privacy & Safety, Chat & Composer, Voice & Activities, Friends & Spaces, Extensions, Recovery, and Advanced. Its search narrows those workspaces without hiding the active page. Module status uses explicit states such as off, ready, degraded, unavailable, and quarantined.
+The Control Center is organized around Overview, Appearance, Performance, Privacy & Safety, Chat & Composer, Voice & Activities, Friends & Spaces, Extensions, and Recovery. Its search narrows those workspaces without hiding the active page. Module status uses explicit states such as off, ready, degraded, unavailable, and quarantined.
 
 Solcord uses one semantic token layer for surfaces, borders, text, status, focus, spacing, radius, density, and motion. The interface supports narrow containers, visible keyboard focus, reduced motion, and high Windows scaling without introducing a second component library.
 

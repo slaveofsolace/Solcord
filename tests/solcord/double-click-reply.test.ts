@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
+import {readFileSync} from "node:fs";
+import {resolve} from "node:path";
 
 import {
     decideDoubleClickReply,
@@ -12,6 +14,7 @@ import {
 
 const MESSAGE_ID = "1152921504606846976";
 const CHANNEL_ID = "1152921504606846977";
+const RUNTIME_SOURCE = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
 
 function context(overrides: Partial<DoubleClickReplyContext> = {}): DoubleClickReplyContext {
     return {
@@ -29,6 +32,8 @@ class FakeAdapter implements DoubleClickReplyAdapter {
     public valid = true;
     public installs = 0;
     public disposals = 0;
+    public suppressorInstalls = 0;
+    public suppressorDisposals = 0;
     public replies: DoubleClickReplyTarget[] = [];
     public listener: ((event: unknown) => void) | undefined;
 
@@ -51,6 +56,11 @@ class FakeAdapter implements DoubleClickReplyAdapter {
 
     public requestReply(target: DoubleClickReplyTarget): void {
         this.replies.push(target);
+    }
+
+    public installAltClickSuppressor(): () => void {
+        this.suppressorInstalls++;
+        return () => {this.suppressorDisposals++;};
     }
 }
 
@@ -89,6 +99,15 @@ describe("double-click reply domain policy", () => {
         expect(decideDoubleClickReply(context({message: null}))).toEqual({action: "ignore", reason: "not-message"});
     });
 
+    test("supports one explicitly configured Ctrl, Shift, or Alt reply modifier", () => {
+        expect(decideDoubleClickReply(context({ctrlKey: true}), "ctrl").action).toBe("reply");
+        expect(decideDoubleClickReply(context({shiftKey: true}), "shift").action).toBe("reply");
+        expect(decideDoubleClickReply(context({altKey: true}), "alt").action).toBe("reply");
+        expect(decideDoubleClickReply(context(), "shift")).toEqual({action: "ignore", reason: "modified-click"});
+        expect(decideDoubleClickReply(context({ctrlKey: true, shiftKey: true}), "ctrl")).toEqual({action: "ignore", reason: "modified-click"});
+        expect(decideDoubleClickReply(context({metaKey: true}), "none")).toEqual({action: "ignore", reason: "modified-click"});
+    });
+
     test("fails closed for malformed or structurally invalid message identities", () => {
         expect(decideDoubleClickReply(null)).toEqual({action: "ignore", reason: "malformed-context"});
         expect(decideDoubleClickReply(context({message: {messageId: "not-an-id", channelId: CHANNEL_ID}}))).toEqual({action: "ignore", reason: "invalid-message-identity"});
@@ -97,6 +116,38 @@ describe("double-click reply domain policy", () => {
 });
 
 describe("double-click reply lifecycle", () => {
+    test("captures a real synthetic dblclick on loaded message content and requests reply state only", () => {
+        const adapter = new FakeAdapter();
+        const feature = new DoubleClickReplyFeature(adapter);
+        const message = document.createElement("div");
+        const content = document.createElement("span");
+        message.dataset.listItemId = `chat-messages___${CHANNEL_ID}-${MESSAGE_ID}`;
+        message.append(content);
+        document.body.append(message);
+        adapter.installDoubleClickListener = listener => {
+            const handler = (event: Event) => listener(context({
+                eventType: event.type,
+                button: (event as MouseEvent).button,
+                detail: (event as MouseEvent).detail,
+                ancestors: [{tagName: (event.target as Element).tagName}],
+                message: {messageId: MESSAGE_ID, channelId: CHANNEL_ID}
+            }));
+            document.addEventListener("dblclick", handler, true);
+            return () => document.removeEventListener("dblclick", handler, true);
+        };
+
+        expect(feature.start()).toBeTrue();
+        content.dispatchEvent(new MouseEvent("dblclick", {bubbles: true, button: 0, detail: 2}));
+        expect(adapter.replies).toEqual([{messageId: MESSAGE_ID, channelId: CHANNEL_ID}]);
+        expect(RUNTIME_SOURCE).toContain("document.addEventListener(\"dblclick\", handler, true)");
+        expect(RUNTIME_SOURCE).toContain("[data-list-item-id^='chat-messages'], [id^='chat-messages-']");
+        expect(RUNTIME_SOURCE).toContain("CREATE_PENDING_REPLY");
+        expect(RUNTIME_SOURCE).toContain("Reflect.apply(replyFunction, replyModule");
+        expect(RUNTIME_SOURCE).not.toContain("resolved.message.author?.id === userStore");
+        feature.stop();
+        message.remove();
+    });
+
     test("installs one listener and only requests reply state on a valid double click", () => {
         const adapter = new FakeAdapter();
         const feature = new DoubleClickReplyFeature(adapter);
@@ -146,5 +197,32 @@ describe("double-click reply lifecycle", () => {
         expect(feature.start()).toBeTrue();
         expect(() => adapter.listener?.(context())).not.toThrow();
         expect(adapter.replies).toEqual([]);
+    });
+
+    test("owns the Alt conflict suppressor and fails closed if the adapter cannot provide one", () => {
+        const adapter = new FakeAdapter();
+        const feature = new DoubleClickReplyFeature(adapter, "alt");
+        expect(feature.start()).toBeTrue();
+        expect(adapter.suppressorInstalls).toBe(1);
+        feature.stop();
+        expect(adapter.suppressorDisposals).toBe(1);
+
+        const incomplete = new FakeAdapter();
+        incomplete.installAltClickSuppressor = undefined as unknown as () => () => void;
+        const unsupported = new DoubleClickReplyFeature(incomplete, "alt");
+        expect(unsupported.start()).toBeFalse();
+        expect(incomplete.disposals).toBe(1);
+    });
+
+    test("rolls back the primary listener if Alt suppressor installation throws", () => {
+        const adapter = new FakeAdapter();
+        adapter.installAltClickSuppressor = () => {throw new Error("Discord click adapter drifted");};
+        const feature = new DoubleClickReplyFeature(adapter, "alt");
+
+        expect(feature.start()).toBeFalse();
+        expect(feature.running).toBeFalse();
+        expect(adapter.installs).toBe(1);
+        expect(adapter.disposals).toBe(1);
+        expect(adapter.listener).toBeUndefined();
     });
 });

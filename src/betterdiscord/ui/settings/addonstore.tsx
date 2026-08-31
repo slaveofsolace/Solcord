@@ -1,4 +1,4 @@
-import React, {useRef} from "react";
+import React, {useEffect, useRef} from "react";
 import AddonStore from "@modules/addonstore";
 import {t} from "@common/i18n";
 import ipc from "@modules/ipc";
@@ -141,6 +141,10 @@ interface AddonStorePageProps {
 }
 
 export default function AddonStorePage({type}: AddonStorePageProps) {
+    useEffect(() => {
+        void AddonStore.openStore();
+    }, []);
+
     const {error, addons, loading} = useStateFromStores(AddonStore, () => AddonStore.getState(), [], (a, b) => {
         return a.loading === b.loading && a.error === b.error && shallowEqual(a.addons, b.addons);
     });

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES} from "./addon-catalog.generated";
-import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "./builtin-addons";
+import {isSolcordBuiltInAddon} from "./builtin-addons";
 
 
 export type SolcordSetupAvailability = "built-in" | "accepted" | "runtime-pending" | "action-gated" | "dependency-held" | "held" | "rejected";
@@ -28,7 +28,9 @@ export interface SolcordSetupPlan {
 }
 
 export const SOLCORD_RECOMMENDED_SETUP_ADDONS = Object.freeze([
-    ...SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS
+    "DoNotTrack",
+    "InvisibleTyping",
+    "DoubleClickToReply"
 ] as const);
 
 const REVIEW_FLAG_LABELS: Readonly<Record<string, string>> = Object.freeze({
@@ -61,8 +63,8 @@ function decisionFor(candidate: (typeof SOLCORD_RUNTIME_ADDONS)[number], selecte
 
     if (builtIn) {
         availability = "built-in";
-        statusLabel = "ready · Solcord built-in";
-        reason = "Included in Solcord; no community file or external dependency is installed.";
+        statusLabel = "included · checked at startup";
+        reason = "Included in Solcord with no community file or external dependency. The installed Discord client validates the live adapter before it can run.";
     }
     else if (candidate.installable && heldDependencies.length === 0) {
         availability = "accepted";

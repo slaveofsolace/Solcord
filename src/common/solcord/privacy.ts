@@ -42,6 +42,10 @@ export interface PrivacyCapabilityRecord {
     summary: string;
 }
 
+export function privacyCapabilityStateLabel(state: PrivacyCapabilityState): string {
+    return state === "NeedsReview" ? "Needs review" : state;
+}
+
 const HOUR_MS = 60 * 60 * 1_000;
 const OUTBOUND_DATA_CLASSES: readonly OutboundDataClass[] = ["core-discord", "telemetry", "crash-reporting", "activity-discovery", "solcord-updates", "community-addons", "external-providers"];
 const PRIVACY_DECISIONS: readonly PrivacyDecision[] = ["allow", "block", "hold"];

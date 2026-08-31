@@ -64,3 +64,33 @@ export function createCachedVoiceHealthReader(candidates: readonly unknown[], cl
         return normalizeCachedVoiceHealthSample(cached, clock());
     };
 }
+
+export interface SolcordVoiceHealthCapability {
+    state: "ready" | "available" | "unavailable";
+    detail: string;
+    reader?: () => SolcordVoiceHealthSample | undefined;
+    initialSample?: SolcordVoiceHealthSample;
+}
+
+/**
+ * Separates a structurally available cached reader from a positively observed
+ * quality sample. A disconnected client is Available, not falsely Ready.
+ */
+export function resolveCachedVoiceHealthCapability(candidates: readonly unknown[], clock: () => number = Date.now): SolcordVoiceHealthCapability {
+    const reader = createCachedVoiceHealthReader(candidates, clock);
+    if (!reader) return {state: "unavailable", detail: "No single reviewed synchronous cached voice-quality reader was available."};
+    const initialSample = reader();
+    if (!initialSample) {
+        return {
+            state: "available",
+            detail: "The cached voice-quality reader is validated. Join a call to produce the first local sample.",
+            reader
+        };
+    }
+    return {
+        state: "ready",
+        detail: "A bounded cached voice-quality sample was validated without recording audio or requesting network statistics.",
+        reader,
+        initialSample
+    };
+}

@@ -86,9 +86,53 @@ describe("Solcord V2 product model", () => {
         expect(normalized.nativeSuite).toMatchObject({pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, focusChannelIds: []});
     });
 
+    test("normalizes bounded Composer Toolkit preferences", () => {
+        const normalized = normalizeSolcordProductPreferences({nativeSuite: {composer: {
+            doubleClickReplyModifier: "shift",
+            splitBoundary: "newlines",
+            preserveBlankLines: true,
+            splitLimit: 99_000,
+            maxSplitParts: 99,
+            attachmentThreshold: -1,
+            counterWarningPercent: 999,
+            timestampFormat: "iso"
+        }}});
+        expect(normalized.nativeSuite.composer).toEqual({
+            doubleClickReplyModifier: "shift",
+            splitBoundary: "newlines",
+            preserveBlankLines: true,
+            splitLimit: 4_000,
+            maxSplitParts: 20,
+            attachmentThreshold: 0,
+            counterWarningPercent: 100,
+            timestampFormat: "iso"
+        });
+    });
+
+    test("normalizes secondary provider options without accepting unbounded effects", () => {
+        const normalized = normalizeSolcordProductPreferences({nativeSuite: {
+            people: {showRelationshipDates: false, showMutualGuildCounts: false, pinIcon: false, pinUnreadAmount: false, pinChannelAmount: false, sortPinnedByRecent: true, serverHiderStreamOnly: true, pinCategories: {friends: false, groups: true, bots: false, blocked: true, others: false}},
+            voiceActivity: {memberList: false, dmList: false, peopleList: false, highlightCurrentChannel: false, statusIcons: false, currentUser: false},
+            timestamps: {chat: false, embeds: false, markup: false, auditLogs: false, chatTooltips: false, editedTooltips: false, markupTooltips: false},
+            voiceNotes: {downloadButton: false, stripMetadata: true},
+            notifications: {includeDms: false, includeGuilds: false, includeMuted: true},
+            motion: {effect: "rain", particleCount: 9_999, color: "#AABBCC", opacityPercent: 5, speedPercent: 5_000, starAngleDegrees: -500, surfaces: {messages: false, channels: false}}
+        }});
+
+        expect(normalized.nativeSuite.people).toEqual({showRelationshipDates: false, showMutualGuildCounts: false, pinIcon: false, pinUnreadAmount: false, pinChannelAmount: false, sortPinnedByRecent: true, serverHiderStreamOnly: true, pinCategories: {friends: false, groups: true, bots: false, blocked: true, others: false}});
+        expect(normalized.nativeSuite.voiceActivity).toEqual({memberList: false, dmList: false, peopleList: false, highlightCurrentChannel: false, statusIcons: false, currentUser: false});
+        expect(normalized.nativeSuite.notifications).toEqual({includeDms: false, includeGuilds: false, includeMuted: true});
+        expect(normalized.nativeSuite.timestamps).toEqual({chat: false, embeds: false, markup: false, auditLogs: false, chatTooltips: false, editedTooltips: false, markupTooltips: false});
+        expect(normalized.nativeSuite.voiceNotes).toEqual({downloadButton: false, stripMetadata: true});
+        expect(normalized.nativeSuite.motion).toEqual({effect: "rain", particleCount: 24, color: "#aabbcc", opacityPercent: 10, speedPercent: 300, starAngleDegrees: -75, surfaces: {messages: false, channels: false, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}});
+        expect(normalizeSolcordProductPreferences({nativeSuite: {motion: {effect: "work-field"}}}).nativeSuite.motion.effect).toBe("work-field");
+        expect(normalizeSolcordProductPreferences({nativeSuite: {motion: {effect: "embers"}}}).nativeSuite.motion.effect).toBe("embers");
+        expect(normalizeSolcordProductPreferences({nativeSuite: {motion: {effect: "remote-css", particleCount: -2, color: "url(bad)", opacityPercent: 900, speedPercent: -2, starAngleDegrees: 900}}}).nativeSuite.motion).toEqual({effect: "field", particleCount: 1, color: "#9fb8ff", opacityPercent: 100, speedPercent: 25, starAngleDegrees: 75, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}});
+    });
+
     test("resolves performance and motion without overriding reduced-motion safety", () => {
         expect(resolveSolcordPerformancePolicy("lean", "full", false)).toMatchObject({sampleSeconds: 15, effectiveMotion: "subtle", ambientEffects: false});
-        expect(resolveSolcordPerformancePolicy("balanced", "full", false)).toMatchObject({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: false});
+        expect(resolveSolcordPerformancePolicy("balanced", "full", false)).toMatchObject({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: true});
         expect(resolveSolcordPerformancePolicy("visual", "follow-system", false)).toMatchObject({effectiveMotion: "full", ambientEffects: true});
         expect(resolveSolcordPerformancePolicy("visual", "full", true)).toMatchObject({effectiveMotion: "reduced", ambientEffects: false});
     });

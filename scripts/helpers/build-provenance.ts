@@ -8,10 +8,11 @@ import {spawnSync} from "node:child_process";
 export type SolcordBuildMode = "development" | "diagnostic" | "production" | "release" | "watch";
 
 export interface SolcordBuildProvenance {
-    schemaVersion: 1;
+    schemaVersion: 2;
     kind: "solcord-build-provenance";
     product: "Solcord";
     version: string;
+    candidateLabel: string;
     mode: SolcordBuildMode;
     buildLabel: string;
     buildTimestamp: string;
@@ -36,7 +37,7 @@ export interface SolcordBuildProvenance {
 }
 
 export interface SolcordPostBuildManifest {
-    schemaVersion: 1;
+    schemaVersion: 2;
     kind: "solcord-post-build-manifest";
     build: SolcordBuildProvenance;
     packagedAt: string;
@@ -56,6 +57,7 @@ interface ArtifactDigest {
 
 interface CaptureOptions {
     version: string;
+    candidateLabel: string;
     mode: SolcordBuildMode;
     modules: string[];
     buildTimestamp?: string;
@@ -82,6 +84,7 @@ interface CapturedSourceState {
 
 const SHA256 = /^[0-9a-f]{64}$/;
 const FULL_COMMIT = /^[0-9a-f]{40}$/;
+const CANDIDATE_SUFFIX = /^[0-9a-z]+(?:[.-][0-9a-z]+)*$/i;
 const BUILD_MODES = new Set<SolcordBuildMode>(["development", "diagnostic", "production", "release", "watch"]);
 const ALL_PACKAGE_MODULES = ["earlyRenderer", "editor", "editorHtml", "editorPreload", "main", "preload", "solcord"];
 
@@ -232,7 +235,14 @@ export function captureSolcordBuildProvenance(repoRootValue: string, options: Ca
 
     const source = captureStableSourceState(repoRoot);
     const modules = [...new Set(options.modules)].sort();
-    if (!options.version || modules.length === 0 || modules.some(module => !/^[a-zA-Z][a-zA-Z0-9]*$/.test(module))) {
+    const candidatePrefix = `v${options.version}-`;
+    if (!options.version
+        || typeof options.candidateLabel !== "string"
+        || !options.candidateLabel.startsWith(candidatePrefix)
+        || !CANDIDATE_SUFFIX.test(options.candidateLabel.slice(candidatePrefix.length))
+        || options.candidateLabel.length > 128
+        || modules.length === 0
+        || modules.some(module => !/^[a-zA-Z][a-zA-Z0-9]*$/.test(module))) {
         throw new Error("Solcord provenance received invalid build metadata.");
     }
     const bunExecutable = path.resolve(options.bunExecutable ?? process.execPath);
@@ -242,10 +252,11 @@ export function captureSolcordBuildProvenance(repoRootValue: string, options: Ca
     const buildTimestamp = resolveBuildTimestamp(repoRoot, source, options);
 
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         kind: "solcord-build-provenance",
         product: "Solcord",
         version: options.version,
+        candidateLabel: options.candidateLabel,
         mode: options.mode,
         buildLabel,
         buildTimestamp,
@@ -313,16 +324,22 @@ function validateProvenance(value: unknown): SolcordBuildProvenance {
     const toolchain = inputs?.toolchain;
     const modules = candidate.modules;
     const expectedLabel = source?.clean ? `${candidate.mode}-clean` : `${candidate.mode}-dirty.${source?.digest?.slice(0, 16)}`;
-    if (!exactKeys(candidate, ["schemaVersion", "kind", "product", "version", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
+    const candidateVersion = typeof candidate.version === "string" ? candidate.version : "";
+    const candidatePrefix = `v${candidateVersion}-`;
+    if (!exactKeys(candidate, ["schemaVersion", "kind", "product", "version", "candidateLabel", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
         || !source || !exactKeys(source, ["commit", "branch", "clean", "digest", "statusDigest"])
         || !inputs || !exactKeys(inputs, ["lockfile", "toolchain"])
         || !lockfile || !exactKeys(lockfile, ["file", "sha256"])
         || !toolchain || !exactKeys(toolchain, ["bunVersion", "bunExecutableSha256", "packageJsonSha256", "buildScriptSha256", "packScriptSha256"])
-        || candidate.schemaVersion !== 1
+        || candidate.schemaVersion !== 2
         || candidate.kind !== "solcord-build-provenance"
         || candidate.product !== "Solcord"
         || typeof candidate.version !== "string"
         || !candidate.version
+        || typeof candidate.candidateLabel !== "string"
+        || !candidate.candidateLabel.startsWith(candidatePrefix)
+        || !CANDIDATE_SUFFIX.test(candidate.candidateLabel.slice(candidatePrefix.length))
+        || candidate.candidateLabel.length > 128
         || !BUILD_MODES.has(candidate.mode)
         || !FULL_COMMIT.test(source.commit)
         || typeof source.branch !== "string"
@@ -378,7 +395,7 @@ export function createSolcordPostBuildManifest(
 ): SolcordPostBuildManifest {
     validateProvenance(provenance);
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         kind: "solcord-post-build-manifest",
         build: provenance,
         // A wall-clock packaging time would make otherwise identical release

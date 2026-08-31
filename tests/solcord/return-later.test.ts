@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {normalizeSolcordReturnRoute, SolcordReturnLaterJournal} from "../../src/common/solcord/return-later";
+import {normalizeSolcordReturnRoute, solcordReturnLaterTarget, SolcordReturnLaterJournal, SolcordReturnRouteMemory} from "../../src/common/solcord/return-later";
 
 describe("Solcord Return Later", () => {
     test("accepts only explicit Discord DM or channel routes and strips query data", () => {
@@ -10,6 +10,21 @@ describe("Solcord Return Later", () => {
         expect(normalizeSolcordReturnRoute("https://discord.com/channels/1/2")).toBe("/channels/1/2");
         expect(normalizeSolcordReturnRoute("https://example.com/channels/@me/1/2")).toBeUndefined();
         expect(normalizeSolcordReturnRoute("javascript:alert(1)")).toBeUndefined();
+        expect(solcordReturnLaterTarget("/channels/@me/123/456?private=value")).toBe("https://discord.com/channels/@me/123/456");
+    });
+
+    test("retains the last valid visible route until the account session is cleared", () => {
+        const memory = new SolcordReturnRouteMemory();
+        expect(memory.remember("https://discord.com/channels/@me/123/456")).toBeTrue();
+        expect(memory.current()).toBe("/channels/@me/123/456");
+        expect(memory.remember("https://discord.com/settings/solcord")).toBeFalse();
+        expect(memory.current()).toBe("/channels/@me/123/456");
+        expect(memory.remember("https://discord.com/channels/@me")).toBeFalse();
+        expect(memory.current()).toBe("/channels/@me/123/456");
+        expect(memory.remember("https://discord.com/channels/789/987")).toBeTrue();
+        expect(memory.current()).toBe("/channels/789/987");
+        memory.clear();
+        expect(memory.current()).toBeUndefined();
     });
 
     test("bounds due dates and supports local snooze and completion without account actions", () => {

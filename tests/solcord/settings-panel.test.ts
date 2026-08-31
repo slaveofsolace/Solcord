@@ -49,6 +49,7 @@ describe("Solcord Control Center clarity", () => {
     const panel = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/ui/solcord/panel.tsx"), "utf8");
     const timeline = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/ui/solcord/timeline.tsx"), "utf8");
     const styles = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/styles/solcord.css"), "utf8");
+    const runtime = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
 
     test("uses a stable vertical information architecture", () => {
         expect(panel).toContain("{label: \"Start\", ids: [\"overview\"]}");
@@ -70,7 +71,14 @@ describe("Solcord Control Center clarity", () => {
 
     test("keeps runtime diagnostics and the community catalog out of the primary path", () => {
         expect(panel).toContain("className=\"solcord-extension-disclosure\"");
-        expect(panel).toContain("Community software and technical state");
+        expect(panel).toContain("<summary>Community plugins</summary>");
+    });
+
+    test("shows native feature readiness before the collapsed community-plugin tools", () => {
+        const statusLedger = panel.indexOf("<NativeSuitePanel key=\"status\" scope=\"status\" />");
+        const communityDisclosure = panel.indexOf("<details className=\"solcord-extension-disclosure\"");
+        expect(statusLedger).toBeGreaterThan(-1);
+        expect(communityDisclosure).toBeGreaterThan(statusLedger);
     });
 
     test("keeps idle Fake Deafen out of Overview attention signals", () => {
@@ -84,18 +92,49 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("no Activity window has opened in this session");
     });
 
-    test("places Fake Deafen under a collapsed Voice experimental disclosure", () => {
-        expect(panel).toContain("<details className=\"solcord-experimental\"><summary>Experimental</summary><PowerLabStatus /></details>");
+    test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
+        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
         expect(panel).toContain("aria-label=\"Enable Solcord Fake Deafen\"");
-        expect(panel).toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
+        expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
+        expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
     });
 
+    test("uses one-click effect color swatches instead of the sticky native color popup", () => {
+        expect(panel).toContain("role=\"radiogroup\" aria-label=\"Effect color\"");
+        expect(panel).toContain("role=\"radio\" aria-checked=");
+        expect(panel).not.toContain("type=\"color\"");
+    });
+
+    test("makes an explicit ambient-background choice take effect in one action", () => {
+        expect(panel).toContain("const ambient = effect !== \"off\" && effect !== \"signal\"");
+        expect(panel).toContain("const motion = ambient && appearance.motion !== \"reduced\" ? \"full\" : appearance.motion");
+        expect(panel).toContain("onChange={event => updateAnimatedBackground(event.currentTarget.value as typeof preferences.nativeSuite.motion.effect)}");
+    });
+
+    test("gives every standalone private or composer text area an explicit accessible name", () => {
+        expect(panel).toContain("aria-label=\"Draft to review locally\"");
+        expect(panel).toContain("aria-label=\"Text to translate\"");
+        expect(panel).toContain("aria-label=\"Private local identity note\"");
+    });
+
+    test("presents Translation Desk as local-first without disguising network providers as setup dependencies", () => {
+        expect(panel).toContain("<option value=\"local\">On-device</option>");
+        expect(panel).toContain("Checking this language pair on device");
+        expect(panel).toContain("Provider off. Nothing will be transmitted.");
+        expect(panel).toContain("No cloud fallback will run automatically.");
+        expect(panel).toContain("Translate on device");
+        expect(panel).toContain("External provider selected. Solcord shows the destination and asks before each request.");
+        expect(panel).toContain("localPairBlocked");
+        expect(panel).toContain("<summary>External provider settings</summary>");
+    });
+
     test("keeps Voice Note Studio actions synchronized with permission, recording, and preview state", () => {
-        expect(panel).toContain("const [voiceStarting, setVoiceStarting] = useState(false)");
-        expect(panel).toContain("disabled={voiceStarting || voiceRecording || Boolean(voicePreview)}");
-        expect(panel).toContain("disabled={voiceStarting || !voiceRecording}");
-        expect(panel).toContain("disabled={!voiceStarting && !voiceRecording && !voicePreview}");
+        expect(panel).toContain("const [voicePhase, setVoicePhase] = useState<SolcordVoiceNotePhase>");
+        expect(panel).toContain("disabled={voicePhase !== \"idle\" || Boolean(voicePreview)}");
+        expect(panel).toContain("disabled={!voiceRecording}");
+        expect(panel).toContain("disabled={voicePhase === \"idle\" && !voicePreview}");
+        expect(panel).toContain("controller.cancelVoiceNote();");
     });
 
     test("never reports a built-in action succeeded after its runtime controller disappeared", () => {
@@ -128,6 +167,137 @@ describe("Solcord Control Center clarity", () => {
         expect(styles).not.toContain("details:nth-child");
     });
 
+    test("invalidates local Composer proof as soon as its draft changes", () => {
+        expect(panel).toContain("setComposerDraft(event.currentTarget.value); setComposerProof(undefined);");
+        expect(panel).toContain("composerProof?.reviewedDraft === composerDraft");
+        expect(panel).toContain("role=\"status\" aria-live=\"polite\"");
+        expect(panel).toContain("<NativeSuitePanel key=\"chat\" scope=\"chat\" />");
+        expect(panel).not.toContain("onChange={event => setComposerDraft(event.currentTarget.value)}");
+    });
+
+    test("renders Channel Glance as bounded accessible rows rather than a raw message dump", () => {
+        expect(panel).toContain("presentSolcordChannelGlance(requireController().previewLoadedChannel(channelId.trim()))");
+        expect(panel).toContain("role=\"list\" aria-label={`Channel Glance:");
+        expect(panel).toContain("role=\"listitem\" className=\"solcord-glance-row\"");
+        expect(panel).toContain("<NativeSuitePanel key=\"voice\" scope=\"voice\" />");
+        expect(panel).toContain("Nothing was fetched, marked read, or persisted.");
+        expect(panel).not.toContain("{message.text || \"No text content\"}");
+        expect(panel).not.toContain("{message.authorLabel}");
+    });
+
+    test("never opens a mutating Notification Review confirmation for zero loaded items", () => {
+        const notificationReview = panel.slice(panel.indexOf("const previewNotifications"), panel.indexOf("const addLocalSpaceRule"));
+        expect(notificationReview).toContain("if (preview.count === 0)");
+        expect(notificationReview).toContain("Nothing to review in the already-loaded notification state.");
+        expect(notificationReview.indexOf("if (preview.count === 0)")).toBeLessThan(notificationReview.indexOf("window.confirm"));
+    });
+
+    test("makes Return Later reachable from the visible DM or channel and keeps route memory account-scoped", () => {
+        expect(runtime).toContain("name: \"Save current DM or channel for later\"");
+        expect(runtime).toContain("Patcher.after(\"Solcord~ReturnLaterRoute\", window.history, \"pushState\"");
+        expect(runtime).toContain("Patcher.after(\"Solcord~ReturnLaterRoute\", window.history, \"replaceState\"");
+        expect(runtime).toContain("this.#returnRouteMemory.clear();");
+        expect(runtime).toContain("window.location.assign(target);");
+        expect(panel).toContain("SolcordRuntime.snoozeReturnLater(item.id");
+        expect(panel).toContain("SolcordRuntime.completeReturnLater(item.id)");
+        expect(panel).toContain("SolcordRuntime.openReturnLater(item.id)");
+        expect(panel).toContain("choose Save current DM or channel for later");
+    });
+
+    test("keeps Command Deck focus inside the modal and restores the prior control", () => {
+        const deck = runtime.slice(runtime.indexOf("openCommandDeck(): void"), runtime.indexOf("inspectLink(input: string)"));
+        expect(deck).toContain("appMount.inert = true");
+        expect(deck).toContain("document.addEventListener(\"keydown\", documentKeydown, true)");
+        expect(deck).toContain("document.addEventListener(\"focusin\", containFocus, true)");
+        expect(deck).toContain("search.addEventListener(\"pointerdown\"");
+        expect(deck).toContain("search.focus({preventScroll: true})");
+        expect(deck).toContain("filterSolcordCommands(commands, search.value)");
+        expect(deck).toContain("No matching local command.");
+        expect(deck).toContain("previousFocus.focus({preventScroll: true})");
+        expect(styles).toContain("pointer-events: auto !important");
+    });
+
+    test("keeps Return Later in one primary workspace while People and Spaces resolves loaded object types", () => {
+        expect(panel).toContain("workspace === \"chat\" && <><BaselineToolsPanel /><BuiltInFeatureSwitches scope=\"chat\" /><NativeSuitePanel key=\"chat\" scope=\"chat\" /><ReturnLaterPanel /></>");
+        expect(panel).toContain("workspace === \"friends\" && <><FriendWatchPanel /><BuiltInFeatureSwitches scope=\"friends\" /><NativeSuitePanel key=\"friends\" scope=\"friends\" /></>");
+        expect(panel.match(/<ReturnLaterPanel \/>/g)).toHaveLength(1);
+        expect(panel).toContain("scope === \"friends\" ? SolcordRuntime.currentPeopleObjectId() ?? \"\"");
+        expect(panel).toContain("SolcordRuntime.resolvePeopleObject(channelId.trim())");
+        expect(panel).toContain("disabled={!peopleTarget?.canPinDm}");
+        expect(panel).toContain("disabled={!peopleTarget?.canManageServer}");
+        expect(panel).toContain("peopleTarget.kind === \"server-channel\"");
+        expect(panel).toContain("The local People and Spaces transaction did not complete; no success was reported.");
+        expect(panel).toContain("The local removal did not complete; no success was reported.");
+        expect(runtime).toContain("resolvePeopleObject(id: string): SolcordPeopleObjectResolution");
+        expect(runtime).toContain("currentPeopleObjectId(): string | undefined");
+        expect(runtime).toContain("this.#sessionPeopleState = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []}");
+    });
+
+    test("keeps workspace search results explicit without desynchronizing the section selector", () => {
+        expect(panel).toContain("const navigateFromSearch = (next: SolcordWorkspaceId) => {");
+        expect(panel).toContain("setWorkspaceQuery(\"\")");
+        expect(panel).toContain("onClick={() => navigateFromSearch(item.id)}");
+        expect(panel).toContain("onChange={event => navigateFromSearch(event.currentTarget.value as SolcordWorkspaceId)}>{SOLCORD_WORKSPACES.map");
+        expect(panel).not.toContain("value={workspace} onChange={event => setWorkspace(event.currentTarget.value as SolcordWorkspaceId)}>{visibleWorkspaces.map");
+    });
+
+    test("shows runtime ownership as read-only technical status and keeps built-in controls in one workspace", () => {
+        const statusDetails = panel.slice(panel.indexOf("function RuntimeStatusDetails"), panel.indexOf("function ActivityBridge"));
+        expect(statusDetails).toContain("Read-only Solcord runtime status");
+        expect(statusDetails).not.toContain("SolcordRuntime.setEnabled");
+        expect(statusDetails).not.toContain("type=\"checkbox\"");
+        expect(panel).toContain("<summary>Technical details</summary><p>Read-only lifecycle and owned-resource status.");
+        expect(panel).not.toContain("<Section title=\"Core runtime\"");
+    });
+
+    test("gives built-in title, replacement copy, and status separate wrapping columns", () => {
+        expect(panel).toContain("className=\"solcord-native-title\"");
+        expect(panel).toContain("className=\"solcord-native-replaces\"");
+        expect(styles).toContain("grid-template-columns: minmax(132px, max-content) minmax(18ch, 1fr) auto");
+        expect(styles).toContain(".solcord-native-replaces { grid-column: 2; min-width: 0; overflow-wrap: anywhere;");
+        expect(styles).toContain(".solcord-native-row > .solcord-capability { grid-column: 3; }");
+        expect(styles).toContain(".solcord-native-replaces { grid-row: 2; grid-column: 1 / -1; }");
+    });
+
+    test("uses whitespace and type hierarchy instead of stacked adjacent dividers", () => {
+        expect(panel).toContain("<h3>{title}</h3>");
+        expect(panel).not.toContain("<h2>{title}</h2>");
+        expect(styles).toContain(".solcord-workspace-heading { padding: 0 0 20px; }");
+        expect(styles).toContain(".solcord-workspace-heading h2 { margin: 0 0 8px;");
+        expect(styles).toContain(".solcord-section-heading h3 { margin: 0;");
+        expect(styles).toContain(".solcord-section { padding: 20px 0 24px; border: 0; }");
+        expect(styles).toContain(".solcord-section + .solcord-section { border-top: 1px solid var(--sc-border); }");
+        expect(styles).toContain(".solcord-section-heading p { max-width: 64ch; margin: 8px 0 0;");
+        expect(styles).toContain(".solcord-setting-row > span:first-child { display: grid; gap: 8px;");
+        for (const primitive of [
+            ".solcord-setting-rows { display: grid; gap: 4px; }",
+            ".solcord-setting-list { display: grid; gap: 4px; max-width: 700px; }",
+            ".solcord-module-table { display: grid; gap: 4px; overflow: hidden; }",
+            ".solcord-native-ledger { display: grid; gap: 4px; }",
+            ".solcord-privacy-capabilities { display: grid; gap: 4px; margin-top: 14px; }",
+            ".solcord-native-tools { display: grid; gap: 8px; margin-top: 14px; }"
+        ]) expect(styles).toContain(primitive);
+        expect(styles).toContain(".solcord-setting-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }");
+        expect(styles).toContain(".solcord-native-row:is(:hover, :focus-within) { background: var(--sc-surface-1); }");
+        expect(styles).not.toContain(".solcord-setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; min-height: 56px; padding: 9px 0; border-bottom");
+        expect(styles).not.toContain(".solcord-native-row:last-child { border-bottom: 0; }");
+        expect(styles).not.toContain(".solcord-privacy-capabilities > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 52px; padding: 8px 0; border-bottom");
+        expect(styles).not.toContain(".solcord-segmented button { border-right: 0; border-bottom");
+        expect(styles).not.toContain(".solcord-workspace-heading { padding: 3px 0 var(--sc-space-4); border-bottom");
+        expect(styles).not.toContain("margin-top: 16px; padding: 10px 0; border-block: 1px solid var(--sc-border)");
+    });
+
+    test("keeps Friend Watch quiet while off and reveals private controls only after opt in", () => {
+        const friendWatch = panel.slice(panel.indexOf("function FriendWatchPanel"), panel.indexOf("function ReturnLaterPanel"));
+        expect(friendWatch).toContain("Off. No relationship history is stored.");
+        expect(friendWatch).toContain("On. History is encrypted, local, and isolated to this account.");
+        expect(friendWatch).toContain("{policy.enabled && <>");
+        expect(friendWatch).toContain("<summary>Retention and notifications</summary>");
+        expect(friendWatch).toContain("{state.events.length > 0 && <div className=\"solcord-actions\"");
+        expect(friendWatch).not.toContain("<ActionButton disabled={!state.events.length}");
+        expect(styles).toContain(".solcord-empty { margin: 10px 0; color: var(--text-muted); font-style: normal;");
+    });
+
     test("uses a dedicated setup workspace and only a compact reminder after deferral", () => {
         expect(panel).toContain("const focusSetup = workspace === \"overview\" && workspaceFocus === \"setup\"");
         expect(panel).toContain("document.querySelector<HTMLElement>(\".solcord-wizard\")");
@@ -147,10 +317,24 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("leads Privacy with the explicit profile and content-free capability report", () => {
-        expect(panel).toContain("<PrivacyProtectionPanel /><StreamShieldControls />");
+        expect(panel).toContain("<PrivacyProtectionPanel /><BuiltInFeatureSwitches scope=\"privacy\" /><StreamShieldControls />");
         expect(panel).toContain("Use Strict Privacy");
         expect(panel).toContain("Check for updates");
+        expect(panel).toContain("privacyCapabilityStateLabel(capability.state)");
+        expect(panel).toMatch(/solcord-privacy-state-\$\{capability\.state\.toLowerCase\(\)\}/);
         expect(panel).toContain("never URLs, payloads, account IDs, messages, attachments, or file paths");
+    });
+
+    test("reports each built-in from its actual adapter result and explains every family state", () => {
+        expect(panel).toContain("adapters: SolcordRuntime.curatedAdapterStatus()");
+        expect(panel).toContain("const adapter = state.adapters[name]");
+        expect(panel).toContain("const maturity = !enabled ? \"off\" : adapter?.enabled ? \"ready\" : \"unsupported\"");
+        expect(panel).toContain("const adapter = SolcordRuntime.curatedAdapterStatus()[name]");
+        expect(panel).toContain("is selected but unavailable");
+        expect(panel).not.toContain("state.statuses.find(item => item.id === feature)");
+        expect(panel).toContain("optional setup</span><span>{visibleStatuses.filter(item => item.maturity === \"degraded\").length} degraded");
+        expect(panel).toContain("Degraded means part of a running tool drifted or could not clean up completely.");
+        expect(panel).toMatch(/aria-label=\{`\$\{item\.title\}: \$\{stateLabel\[item\.maturity\]\}\. \$\{item\.detail\}`\}/);
     });
 
     test("does not report a storage failure before Message Timeline is enabled", () => {
@@ -160,9 +344,18 @@ describe("Solcord Control Center clarity", () => {
         expect(timeline).not.toContain("session only · secure storage unavailable or disabled");
     });
 
-    test("removes Discord's 300px settings-panel floor at a 320px viewport", () => {
-        expect(styles).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"] > [class*=\"panel_\"]");
-        expect(styles).toMatch(/\[class\*="panel_"\].*min-width: 0; max-width: 100%; margin: 0; padding: 0;/);
+    test("keeps the Discord wrapper and long status copy inside the visible settings column", () => {
+        expect(styles).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { flex: 1 1 auto; min-width: 0; }");
+        expect(styles).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"],");
+        expect(styles).toContain("[class*=\"contentColumn_\"]:has(.solcord-panel)");
+        expect(styles).toContain(":is([class*=\"panel_\"], :has(> .solcord-panel)) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; }");
+        expect(styles).toContain(".solcord-pulse > div { min-width: 0; }");
+        expect(styles).toContain(".solcord-pulse p { margin: 4px 0 0; color: var(--sc-muted); overflow-wrap: anywhere; white-space: normal; }");
+        expect(styles).toContain(".solcord-setup-reminder > span { display: grid; gap: 8px; min-width: 0; }");
+        expect(styles).toContain(".solcord-setup-reminder small { overflow-wrap: anywhere; white-space: normal; }");
+        expect(styles).toContain(".solcord-setup-reminder > .solcord-action { flex: 0 0 auto; }");
+        expect(styles).toMatch(/@container solcord-panel \(max-width: 720px\)[\s\S]*?\.solcord-setup-reminder,[\s\S]*?\.solcord-pulse \{ align-items: flex-start; flex-direction: column; \}/);
+        expect(styles).toMatch(/@container solcord-panel \(max-width: 720px\)[\s\S]*?\.solcord-setup-reminder > span,[\s\S]*?\.solcord-pulse > div \{ width: 100%; max-width: 100%; \}/);
         expect(styles).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.solcord-panel \{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*padding-right: 12px;[^}]*padding-left: 12px;/);
     });
 

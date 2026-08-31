@@ -59,6 +59,7 @@ function capture(
 ) {
     return captureSolcordBuildProvenance(testFixture.root, {
         version: "1.0.0-test",
+        candidateLabel: "v1.0.0-test-rc.0",
         mode,
         modules: MODULES,
         ...timing,
@@ -109,6 +110,9 @@ describe("Solcord build provenance", () => {
         const testFixture = fixture();
         const clean = capture(testFixture);
         expect(clean.source.clean).toBeTrue();
+        expect(clean.version).toBe("1.0.0-test");
+        expect(clean.candidateLabel).toBe("v1.0.0-test-rc.0");
+        expect(clean.candidateLabel).not.toBe(clean.version);
         expect(clean.source.commit).toMatch(/^[0-9a-f]{40}$/);
         expect(clean.buildLabel).toBe("diagnostic-clean");
 
@@ -235,6 +239,7 @@ describe("Solcord build provenance", () => {
         expect(manifest.artifacts.asar.file).toBe("solcord.asar");
         expect(manifest.artifacts.packageMetadata.file).toBe("dist-package.json");
         expect(manifest.build.source.commit).toHaveLength(40);
+        expect(manifest.build.candidateLabel).toBe("v1.0.0-test-rc.0");
         expect(JSON.stringify(manifest)).not.toContain("solcord-provenance-test-");
     });
 });

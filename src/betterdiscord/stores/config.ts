@@ -8,6 +8,7 @@ class ConfigStore extends Store {
         commit: process.env.__COMMIT__!,
         build: process.env.__BUILD__!,
         version: process.env.__VERSION__!,
+        candidate: process.env.__CANDIDATE__!,
 
         // TODO: asynchronously get these from the main process instead of hacky env vars
         appPath: process.env.DISCORD_APP_PATH!,
@@ -28,7 +29,9 @@ class ConfigStore extends Store {
         this.emitChange();
     }
 
-    get isDevelopment() {return this.data.build !== "production";}
+    get isCleanCandidateBuild() {return this.data.build === "production-clean" || this.data.build === "release-clean";}
+    get candidateIdentity() {return this.isCleanCandidateBuild ? this.data.candidate : `${this.data.candidate} · ${this.data.build || "unidentified build"}`;}
+    get isDevelopment() {return !this.isCleanCandidateBuild;}
     get isCanary() {return this.data.branch !== "main";}
 }
 

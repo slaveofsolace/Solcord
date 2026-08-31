@@ -7,10 +7,12 @@ import styleLoader from "bun-style-loader";
 import * as esbuild from "esbuild";
 
 import {assertSolcordBuildAllowed, captureSolcordBuildProvenance, type SolcordBuildMode, writeSolcordBuildProvenance} from "./helpers/build-provenance";
+import {assertSolcordPackageVersion, SOLCORD_PRODUCT_IDENTITY} from "../src/common/solcord/product-identity";
 
 
 const fileURL = Bun.fileURLToPath(import.meta.url);
 const rootDir = path.join(path.dirname(fileURL), "..");
+assertSolcordPackageVersion(pkg.version);
 const isProduction = process.argv.includes("--minify") || process.argv.includes("--production") || process.argv.includes("--release");
 const buildMode: SolcordBuildMode = process.argv.includes("--release")
     ? "release"
@@ -42,7 +44,8 @@ if (!modulesRequested.length) modulesRequested = Object.keys(moduleConfigs);
 
 const entryPoints = modulesRequested.map(m => moduleConfigs[m]);
 const provenance = captureSolcordBuildProvenance(rootDir, {
-    version: pkg.version,
+    version: SOLCORD_PRODUCT_IDENTITY.numericVersion,
+    candidateLabel: SOLCORD_PRODUCT_IDENTITY.candidateLabel,
     mode: buildMode,
     modules: modulesRequested
 });
@@ -78,7 +81,8 @@ function buildOptions() {
         minify: isProduction,
         legalComments: "none",
         define: {
-            "process.env.__VERSION__": JSON.stringify(pkg.version),
+            "process.env.__VERSION__": JSON.stringify(SOLCORD_PRODUCT_IDENTITY.numericVersion),
+            "process.env.__CANDIDATE__": JSON.stringify(SOLCORD_PRODUCT_IDENTITY.candidateLabel),
             "process.env.__MONACO_VERSION__": JSON.stringify(pkg.dependencies["monaco-editor"]),
             "process.env.__BRANCH__": JSON.stringify(BRANCH_NAME),
             "process.env.__COMMIT__": JSON.stringify(COMMIT_HASH),
@@ -107,7 +111,8 @@ async function runBuild() {
     console.log(`Finished building ${names} in ${(after - before).toFixed(2)}ms`);
     console.log("");
     console.log(`Type:    ${DEVELOPMENT}`);
-    console.log(`Version: ${pkg.version}`);
+    console.log(`Core:    ${SOLCORD_PRODUCT_IDENTITY.numericVersion}`);
+    console.log(`Build:   ${SOLCORD_PRODUCT_IDENTITY.candidateLabel}`);
     console.log(`Branch:  ${BRANCH_NAME}`);
     console.log(`Commit:  ${COMMIT_HASH}`);
     console.log("");

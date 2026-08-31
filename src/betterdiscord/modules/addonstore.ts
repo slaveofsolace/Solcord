@@ -20,6 +20,7 @@ import {parseJsDoc} from "@common/utils";
 import type {Addon as AddonType} from "@typed/addon";
 import Store from "@stores/base";
 import {fetch} from "./net";
+import {onSolcordUpdatePolicyChange, solcordAutomaticCatalogRequestsAllowed, solcordAutomaticUpdatesAllowed, solcordCatalogRetryAllowed} from "./solcord/privacy-runtime-state";
 
 
 function showConfirmDelete(addon: AddonType) {
@@ -369,15 +370,16 @@ const addonStore = new class AddonStore extends Store {
 
         // window.AddonStore = this;
 
-        const isEnabled = () => (
-            Settings.get<boolean>("settings", "store", "bdAddonStore")
-            || Settings.get<boolean>("settings", "addons", "checkForUpdates")
+        const storeIsVisible = () => Settings.get<boolean>("settings", "store", "bdAddonStore");
+        const automaticRequestsAreEnabled = () => solcordAutomaticCatalogRequestsAllowed(
+            storeIsVisible(),
+            Settings.get<boolean>("settings", "addons", "checkForUpdates")
         );
 
-        let wasEnabled = isEnabled();
+        let wasEnabled = automaticRequestsAreEnabled();
 
         const handle = () => {
-            const isNowEnabled = isEnabled();
+            const isNowEnabled = automaticRequestsAreEnabled();
 
             if (wasEnabled === isNowEnabled) {
                 wasEnabled = isNowEnabled;
@@ -388,23 +390,27 @@ const addonStore = new class AddonStore extends Store {
 
             if (isNowEnabled) {
                 this._useCache();
-                this.requestAddons(!this.hasDoneFirstRequest);
+                this.requestAddons(!this.hasDoneFirstRequest, true);
                 this.hasDoneFirstRequest = true;
                 return;
             }
 
             if (this._setTimeout) clearTimeout(this._setTimeout);
             this._setTimeout = null;
+            window.removeEventListener("online", this._onLineListener);
+            if (this.#activeRequest?.automatic) this.#activeRequest.controller.abort(new Error("SolcordAutomaticCatalogRequestDisabled"));
 
             this.#promise = Promise.resolve();
         };
 
         Settings.on("settings", "store", "bdAddonStore", handle);
         Settings.on("settings", "addons", "checkForUpdates", handle);
+        onSolcordUpdatePolicyChange(handle);
+
+        if (storeIsVisible()) this._useCache();
 
         if (wasEnabled) {
-            this._useCache();
-            this.requestAddons(true);
+            this.requestAddons(true, true);
             this.hasDoneFirstRequest = true;
         }
         else {
@@ -524,10 +530,14 @@ const addonStore = new class AddonStore extends Store {
      */
     private _onLineListener = () => {
         window.removeEventListener("online", this._onLineListener);
-        this.requestAddons();
+        if (solcordAutomaticUpdatesAllowed()) this.requestAddons(false, true);
     };
 
-    async requestAddons(firstRun = false) {
+    async requestAddons(firstRun = false, automatic = false) {
+        if (automatic && !solcordAutomaticUpdatesAllowed()) {
+            this.#promise = Promise.resolve();
+            return this.#promise;
+        }
         if (this.loading) {
             Logger.debug("AddonStore", "Requested all addons but was already requesting them");
             return this.#promise;
@@ -544,6 +554,9 @@ const addonStore = new class AddonStore extends Store {
         }
 
         this.loading = true;
+        const controller = new AbortController();
+        const activeRequest = {automatic, controller};
+        this.#activeRequest = activeRequest;
 
         if (this._setTimeout) window.clearTimeout(this._setTimeout);
         this._setTimeout = null;
@@ -563,7 +576,7 @@ const addonStore = new class AddonStore extends Store {
             Logger.debug("AddonStore", "User is offline waiting for connection...");
 
             window.removeEventListener("online", this._onLineListener);
-            window.addEventListener("online", this._onLineListener);
+            if (solcordCatalogRetryAllowed(automatic)) window.addEventListener("online", this._onLineListener);
 
             Toasts.show(t("Addons.failedToFetch"), {
                 type: "error"
@@ -574,6 +587,7 @@ const addonStore = new class AddonStore extends Store {
             this._useCache();
 
             this.emitChange();
+            resolve();
         };
 
         if (window.navigator.onLine) {
@@ -581,6 +595,7 @@ const addonStore = new class AddonStore extends Store {
         }
         else {
             offLineListener();
+            if (this.#activeRequest === activeRequest) this.#activeRequest = undefined;
             return;
         }
 
@@ -591,6 +606,7 @@ const addonStore = new class AddonStore extends Store {
                 "Cache-Control": "no-cache",
                 "Pragma": "no-cache"
             },
+            signal: controller.signal,
             timeout: null
         })
             .then((x) => {
@@ -608,6 +624,7 @@ const addonStore = new class AddonStore extends Store {
             })
             .then((json: BdWebAddon[] | undefined) => {
                 if (!json) return;
+                if (automatic && !solcordAutomaticUpdatesAllowed()) return;
 
                 const isFirstRun = this._cache.known.length === 0 && Object.keys(this._cache.addons).length === 0;
 
@@ -633,6 +650,10 @@ const addonStore = new class AddonStore extends Store {
                 this.error = null;
             })
             .catch((error) => {
+                if (controller.signal.aborted) {
+                    this.error = null;
+                    return;
+                }
                 Logger.stacktrace("AddonStore", "Failed to request addons", error as Error);
 
                 Toasts.show(t("Addons.failedToFetch"), {
@@ -644,6 +665,7 @@ const addonStore = new class AddonStore extends Store {
                 this._useCache();
             })
             .finally(() => {
+                if (this.#activeRequest === activeRequest) this.#activeRequest = undefined;
                 this.loading = false;
 
                 this.emitChange();
@@ -663,15 +685,15 @@ const addonStore = new class AddonStore extends Store {
                         Logger.debug("AddonStore", "User is offline waiting for connection...");
 
                         window.removeEventListener("online", this._onLineListener);
-                        window.addEventListener("online", this._onLineListener);
+                        if (solcordCatalogRetryAllowed(automatic)) window.addEventListener("online", this._onLineListener);
                         return;
                     }
                 }
 
-                if (Settings.get<boolean>("settings", "store", "bdAddonStore")) {
+                if (solcordCatalogRetryAllowed(automatic) && Settings.get<boolean>("settings", "store", "bdAddonStore")) {
                     const hours = Settings.get<number>("addons", "updateInterval");
 
-                    this._setTimeout = window.setTimeout(() => this.requestAddons(), hours * minutes * 60 * 1000);
+                    this._setTimeout = window.setTimeout(() => this.requestAddons(false, true), hours * minutes * 60 * 1000);
                 }
 
                 resolve();
@@ -679,12 +701,20 @@ const addonStore = new class AddonStore extends Store {
     }
 
     async updaterRequestAddons() {
-        await this.requestAddons(this.hasDoneFirstRequest);
+        await this.requestAddons(this.hasDoneFirstRequest, solcordAutomaticUpdatesAllowed());
 
         this.hasDoneFirstRequest = true;
     }
 
+    async openStore() {
+        if (!this.addons.length) this._useCache();
+        if (this.addons.length || this.loading) return;
+        await this.requestAddons(true, false);
+        this.hasDoneFirstRequest = true;
+    }
+
     private _setTimeout: number | null = null;
+    #activeRequest?: {automatic: boolean; controller: AbortController;};
 
     /**
      * get important data from the store to use in the ui

@@ -50,6 +50,26 @@ export class SolcordDisposalScope {
         return handle;
     }
 
+    idle(callback: () => void, timeout = 1_500): void {
+        const host = globalThis as typeof globalThis & {
+            requestIdleCallback?: (callback: () => void, options?: {timeout: number;}) => number;
+            cancelIdleCallback?: (handle: number) => void;
+        };
+        if (typeof host.requestIdleCallback !== "function" || typeof host.cancelIdleCallback !== "function") {
+            this.timeout(callback, Math.min(Math.max(timeout, 0), 250));
+            return;
+        }
+        let handle = 0;
+        let fired = false;
+        const release = this.own(() => host.cancelIdleCallback?.(handle), "timer");
+        handle = host.requestIdleCallback(() => {
+            if (fired) return;
+            fired = true;
+            release();
+            if (!this.#disposed) callback();
+        }, {timeout: Math.max(0, timeout)});
+    }
+
     interval(callback: () => void, delay: number): number {
         const handle = globalThis.setInterval(callback, delay) as unknown as number;
         this.own(() => globalThis.clearInterval(handle), "interval");

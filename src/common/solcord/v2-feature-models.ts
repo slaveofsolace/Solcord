@@ -222,33 +222,45 @@ export interface SolcordCallSnapshot {
     participantCount: number;
     speakerCount: number;
     viewerCount: number;
+    participantIds?: readonly string[];
+    speakerIds?: readonly string[];
+    viewerLabels?: readonly string[];
 }
 
 export class SolcordCallContextController implements SolcordV2Disposable {
     readonly #lifecycle = new SolcordV2Lifecycle();
-    #current?: Readonly<SolcordCallSnapshot>;
+    #current?: Readonly<Required<SolcordCallSnapshot>>;
     get disposed(): boolean {return this.#lifecycle.disposed;}
     resourceCounts(): Readonly<Record<string, number>> {return this.#lifecycle.resourceCounts();}
 
     observe(snapshot: SolcordCallSnapshot): Readonly<SolcordCallSnapshot> {
         this.#lifecycle.assertActive();
+        const participantIds = [...new Set((snapshot.participantIds ?? []).map(id => requireToken(id, "Participant ID", 32)))].slice(0, 500);
+        const speakerIds = [...new Set((snapshot.speakerIds ?? []).map(id => requireToken(id, "Speaker ID", 32)))].slice(0, 500);
+        const viewerLabels = [...new Set((snapshot.viewerLabels ?? []).map(label => boundedText(label.trim(), 80, "Viewer label")).filter(Boolean))].slice(0, 100);
         const normalized = Object.freeze({
             channelId: requireToken(snapshot.channelId, "Channel ID", 32),
             connectedAt: boundedInteger(snapshot.connectedAt, 0, Number.MAX_SAFE_INTEGER, "Connected time"),
             participantCount: boundedInteger(snapshot.participantCount, 0, 500, "Participant count"),
             speakerCount: boundedInteger(snapshot.speakerCount, 0, 500, "Speaker count"),
-            viewerCount: boundedInteger(snapshot.viewerCount, 0, 500, "Viewer count")
+            viewerCount: boundedInteger(snapshot.viewerCount, 0, 500, "Viewer count"),
+            participantIds: Object.freeze(participantIds),
+            speakerIds: Object.freeze(speakerIds),
+            viewerLabels: Object.freeze(viewerLabels)
         });
         if (normalized.speakerCount > normalized.participantCount || normalized.viewerCount > normalized.participantCount) throw new Error("Call counts are inconsistent.");
+        if (normalized.speakerIds.some(id => !normalized.participantIds.includes(id))) throw new Error("Speaking users must be current call participants.");
         this.#current = normalized;
         return normalized;
     }
 
-    summary(now = Date.now()): Readonly<{connected: boolean; elapsedMs: number; participantCount: number; speakerCount: number; viewerCount: number;}> {
+    summary(now = Date.now()): Readonly<{connected: boolean; elapsedMs: number; participantCount: number; speakerCount: number; viewerCount: number; participantIds: readonly string[]; speakerIds: readonly string[]; viewerLabels: readonly string[];}> {
         this.#lifecycle.assertActive();
-        if (!this.#current) return Object.freeze({connected: false, elapsedMs: 0, participantCount: 0, speakerCount: 0, viewerCount: 0});
-        return Object.freeze({connected: true, elapsedMs: Math.max(0, now - this.#current.connectedAt), participantCount: this.#current.participantCount, speakerCount: this.#current.speakerCount, viewerCount: this.#current.viewerCount});
+        if (!this.#current) return Object.freeze({connected: false, elapsedMs: 0, participantCount: 0, speakerCount: 0, viewerCount: 0, participantIds: Object.freeze([]), speakerIds: Object.freeze([]), viewerLabels: Object.freeze([])});
+        return Object.freeze({connected: true, elapsedMs: Math.max(0, now - this.#current.connectedAt), participantCount: this.#current.participantCount, speakerCount: this.#current.speakerCount, viewerCount: this.#current.viewerCount, participantIds: this.#current.participantIds, speakerIds: this.#current.speakerIds, viewerLabels: this.#current.viewerLabels});
     }
+
+    clear(): void {this.#lifecycle.assertActive(); this.#current = undefined;}
 
     dispose(): void {this.#current = undefined; this.#lifecycle.dispose();}
 }
@@ -263,7 +275,8 @@ export class SolcordAudioConsoleController implements SolcordV2Disposable {
 
     previewVolume(userId: string, currentPercent: number, targetPercent: number): Readonly<{userId: string; currentPercent: number; targetPercent: number;}> {
         this.#lifecycle.assertActive();
-        this.#preview = Object.freeze({userId: requireToken(userId, "User ID", 32), currentPercent: boundedNumber(currentPercent, 0, 200, "Current volume"), targetPercent: boundedNumber(targetPercent, 0, 200, "Target volume")});
+        if (!/^[1-9]\d{16,19}$/.test(userId)) throw new Error("Enter a complete Discord user ID.");
+        this.#preview = Object.freeze({userId, currentPercent: boundedNumber(currentPercent, 0, 200, "Current volume"), targetPercent: boundedNumber(targetPercent, 0, 200, "Target volume")});
         return this.#preview;
     }
 
@@ -283,6 +296,7 @@ export interface SolcordVoiceNotePreview {
     durationMs: number;
     sizeBytes: number;
     mime: "audio/ogg" | "audio/webm";
+    waveform: readonly number[];
 }
 
 export const SOLCORD_VOICE_NOTE_MAX_DURATION_MS = 600_000;
@@ -313,7 +327,8 @@ export class SolcordVoiceNoteStudioController implements SolcordV2Disposable {
                 recordingId: requireToken(value.recordingId, "Recording ID"),
                 durationMs: boundedInteger(value.durationMs, 200, SOLCORD_VOICE_NOTE_MAX_DURATION_MS, "Recording duration"),
                 sizeBytes: boundedInteger(value.sizeBytes, 1, SOLCORD_VOICE_NOTE_MAX_BYTES, "Recording size"),
-                mime: value.mime
+                mime: value.mime,
+                waveform: Object.freeze(value.waveform.slice(0, 256).map(sample => boundedInteger(sample, 0, 255, "Waveform sample")))
             });
             if (preview.mime !== "audio/ogg" && preview.mime !== "audio/webm") throw new Error("Voice-note MIME type is unsupported.");
             this.#recording = false;
@@ -326,11 +341,11 @@ export class SolcordVoiceNoteStudioController implements SolcordV2Disposable {
         }
     }
 
-    confirmUpload(channelId: string): SolcordV2ActionIntent<{channelId: string; recordingId: string; sizeBytes: number; mime: string;}> {
+    confirmUpload(channelId: string): SolcordV2ActionIntent<{channelId: string; recordingId: string; durationMs: number; sizeBytes: number; mime: string; waveform: readonly number[];}> {
         this.#lifecycle.assertActive();
         if (!this.#preview) throw new Error("Preview a voice note before authorizing upload.");
         const preview = this.#preview;
-        return this.#intents.create("voice-note-studio", "upload-voice-note", {channelId: requireToken(channelId, "Channel ID", 32), recordingId: preview.recordingId, sizeBytes: preview.sizeBytes, mime: preview.mime}, `Upload the reviewed ${Math.ceil(preview.durationMs / 1_000)} second voice note.`, 15_000);
+        return this.#intents.create("voice-note-studio", "upload-voice-note", {channelId: requireToken(channelId, "Channel ID", 32), recordingId: preview.recordingId, durationMs: preview.durationMs, sizeBytes: preview.sizeBytes, mime: preview.mime, waveform: preview.waveform}, `Upload the reviewed ${Math.ceil(preview.durationMs / 1_000)} second voice note.`, 15_000);
     }
 
     completeUpload(recordingId: string): void {
@@ -399,6 +414,10 @@ export interface SolcordPeopleSpacesSnapshot {
     pinnedDmIds: readonly string[];
     hiddenGuildIds: readonly string[];
     guildAliases: Readonly<Record<string, string>>;
+    favoriteFriendIds: readonly string[];
+    hiddenFriendIds: readonly string[];
+    ignoredVoiceChannelIds: readonly string[];
+    ignoredVoiceGuildIds: readonly string[];
 }
 
 export class SolcordPeopleSpacesController implements SolcordV2Disposable {
@@ -406,19 +425,42 @@ export class SolcordPeopleSpacesController implements SolcordV2Disposable {
     readonly #pinnedDmIds = new Set<string>();
     readonly #hiddenGuildIds = new Set<string>();
     readonly #guildAliases = new Map<string, string>();
+    readonly #favoriteFriendIds = new Set<string>();
+    readonly #hiddenFriendIds = new Set<string>();
+    readonly #ignoredVoiceChannelIds = new Set<string>();
+    readonly #ignoredVoiceGuildIds = new Set<string>();
     get disposed(): boolean {return this.#lifecycle.disposed;}
     resourceCounts(): Readonly<Record<string, number>> {return this.#lifecycle.resourceCounts();}
 
     pinDm(id: string): void {this.#lifecycle.assertActive(); if (this.#pinnedDmIds.size >= 100 && !this.#pinnedDmIds.has(id)) throw new Error("Pinned DM limit reached."); this.#pinnedDmIds.add(requireToken(id, "DM ID", 32));}
+    unpinDm(id: string): void {this.#lifecycle.assertActive(); this.#pinnedDmIds.delete(requireToken(id, "DM ID", 32));}
     hideGuild(id: string): void {this.#lifecycle.assertActive(); if (this.#hiddenGuildIds.size >= 200 && !this.#hiddenGuildIds.has(id)) throw new Error("Hidden server limit reached."); this.#hiddenGuildIds.add(requireToken(id, "Guild ID", 32));}
+    showGuild(id: string): void {this.#lifecycle.assertActive(); this.#hiddenGuildIds.delete(requireToken(id, "Guild ID", 32));}
     aliasGuild(id: string, alias: string): void {this.#lifecycle.assertActive(); if (this.#guildAliases.size >= 200 && !this.#guildAliases.has(id)) throw new Error("Server alias limit reached."); this.#guildAliases.set(requireToken(id, "Guild ID", 32), boundedText(alias.trim(), 48, "Server alias"));}
+    clearGuildAlias(id: string): void {this.#lifecycle.assertActive(); this.#guildAliases.delete(requireToken(id, "Guild ID", 32));}
+    favoriteFriend(id: string): void {this.#lifecycle.assertActive(); if (this.#favoriteFriendIds.size >= 500 && !this.#favoriteFriendIds.has(id)) throw new Error("Favorite friend limit reached."); this.#favoriteFriendIds.add(requireToken(id, "Friend ID", 32)); this.#hiddenFriendIds.delete(id);}
+    unfavoriteFriend(id: string): void {this.#lifecycle.assertActive(); this.#favoriteFriendIds.delete(requireToken(id, "Friend ID", 32));}
+    hideFriend(id: string): void {this.#lifecycle.assertActive(); if (this.#hiddenFriendIds.size >= 500 && !this.#hiddenFriendIds.has(id)) throw new Error("Hidden friend limit reached."); this.#hiddenFriendIds.add(requireToken(id, "Friend ID", 32)); this.#favoriteFriendIds.delete(id);}
+    showFriend(id: string): void {this.#lifecycle.assertActive(); this.#hiddenFriendIds.delete(requireToken(id, "Friend ID", 32));}
+    ignoreVoiceChannel(id: string): void {this.#lifecycle.assertActive(); if (this.#ignoredVoiceChannelIds.size >= 500 && !this.#ignoredVoiceChannelIds.has(id)) throw new Error("Ignored voice-channel limit reached."); this.#ignoredVoiceChannelIds.add(requireToken(id, "Voice channel ID", 32));}
+    includeVoiceChannel(id: string): void {this.#lifecycle.assertActive(); this.#ignoredVoiceChannelIds.delete(requireToken(id, "Voice channel ID", 32));}
+    ignoreVoiceGuild(id: string): void {this.#lifecycle.assertActive(); if (this.#ignoredVoiceGuildIds.size >= 500 && !this.#ignoredVoiceGuildIds.has(id)) throw new Error("Ignored voice-server limit reached."); this.#ignoredVoiceGuildIds.add(requireToken(id, "Voice guild ID", 32));}
+    includeVoiceGuild(id: string): void {this.#lifecycle.assertActive(); this.#ignoredVoiceGuildIds.delete(requireToken(id, "Voice guild ID", 32));}
 
     snapshot(): Readonly<SolcordPeopleSpacesSnapshot> {
         this.#lifecycle.assertActive();
-        return Object.freeze({pinnedDmIds: Object.freeze([...this.#pinnedDmIds]), hiddenGuildIds: Object.freeze([...this.#hiddenGuildIds]), guildAliases: Object.freeze(Object.fromEntries(this.#guildAliases))});
+        return Object.freeze({
+            pinnedDmIds: Object.freeze([...this.#pinnedDmIds]),
+            hiddenGuildIds: Object.freeze([...this.#hiddenGuildIds]),
+            guildAliases: Object.freeze(Object.fromEntries(this.#guildAliases)),
+            favoriteFriendIds: Object.freeze([...this.#favoriteFriendIds]),
+            hiddenFriendIds: Object.freeze([...this.#hiddenFriendIds]),
+            ignoredVoiceChannelIds: Object.freeze([...this.#ignoredVoiceChannelIds]),
+            ignoredVoiceGuildIds: Object.freeze([...this.#ignoredVoiceGuildIds])
+        });
     }
 
-    dispose(): void {this.#pinnedDmIds.clear(); this.#hiddenGuildIds.clear(); this.#guildAliases.clear(); this.#lifecycle.dispose();}
+    dispose(): void {this.#pinnedDmIds.clear(); this.#hiddenGuildIds.clear(); this.#guildAliases.clear(); this.#favoriteFriendIds.clear(); this.#hiddenFriendIds.clear(); this.#ignoredVoiceChannelIds.clear(); this.#ignoredVoiceGuildIds.clear(); this.#lifecycle.dispose();}
 }
 
 export interface SolcordGlanceMessage {
@@ -485,6 +527,7 @@ export class SolcordNotificationReviewController implements SolcordV2Disposable 
         const preview = this.#preview;
         this.#preview = undefined;
         this.#previewExpiresAt = 0;
+        if (preview.count === 0) throw new Error("No reviewed notifications are available to mark as read.");
         return this.#intents.create("notification-review", "mark-notifications-read", {scope: preview.scope, notificationIds: preview.notificationIds}, `Mark ${preview.count} reviewed notification(s) as read.`, 10_000);
     }
 

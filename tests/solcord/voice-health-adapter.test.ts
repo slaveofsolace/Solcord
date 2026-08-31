@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
 
-import {createCachedVoiceHealthReader, normalizeCachedVoiceHealthSample} from "../../src/betterdiscord/modules/solcord/voice-health";
+import {createCachedVoiceHealthReader, normalizeCachedVoiceHealthSample, resolveCachedVoiceHealthCapability} from "../../src/betterdiscord/modules/solcord/voice-health";
 
 
 describe("Solcord cached-only Voice Health adapter", () => {
@@ -30,5 +30,16 @@ describe("Solcord cached-only Voice Health adapter", () => {
         expect(asyncReader?.()).toBeUndefined();
         expect(throwingReader?.()).toBeUndefined();
         expect(createCachedVoiceHealthReader([])).toBeUndefined();
+    });
+
+    test("reports Ready only after a valid cached quality sample is positively observed", () => {
+        const ready = resolveCachedVoiceHealthCapability([{getConnectionQuality: () => ({rttMs: 18, jitterMs: 1, packetLossPercent: 0})}], () => 50);
+        expect(ready).toEqual(expect.objectContaining({state: "ready", initialSample: {timestamp: 50, rttMs: 18, jitterMs: 1, packetLossPercent: 0}}));
+
+        const available = resolveCachedVoiceHealthCapability([{getConnectionQuality: () => undefined}]);
+        expect(available).toEqual(expect.objectContaining({state: "available"}));
+        expect(available.detail).toContain("Join a call");
+
+        expect(resolveCachedVoiceHealthCapability([]).state).toBe("unavailable");
     });
 });

@@ -1,6 +1,6 @@
 export const SOLCORD_AUDIENCE_GUARD_PROMISE = "Your stream will not start or continue while a denied user is detected in the current call or viewer list.";
 
-const DISCORD_ID = /^\d{1,32}$/;
+const DISCORD_ID = /^[1-9]\d{16,19}$/;
 const MAX_DENIED_USERS = 100;
 const STOP_VERIFICATION_MS = 3_000;
 
@@ -33,6 +33,11 @@ export interface SolcordAudienceGuardStatus {
     detectedCount: number;
     activeModes: SolcordAudienceGuardModes;
     lastTrigger?: "prevent-start" | "stop-on-join" | "stop-on-watch";
+}
+
+export interface SolcordAudienceGuardArmReadiness {
+    ready: boolean;
+    detail: string;
 }
 
 export interface SolcordAudienceGuardAdapter {
@@ -184,14 +189,32 @@ export class SolcordStreamAudienceGuard {
             this.#publish({phase: "unavailable", detail: "Audience Guard stayed unavailable because its Discord adapters did not pass structural validation.", available: false});
             return false;
         }
-        this.#unpatchStart = this.#adapter.interceptStreamStart(() => this.#allowStart());
-        this.#unsubscribe = this.#adapter.subscribe(() => this.synchronize());
+        try {
+            this.#unpatchStart = this.#adapter.interceptStreamStart(() => this.#allowStart());
+            this.#unsubscribe = this.#adapter.subscribe(() => this.synchronize());
+        }
+        catch {
+            const cleanupErrors = this.#releaseAdapters();
+            this.#started = cleanupErrors.length > 0;
+            this.#publish({
+                phase: "unavailable",
+                detail: cleanupErrors.length
+                    ? "Audience Guard setup failed and one adapter cleanup remains owned for retry; no second adapter will be installed."
+                    : "Audience Guard stayed unavailable because its start interception or observation subscription failed safely.",
+                available: false
+            });
+            return false;
+        }
         if (!this.#unpatchStart || !this.#unsubscribe) {
-            this.#unpatchStart?.();
-            this.#unsubscribe?.();
-            this.#unpatchStart = undefined;
-            this.#unsubscribe = undefined;
-            this.#publish({phase: "unavailable", detail: "Audience Guard stayed unavailable because start interception or stream observation could not be installed.", available: false});
+            const cleanupErrors = this.#releaseAdapters();
+            this.#started = cleanupErrors.length > 0;
+            this.#publish({
+                phase: "unavailable",
+                detail: cleanupErrors.length
+                    ? "Audience Guard could not finish setup and one adapter cleanup remains owned for retry; no second adapter will be installed."
+                    : "Audience Guard stayed unavailable because start interception or stream observation could not be installed.",
+                available: false
+            });
             return false;
         }
         this.#available = true;
@@ -200,18 +223,19 @@ export class SolcordStreamAudienceGuard {
     }
 
     stop(): void {
-        this.#clearVerification();
-        this.#unpatchStart?.();
-        this.#unsubscribe?.();
-        this.#unpatchStart = undefined;
-        this.#unsubscribe = undefined;
-        this.#started = false;
+        const cleanupErrors: unknown[] = [];
+        try {this.#clearVerification();}
+        catch (error) {cleanupErrors.push(error);}
+        cleanupErrors.push(...this.#releaseAdapters());
+        this.#started = cleanupErrors.length > 0;
         this.#available = false;
         this.#stopLatch = undefined;
         this.#clearPrivateState();
         this.#publish({
-            phase: "off",
-            detail: "Audience Guard is off.",
+            phase: cleanupErrors.length ? "unavailable" : "off",
+            detail: cleanupErrors.length
+                ? "Audience Guard is off, but one or more exact adapter cleanups remain owned for retry."
+                : "Audience Guard is off.",
             available: false,
             armed: false,
             accountBound: false,
@@ -221,21 +245,30 @@ export class SolcordStreamAudienceGuard {
             activeModes: {...NO_MODES},
             lastTrigger: undefined
         });
+        if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Audience Guard adapter cleanup failed.");
     }
 
     arm(entries: unknown, modes: SolcordAudienceGuardModes): boolean {
-        if (!this.#available) return false;
-        const accountId = this.#adapter.currentAccountId();
-        const channelId = this.#adapter.currentVoiceChannelId();
+        const readiness = this.armReadiness(entries, modes);
+        if (!readiness.ready) {
+            this.disarm(readiness.detail);
+            return false;
+        }
+        let accountId: string | undefined;
+        let channelId: string | undefined;
+        try {
+            accountId = this.#adapter.currentAccountId();
+            channelId = this.#adapter.currentVoiceChannelId();
+        }
+        catch {
+            this.disarm("Audience Guard could not revalidate the current call while arming.");
+            return false;
+        }
+        if (!accountId || !DISCORD_ID.test(accountId) || !channelId || !DISCORD_ID.test(channelId)) {
+            this.disarm("Audience Guard could not revalidate the current call while arming.");
+            return false;
+        }
         const normalizedEntries = normalizeAudienceGuardEntries(entries);
-        if (!accountId || !DISCORD_ID.test(accountId) || !channelId || !DISCORD_ID.test(channelId) || !normalizedEntries.length) {
-            this.disarm("Audience Guard needs a validated account, current voice channel, and at least one denied user before it can be armed.");
-            return false;
-        }
-        if (!modes.preventStart && !modes.stopOnJoin && !modes.stopOnWatch) {
-            this.disarm("Audience Guard needs at least one protection mode before it can be armed.");
-            return false;
-        }
         this.#armedAccountId = accountId;
         this.#armedChannelId = channelId;
         this.#denied = new Set(normalizedEntries.map(entry => entry.userId));
@@ -255,6 +288,22 @@ export class SolcordStreamAudienceGuard {
         });
         this.synchronize();
         return true;
+    }
+
+    armReadiness(entries: unknown, modes: SolcordAudienceGuardModes): SolcordAudienceGuardArmReadiness {
+        if (!this.#available) return {ready: false, detail: "Audience Guard's Discord adapters are unavailable."};
+        let accountId: string | undefined;
+        let channelId: string | undefined;
+        try {
+            accountId = this.#adapter.currentAccountId();
+            channelId = this.#adapter.currentVoiceChannelId();
+        }
+        catch {return {ready: false, detail: "Audience Guard could not validate the current account and voice channel."};}
+        if (!accountId || !DISCORD_ID.test(accountId)) return {ready: false, detail: "Audience Guard is waiting for a validated signed-in account."};
+        if (!channelId || !DISCORD_ID.test(channelId)) return {ready: false, detail: "Join a voice call to arm Audience Guard."};
+        if (!normalizeAudienceGuardEntries(entries).length) return {ready: false, detail: "Add at least one denied user before arming."};
+        if (!modes.preventStart && !modes.stopOnJoin && !modes.stopOnWatch) return {ready: false, detail: "Enable at least one Audience Guard mode before arming."};
+        return {ready: true, detail: "Ready to arm for the current voice call."};
     }
 
     disarm(detail = "Audience Guard was disarmed for this call."): boolean {
@@ -283,13 +332,22 @@ export class SolcordStreamAudienceGuard {
 
     synchronize(): void {
         if (!this.#status.armed || !this.#armedAccountId || !this.#armedChannelId) return;
-        const accountId = this.#adapter.currentAccountId();
-        const channelId = this.#adapter.currentVoiceChannelId();
+        let accountId: string | undefined;
+        let channelId: string | undefined;
+        let stream: unknown;
+        try {
+            accountId = this.#adapter.currentAccountId();
+            channelId = this.#adapter.currentVoiceChannelId();
+            stream = this.#adapter.currentStream();
+        }
+        catch {
+            this.#observationFailure("Audience Guard could not validate the current account, call, or stream. Stop sharing manually if Go Live is active.");
+            return;
+        }
         if (accountId !== this.#armedAccountId || channelId !== this.#armedChannelId) {
             this.disarm("Audience Guard disarmed because the Discord account or voice channel changed.");
             return;
         }
-        const stream = this.#adapter.currentStream();
         if (!stream) {
             this.#stopLatch = undefined;
             this.#clearVerification();
@@ -297,25 +355,50 @@ export class SolcordStreamAudienceGuard {
             return;
         }
         if (this.#modes.stopOnJoin) {
-            const deniedInChannel = deniedAudienceMatches(this.#denied, this.#adapter.voiceMemberIds(this.#armedChannelId));
+            let deniedInChannel: string[];
+            try {deniedInChannel = deniedAudienceMatches(this.#denied, this.#adapter.voiceMemberIds(this.#armedChannelId));}
+            catch {
+                this.#observationFailure("Audience Guard could not validate call membership. Stop sharing manually until the voice-state adapter recovers.");
+                return;
+            }
             if (deniedInChannel.length) {
                 this.#requestStop(stream, "stop-on-join", deniedInChannel.length);
                 return;
             }
         }
         if (this.#modes.stopOnWatch) {
-            const deniedViewers = deniedAudienceMatches(this.#denied, this.#adapter.viewerIds(stream));
+            let deniedViewers: string[];
+            try {deniedViewers = deniedAudienceMatches(this.#denied, this.#adapter.viewerIds(stream));}
+            catch {
+                this.#observationFailure("Audience Guard could not validate the viewer list. Stop sharing manually; zero-frame protection is never guaranteed.");
+                return;
+            }
             if (deniedViewers.length) this.#requestStop(stream, "stop-on-watch", deniedViewers.length);
         }
     }
 
     #allowStart(): boolean {
         if (!this.#status.armed || !this.#modes.preventStart || !this.#armedChannelId) return true;
-        if (this.#adapter.currentAccountId() !== this.#armedAccountId || this.#adapter.currentVoiceChannelId() !== this.#armedChannelId) {
+        let accountId: string | undefined;
+        let channelId: string | undefined;
+        try {
+            accountId = this.#adapter.currentAccountId();
+            channelId = this.#adapter.currentVoiceChannelId();
+        }
+        catch {
+            this.#observationFailure("Go Live was not started because Audience Guard could not validate the current call. Disarm the guard explicitly to proceed without protection.");
+            return false;
+        }
+        if (accountId !== this.#armedAccountId || channelId !== this.#armedChannelId) {
             this.disarm("Audience Guard disarmed before Go Live because the Discord account or voice channel changed.");
             return true;
         }
-        const matches = deniedAudienceMatches(this.#denied, this.#adapter.voiceMemberIds(this.#armedChannelId));
+        let matches: string[];
+        try {matches = deniedAudienceMatches(this.#denied, this.#adapter.voiceMemberIds(this.#armedChannelId));}
+        catch {
+            this.#observationFailure("Go Live was not started because Audience Guard could not validate call membership. Disarm the guard explicitly to proceed without protection.");
+            return false;
+        }
         if (!matches.length) return true;
         this.#publish({phase: "blocked", detail: "Go Live was not started because a denied user is present in this voice channel.", detectedCount: matches.length, lastTrigger: "prevent-start"});
         return false;
@@ -332,7 +415,13 @@ export class SolcordStreamAudienceGuard {
                 this.#clearVerification();
                 this.#verifyTimer = this.#adapter.setTimer(() => {
                     this.#verifyTimer = undefined;
-                    if (this.#adapter.currentStream()) {
+                    let currentStream: unknown;
+                    try {currentStream = this.#adapter.currentStream();}
+                    catch {
+                        this.#publish({phase: "attention", detail: "Solcord could not verify whether Go Live stopped. Stop sharing manually now.", detectedCount, lastTrigger: trigger});
+                        return;
+                    }
+                    if (currentStream) {
                         this.#publish({phase: "attention", detail: "Solcord could not verify that Go Live stopped. Stop sharing manually now.", detectedCount, lastTrigger: trigger});
                     }
                     else {
@@ -347,6 +436,32 @@ export class SolcordStreamAudienceGuard {
 
     #stopFailed(trigger: "stop-on-join" | "stop-on-watch", detectedCount: number): void {
         this.#publish({phase: "attention", detail: "Solcord could not request a verified Go Live stop. Stop sharing manually now.", detectedCount, lastTrigger: trigger});
+    }
+
+    #observationFailure(detail: string): void {
+        this.#clearVerification();
+        this.#publish({phase: "attention", detail, detectedCount: 0});
+    }
+
+    #releaseAdapters(): unknown[] {
+        const errors: unknown[] = [];
+        const unsubscribe = this.#unsubscribe;
+        if (unsubscribe) {
+            try {
+                unsubscribe();
+                this.#unsubscribe = undefined;
+            }
+            catch (error) {errors.push(error);}
+        }
+        const unpatchStart = this.#unpatchStart;
+        if (unpatchStart) {
+            try {
+                unpatchStart();
+                this.#unpatchStart = undefined;
+            }
+            catch (error) {errors.push(error);}
+        }
+        return errors;
     }
 
     #clearVerification(): void {

@@ -18,7 +18,7 @@ import {
     SOLCORD_PRESET_ADDONS,
     verifySolcordImportAtApply
 } from "../../src/betterdiscord/modules/solcord/store";
-import {recommendedSolcordSetupAddons} from "../../src/common/solcord/setup-catalog";
+import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan} from "../../src/common/solcord/setup-catalog";
 
 
 describe("Solcord settings schema", () => {
@@ -223,12 +223,14 @@ describe("Solcord settings schema", () => {
             quarantineReason: "machine-local hold"
         };
         document.productPreferences.nativeSuite = {
+            ...document.productPreferences.nativeSuite,
             pinnedDmIds: ["123456789012345670"],
             hiddenGuildIds: ["123456789012345671"],
             guildAliases: {"123456789012345671": "Private workshop"},
             focusChannelIds: ["123456789012345672"],
             voiceHealthEnabled: true,
-            translation: {provider: "libretranslate", endpoint: "https://private.example/translate"}
+            translation: {provider: "libretranslate", endpoint: "https://private.example/translate", sourceLanguage: "auto", targetLanguage: "EN"},
+            composer: {doubleClickReplyModifier: "shift", splitBoundary: "newlines", preserveBlankLines: true, splitLimit: 1_800, maxSplitParts: 8, attachmentThreshold: 12_000, counterWarningPercent: 75, timestampFormat: "compact"}
         };
 
         const exported = serializeSolcordSettingsExport(document);
@@ -361,19 +363,19 @@ describe("Solcord settings schema", () => {
         expect(document?.profiles.map(profile => profile.id)).toEqual(["activities", "gaming", "calls", "streaming", "focus"]);
     });
 
-    test("migrates an older schema to v7 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
+    test("migrates an older schema to v10 fail-closed without carrying stale Link Lens or Power Lab consent", () => {
         const document = normalizeSolcordDocument({
             schemaVersion: 2,
             modules: {"link-lens": {enabled: true, values: {confirmAllExternal: true, removeTrackers: true}}},
             powerLab: {"voice-anchor": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 1}}
         });
 
-        expect(document.schemaVersion).toBe(7);
+        expect(document.schemaVersion).toBe(10);
         expect(document.consentVersion).toBe(3);
         expect(document.onboarding.status).toBe("pending");
         expect(document.modules["link-lens"].enabled).toBeFalse();
         expect(document.powerLab["voice-anchor"].enabled).toBeFalse();
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 7}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 2, toSchema: 10}));
     });
 
     test("starts a genuinely new profile in Strict Privacy without a false migration receipt", () => {
@@ -397,7 +399,7 @@ describe("Solcord settings schema", () => {
             profile: "standard",
             migrationPending: true
         }));
-        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 6, toSchema: 7}));
+        expect(document.migrationProvenance.at(-1)).toEqual(expect.objectContaining({fromSchema: 6, toSchema: 10}));
     });
 
     test("disables Power Lab entries unless their versioned acknowledgement is current", () => {
@@ -421,7 +423,7 @@ describe("Solcord settings schema", () => {
             powerLab: {"fake-deafen": {enabled: true, acknowledgementVersion: 2, acknowledgedAt: 12}}
         });
 
-        expect(document.schemaVersion).toBe(7);
+        expect(document.schemaVersion).toBe(10);
         expect(document.curatedAddons.DoNotTrack.provider).toBe("prefer-solcord");
         expect(document.powerLab["fake-deafen"]).toEqual({enabled: false, acknowledgementVersion: 2, acknowledgedAt: 12});
     });
@@ -531,7 +533,8 @@ describe("Solcord settings schema", () => {
         expect(document).toEqual(before);
 
         const allSelectedPreview = previewSetupChanges(document, {...noChangeDraft, selectedAddons: [...SOLCORD_PRESET_ADDONS]});
-        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(SOLCORD_PRESET_ADDONS.length - recommended.length);
+        const allSelectedPlan = resolveSolcordSetupPlan(SOLCORD_PRESET_ADDONS, noChangeDraft.addonModes);
+        expect(allSelectedPreview.filter(change => change.includes(": skip this run — "))).toHaveLength(allSelectedPlan.skipped.length);
         expect(allSelectedPreview).toContain("BlurNSFW: skip this run — optional · held for review");
         expect(allSelectedPreview).toContain("BetterSearchPage: skip this run — optional · dependency held");
         expect(allSelectedPreview).toContain("PermissionsViewer: skip this run — optional · runtime pending");

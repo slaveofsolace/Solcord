@@ -21,6 +21,8 @@
     --solcord-blue: #387A99;
     --solcord-seam: #2B3946;
     --solcord-focus: #8AD5E5;
+    --focus-primary: var(--solcord-focus);
+    --input-border-focus: var(--solcord-focus);
     --solcord-canvas: #080D13;
     --solcord-surface-0: rgb(13 20 28 / 94%);
     --solcord-surface-1: rgb(18 28 38 / 88%);
@@ -109,8 +111,11 @@
 }
 
 ::selection { color: #071116; background: #95DCE9; }
-:where(button, [role="button"], a, input, textarea, select):focus-visible { outline: 3px solid var(--solcord-focus) !important; outline-offset: 2px; }
+:where(button, [role="button"], a):focus-visible { outline: 3px solid var(--solcord-focus) !important; outline-offset: 2px; }
+.solcord-panel :where(input, textarea, select):focus-visible { outline: 2px solid var(--solcord-focus) !important; outline-offset: 2px; }
 :where(a):focus-visible { text-decoration-thickness: 2px; text-underline-offset: 2px; }
+#app-mount [class*="standardSidebarView_"] [class*="sidebarRegion_"] { border: 0; border-right: 1px solid var(--solcord-seam); }
+#app-mount [class*="standardSidebarView_"] [class*="contentRegion_"] { border: 0; }
 #app-mount :is([class*="sidebarList_"], [class*="membersWrap_"], [class*="nowPlayingColumn_"]) { border-color: var(--solcord-seam); }
 #app-mount [class*="mentioned_"] { background: rgb(56 122 153 / 16%) !important; border-left: 2px solid var(--solcord-ice); }
 #app-mount [class*="newMessagesBar_"] { background: var(--solcord-blue) !important; color: #EFFBFF !important; }
@@ -130,7 +135,7 @@ body {
     background: transparent !important;
 }
 
-#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="panels_"], [class*="subtitleContainer_"], [class*="chatContent_"], [class*="peopleColumn_"], [class*="nowPlayingColumn_"], [class*="membersWrap_"]) {
+#app-mount :is([class*="guilds_"], [class*="sidebarList_"], [class*="subtitleContainer_"], [class*="chatContent_"], [class*="peopleColumn_"], [class*="nowPlayingColumn_"], [class*="membersWrap_"]) {
     box-sizing: border-box;
     border: 1px solid var(--solcord-seam);
     border-radius: var(--solcord-radius);
@@ -144,7 +149,7 @@ body {
 }
 
 #app-mount [class*="sidebarList_"] { margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--solcord-gap)); }
-#app-mount [class*="panels_"] { border-top: 2px solid var(--solcord-ice); }
+#app-mount [class*="panels_"] { box-shadow: inset 0 2px 0 var(--solcord-ice); }
 #app-mount [class*="subtitleContainer_"] { margin-bottom: var(--solcord-gap); }
 #app-mount :is([class*="membersWrap_"], [class*="nowPlayingColumn_"]) { margin-left: var(--solcord-gap); }
 
@@ -154,7 +159,7 @@ body {
     background: transparent !important;
 }
 
-#app-mount :is([class*="channelTextArea_"], [class*="searchBar_"], [class*="inputWrapper_"]) {
+#app-mount [class*="channelTextArea_"] {
     border: 1px solid var(--solcord-seam) !important;
     border-radius: var(--solcord-radius-small) !important;
     background: var(--solcord-surface-2) !important;

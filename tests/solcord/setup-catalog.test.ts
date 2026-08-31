@@ -12,21 +12,24 @@ const expectedBuiltIns = [
     "DoNotTrack", "DoubleClickToReply", "EditServers", "InvisibleTyping", "MessagePeek", "PinDMs", "ReadAllNotificationsButton",
     "ServerDetails", "ServerHider", "ShowSpectators", "SplitLargeMessages", "Translator", "VoiceActivity", "VoiceMessages"
 ];
+const expectedRecommended = ["DoNotTrack", "InvisibleTyping", "DoubleClickToReply"];
 
 describe("Solcord beginner-first setup catalog", () => {
     test("recommends only accepted Solcord built-ins", () => {
-        expect(recommendedSolcordSetupAddons()).toEqual(expectedBuiltIns);
+        expect(recommendedSolcordSetupAddons()).toEqual(expectedRecommended);
         const plan = resolveSolcordSetupPlan(recommendedSolcordSetupAddons(), defaultModes);
         expect(plan.executableAddons).toEqual(recommendedSolcordSetupAddons());
         expect(plan.skipped).toEqual([]);
         expect(plan.decisions.filter(decision => decision.selected).every(decision => decision.availability === "built-in")).toBeTrue();
+        expect(plan.decisions.filter(decision => decision.selected).every(decision => decision.statusLabel === "included · checked at startup")).toBeTrue();
+        expect(plan.decisions.filter(decision => decision.selected).every(decision => !decision.statusLabel.toLowerCase().includes("ready"))).toBeTrue();
     });
 
     test("skips every selected unavailable community candidate without blocking the ready set", () => {
         const plan = resolveSolcordSetupPlan(SOLCORD_PRESET_ADDONS, defaultModes);
 
         expect(plan.requestedAddons).toHaveLength(36);
-        expect([...plan.executableAddons].sort()).toEqual(recommendedSolcordSetupAddons().sort());
+        expect([...plan.executableAddons].sort()).toEqual(expectedBuiltIns.sort());
         expect(plan.skipped).toHaveLength(SOLCORD_PRESET_ADDONS.length - expectedBuiltIns.length);
         expect(plan.skipped.every(decision => decision.reason.length > 20 && (decision.statusLabel.includes("optional") || decision.statusLabel.includes("unavailable") || decision.statusLabel.includes("preview")))).toBeTrue();
         expect(plan.dependencyNames).toEqual([]);

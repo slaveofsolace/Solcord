@@ -55,13 +55,15 @@ export default new class Core {
 
         Logger.log("Startup", "Initializing Settings");
         Settings.initialize();
-        SolcordRuntime.initialize();
-        Settings.registerPanel("solcord", "Solcord Suite", {
-            order: 0,
-            icon: ShieldCheckIcon,
-            element: SolcordPanel,
-            translateLabel: false,
-            searchable: () => ["Solcord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
+        await SolcordRuntime.initialize();
+        SolcordRuntime.attachControlCenter(() => {
+            Settings.registerPanel("solcord", "Solcord Suite", {
+                order: 0,
+                icon: ShieldCheckIcon,
+                element: SolcordPanel,
+                translateLabel: false,
+                searchable: () => ["Solcord", "Activity Bridge", "Plugin Doctor", "profiles", "privacy", "recovery", "Do Not Track", "Invisible Typing", "Double Click to Reply"]
+            });
         });
         SettingsRenderer.initialize();
 
@@ -83,29 +85,43 @@ export default new class Core {
         Logger.log("Startup", "Initializing Toasts");
         Toasts.initialize();
 
-        Logger.log("Startup", "Starting Solcord safety modules");
-        await SolcordRuntime.start();
+        Logger.log("Startup", "Starting Solcord privacy policy");
+        const privacyPolicyReady = await SolcordRuntime.start();
 
         Logger.log("Startup", "Initializing Builtins");
         for (const module in Builtins) {
             Builtins[module as keyof typeof Builtins].initialize();
         }
 
+        PluginManager.holdAddonActivation();
+        ThemeManager.holdAddonActivation();
+        PluginManager.setAddonActivationGuard(addon => SolcordRuntime.canActivateCommunityAddon(addon));
+        ThemeManager.setAddonActivationGuard(theme => SolcordRuntime.canActivateCommunityTheme(theme));
+
         Logger.log("Startup", "Loading Plugins");
         PluginManager.initialize();
-        await SolcordRuntime.enforceAddonIntegrityBeforeStart();
-        PluginManager.startAddons("connection");
 
         Logger.log("Startup", "Loading Themes");
         ThemeManager.initialize();
-        await SolcordRuntime.enforceAddonIntegrityBeforeStart();
-        ThemeManager.startAddons();
+
+        Logger.log("Startup", "Validating reviewed addons before activation");
+        const addonActivationAllowed = privacyPolicyReady && await SolcordRuntime.enforceAddonIntegrityBeforeStart();
+        if (addonActivationAllowed) {
+            PluginManager.releaseAddonActivation();
+            ThemeManager.releaseAddonActivation();
+            PluginManager.startAddons("connection");
+            ThemeManager.startAddons();
+        }
+        else {
+            Logger.warn("Startup", "Community addon activation remains held because Solcord privacy or integrity validation did not complete.");
+        }
 
         Logger.log("Startup", "Initializing Updater");
         Updater.initialize();
 
         Logger.log("Startup", "Removing Loading Icon");
         LoadingIcon.hide();
+        SolcordRuntime.scheduleDeferredStartup();
 
         const previousVersion = JsonStore.get("misc", "version");
         if (Config.get("version") !== previousVersion) {
@@ -113,7 +129,7 @@ export default new class Core {
             JsonStore.set("misc", "version", Config.get("version"));
         }
 
-        allModulesLoaded.then(() => PluginManager.startAddons("idle"));
+        if (addonActivationAllowed) allModulesLoaded.then(() => PluginManager.startAddons("idle"));
     }
 
     waitForConnection() {

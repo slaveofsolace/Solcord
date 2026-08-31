@@ -10,6 +10,9 @@ const REGION_CLASSES: Readonly<Record<SolcordLayoutRegion, string>> = Object.fre
     channels: "solcord-layout-hide-channels",
     members: "solcord-layout-hide-members"
 });
+const LAYOUT_TARGET_CLASS = "solcord-layout-region-hidden";
+const MESSAGE_CONTAINER_SELECTOR = "[id^=\"chat-messages-\"], [data-list-item-id^=\"chat-messages\"], [class*=\"messageListItem_\"]";
+const EMBED_ROOT_CLASS = /^(?:embed|embedFull|embedWrapper|inlineMediaEmbed)[_-]/i;
 
 export interface SolcordLoadedMessage {
     id?: string;
@@ -43,22 +46,81 @@ function scrollableAncestor(target: EventTarget | null): HTMLElement | undefined
     }
 }
 
+function labelledLandmark(root: ParentNode, pattern: RegExp, excluded?: RegExp): HTMLElement | undefined {
+    for (const candidate of root.querySelectorAll<HTMLElement>("nav[aria-label], aside[aria-label], [role=\"navigation\"][aria-label], [role=\"complementary\"][aria-label]")) {
+        const label = candidate.getAttribute("aria-label")?.trim() ?? "";
+        if (pattern.test(label) && !excluded?.test(label)) return candidate;
+    }
+}
+
+function structuralContainer(seed: Element | null, selector: string): HTMLElement | undefined {
+    const candidate = seed?.closest<HTMLElement>(selector);
+    return candidate && candidate !== document.body && candidate !== document.documentElement ? candidate : undefined;
+}
+
+/**
+ * Resolve only landmarks whose role or stable list identity proves the requested
+ * Discord shell region. Hashed classes are last-resort evidence, never the sole
+ * signal for the server or channel rails.
+ */
+export function resolveSolcordLayoutTarget(root: ParentNode, region: SolcordLayoutRegion): HTMLElement | undefined {
+    if (region === "guilds") {
+        const list = root.querySelector<HTMLElement>("[data-list-id=\"guildsnav\"], [data-list-id^=\"guildsnav-\"]");
+        const landmark = structuralContainer(list, "nav, [role=\"navigation\"]");
+        return landmark ?? labelledLandmark(root, /(?:server|guild)/i);
+    }
+    if (region === "channels") {
+        const list = root.querySelector<HTMLElement>("[data-list-id^=\"channels\"], [data-list-id^=\"private-channels\"]");
+        const landmark = structuralContainer(list, "nav, [role=\"navigation\"]");
+        return landmark ?? labelledLandmark(root, /(?:channel|direct message|private)/i, /(?:server|guild)/i);
+    }
+    const list = root.querySelector<HTMLElement>("[data-list-id^=\"members\"]");
+    const landmark = structuralContainer(list, "aside, [role=\"complementary\"]");
+    if (landmark) return landmark;
+    const labelled = labelledLandmark(root, /member/i);
+    if (labelled) return labelled;
+    const classCandidate = root.querySelector<HTMLElement>("[class*=\"membersWrap_\"]");
+    return classCandidate?.querySelector("[role=\"list\"], [data-list-id^=\"members\"]") ? classCandidate : undefined;
+}
+
+function richEmbedEvidence(candidate: HTMLElement): boolean {
+    const message = candidate.closest<HTMLElement>(MESSAGE_CONTAINER_SELECTOR);
+    if (!message || candidate === message) return false;
+    const rootClass = [...candidate.classList].some(token => EMBED_ROOT_CLASS.test(token));
+    const article = candidate.tagName === "ARTICLE";
+    if (!rootClass && !article) return false;
+    return Boolean(candidate.querySelector("a[href^=\"https://\"], a[href^=\"http://\"], img, video, [role=\"img\"], [class*=\"embedMedia_\"]"));
+}
+
+/** Return the outermost structurally verified rich-embed roots on loaded messages. */
+export function resolveSolcordEmbedTargets(root: ParentNode): HTMLElement[] {
+    const verified = [...root.querySelectorAll<HTMLElement>("article, [class*=\"embed\"]")].filter(richEmbedEvidence);
+    return verified.filter(candidate => !verified.some(other => other !== candidate && other.contains(candidate)));
+}
+
 export class SolcordBaselineSuite {
     #scope?: SolcordDisposalScope;
     #status: SolcordBaselineSuiteStatus = {active: false, resources: {}, enabled: [], unavailable: []};
+    #runtimeIssues = new Map<string, string>();
 
     constructor(private readonly adapter: SolcordBaselineSuiteAdapter) {}
 
     start(preferences: SolcordBaselinePreferences): SolcordBaselineSuiteStatus {
         this.stop();
+        this.#runtimeIssues.clear();
         const scope = new SolcordDisposalScope();
         const enabled: string[] = [];
         const unavailable: string[] = [];
         this.#scope = scope;
 
         if (preferences.layoutCollapse) {
-            enabled.push("Layout Collapse");
-            this.#startLayout(scope, preferences.collapsedRegions);
+            if (preferences.collapsedRegions.length) {
+                enabled.push("Layout Collapse");
+                this.#startLayout(scope, preferences.collapsedRegions);
+            }
+            else {
+                unavailable.push("Layout Collapse: select at least one region; no layout adapter is running.");
+            }
         }
         if (preferences.embedControls) {
             enabled.push("Embed Controls");
@@ -75,7 +137,7 @@ export class SolcordBaselineSuite {
             }
             else {unavailable.push("Message Link Preview: loaded message store unavailable");}
         }
-        if (!enabled.length && !unavailable.length) {
+        if (!enabled.length) {
             scope.dispose();
             this.#scope = undefined;
         }
@@ -84,25 +146,86 @@ export class SolcordBaselineSuite {
     }
 
     status(): SolcordBaselineSuiteStatus {
-        return structuredClone({...this.#status, resources: this.#scope?.counts() ?? {}});
+        return structuredClone({...this.#status, resources: this.#scope?.counts() ?? {}, unavailable: [...this.#status.unavailable, ...this.#runtimeIssues.values()]});
     }
 
     stop(): void {
         const scope = this.#scope;
         this.#scope = undefined;
         try {scope?.dispose();}
-        finally {this.#status = {active: false, resources: {}, enabled: [], unavailable: []};}
+        finally {
+            this.#runtimeIssues.clear();
+            this.#status = {active: false, resources: {}, enabled: [], unavailable: []};
+        }
+    }
+
+    #setRuntimeIssue(key: string, detail?: string): void {
+        if (detail) this.#runtimeIssues.set(key, detail);
+        else this.#runtimeIssues.delete(key);
     }
 
     #startLayout(scope: SolcordDisposalScope, collapsed: readonly SolcordLayoutRegion[]): void {
         const root = document.documentElement;
-        for (const region of collapsed) root.classList.add(REGION_CLASSES[region]);
-        scope.own(() => root.classList.remove(...Object.values(REGION_CLASSES)), "style");
+        const targets = new Map<SolcordLayoutRegion, HTMLElement>();
+        let frame = 0;
+        let suspended = false;
+        const clearTargets = () => {
+            for (const target of targets.values()) target.classList.remove(LAYOUT_TARGET_CLASS);
+            targets.clear();
+            for (const target of document.querySelectorAll<HTMLElement>(`.${LAYOUT_TARGET_CLASS}`)) target.classList.remove(LAYOUT_TARGET_CLASS);
+            root.classList.remove(...Object.values(REGION_CLASSES));
+        };
+        const scan = () => {
+            frame = 0;
+            if (suspended) return;
+            for (const region of collapsed) {
+                const next = resolveSolcordLayoutTarget(document, region);
+                const previous = targets.get(region);
+                if (previous && previous !== next) previous.classList.remove(LAYOUT_TARGET_CLASS);
+                if (!next) {
+                    targets.delete(region);
+                    this.#setRuntimeIssue(`layout:${region}`, `Layout Collapse (${region}): this Discord build exposed no structurally verified target. Nothing was hidden.`);
+                    continue;
+                }
+                next.classList.add(LAYOUT_TARGET_CLASS);
+                targets.set(region, next);
+                this.#setRuntimeIssue(`layout:${region}`);
+            }
+        };
+        const schedule = () => {if (!frame) frame = requestAnimationFrame(scan);};
         scope.style("solcord-layout-collapse-runtime", `
-            html.solcord-layout-hide-guilds [class*="guilds_"] { display: none !important; }
-            html.solcord-layout-hide-channels [class*="sidebarList_"] { display: none !important; }
-            html.solcord-layout-hide-members [class*="membersWrap_"] { display: none !important; }
+            .${LAYOUT_TARGET_CLASS} { display: none !important; }
+            .solcord-layout-restore { position: fixed; z-index: 2147483000; left: 12px; bottom: 12px; min-height: 32px; padding: 6px 10px; color: var(--text-normal); background: var(--background-floating); border: 1px solid var(--border-subtle); border-radius: 6px; box-shadow: var(--elevation-high); font: inherit; cursor: pointer; }
+            .solcord-layout-restore:focus-visible { outline: 2px solid var(--focus-primary, var(--brand-500)); outline-offset: 2px; }
         `);
+        const restore = document.createElement("button");
+        restore.type = "button";
+        restore.className = "solcord-layout-restore";
+        restore.textContent = "Show hidden panels";
+        restore.title = "Temporarily show every Discord panel (Ctrl+Shift+L)";
+        restore.setAttribute("aria-keyshortcuts", "Control+Shift+L");
+        restore.hidden = collapsed.length === 0;
+        const reveal = () => {
+            suspended = true;
+            clearTargets();
+            restore.hidden = true;
+            this.#setRuntimeIssue("layout:recovery", "Layout Collapse: panels are shown temporarily. Change the saved regions in Solcord settings before the adapter restarts.");
+        };
+        scope.element(restore);
+        scope.listen(restore, "click", reveal);
+        scope.listen(document, "keydown", event => {
+            const key = event as KeyboardEvent;
+            if (!key.ctrlKey || !key.shiftKey || key.altKey || key.code !== "KeyL") return;
+            key.preventDefault();
+            reveal();
+        }, true);
+        scan();
+        const observer = new MutationObserver(schedule);
+        scope.observe(observer, document.body, {childList: true, subtree: true});
+        scope.own(() => {
+            if (frame) cancelAnimationFrame(frame);
+            clearTargets();
+        }, "element");
     }
 
     #startEmbedControls(scope: SolcordDisposalScope): void {
@@ -112,11 +235,22 @@ export class SolcordBaselineSuite {
             .solcord-embed-host.solcord-embed-collapsed > :not(.solcord-embed-control) { display: none !important; }
         `);
         let frame = 0;
+        const controls = new Map<HTMLElement, {button: HTMLButtonElement; listener: EventListener;}>();
+        const releaseDetachedControls = () => {
+            for (const [candidate, {button, listener}] of controls) {
+                if (candidate.isConnected && button.isConnected && richEmbedEvidence(candidate)) continue;
+                button.removeEventListener("click", listener);
+                button.remove();
+                candidate.classList.remove("solcord-embed-host", "solcord-embed-collapsed");
+                controls.delete(candidate);
+            }
+        };
         const scan = () => {
             frame = 0;
-            for (const candidate of document.querySelectorAll<HTMLElement>("[class*=\"embedWrapper_\"]")) {
-                const message = candidate.closest("[id^=\"chat-messages-\"], [data-list-item-id^=\"chat-messages\"], [class*=\"messageListItem_\"]");
-                if (!message || candidate.querySelector(":scope > .solcord-embed-control")) continue;
+            releaseDetachedControls();
+            const candidates = resolveSolcordEmbedTargets(document);
+            for (const candidate of candidates) {
+                if (controls.has(candidate) || candidate.querySelector(":scope > .solcord-embed-control")) continue;
                 candidate.classList.add("solcord-embed-host");
                 const button = document.createElement("button");
                 button.type = "button";
@@ -124,15 +258,26 @@ export class SolcordBaselineSuite {
                 button.textContent = "−";
                 button.title = "Collapse this embed locally";
                 button.setAttribute("aria-label", "Collapse this embed locally");
-                button.addEventListener("click", event => {
+                const toggle: EventListener = event => {
                     event.preventDefault();
                     event.stopPropagation();
                     const collapsed = candidate.classList.toggle("solcord-embed-collapsed");
                     button.textContent = collapsed ? "+" : "−";
                     button.title = collapsed ? "Expand this embed locally" : "Collapse this embed locally";
                     button.setAttribute("aria-label", button.title);
-                });
+                };
+                button.addEventListener("click", toggle);
+                controls.set(candidate, {button, listener: toggle});
                 candidate.prepend(button);
+            }
+            if (candidates.length) {
+                this.#setRuntimeIssue("embed-controls");
+            }
+            else {
+                const possible = [...document.querySelectorAll<HTMLElement>(MESSAGE_CONTAINER_SELECTOR)].some(message => message.querySelector("article, [class*=\"embed\"]"));
+                this.#setRuntimeIssue("embed-controls", possible
+                    ? "Embed Controls: loaded embed-like markup could not be structurally verified, so Solcord injected nothing."
+                    : "Embed Controls: no loaded rich embed is present on this route; the adapter is waiting without changing messages.");
             }
         };
         const schedule = () => {if (!frame) frame = requestAnimationFrame(scan);};
@@ -141,7 +286,12 @@ export class SolcordBaselineSuite {
         scope.observe(observer, document.body, {childList: true, subtree: true});
         scope.own(() => {
             if (frame) cancelAnimationFrame(frame);
-            for (const control of document.querySelectorAll(".solcord-embed-control")) control.remove();
+            for (const [candidate, {button, listener}] of controls) {
+                button.removeEventListener("click", listener);
+                button.remove();
+                candidate.classList.remove("solcord-embed-host", "solcord-embed-collapsed");
+            }
+            controls.clear();
             for (const host of document.querySelectorAll(".solcord-embed-host")) host.classList.remove("solcord-embed-host", "solcord-embed-collapsed");
         }, "element");
     }

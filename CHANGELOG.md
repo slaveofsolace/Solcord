@@ -1,5 +1,32 @@
 # Solcord Changelog
 
+## 2.0.0-rc.11 - Responsive motion and bounded local translation
+
+### Fixed
+
+- Choosing an animated background now activates it in one action under the Balanced profile. Lean mode and reduced-motion preferences still suppress ambient work.
+- On-device translation capability checks and jobs now have hard deadlines. An embedded Translator API that stops responding degrades visibly and releases its queue instead of leaving the Control Center spinning.
+- Standalone draft, translation, and private-note text areas now expose explicit accessible names.
+
+### Verified
+
+- All eleven Solcord themes activate independently in Discord Stable without introducing document or Control Center horizontal overflow, and the prior selection restores afterward.
+- Attachment Guard, Permission Lens, People & Spaces validation, and the four local baseline adapters completed non-mutating live interaction checks.
+
+## 2.0.0-rc.10 - Setup-width containment
+
+### Fixed
+
+- Control Center and First Setup now shrink with Discord's current settings wrappers instead of retaining a desktop-width inner column that clips copy and controls in smaller owner windows.
+- First Setup now contains every internal step, paragraph, choice, and action within the live settings column. The five-step rail always remains visible without horizontal scrolling.
+- Current `contentRegion`, scroller, content-column, and custom-column wrappers stay inside the visible Solcord settings column without changing non-Solcord settings pages.
+
+### Verification boundary
+
+- The source matrix passes 950 tests and 6,327 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, circular audit, and whitespace checks.
+- Twenty-seven isolated UI fixtures pass, and the formal CSS-only security diff review reports zero findings.
+- Installed-client visual acceptance remains required on the exact RC10 bytes before merge or publication. RC9 is preserved as the superseded candidate that exposed the setup-specific defect.
+
 ## 2.0.0-rc.4 - Provider consolidation hotfix
 
 ### Fixed

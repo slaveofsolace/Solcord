@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
+import fs from "node:fs";
+import path from "node:path";
 
 import {
     applyPrivacyProfile,
@@ -9,12 +11,15 @@ import {
     defaultStrictPrivacyPreferences,
     legacyPrivacyPreferences,
     normalizePrivacyPreferences,
+    privacyCapabilityStateLabel,
     privacyReceiptTimeBucket
 } from "../../src/common/solcord/privacy";
 import {SolcordDisposalScope} from "../../src/betterdiscord/modules/solcord/disposal";
 import {privacyCategoryBlocked, resolvePrivacyMethodTarget, SolcordPrivacyPolicyAdapter, type PrivacyPolicyPatcher} from "../../src/betterdiscord/modules/solcord/privacy-policy";
 import {classifyCommunityAddonOutbound, planStrictCommunityAddonPolicy} from "../../src/betterdiscord/modules/solcord/addon-outbound-policy";
-import {onSolcordUpdatePolicyChange, setSolcordAutomaticUpdatesAllowed, solcordAutomaticUpdatesAllowed} from "../../src/betterdiscord/modules/solcord/privacy-runtime-state";
+import {onSolcordUpdatePolicyChange, setSolcordAutomaticUpdatesAllowed, solcordAutomaticCatalogRequestsAllowed, solcordAutomaticUpdatesAllowed, solcordCatalogRetryAllowed} from "../../src/betterdiscord/modules/solcord/privacy-runtime-state";
+
+const ROOT = path.resolve(import.meta.dir, "../..");
 
 function harness() {
     const calls: string[] = [];
@@ -55,6 +60,13 @@ function harness() {
 }
 
 describe("Solcord privacy policy", () => {
+    test("formats capability states for people without weakening unsupported states", () => {
+        expect(privacyCapabilityStateLabel("NeedsReview")).toBe("Needs review");
+        expect(privacyCapabilityStateLabel("Protected")).toBe("Protected");
+        expect(privacyCapabilityStateLabel("Degraded")).toBe("Degraded");
+        expect(privacyCapabilityStateLabel("Unsupported")).toBe("Unsupported");
+    });
+
     test("normalizes fresh installs to strict while migrating existing profiles without silently changing them", () => {
         expect(defaultStrictPrivacyPreferences()).toEqual(expect.objectContaining({profile: "strict", telemetry: "block", crashReporting: "block-optional", activityDiscovery: "block", updates: "manual"}));
         expect(normalizePrivacyPreferences({profile: "forged", telemetry: "capture-all"})).toEqual(defaultStrictPrivacyPreferences());
@@ -197,5 +209,37 @@ describe("Solcord privacy policy", () => {
         release();
         setSolcordAutomaticUpdatesAllowed(false);
         expect(changes).toBe(1);
+    });
+
+    test("keeps addon catalog traffic manual while preserving explicit store browsing", () => {
+        const store = fs.readFileSync(path.join(ROOT, "src/betterdiscord/modules/addonstore.ts"), "utf8");
+        const page = fs.readFileSync(path.join(ROOT, "src/betterdiscord/ui/settings/addonstore.tsx"), "utf8");
+        const initialize = store.slice(store.indexOf("    public initialize()"), store.indexOf("    private _cache"));
+        const request = store.slice(store.indexOf("    async requestAddons"), store.indexOf("    async updaterRequestAddons"));
+        setSolcordAutomaticUpdatesAllowed(false);
+        expect(solcordAutomaticCatalogRequestsAllowed(true, true)).toBeFalse();
+        expect(solcordCatalogRetryAllowed(true)).toBeFalse();
+        setSolcordAutomaticUpdatesAllowed(true);
+        expect(solcordAutomaticCatalogRequestsAllowed(false, false)).toBeFalse();
+        expect(solcordAutomaticCatalogRequestsAllowed(true, false)).toBeTrue();
+        expect(solcordAutomaticCatalogRequestsAllowed(false, true)).toBeTrue();
+        expect(solcordCatalogRetryAllowed(false)).toBeFalse();
+        expect(solcordCatalogRetryAllowed(true)).toBeTrue();
+        setSolcordAutomaticUpdatesAllowed(false);
+        expect(initialize).toContain("solcordAutomaticCatalogRequestsAllowed(");
+        expect(initialize).toContain("this.requestAddons(!this.hasDoneFirstRequest, true)");
+        expect(request).toContain("solcordCatalogRetryAllowed(automatic)");
+        expect(request).toContain("this.requestAddons(false, true)");
+        expect(request).toContain("if (automatic && !solcordAutomaticUpdatesAllowed())");
+        expect(request).toContain("signal: controller.signal");
+        expect(request).toContain("if (controller.signal.aborted)");
+        expect(request).toContain("resolve();");
+        expect(store).toContain("async openStore()");
+        expect(store).toContain("this.requestAddons(true, false)");
+        expect(store).toContain("this.#activeRequest?.automatic");
+        expect(store).toContain("controller.abort(new Error(\"SolcordAutomaticCatalogRequestDisabled\"))");
+        expect(store).toContain("if (this.addons.length || this.loading) return;");
+        expect(store).toContain("if (this.#activeRequest === activeRequest) this.#activeRequest = undefined;");
+        expect(page).toContain("void AddonStore.openStore()");
     });
 });

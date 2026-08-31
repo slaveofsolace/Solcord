@@ -12,7 +12,10 @@ interface TimelineEvent {
     observedAt: number;
     messageId: string;
     channelId: string;
+    authorId?: string;
     authorLabel?: string;
+    authorIsBot?: boolean;
+    mentionedCurrentUser?: boolean;
     content?: string;
     attachments?: Array<{name: string; contentType?: string; size?: number;}>;
 }
@@ -104,7 +107,10 @@ function normalizeEvent(value: unknown): TimelineEvent | undefined {
         observedAt: typeof candidate.observedAt === "number" && Number.isSafeInteger(candidate.observedAt) && candidate.observedAt >= 0 ? candidate.observedAt : Date.now(),
         messageId: candidate.messageId,
         channelId: candidate.channelId,
+        ...(validId(candidate.authorId) ? {authorId: candidate.authorId} : {}),
         ...(typeof candidate.authorLabel === "string" ? {authorLabel: candidate.authorLabel.slice(0, 160)} : {}),
+        ...(typeof candidate.authorIsBot === "boolean" ? {authorIsBot: candidate.authorIsBot} : {}),
+        ...(typeof candidate.mentionedCurrentUser === "boolean" ? {mentionedCurrentUser: candidate.mentionedCurrentUser} : {}),
         ...(typeof candidate.content === "string" ? {content: candidate.content.slice(0, 64_000)} : {}),
         ...(attachments ? {attachments} : {})
     };

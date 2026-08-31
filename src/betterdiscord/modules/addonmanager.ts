@@ -21,6 +21,7 @@ import RemoteAPI from "@polyfill/remote";
 import {parseJsDoc} from "@common/utils";
 import Modals from "@ui/modals";
 import type {Addon, AddonType} from "@typed/addon";
+import {AddonActivationGate, type AddonActivationDisposition, type AddonActivationGuard} from "./addon-activation-gate";
 
 export default abstract class AddonManager<T extends Addon = Addon> extends Store {
     abstract name: string;
@@ -47,6 +48,34 @@ export default abstract class AddonManager<T extends Addon = Addon> extends Stor
     windows = new Set<string>();
     hasInitialized = false;
     initialAddonsLoaded = 0;
+    #activationGate = new AddonActivationGate<Addon>();
+
+    holdAddonActivation() {
+        this.#activationGate.hold();
+    }
+
+    releaseAddonActivation() {
+        this.#activationGate.release();
+    }
+
+    setAddonActivationGuard(guard?: AddonActivationGuard<T>) {
+        this.#activationGate.setGuard(guard ? addon => guard(addon as T) : undefined);
+    }
+
+    protected addonActivationDisposition(addon: T): AddonActivationDisposition {
+        return this.#activationGate.evaluate(addon);
+    }
+
+    protected approveAddonActivation(addon: T): boolean {
+        const disposition = this.addonActivationDisposition(addon);
+        if (disposition !== "denied") return disposition === "allowed";
+        if (!this.state[addon.id]) return false;
+        this.state[addon.id] = false;
+        this.saveState();
+        this.trigger("disabled", addon);
+        Logger.warn(this.name, `${addon.name || addon.filename} was kept off by the active addon policy.`);
+        return false;
+    }
 
     initialize() {
         this.loadState();
@@ -230,6 +259,7 @@ export default abstract class AddonManager<T extends Addon = Addon> extends Stor
     abstract initAddon(addon: T): boolean;
 
     loadAddon(addon: T) {
+        if (!this.approveAddonActivation(addon)) return false;
         const initialized = this.initAddon(addon);
 
         // Make the addon partial if it failed to initialize
@@ -288,6 +318,7 @@ export default abstract class AddonManager<T extends Addon = Addon> extends Stor
     enableAddon(idOrAddon: string | T) {
         const addon = this.resolveAddon(idOrAddon);
         if (!addon || addon.partial || this.state[addon.id]) return;
+        if (!this.approveAddonActivation(addon)) return false;
 
         this.state[addon.id] = true;
         this.trigger("enabled", addon);

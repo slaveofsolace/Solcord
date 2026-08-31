@@ -7,11 +7,11 @@ using System.Text.RegularExpressions;
 
 namespace Solcord.Installer;
 
-internal sealed record ReleaseManifest(string Version, string SourceCommit, string ArtifactSha256, string ArtifactFile, string BuildManifestSha256, int SchemaVersion, string SupportedDiscord, string ReleaseNotes);
+internal sealed record ReleaseManifest(string Version, string CandidateLabel, string SourceCommit, string ArtifactSha256, string ArtifactFile, string BuildManifestSha256, int SchemaVersion, string SupportedDiscord, string ReleaseNotes);
 internal sealed record DiscordTarget(string Channel, string Version, string ExecutablePath, string ProcessName);
-internal sealed record InstallReceipt(string Version, string SourceCommit, string ArtifactSha256, string Channel, string DiscordVersion, string InstalledAtUtc, string? BackupDirectory);
+internal sealed record InstallReceipt(string Version, string SourceCommit, string ArtifactSha256, string Channel, string DiscordVersion, string InstalledAtUtc, string? BackupDirectory, string? CandidateLabel = null);
 internal sealed record InjectorBackupState(bool HadAppDirectory, string OriginalModule, string Channel, string DiscordVersion, string? IndexSha256, string? PackageSha256);
-internal sealed record BackupState(bool HadCore, string? ExistingCoreSha256, string InstalledArtifactSha256, string CandidateVersion, string CandidateSourceCommit, InjectorBackupState Injector);
+internal sealed record BackupState(bool HadCore, string? ExistingCoreSha256, string InstalledArtifactSha256, string CandidateVersion, string CandidateSourceCommit, InjectorBackupState Injector, string? CandidateLabel = null);
 
 internal sealed class InstallerEngine
 {
@@ -44,7 +44,7 @@ internal sealed class InstallerEngine
         ReleaseManifest? manifest;
         try {manifest = JsonSerializer.Deserialize<ReleaseManifest>(json, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});}
         catch {throw new InvalidDataException("The installer manifest failed validation.");}
-        if (manifest is null || !Sha256Pattern.IsMatch(manifest.ArtifactSha256) || !Sha256Pattern.IsMatch(manifest.BuildManifestSha256) || manifest.SchemaVersion < 1 || !Regex.IsMatch(manifest.Version, "^\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?$") || !Version.TryParse(manifest.Version, out _) || !Regex.IsMatch(manifest.SourceCommit, "^[0-9a-f]{40}$")) throw new InvalidDataException("The installer manifest failed validation.");
+        if (manifest is null || !Sha256Pattern.IsMatch(manifest.ArtifactSha256) || !Sha256Pattern.IsMatch(manifest.BuildManifestSha256) || manifest.SchemaVersion != 7 || !Regex.IsMatch(manifest.Version, "^\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?$") || !Version.TryParse(manifest.Version, out _) || string.IsNullOrEmpty(manifest.CandidateLabel) || !Regex.IsMatch(manifest.CandidateLabel, $"^v{Regex.Escape(manifest.Version)}-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$") || !Regex.IsMatch(manifest.SourceCommit, "^[0-9a-f]{40}$")) throw new InvalidDataException("The installer manifest failed validation.");
         if (Path.GetFileName(manifest.ArtifactFile) != manifest.ArtifactFile || !manifest.ArtifactFile.EndsWith(".asar", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The manifest artifact name is unsafe.");
         return manifest;
     }
@@ -95,10 +95,11 @@ internal sealed class InstallerEngine
             JsonElement source = build.GetProperty("source");
             JsonElement asar = root.GetProperty("artifacts").GetProperty("asar");
             string mode = build.GetProperty("mode").GetString() ?? "";
-            bool valid = root.GetProperty("schemaVersion").GetInt32() == 1
+            bool valid = root.GetProperty("schemaVersion").GetInt32() == 2
                 && root.GetProperty("kind").GetString() == "solcord-post-build-manifest"
                 && build.GetProperty("product").GetString() == "Solcord"
                 && build.GetProperty("version").GetString() == manifest.Version
+                && build.GetProperty("candidateLabel").GetString() == manifest.CandidateLabel
                 && (mode == "production" || mode == "release")
                 && source.GetProperty("clean").GetBoolean()
                 && source.GetProperty("commit").GetString() == manifest.SourceCommit
@@ -143,10 +144,10 @@ internal sealed class InstallerEngine
             if (existingHash is null || !HashFile(coreBackup).Equals(existingHash, StringComparison.OrdinalIgnoreCase) || !HashFile(installed).Equals(existingHash, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The current core changed while its rollback backup was captured; installation was held before mutation.");
         }
         InjectorBackupState injector = BackupInjector(target, backupDirectory, installed);
-        var backupState = new BackupState(hadCore, existingHash, manifest.ArtifactSha256, manifest.Version, manifest.SourceCommit, injector);
+        var backupState = new BackupState(hadCore, existingHash, manifest.ArtifactSha256, manifest.Version, manifest.SourceCommit, injector, manifest.CandidateLabel);
         WriteAtomic(Path.Combine(backupDirectory, "backup-state.json"), JsonSerializer.Serialize(backupState, new JsonSerializerOptions {WriteIndented = true}));
 
-        var receipt = new InstallReceipt(manifest.Version, manifest.SourceCommit, manifest.ArtifactSha256, target.Channel, target.Version, DateTime.UtcNow.ToString("O"), backupDirectory);
+        var receipt = new InstallReceipt(manifest.Version, manifest.SourceCommit, manifest.ArtifactSha256, target.Channel, target.Version, DateTime.UtcNow.ToString("O"), backupDirectory, manifest.CandidateLabel);
         string receiptRoot = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer");
         RejectLinkedPath(_roamingAppData, receiptRoot);
         Directory.CreateDirectory(receiptRoot);
@@ -212,7 +213,7 @@ internal sealed class InstallerEngine
         if (!Directory.Exists(backupDirectory) || !File.Exists(Path.Combine(backupDirectory, "backup-state.json"))) throw new InvalidOperationException("The receipt-bound Solcord backup is unavailable.");
         RejectReparsePoint(backupDirectory);
         BackupState? state = JsonSerializer.Deserialize<BackupState>(File.ReadAllText(Path.Combine(backupDirectory, "backup-state.json")));
-        if (state is null || state.Injector.Channel != target.Channel || state.Injector.DiscordVersion != target.Version || !Sha256Pattern.IsMatch(state.InstalledArtifactSha256) || state.InstalledArtifactSha256 != receipt.ArtifactSha256 || state.CandidateVersion != receipt.Version || state.CandidateSourceCommit != receipt.SourceCommit) throw new InvalidDataException("The rollback state does not match the receipt-bound Discord target.");
+        if (state is null || state.Injector.Channel != target.Channel || state.Injector.DiscordVersion != target.Version || !Sha256Pattern.IsMatch(state.InstalledArtifactSha256) || state.InstalledArtifactSha256 != receipt.ArtifactSha256 || state.CandidateVersion != receipt.Version || state.CandidateSourceCommit != receipt.SourceCommit || state.CandidateLabel != receipt.CandidateLabel || state.CandidateLabel is not null && !IsCandidateLabelForVersion(state.CandidateLabel, state.CandidateVersion)) throw new InvalidDataException("The rollback state does not match the receipt-bound Discord target.");
         if (state.HadCore != (state.ExistingCoreSha256 is not null) || state.ExistingCoreSha256 is not null && !Sha256Pattern.IsMatch(state.ExistingCoreSha256)) throw new InvalidDataException("The rollback core metadata is invalid.");
         if (state.Injector.HadAppDirectory != (state.Injector.IndexSha256 is not null && state.Injector.PackageSha256 is not null) || state.Injector.IndexSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.IndexSha256) || state.Injector.PackageSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.PackageSha256)) throw new InvalidDataException("The rollback injector metadata is invalid.");
         RestoreBackup(target, backupDirectory, state, true, true);
@@ -244,9 +245,28 @@ internal sealed class InstallerEngine
         InstallReceipt? current;
         try {current = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(receipt));}
         catch {throw new InvalidDataException("The current Solcord installer receipt is malformed; repair is held for review.");}
-        if (current is null || !Version.TryParse(current.Version, out Version? installed) || !Version.TryParse(manifest.Version, out Version? candidate)) throw new InvalidDataException("Solcord version provenance is malformed; update is held for review.");
-        if (candidate < installed) throw new InvalidOperationException("The candidate is older than the recorded Solcord install. Use an explicit reviewed rollback instead of downgrading through Update.");
+        if (current is null || !Sha256Pattern.IsMatch(current.ArtifactSha256) || !Regex.IsMatch(current.SourceCommit, "^[0-9a-f]{40}$") || !Version.TryParse(current.Version, out Version? installed) || !Version.TryParse(manifest.Version, out Version? candidate) || current.CandidateLabel is not null && !IsCandidateLabelForVersion(current.CandidateLabel, current.Version)) throw new InvalidDataException("Solcord version provenance is malformed; update is held for review.");
+        if (candidate < installed) throw new InvalidOperationException("The candidate is older than the recorded Solcord install. Use an explicit rollback instead of downgrading through Update.");
+        if (candidate > installed) return;
+        if (current.CandidateLabel is null)
+        {
+            if (current.ArtifactSha256.Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase) && current.SourceCommit == manifest.SourceCommit) return;
+            throw new InvalidOperationException("The recorded same-core install predates candidate labels, so its RC order cannot be proven. Use Roll Back / Uninstall before installing this candidate.");
+        }
+        if (!TryGetReleaseCandidateOrdinal(current.CandidateLabel, current.Version, out ulong installedOrdinal) || !TryGetReleaseCandidateOrdinal(manifest.CandidateLabel, manifest.Version, out ulong candidateOrdinal)) throw new InvalidOperationException("The recorded same-core candidate labels do not have a supported RC order. Use an explicit rollback instead of replacing them through Update.");
+        if (candidateOrdinal < installedOrdinal) throw new InvalidOperationException("The candidate is older than the recorded Solcord release candidate. Use an explicit rollback instead of downgrading through Update.");
+        if (candidateOrdinal == installedOrdinal && (current.CandidateLabel != manifest.CandidateLabel || !current.ArtifactSha256.Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase) || current.SourceCommit != manifest.SourceCommit)) throw new InvalidOperationException("This release-candidate label is already bound to different source bytes. Candidate labels are immutable; use a new label or explicit rollback.");
     }
+
+    internal static bool TryGetReleaseCandidateOrdinal(string candidateLabel, string version, out ulong ordinal)
+    {
+        ordinal = 0;
+        if (!IsCandidateLabelForVersion(candidateLabel, version)) return false;
+        Match match = Regex.Match(candidateLabel, $"^v{Regex.Escape(version)}-rc\\.(0|[1-9][0-9]*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        return match.Success && ulong.TryParse(match.Groups[1].Value, out ordinal);
+    }
+
+    private static bool IsCandidateLabelForVersion(string candidateLabel, string version) => Regex.IsMatch(candidateLabel, $"^v{Regex.Escape(version)}-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$", RegexOptions.CultureInvariant);
 
     private void RequireNoPendingRecovery()
     {
@@ -460,7 +480,7 @@ internal sealed class InstallerEngine
         InstallReceipt? receipt;
         try {receipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(file));}
         catch {throw new InvalidDataException("The current Solcord install receipt is malformed.");}
-        if (receipt is null || !Sha256Pattern.IsMatch(receipt.ArtifactSha256) || !Regex.IsMatch(receipt.SourceCommit, "^[0-9a-f]{40}$") || !Version.TryParse(receipt.Version, out _)) throw new InvalidDataException("The current Solcord install receipt failed validation.");
+        if (receipt is null || !Sha256Pattern.IsMatch(receipt.ArtifactSha256) || !Regex.IsMatch(receipt.SourceCommit, "^[0-9a-f]{40}$") || !Version.TryParse(receipt.Version, out _) || receipt.CandidateLabel is not null && !IsCandidateLabelForVersion(receipt.CandidateLabel, receipt.Version)) throw new InvalidDataException("The current Solcord install receipt failed validation.");
         return (receipt, file);
     }
 

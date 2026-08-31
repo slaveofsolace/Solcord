@@ -12,7 +12,10 @@ const PANEL_FALLBACKS: Record<string, string> = {
 
 export function resolveTranslatedText(key: string, fallback?: string): string | undefined {
     const translated = t(key);
-    if (translated && translated !== MISSING_TRANSLATION) return translated;
+    // Discord has used both a sentinel and the untranslated lookup key for a
+    // missing string. Neither is user-facing copy, so keep the product-owned
+    // fallback in both cases.
+    if (translated && translated !== MISSING_TRANSLATION && translated !== key) return translated;
     return fallback && fallback !== MISSING_TRANSLATION ? fallback : undefined;
 }
 

@@ -36,6 +36,8 @@ export interface DoubleClickReplyTarget {
     channelId: string;
 }
 
+export type DoubleClickReplyModifier = "none" | "ctrl" | "shift" | "alt";
+
 export type DoubleClickReplyIgnoreReason =
     | "malformed-context"
     | "not-double-primary-click"
@@ -54,6 +56,7 @@ export interface DoubleClickReplyAdapter {
     installDoubleClickListener(listener: (event: unknown) => void): () => void;
     inspect(event: unknown): DoubleClickReplyContext | null;
     requestReply(target: DoubleClickReplyTarget): void;
+    installAltClickSuppressor?(): () => void;
 }
 
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
@@ -77,12 +80,23 @@ function isBlockedNode(value: unknown): boolean {
     return value.contentEditable === true || value.contentEditable === "" || value.contentEditable === "true";
 }
 
-function decideContext(context: unknown): DoubleClickReplyDecision {
+function modifierMatches(context: Record<PropertyKey, unknown>, modifier: DoubleClickReplyModifier): boolean {
+    if (context.metaKey === true) return false;
+    const pressed = {
+        alt: context.altKey === true,
+        ctrl: context.ctrlKey === true,
+        shift: context.shiftKey === true
+    };
+    if (modifier === "none") return !pressed.alt && !pressed.ctrl && !pressed.shift;
+    return pressed[modifier] && (modifier === "alt" || !pressed.alt) && (modifier === "ctrl" || !pressed.ctrl) && (modifier === "shift" || !pressed.shift);
+}
+
+function decideContext(context: unknown, modifier: DoubleClickReplyModifier): DoubleClickReplyDecision {
     if (!isObject(context)) return {action: "ignore", reason: "malformed-context"};
     if (context.eventType !== "dblclick" || context.button !== 0 || context.detail !== 2) {
         return {action: "ignore", reason: "not-double-primary-click"};
     }
-    if (context.altKey === true || context.ctrlKey === true || context.metaKey === true || context.shiftKey === true) {
+    if (!modifierMatches(context, modifier)) {
         return {action: "ignore", reason: "modified-click"};
     }
     if (context.hasSelection !== false) return {action: "ignore", reason: context.hasSelection === true ? "text-selected" : "malformed-context"};
@@ -98,8 +112,8 @@ function decideContext(context: unknown): DoubleClickReplyDecision {
     return {action: "reply", target: {messageId, channelId}};
 }
 
-export function decideDoubleClickReply(context: unknown): DoubleClickReplyDecision {
-    try {return decideContext(context);}
+export function decideDoubleClickReply(context: unknown, modifier: DoubleClickReplyModifier = "none"): DoubleClickReplyDecision {
+    try {return decideContext(context, modifier);}
     catch {return {action: "ignore", reason: "malformed-context"};}
 }
 
@@ -115,9 +129,11 @@ export class DoubleClickReplyFeature {
     #adapter: unknown;
     #dispose: (() => void) | undefined;
     #active = false;
+    readonly #modifier: DoubleClickReplyModifier;
 
-    public constructor(adapter: unknown) {
+    public constructor(adapter: unknown, modifier: DoubleClickReplyModifier = "none") {
         this.#adapter = adapter;
+        this.#modifier = modifier;
     }
 
     public get running(): boolean {
@@ -129,24 +145,50 @@ export class DoubleClickReplyFeature {
         if (!isAdapter(this.#adapter)) return false;
 
         const adapter = this.#adapter;
+        let disposeListener: (() => void) | undefined;
+        let disposeSuppressor: (() => void) | undefined;
         try {
             if (adapter.validate() !== true) return false;
-            const dispose = adapter.installDoubleClickListener(event => {
+            disposeListener = adapter.installDoubleClickListener(event => {
                 if (!this.#active) return;
                 try {
-                    const decision = decideDoubleClickReply(adapter.inspect(event));
+                    const decision = decideDoubleClickReply(adapter.inspect(event), this.#modifier);
                     if (decision.action === "reply") adapter.requestReply(decision.target);
                 }
                 catch {
                     // Discord adapters are volatile. A lookup failure must never turn into an action.
                 }
             });
-            if (typeof dispose !== "function") return false;
-            this.#dispose = dispose;
+            if (typeof disposeListener !== "function") return false;
+            if (this.#modifier === "alt") {
+                if (typeof adapter.installAltClickSuppressor !== "function") {
+                    disposeListener();
+                    disposeListener = undefined;
+                    return false;
+                }
+                disposeSuppressor = adapter.installAltClickSuppressor();
+                if (typeof disposeSuppressor !== "function") {
+                    disposeListener();
+                    disposeListener = undefined;
+                    return false;
+                }
+            }
+            this.#dispose = () => {
+                let firstError: unknown;
+                try {disposeSuppressor?.();}
+                catch (error) {firstError = error;}
+                try {disposeListener?.();}
+                catch (error) {firstError ??= error;}
+                if (firstError) throw firstError;
+            };
             this.#active = true;
             return true;
         }
         catch {
+            try {disposeSuppressor?.();}
+            catch {/* startup still fails closed */}
+            try {disposeListener?.();}
+            catch {/* startup still fails closed */}
             this.#dispose = undefined;
             this.#active = false;
             return false;

@@ -22,7 +22,7 @@ function stepLabels(): string[] {
 describe("Solcord beginner-first setup UI", () => {
     test("uses five resumable novice steps with private-history consent and no Power Lab page", () => {
         expect(stepLabels()).toEqual(["Welcome", "Privacy", "Appearance", "Features", "Review and Apply"]);
-        expect(WIZARD_SOURCE).toContain("<summary>Optional private history</summary>");
+        expect(WIZARD_SOURCE).toContain("<DisclosureSummary title=\"Optional private history\" detail=\"Off by default · local, account-scoped, and clearable\" />");
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setOnboardingStep(bounded)");
         expect(WIZARD_SOURCE).not.toContain("function PowerLabStep");
         expect(WIZARD_SOURCE).not.toContain("SOLCORD_POWER_LAB");
@@ -30,35 +30,65 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setSetupDraft(draft)");
         expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
-        expect(WIZARD_SOURCE).toContain("wizardRef.current?.scrollIntoView({behavior: \"auto\", block: \"start\"})");
+        expect(WIZARD_SOURCE).toContain("function scrollSolcordSetupTarget(target: HTMLElement | null): void");
+        expect(WIZARD_SOURCE).toContain("/auto|scroll|overlay/.test(overflowY) && scrollOwner.scrollHeight > scrollOwner.clientHeight");
+        expect(WIZARD_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
+        expect(WIZARD_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
+        expect(WIZARD_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
+        expect(WIZARD_SOURCE).toContain("scrollSolcordSetupTarget(wizardRef.current)");
+        expect(WIZARD_SOURCE).not.toContain("wizardRef.current?.scrollIntoView");
         expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
-        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; min-width: 0; max-width: 100%");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps li { box-sizing: border-box; width: auto; min-width: 0; max-width: 100%; overflow: hidden; }");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps button { position: relative; box-sizing: border-box;");
         expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { display: flex");
         expect(WIZARD_CSS).not.toContain(".solcord-wizard-steps { overflow-x: auto");
         expect(WIZARD_CSS).toContain("var(--brand-500, var(--button-filled-brand-background");
+    });
+
+    test("mounts only the active step and gives collapsed setup sections meaningful summaries", () => {
+        expect(WIZARD_SOURCE).toContain("const stepContent = [");
+        expect(WIZARD_SOURCE).toContain("<div key={step} className=\"solcord-wizard-current-step\" role=\"group\"");
+        expect(WIZARD_SOURCE).not.toContain("{step === 0 &&");
+        expect(WIZARD_SOURCE).not.toContain("{step === 4 &&");
+        expect(WIZARD_SOURCE).toMatch(/Performance details" detail=\{`\$\{policy\.effectiveMotion\} motion/);
+        expect(WIZARD_SOURCE).toContain("Activities compatibility check\" detail=\"Policy status only · no Activity is launched during setup\"");
+        expect(WIZARD_CSS).toContain(".solcord-disclosure-summary > span { display: grid; gap: 2px; min-width: 0;");
     });
 
     test("keys responsive layout to the actual settings content container", () => {
         expect(WIZARD_CSS).toContain("container: solcord-panel / inline-size; width: min(100%, 1180px); min-width: 0; max-width: 100%");
         expect(WIZARD_CSS).toContain("padding: 0 clamp(20px, 2.8vw, 34px) 52px");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 720px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-search { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; top: 0;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 66px; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; isolation: isolate; top: 0;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 84px; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { min-width: 0; padding-top: 12px; }");
         expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
-        expect(PANEL_SOURCE).toContain("getComputedStyle(navigation).position === \"sticky\"");
+        expect(PANEL_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
+        expect(PANEL_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
         expect(PANEL_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
         expect(PANEL_SOURCE).not.toContain("workspaceRef.current?.scrollIntoView");
         expect(WIZARD_CSS).toContain(":is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type=\"checkbox\"] { appearance: none;");
         expect(WIZARD_CSS).toContain("> input[type=\"checkbox\"]:focus-visible");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
+        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 28px); margin-right: 14px; margin-left: 14px; }");
         expect(WIZARD_CSS).toContain(".solcord-panel { padding-right: 14px; padding-left: 14px; }");
         expect(WIZARD_CSS).toContain("@media (max-width: 640px)");
         expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > aside[class*=\"sidebar_\"] { display: none; }");
-        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { width: 100%; min-width: 0; }");
+        expect(WIZARD_CSS).toContain("[class*=\"container_\"]:has(.solcord-panel) > [class*=\"content_\"] { flex: 1 1 auto; min-width: 0; }");
+        expect(WIZARD_CSS).toContain("[class*=\"contentBody_\"]:has(.solcord-panel) > [class*=\"scroller_\"],");
+        expect(WIZARD_CSS).toContain("[class*=\"contentRegion_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"contentRegionScroller_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"contentColumn_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("[class*=\"customColumn_\"]:has(.solcord-panel)");
+        expect(WIZARD_CSS).toContain("{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }");
     });
 
     test("applies explicit appearance modes to Discord instead of only recoloring the Solcord panel", () => {
@@ -100,11 +130,21 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("<CatalogBrowser />");
         expect(PANEL_SOURCE).toContain("<SetupWizard />");
         expect(WIZARD_SOURCE).toContain("catalog candidates still need a runtime or security gate");
-        expect(WIZARD_SOURCE).toContain("Each starts only after its Discord adapter validates.");
+        expect(WIZARD_SOURCE).toContain("Runtime adapters validate after Apply; an unsupported adapter stays off.");
+        expect(WIZARD_SOURCE).toContain("Select recommended 3");
+        expect(WIZARD_SOURCE).toContain("Runtime check pending");
+        expect(WIZARD_SOURCE).not.toContain("{decision.statusLabel}");
+        expect(WIZARD_CSS).toContain(".solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px;");
+        expect(WIZARD_CSS).toContain("padding: 4px 0 0; border: 0;");
+        expect(WIZARD_CSS).not.toContain(".solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px; margin: 0; padding: 14px 0 0; border: 0; border-top");
+        expect(WIZARD_CSS).not.toContain(".solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px;");
         expect(WIZARD_SOURCE).toContain("Pending tools stay uninstalled");
         expect(PANEL_SOURCE).toContain("Optional files not installed");
         const catalogSource = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8");
-        expect(catalogSource).toContain("optional catalog file(s) absent");
+        expect(catalogSource).toContain("optional file(s) absent");
+        expect(catalogSource).toContain("addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)");
+        expect(catalogSource).toContain("<summary>Technical details</summary>");
+        expect(catalogSource).not.toContain("clean-room built-in");
         expect(catalogSource).toMatch(/aria-label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
         expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
@@ -178,10 +218,37 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("distinguishes disabled Friend Watch storage from an active session-only fallback", () => {
-        expect(PANEL_SOURCE).toContain("unopened while Friend Watch is off.");
-        expect(PANEL_SOURCE).toContain("Enabling negotiates encrypted account-isolated storage");
-        expect(PANEL_SOURCE).toContain("otherwise fails closed to session-only memory.");
+        expect(PANEL_SOURCE).toContain("Off. No relationship history is stored.");
+        expect(PANEL_SOURCE).toContain("On. History is encrypted, local, and isolated to this account.");
+        expect(PANEL_SOURCE).toContain("On for this session only. Persistent storage is unavailable.");
         expect(PANEL_SOURCE).toContain("state.persistent");
+    });
+
+    test("keeps compact setup navigation readable and accessible without repeated headings", () => {
+        expect(WIZARD_SOURCE).toMatch(/aria-label=\{`\$\{index \+ 1\}\. \$\{label\}\$\{index === step \? ", current step" : ""\}`\}/);
+        expect(WIZARD_SOURCE).toContain("<h3>Choose your look</h3>");
+        expect(WIZARD_SOURCE).toContain("<h3>Check your choices</h3>");
+        expect(WIZARD_SOURCE).not.toContain("<h3>Appearance</h3>");
+        expect(WIZARD_SOURCE).not.toContain("<h3>Review and apply</h3>");
+        expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps button span:last-child { display: none; }");
+    });
+
+    test("uses one setup rail and whitespace instead of nested divider boxes", () => {
+        expect(WIZARD_CSS).toContain(".solcord-wizard {\n    box-sizing: border-box;\n    width: 100%;\n    min-width: 0;\n    max-width: 100%;\n    overflow: hidden;\n    contain: inline-size;");
+        expect(WIZARD_CSS).toContain(".solcord-wizard > *,\n.solcord-wizard-current-step,\n.solcord-wizard-body,\n.solcord-wizard-body > * { box-sizing: border-box; min-width: 0; max-width: 100%; }");
+        expect(WIZARD_CSS).toContain(".solcord-wizard-steps { box-sizing: border-box; display: grid;");
+        expect(WIZARD_CSS).toContain("border-bottom: 1px solid var(--border-subtle)");
+        expect(WIZARD_CSS).toContain(".solcord-control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }");
+        expect(WIZARD_CSS).toContain(".solcord-control-grid label:hover { background: var(--sc-surface-1); }");
+        for (const obsolete of [
+            ".solcord-wizard-body + .solcord-wizard-body { min-height: 0; padding-top: 8px; border-top",
+            ".solcord-features-advanced { margin: 0 0 18px; border-block",
+            ".solcord-apply-summary { margin-bottom: 18px; padding: 12px 0; border-block",
+            ".solcord-control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block",
+            ".solcord-control-grid label:nth-child(even) { padding-left: 16px; border-left",
+            ".solcord-choice-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block"
+        ]) expect(WIZARD_CSS).not.toContain(obsolete);
     });
 
     test("makes appearance choices visible before setup is applied", () => {
@@ -196,7 +263,7 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("ships the V2 native tool surface without browser prompts or hidden account actions", () => {
-        for (const label of ["Composer Proof and Time Composer", "Permission Lens and Focus Channels", "Encrypted Local Identity Notes", "Voice Note Studio", "Notification Review"]) {
+        for (const label of ["Composer Proof reviewed this local draft", "Time Composer generated local Discord timestamp markup", "Permission Lens and Focus Channels", "Encrypted Local Identity Notes", "Voice Note Studio", "Notification Review"]) {
             expect(PANEL_SOURCE).toContain(label);
         }
         expect(PANEL_SOURCE).not.toContain("window.prompt(");
