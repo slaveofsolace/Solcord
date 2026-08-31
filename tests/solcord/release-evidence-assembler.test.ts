@@ -196,7 +196,7 @@ describe("Solcord RC release-evidence assembler", () => {
 
     test("requires the schema-seven installer to bind the exact candidate label", async () => {
         const data = await fixture();
-        expect(() => assembleRelease({...assembleOptions(data, path.join(data.root, "release")), candidateLabel: "v2.0.0-rc.6"})).toThrow("candidate label");
+        expect(() => assembleRelease({...assembleOptions(data, path.join(data.root, "release")), candidateLabel: "v2.0.0-rc.7"})).toThrow("candidate label");
         expect(fs.existsSync(path.join(data.root, "release"))).toBeFalse();
     });
 

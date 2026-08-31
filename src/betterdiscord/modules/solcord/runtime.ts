@@ -23,7 +23,7 @@ import {channelIsInTimelineScope, MessageTimelineJournal, normalizeDiscordTimeli
 import {planLargeMessage} from "./message-splitter";
 import {configureReviewedExecutionOwnership, integrityBlocksExecution, integrityFailureReason, integrityRecordIsAccepted, integrityRequiresQuarantine, normalizeIntegrityAudit, reviewBlocksEnable, summarizeIntegrity, unavailableIntegrityRecords, type AddonIntegrityKind, type AddonIntegrityRecord, type AddonIntegritySummary, type ReviewedExecutionOwnership} from "./integrity";
 import {SOLCORD_CATALOG_INDEX, SOLCORD_RUNTIME_ADDONS, SOLCORD_RUNTIME_DEPENDENCIES, SOLCORD_RUNTIME_THEMES} from "@common/solcord/addon-catalog.generated";
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordBuiltInDoctorId, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordStandaloneProviderFileName, type SolcordProviderMigrationIdentity, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {resolveSolcordSetupPlan} from "@common/solcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
@@ -1582,7 +1582,7 @@ class SolcordRuntimeStore extends Store {
                     continue;
                 }
                 const reason = adapter?.reason ?? "The Solcord adapter failed its runtime validation and stayed off.";
-                PluginDoctor.recordCapabilityMiss(name);
+                PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name));
                 results[name] = {enabled: false};
                 Logger.warn("Solcord", `${name} remains selected but unavailable on this Discord build (${reason})`);
             }
@@ -1671,19 +1671,26 @@ class SolcordRuntimeStore extends Store {
         const state = SolcordSettings.snapshot().curatedAddons[name];
         const guardedBuiltIn = isSolcordBuiltInAddon(name, state?.mode);
         const setupExecutable = this.#setupAcceptsAddon(name, state?.mode);
-        const guardedWithoutCommunityFile = guardedBuiltIn && integrityRecord?.status === "missing";
+        const communityAddonPresent = Boolean(resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName));
+        const guardedCanRunIndependently = guardedBuiltIn && !this.#communityAddonEnabled(name);
         const dependenciesVerified = candidate.dependencies.every(dependencyName => integrity.some(record => record.kind === "dependency" && record.name === dependencyName && record.status === "match"));
-        if (enabled && guardedBuiltIn && !this.#communityAddonEnabled(name)) PluginDoctor.clearLegacyCapabilityMissQuarantine(name);
+        const doctorId = guardedBuiltIn ? solcordBuiltInDoctorId(name) : name;
+        if (enabled && guardedCanRunIndependently) {
+            // The old unprefixed key is safe to migrate only when it cannot
+            // belong to an installed community file with the same product id.
+            if (!communityAddonPresent) PluginDoctor.clearLegacyCapabilityMissQuarantine(name);
+            PluginDoctor.clearLegacyCapabilityMissQuarantine(doctorId);
+        }
         if (enabled && guardedBuiltIn && !setupExecutable) return false;
         if (enabled && reviewBlocksEnable(candidate, guardedBuiltIn)) return false;
-        if (enabled && ((!guardedWithoutCommunityFile && (integrityRecord?.status !== "match" || !dependenciesVerified)) || PluginDoctor.isQuarantined(name))) return false;
+        if (enabled && ((!guardedCanRunIndependently && (integrityRecord?.status !== "match" || !dependenciesVerified)) || PluginDoctor.isQuarantined(doctorId))) return false;
         if (guardedBuiltIn) {
             SolcordSettings.setCuratedAddonEnabled(name, enabled);
             this.#refreshReviewedExecutionOwnership();
             const result = this.#synchronizeCuratedAdapters()[name];
             if (!enabled || result?.enabled) return true;
             const reason = result?.reason ?? "The Solcord adapter failed its runtime validation and stayed off.";
-            PluginDoctor.recordCapabilityMiss(name);
+            PluginDoctor.recordCapabilityMiss(doctorId);
             Logger.warn("Solcord", `${name} remains selected but unavailable on this Discord build (${reason})`);
             return true;
         }
@@ -2314,6 +2321,11 @@ class SolcordRuntimeStore extends Store {
         return Boolean(candidate && communityAddonIsEnabled(PluginManager, candidate.name, candidate.fileName));
     }
 
+    #communityAddonInstalled(name: string): boolean {
+        const candidate = SOLCORD_RUNTIME_ADDONS.find(entry => entry.name === name);
+        return Boolean(candidate && resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName));
+    }
+
     #communityAddonSignature(): string {
         return SOLCORD_RUNTIME_ADDONS
             .filter(candidate => isSolcordBuiltInAddon(candidate.name, candidate.name === "SplitLargeMessages" ? "guarded" : undefined))
@@ -2356,18 +2368,21 @@ class SolcordRuntimeStore extends Store {
         for (const [name, state] of Object.entries(curated)) {
             if (state.enabled === true
                 && isSolcordBuiltInAddon(name, state.mode)
-                && !this.#communityAddonEnabled(name)) PluginDoctor.clearLegacyCapabilityMissQuarantine(name);
+                && !this.#communityAddonEnabled(name)) {
+                if (!this.#communityAddonInstalled(name)) PluginDoctor.clearLegacyCapabilityMissQuarantine(name);
+                PluginDoctor.clearLegacyCapabilityMissQuarantine(solcordBuiltInDoctorId(name));
+            }
         }
         const nativeEnabled: Record<string, boolean> = Object.fromEntries(Object.entries(curated).map(([name, state]) => [name,
             state.enabled === true
             && isSolcordBuiltInAddon(name, state.mode)
             && !separatelyOwnedProviders.has(name)
-            && !PluginDoctor.isQuarantined(name)
+            && !PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
             && !this.#communityAddonEnabled(name)
         ]));
         const motionRequested = SolcordSettings.snapshot().productPreferences.nativeSuite.motion.effect !== "off";
         const firstPartyMotionEnabled = motionRequested
-            && !PluginDoctor.isQuarantined("DiscordEffects")
+            && !PluginDoctor.isQuarantined(solcordBuiltInDoctorId("DiscordEffects"))
             && !this.#communityAddonEnabled("DiscordEffects");
         // Animated backgrounds are a first-party Appearance setting, not a
         // hidden dependency on whether the old DiscordEffects card completed
@@ -2391,7 +2406,7 @@ class SolcordRuntimeStore extends Store {
         if (!split?.enabled || split.mode !== "guarded" || !this.#setupAcceptsAddon("SplitLargeMessages", split.mode)) {
             results.SplitLargeMessages = {enabled: false, provider: "off"};
         }
-        else if (PluginDoctor.isQuarantined("SplitLargeMessages")) {
+        else if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId("SplitLargeMessages"))) {
             results.SplitLargeMessages = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
         }
         else if (this.#communityAddonEnabled("SplitLargeMessages")) {
@@ -2416,12 +2431,12 @@ class SolcordRuntimeStore extends Store {
         if (!curated.DoNotTrack?.enabled) {
             results.DoNotTrack = {enabled: false, provider: "off"};
         }
-        else if (PluginDoctor.isQuarantined("DoNotTrack")) {
+        else if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId("DoNotTrack"))) {
             results.DoNotTrack = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
         }
         else if (SolcordSettings.snapshot().productPreferences.privacy.telemetry === "block" && this.#privacyCapabilities.find(capability => capability.dataClass === "telemetry")?.state === "Protected") {
             results.DoNotTrack = {enabled: true, provider: "solcord"};
-            PluginDoctor.recordSuccessfulStart("DoNotTrack");
+            PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoNotTrack"));
         }
         else if (this.#communityAddonEnabled("DoNotTrack")) {
             results.DoNotTrack = communityResult("DoNotTrack");
@@ -2440,19 +2455,19 @@ class SolcordRuntimeStore extends Store {
             });
             if (adapter.start()) {
                 results.DoNotTrack = {enabled: true, provider: "solcord"};
-                PluginDoctor.recordSuccessfulStart("DoNotTrack");
+                PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoNotTrack"));
             }
             else {
                 const reason = "Discord analytics lookup failed structural validation; Do Not Track stayed off.";
                 results.DoNotTrack = {enabled: false, provider: "off", reason};
-                PluginDoctor.recordCapabilityMiss("DoNotTrack");
+                PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId("DoNotTrack"));
             }
         }
 
         if (!curated.InvisibleTyping?.enabled) {
             results.InvisibleTyping = {enabled: false, provider: "off"};
         }
-        else if (PluginDoctor.isQuarantined("InvisibleTyping")) {
+        else if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId("InvisibleTyping"))) {
             results.InvisibleTyping = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
         }
         else if (this.#communityAddonEnabled("InvisibleTyping")) {
@@ -2469,19 +2484,19 @@ class SolcordRuntimeStore extends Store {
             });
             if (adapter.start()) {
                 results.InvisibleTyping = {enabled: true, provider: "solcord"};
-                PluginDoctor.recordSuccessfulStart("InvisibleTyping");
+                PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("InvisibleTyping"));
             }
             else {
                 const reason = "Discord typing lookup failed structural validation; Invisible Typing stayed off.";
                 results.InvisibleTyping = {enabled: false, provider: "off", reason};
-                PluginDoctor.recordCapabilityMiss("InvisibleTyping");
+                PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId("InvisibleTyping"));
             }
         }
 
         if (!curated.DoubleClickToReply?.enabled) {
             results.DoubleClickToReply = {enabled: false, provider: "off"};
         }
-        else if (PluginDoctor.isQuarantined("DoubleClickToReply")) {
+        else if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId("DoubleClickToReply"))) {
             results.DoubleClickToReply = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
         }
         else if (this.#communityAddonEnabled("DoubleClickToReply")) {
@@ -2493,18 +2508,18 @@ class SolcordRuntimeStore extends Store {
             if (feature.start()) {
                 scope.own(() => feature.stop(), "listener");
                 results.DoubleClickToReply = {enabled: true, provider: "solcord"};
-                PluginDoctor.recordSuccessfulStart("DoubleClickToReply");
+                PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoubleClickToReply"));
             }
             else {
                 const reason = "Discord reply lookup failed structural validation; Double Click to Reply stayed off.";
                 results.DoubleClickToReply = {enabled: false, provider: "off", reason};
-                PluginDoctor.recordCapabilityMiss("DoubleClickToReply");
+                PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId("DoubleClickToReply"));
             }
         }
         for (const [name, state] of Object.entries(curated)) {
             if (Object.hasOwn(results, name) || !isSolcordBuiltInAddon(name, state.mode)) continue;
             if (name === "DiscordEffects" && motionRequested) {
-                if (PluginDoctor.isQuarantined(name)) {
+                if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))) {
                     results[name] = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the animated background until an explicit retry succeeds."};
                 }
                 else if (this.#communityAddonEnabled(name)) {
@@ -2512,12 +2527,12 @@ class SolcordRuntimeStore extends Store {
                 }
                 else if (nativeSuite.providerReady(name)) {
                     results[name] = {enabled: true, provider: "solcord", reason: "Active as the selected first-party Appearance background."};
-                    PluginDoctor.recordSuccessfulStart(name);
+                    PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId(name));
                 }
                 else {
                     const reason = "The selected animated background did not validate and stayed off.";
                     results[name] = {enabled: false, provider: "off", reason};
-                    PluginDoctor.recordCapabilityMiss(name);
+                    PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name));
                 }
                 continue;
             }
@@ -2525,7 +2540,7 @@ class SolcordRuntimeStore extends Store {
                 results[name] = {enabled: false, provider: "off"};
                 continue;
             }
-            if (PluginDoctor.isQuarantined(name)) {
+            if (PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))) {
                 results[name] = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
                 continue;
             }
@@ -2535,17 +2550,17 @@ class SolcordRuntimeStore extends Store {
             }
             if (nativeSuite.providerReady(name)) {
                 results[name] = {enabled: true, provider: "solcord"};
-                PluginDoctor.recordSuccessfulStart(name);
+                PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId(name));
                 continue;
             }
             if (nativeSuite.providerAvailable(name)) {
                 results[name] = {enabled: true, provider: "solcord", reason: "Available — the first-party adapter is active, but Ready is withheld until a matching live interaction succeeds."};
-                PluginDoctor.recordCapabilityMiss(name);
+                PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name));
                 continue;
             }
             const reason = `${name}'s native adapter did not validate on this Discord build and stayed off.`;
             results[name] = {enabled: false, provider: "off", reason};
-            PluginDoctor.recordCapabilityMiss(name);
+            PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name));
         }
         if (!curatedOverride) {
             const retryable = Object.entries(results).some(([name, result]) => {
@@ -2553,7 +2568,7 @@ class SolcordRuntimeStore extends Store {
                 return state?.enabled === true
                     && isSolcordBuiltInAddon(name, state.mode)
                     && !this.#communityAddonEnabled(name)
-                    && !PluginDoctor.isQuarantined(name)
+                    && !PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
                     && !result.enabled
                     && Boolean(result.reason);
             });

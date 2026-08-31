@@ -263,13 +263,13 @@ describe("Solcord renderer security contracts", () => {
     test("holds genuine Solcord built-in quarantines while recovering only the classified legacy capability miss", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
-        expect(synchronize).toContain("!PluginDoctor.isQuarantined(name)");
+        expect(synchronize).toContain("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))");
         for (const name of ["SplitLargeMessages", "DoNotTrack", "InvisibleTyping", "DoubleClickToReply"]) {
-            expect(synchronize).toContain(`PluginDoctor.isQuarantined("${name}")`);
+            expect(synchronize).toContain(`PluginDoctor.isQuarantined(solcordBuiltInDoctorId("${name}"))`);
         }
         expect(synchronize).toContain("Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds.");
         const retryDecision = runtime.slice(runtime.indexOf("const retryable ="), runtime.indexOf("if (retryable)", runtime.indexOf("const retryable =")));
-        expect(retryDecision).toContain("!PluginDoctor.isQuarantined(name)");
+        expect(retryDecision).toContain("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))");
     });
 
     test("treats unavailable Discord capabilities as readiness misses rather than crash-loop failures", () => {
@@ -278,18 +278,23 @@ describe("Solcord renderer security contracts", () => {
         expect(synchronize).toContain("PluginDoctor.recordCapabilityMiss");
         expect(synchronize).not.toContain("PluginDoctor.recordFailure");
         expect(synchronize).not.toContain("NativeSuiteAdapterUnavailable");
-        expect(synchronize).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
-        expect(synchronize.indexOf("clearLegacyCapabilityMissQuarantine(name)")).toBeLessThan(synchronize.indexOf("!PluginDoctor.isQuarantined(name)"));
+        expect(synchronize).toContain("if (!this.#communityAddonInstalled(name)) PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
+        expect(synchronize.indexOf("clearLegacyCapabilityMissQuarantine(name)")).toBeLessThan(synchronize.indexOf("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))"));
+        expect(synchronize).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(solcordBuiltInDoctorId(name))");
         expect(synchronize).toContain("nativeSuite.providerAvailable(name)");
         expect(synchronize).toContain("Ready is withheld until a matching live interaction succeeds");
 
         const setup = runtime.slice(runtime.indexOf("const adapterResults = this.#synchronizeCuratedAdapters(requestedCurated)"), runtime.indexOf("const replacementFiles", runtime.indexOf("const adapterResults = this.#synchronizeCuratedAdapters(requestedCurated)")));
-        expect(setup).toContain("PluginDoctor.recordCapabilityMiss(name)");
+        expect(setup).toContain("PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name))");
         expect(setup).not.toContain("PluginDoctor.quarantine(name, reason)");
 
         const toggle = runtime.slice(runtime.indexOf("async setCuratedAddonEnabled"), runtime.indexOf("async retryQuarantinedAddon"));
-        expect(toggle).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
-        expect(toggle).toContain("PluginDoctor.recordCapabilityMiss(name)");
+        expect(toggle).toContain("const guardedCanRunIndependently = guardedBuiltIn && !this.#communityAddonEnabled(name)");
+        expect(toggle).toContain("const doctorId = guardedBuiltIn ? solcordBuiltInDoctorId(name) : name");
+        expect(toggle).toContain("const communityAddonPresent = Boolean(resolveCommunityAddon(PluginManager, candidate.name, candidate.fileName))");
+        expect(toggle).toContain("if (!communityAddonPresent) PluginDoctor.clearLegacyCapabilityMissQuarantine(name)");
+        expect(toggle).toContain("PluginDoctor.clearLegacyCapabilityMissQuarantine(doctorId)");
+        expect(toggle).toContain("PluginDoctor.recordCapabilityMiss(doctorId)");
         expect(toggle).not.toContain("PluginDoctor.quarantine(name, reason)");
         expect(toggle).not.toContain("SolcordSettings.setCuratedAddonEnabled(name, false, reason)");
     });
@@ -298,7 +303,7 @@ describe("Solcord renderer security contracts", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
         expect(synchronize).toContain("productPreferences.nativeSuite.motion.effect !== \"off\"");
-        expect(synchronize).toContain(`!PluginDoctor.isQuarantined("DiscordEffects")`);
+        expect(synchronize).toContain(`!PluginDoctor.isQuarantined(solcordBuiltInDoctorId("DiscordEffects"))`);
         expect(synchronize).toContain(`!this.#communityAddonEnabled("DiscordEffects")`);
         expect(synchronize).toContain("nativeEnabled.DiscordEffects = true");
         expect(synchronize).toContain("Active as the selected first-party Appearance background.");

@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordProviderSourceParityComplete, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordBuiltInDoctorId, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordProviderSourceParityComplete, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
 
 
 describe("Solcord clean-room curated built-ins", () => {
@@ -16,6 +16,12 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(isSolcordBuiltInAddon("InvisibleTyping", "default")).toBeTrue();
         expect(isSolcordBuiltInAddon("SplitLargeMessages", "guarded")).toBeTrue();
         expect(isSolcordBuiltInAddon("SplitLargeMessages", "native")).toBeFalse();
+    });
+
+    test("isolates owned-provider health from the community file with the same product name", () => {
+        expect(solcordBuiltInDoctorId("DoNotTrack")).toBe("SolcordBuiltIn.DoNotTrack");
+        expect(solcordBuiltInDoctorId("VoiceMessages")).not.toBe("VoiceMessages");
+        expect(() => solcordBuiltInDoctorId("UnknownAddon")).toThrow("Unknown Solcord built-in provider.");
     });
 
     test("plans no Discord module lookups for a fully disabled native suite", () => {

@@ -294,3 +294,13 @@ export function isSolcordBuiltInAddon(name: string, mode: string | undefined): b
     if (name === "SplitLargeMessages") return mode !== "native";
     return (SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS as readonly string[]).includes(name);
 }
+
+/**
+ * Plugin Doctor tracks owner-installed community files and Solcord's owned
+ * providers independently. A quarantined community file must never suppress
+ * the clean-room provider that replaces it.
+ */
+export function solcordBuiltInDoctorId(name: string): string {
+    if (!(SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS as readonly string[]).includes(name)) throw new TypeError("Unknown Solcord built-in provider.");
+    return `SolcordBuiltIn.${name}`;
+}
