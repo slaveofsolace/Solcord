@@ -519,7 +519,8 @@ describe("Solcord renderer security contracts", () => {
     test("separates code maturity, running status, and the bounded profile payload", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const panel = source("src/betterdiscord/ui/solcord/panel.tsx");
-        expect(panel).toContain("Ready means an implemented adapter passed its current startup validation");
+        expect(panel).toContain("Ready passed startup validation");
+        expect(panel).toContain("Degraded means part of a running tool drifted or could not clean up completely");
         expect(panel).not.toContain("Ready modules are connected to Discord now");
         expect(panel).toContain("Profiles save Solcord module settings");
         expect(panel).toContain("They do not capture Timeline policy or curated-addon choices");

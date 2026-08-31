@@ -371,6 +371,7 @@ export class SolcordNativeSuiteController {
     #reviewedVolumeUserId?: string;
     #audioActionProven = false;
     #callReaderDrifted = false;
+    #callSubscriptionDrifted = false;
     #recording?: RecordingState;
     #voicePromptGeneration = 0;
     #voicePromptPending = false;
@@ -460,7 +461,9 @@ export class SolcordNativeSuiteController {
             this.#audioActionProven = true;
             const providers = this.#enabled.get("audio-console") ?? [];
             this.#setProviderReady("BetterVolume", providers.includes("BetterVolume"));
-            this.#setStatus("audio-console", "ready", "A user-reviewed local playback-volume change succeeded for a participant in the current call.", providers);
+            this.#setStatus("audio-console", this.#callSubscriptionDrifted ? "degraded" : "ready", this.#callSubscriptionDrifted
+                ? "The reviewed local-volume change succeeded, but Discord's call-change listener drifted. Every later action still revalidates its participant at click time."
+                : "A user-reviewed local playback-volume change succeeded for a participant in the current call.", providers);
         }
         finally {this.#reviewedVolumeUserId = undefined;}
     }
@@ -851,6 +854,7 @@ export class SolcordNativeSuiteController {
         this.#voiceStateListeners.clear();
         this.#audioActionProven = false;
         this.#callReaderDrifted = false;
+        this.#callSubscriptionDrifted = false;
         this.#statusNotificationQueued = false;
     }
 
@@ -1025,13 +1029,18 @@ export class SolcordNativeSuiteController {
             this.#setProviderReady("CallTimeCounter", callTimeReady);
             this.#setProviderReady("VoiceActivity", voiceActivityReady);
             this.#setProviderReady("ShowSpectators", spectatorsReady);
+            const unavailable = providers.filter(provider => this.#providerAvailability.get(provider) !== true);
+            if (unavailable.length) {
+                this.#setStatus("call-context", "degraded", `${unavailable.join(" and ")} could not validate its Discord adapter. The remaining call tools stay available.`, providers);
+                return;
+            }
             if (!connected) {
-                this.#setStatus("call-context", "degraded", "Available — Discord's call stores are validated. Join a call to prove live duration, speaking, and viewer data.", providers);
+                this.#setStatus("call-context", "ready", "Ready — connect to a call to show duration, speaking, and viewer context.", providers);
                 return;
             }
             const missing = providers.filter(provider => this.#providerReadiness.get(provider) !== true);
-            this.#setStatus("call-context", missing.length ? "degraded" : "ready", missing.length
-                ? `The live call snapshot is valid, but ${missing.join(" and ")} still needs its matching speaking or stream-viewer context.`
+            this.#setStatus("call-context", "ready", missing.length
+                ? `Ready — ${missing.join(" and ")} will appear when its matching speaking or stream-viewer context exists.`
                 : "A live call snapshot proved duration, speaking presence, and exposed stream viewers using loaded stores only.", providers);
         };
         const sync = () => {
@@ -1076,6 +1085,7 @@ export class SolcordNativeSuiteController {
             sync();
         }
         catch (error) {
+            this.#callSubscriptionDrifted = true;
             let cleanupIncomplete = error instanceof AggregateError && error.message.includes("cleanup remains owned for retry");
             if (releaseSubscription) {
                 try {releaseSubscription();}
@@ -1175,12 +1185,14 @@ export class SolcordNativeSuiteController {
             return;
         }
         this.#setProviderAvailable("BetterVolume", providers.includes("BetterVolume"));
+        let subscriptionDrifted = this.#callSubscriptionDrifted;
         const synchronize = () => {
             try {
                 this.#setProviderAvailable("BetterVolume", providers.includes("BetterVolume"));
                 this.#updateAudioConsoleCallState(this.#adapter.currentCall?.());
             }
             catch {
+                this.#callReaderDrifted = true;
                 this.#setProviderAvailable("BetterVolume", false);
                 this.#setProviderReady("BetterVolume", false);
                 this.#setStatus("audio-console", "unsupported", "Discord's current-call reader drifted; Audio Console stopped without changing local playback.", providers);
@@ -1192,10 +1204,14 @@ export class SolcordNativeSuiteController {
                 if (unsubscribe) this.#scope.own(unsubscribe, "listener");
             }
             catch {
-                this.#setStatus("audio-console", "degraded", "Available with click-time validation — Discord's call-change subscription drifted, so every action rechecks the current participant before applying.", providers);
+                subscriptionDrifted = true;
+                this.#callSubscriptionDrifted = true;
             }
         }
         synchronize();
+        if (subscriptionDrifted && this.#providerAvailability.get("BetterVolume") === true) {
+            this.#setStatus("audio-console", "degraded", "Available with click-time validation — Discord's call-change subscription drifted, so every action rechecks the current participant before applying.", providers);
+        }
     }
 
     #updateAudioConsoleCallState(call: SolcordCallSnapshot | undefined): void {
@@ -1203,7 +1219,7 @@ export class SolcordNativeSuiteController {
         const providers = this.#enabled.get("audio-console") ?? [];
         if (!call) {
             this.#setProviderReady("BetterVolume", false);
-            this.#setStatus("audio-console", "degraded", "Available — waiting for a connected call and a reviewed participant. No local-volume action can run while disconnected.", providers);
+            this.#setStatus("audio-console", "ready", "Ready — connect to a call and choose a participant before applying a local-volume change.", providers);
             return;
         }
         const participantIds = Array.isArray(call.participantIds) ? call.participantIds.filter(isSolcordDiscordSnowflake) : [];
@@ -1213,9 +1229,9 @@ export class SolcordNativeSuiteController {
             return;
         }
         this.#setProviderReady("BetterVolume", this.#audioActionProven);
-        this.#setStatus("audio-console", this.#audioActionProven ? "ready" : "degraded", this.#audioActionProven
+        this.#setStatus("audio-console", "ready", this.#audioActionProven
             ? "A reviewed local playback-volume change succeeded; every later action still revalidates the current participant."
-            : "Connected — enter a current participant's complete Discord user ID to review a local playback-volume change.", providers);
+            : "Ready — enter a current participant's complete Discord user ID to review a local playback-volume change.", providers);
     }
 
     #startVoiceNoteStudio(): void {

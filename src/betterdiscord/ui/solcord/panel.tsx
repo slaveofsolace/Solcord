@@ -390,34 +390,41 @@ function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
         onboarding: SolcordSettings.snapshot().onboarding,
         addons: SolcordSettings.snapshot().curatedAddons,
-        statuses: SolcordRuntime.nativeSuiteStatus()
+        adapters: SolcordRuntime.curatedAdapterStatus()
     }));
     const [busy, setBusy] = useState<string>();
     const [message, setMessage] = useState("");
     const featureIds = BUILTIN_FEATURES_BY_WORKSPACE[scope] as readonly string[];
     const rows = SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS
         .filter(name => featureIds.includes(solcordNativeSuiteFeatureForAddon(name) ?? ""))
-        .map(name => ({name, presentation: SOLCORD_ADDON_PRESENTATION.get(name)!, feature: solcordNativeSuiteFeatureForAddon(name)!}));
+        .map(name => ({name, presentation: SOLCORD_ADDON_PRESENTATION.get(name)!}));
     const toggle = async (name: string, enabled: boolean) => {
         setBusy(name);
         setMessage("");
         const succeeded = await SolcordRuntime.setCuratedAddonEnabled(name, enabled);
-        setMessage(succeeded
-            ? `${SOLCORD_ADDON_PRESENTATION.get(name)?.label ?? name} ${enabled ? "enabled" : "disabled"}.`
-            : `${SOLCORD_ADDON_PRESENTATION.get(name)?.label ?? name} stayed off because its setup, integrity, or runtime gate is not ready.`);
+        const label = SOLCORD_ADDON_PRESENTATION.get(name)?.label ?? name;
+        const adapter = SolcordRuntime.curatedAdapterStatus()[name];
+        setMessage(!succeeded
+            ? `${label} stayed off because its setup, integrity, or runtime gate is not ready.`
+            : !enabled
+                ? `${label} disabled.`
+                : adapter?.enabled
+                    ? `${label} enabled${adapter.provider === "community" ? " through the reviewed community provider" : ""}.`
+                    : `${label} is selected but unavailable${adapter?.reason ? `: ${adapter.reason}` : "."}`);
         setBusy(undefined);
     };
     const title = scope === "privacy" ? "Privacy built-ins" : scope === "appearance" ? "Motion built-ins" : scope === "chat" ? "Message built-ins" : scope === "voice" ? "Voice built-ins" : "People built-ins";
     return <Section title={title} summary="Owned Solcord features; each switch starts and stops only its matching behavior.">
         <div className="solcord-setting-rows solcord-builtin-switches">
-            {rows.map(({name, presentation, feature}) => {
+            {rows.map(({name, presentation}) => {
                 const enabled = state.addons[name]?.enabled === true;
-                const maturity = state.statuses.find(item => item.id === feature)?.maturity ?? "off";
-                const status = enabled ? ({"ready": "Ready", "needs-setup": "Needs review", "degraded": "Degraded", "unsupported": "Unavailable", "off": "Off"} as const)[maturity] : "Off";
+                const adapter = state.adapters[name];
+                const maturity = !enabled ? "off" : adapter?.enabled ? "ready" : "unsupported";
+                const status = maturity === "ready" ? "Ready" : maturity === "unsupported" ? "Unavailable" : "Off";
                 return <label key={name}>
                     <span><strong>{presentation.label}</strong><small>{presentation.summary}</small></span>
                     <span className="solcord-builtin-control">
-                        <small className={`solcord-capability solcord-capability-${enabled ? maturity : "off"}`}>{status}</small>
+                        <small className={`solcord-capability solcord-capability-${maturity}`} title={adapter?.reason}>{status}</small>
                         <span className="solcord-switch">
                             <input type="checkbox" aria-label={`${enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={enabled} disabled={state.onboarding.status !== "complete" || busy === name} onChange={event => void toggle(name, event.currentTarget.checked)} />
                             <i aria-hidden="true" />
@@ -541,7 +548,7 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
         });
         return () => abort.abort();
     }, [controller, nativePreferences.translation.provider, nativePreferences.translation.sourceLanguage, nativePreferences.translation.targetLanguage, scope]);
-    const stateLabel = {"off": "Off", "needs-setup": "Needs setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unavailable"} as const;
+    const stateLabel = {"off": "Off", "needs-setup": "Optional setup", "ready": "Ready", "degraded": "Degraded", "unsupported": "Unavailable"} as const;
     const statusById = new Map(state.statuses.map(item => [item.id, item]));
     const visibleStatuses = state.statuses.filter(item => item.maturity !== "off");
     const unavailableStatuses = state.statuses.filter(item => item.maturity === "unsupported");
@@ -798,10 +805,10 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
     const sectionSummary = scope === "status" ? "Built-ins replacing the old plugin cards." : "Only validated controls appear below.";
     return <Section title={sectionTitle} summary={sectionSummary}>
         {scope === "status" && <>
-            <div className="solcord-native-summary" aria-label="Built-in feature summary"><strong>{visibleStatuses.filter(item => item.maturity === "ready").length} ready</strong><span>{visibleStatuses.filter(item => item.maturity === "needs-setup").length} need setup</span><span>{unavailableStatuses.length} unsupported on this build</span></div>
-            <details className="solcord-state-help"><summary>What these states mean</summary><p>Ready means an implemented adapter passed its current startup validation. Off means it does no Discord lookup or patch work. Unsupported means the current Discord build did not expose a verified adapter.</p></details>
+            <div className="solcord-native-summary" aria-label="Built-in feature summary"><strong>{visibleStatuses.filter(item => item.maturity === "ready").length} ready</strong><span>{visibleStatuses.filter(item => item.maturity === "needs-setup").length} optional setup</span><span>{visibleStatuses.filter(item => item.maturity === "degraded").length} degraded</span><span>{unavailableStatuses.length} unsupported on this build</span></div>
+            <details className="solcord-state-help"><summary>What these states mean</summary><p>Ready passed startup validation. Optional setup means the tool is available but an external provider or preference is still off. Degraded means part of a running tool drifted or could not clean up completely. Off performs no Discord lookup or patch work. Unavailable means this Discord build exposed no verified adapter.</p></details>
             <div className="solcord-native-ledger" role="list" aria-label="Solcord built-in features">
-                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row"><strong className="solcord-native-title">{item.title}</strong>{item.enabledProviders.length > 0 && <small className="solcord-native-replaces">Replaces {item.enabledProviders.join(", ")}</small>}<span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
+                {scopeStatus.filter(item => item.maturity !== "unsupported").map(item => <div key={item.id} role="listitem" className="solcord-native-row" aria-label={`${item.title}: ${stateLabel[item.maturity]}. ${item.detail}`} title={item.detail}><strong className="solcord-native-title">{item.title}</strong>{item.enabledProviders.length > 0 && <small className="solcord-native-replaces">Replaces {item.enabledProviders.join(", ")}</small>}<span className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</span></div>)}
                 {!scopeStatus.length && <p className="solcord-empty">No built-in status is available yet.</p>}
             </div>
             {unavailableStatuses.length > 0 && <details className="solcord-native-unavailable-list"><summary>{unavailableStatuses.length} unavailable on this Discord build</summary>{unavailableStatuses.map(item => <div key={item.id}><strong>{item.title}</strong><span>{item.detail}</span></div>)}</details>}

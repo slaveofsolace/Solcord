@@ -313,6 +313,18 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("never URLs, payloads, account IDs, messages, attachments, or file paths");
     });
 
+    test("reports each built-in from its actual adapter result and explains every family state", () => {
+        expect(panel).toContain("adapters: SolcordRuntime.curatedAdapterStatus()");
+        expect(panel).toContain("const adapter = state.adapters[name]");
+        expect(panel).toContain("const maturity = !enabled ? \"off\" : adapter?.enabled ? \"ready\" : \"unsupported\"");
+        expect(panel).toContain("const adapter = SolcordRuntime.curatedAdapterStatus()[name]");
+        expect(panel).toContain("is selected but unavailable");
+        expect(panel).not.toContain("state.statuses.find(item => item.id === feature)");
+        expect(panel).toContain("optional setup</span><span>{visibleStatuses.filter(item => item.maturity === \"degraded\").length} degraded");
+        expect(panel).toContain("Degraded means part of a running tool drifted or could not clean up completely.");
+        expect(panel).toMatch(/aria-label=\{`\$\{item\.title\}: \$\{stateLabel\[item\.maturity\]\}\. \$\{item\.detail\}`\}/);
+    });
+
     test("does not report a storage failure before Message Timeline is enabled", () => {
         expect(timeline).toContain("Not in use while Timeline is off");
         expect(timeline).toContain("Session only by choice");

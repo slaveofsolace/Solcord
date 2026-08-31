@@ -182,7 +182,7 @@ describe("Solcord native-suite security boundaries", () => {
         active.start();
         controllers.push({controller: active, scope: activeScope});
         const activeStatus = Object.fromEntries(active.statuses().map(item => [item.id, item.maturity]));
-        expect(activeStatus["audio-console"]).toBe("degraded");
+        expect(activeStatus["audio-console"]).toBe("ready");
         expect(activeStatus["translation-desk"]).toBe("degraded");
         await expect(active.translateLocally("en", "es", "hello")).resolves.toBe("local:hello");
         expect(active.providerReady("BetterVolume")).toBeFalse();
@@ -294,7 +294,7 @@ describe("Solcord native-suite security boundaries", () => {
         let rollbacks = 0;
         const scope = new SolcordDisposalScope();
         const controller = new SolcordNativeSuiteController(scope, {CallTimeCounter: true, BetterVolume: true}, {
-            currentCall: () => ({channelId: "123456", connectedAt: Date.now(), participantCount: 2, speakerCount: 1, viewerCount: 0}),
+            currentCall: () => ({channelId: "123456", connectedAt: Date.now(), participantCount: 2, speakerCount: 1, viewerCount: 0, participantIds: [VOICE_USER_ID]}),
             subscribeCall: () => {
                 registrations++;
                 rollbacks++;
@@ -334,12 +334,13 @@ describe("Solcord native-suite security boundaries", () => {
         expect(controller.localVolumeReviewState(VOICE_USER_ID)).toEqual({ready: false, detail: "Waiting for a connected call."});
         expect(() => controller.previewLocalVolume(VOICE_USER_ID, 100, 125)).toThrow("Waiting for a connected call");
         expect(() => controller.previewLocalVolume("123", 100, 125)).toThrow("complete Discord user ID");
+        expect(controller.statuses().find(status => status.id === "audio-console")?.maturity).toBe("ready");
         expect(statusChanges).toBe(1);
 
         call = {channelId: VOICE_CHANNEL_ID, connectedAt: Date.now(), participantCount: 1, speakerCount: 0, viewerCount: 0, participantIds: [VOICE_USER_ID]};
         listener?.();
         await Promise.resolve();
-        expect(controller.statuses().find(status => status.id === "audio-console")?.detail).toContain("Connected");
+        expect(controller.statuses().find(status => status.id === "audio-console")?.detail).toContain("Ready");
         controller.previewLocalVolume(VOICE_USER_ID, 100, 125);
         call = undefined;
         listener?.();
@@ -356,7 +357,8 @@ describe("Solcord native-suite security boundaries", () => {
 
         call = undefined;
         listener?.();
-        expect(controller.statuses().find(status => status.id === "audio-console")?.detail).toContain("waiting for a connected call");
+        expect(controller.statuses().find(status => status.id === "audio-console")?.detail).toContain("connect to a call");
+        expect(controller.statuses().find(status => status.id === "audio-console")?.maturity).toBe("ready");
         expect(controller.providerReady("BetterVolume")).toBeFalse();
         expect(controller.providerAvailable("BetterVolume")).toBeTrue();
         scope.dispose();
@@ -800,12 +802,43 @@ describe("Solcord native-suite security boundaries", () => {
         expect(controller.providerReady("CallTimeCounter")).toBeTrue();
         expect(controller.providerReady("VoiceActivity")).toBeTrue();
         expect(controller.providerReady("ShowSpectators")).toBeTrue();
+        expect(controller.statuses().find(item => item.id === "call-context")?.maturity).toBe("ready");
 
         controller.dispose();
         scope.dispose();
         expect(member.querySelector("[data-solcord-voice-presence]")).toBeNull();
         panels.remove();
         member.remove();
+    });
+
+    test("treats validated idle Call Context as ready and reserves degraded for adapter drift", () => {
+        const readyScope = new SolcordDisposalScope();
+        const ready = new SolcordNativeSuiteController(readyScope, {CallTimeCounter: true, VoiceActivity: true, ShowSpectators: true}, {
+            currentCall: () => undefined,
+            subscribeCall: () => () => {},
+            voiceActivityAvailable: true,
+            spectatorsAvailable: true,
+            spectatorsReady: () => false
+        });
+        ready.start();
+        controllers.push({controller: ready, scope: readyScope});
+        expect(ready.statuses().find(item => item.id === "call-context")).toEqual(expect.objectContaining({
+            maturity: "ready",
+            detail: expect.stringContaining("connect to a call")
+        }));
+
+        const driftedScope = new SolcordDisposalScope();
+        const drifted = new SolcordNativeSuiteController(driftedScope, {VoiceActivity: true}, {
+            currentCall: () => undefined,
+            subscribeCall: () => () => {},
+            voiceActivityAvailable: false
+        });
+        drifted.start();
+        controllers.push({controller: drifted, scope: driftedScope});
+        expect(drifted.statuses().find(item => item.id === "call-context")).toEqual(expect.objectContaining({
+            maturity: "degraded",
+            detail: expect.stringContaining("could not validate")
+        }));
     });
 
     test("honors Voice Activity surface and current-user choices", () => {
