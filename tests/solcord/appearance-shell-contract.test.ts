@@ -115,6 +115,13 @@ describe("Solcord full-shell appearance contract", () => {
         expect(CSS).toContain("@media (prefers-reduced-motion: reduce)");
     });
 
+    test("keeps decorative fields behind Discord media, dialogs, and controls", () => {
+        const grain = block("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode] body::before");
+        expect(property(grain, "z-index")).toBe("0");
+        expect(CSS).toContain("body:has(> [data-solcord-ambient-effect]) > #app-mount");
+        expect(CSS).toMatch(/\[data-solcord-ambient-effect\]\s*\{\s*z-index:\s*0\s*!important;/);
+    });
+
     test("keeps the performance HUD readable, in-bounds, and away from account controls", () => {
         const overlay = block(".solcord-performance-overlay");
         expect(property(overlay, "position")).toBe("fixed");
@@ -141,6 +148,8 @@ describe("Solcord full-shell appearance contract", () => {
             expect(source, fileName).not.toContain("data-solcord-mode");
             expect(source, fileName).not.toContain("data-solcord-accent");
             expect(source, fileName).not.toContain("data-solcord-density");
+            expect(source, fileName).toContain("[data-solcord-ambient-effect] { z-index: 0 !important; }");
+            expect(source, fileName).toContain("body:has(> [data-solcord-ambient-effect]) > #app-mount");
             expect(executable, fileName).not.toMatch(/@import|https?:\/\//i);
         }
         expect(CSS).toContain("html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode]");
