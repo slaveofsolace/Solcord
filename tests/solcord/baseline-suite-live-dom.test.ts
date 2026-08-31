@@ -5,9 +5,14 @@ import {beforeEach, describe, expect, test} from "bun:test";
 import {resolveSolcordEmbedTargets, resolveSolcordLayoutTarget, SolcordBaselineSuite} from "../../src/betterdiscord/modules/solcord/baseline-suite";
 import {defaultSolcordProductPreferences} from "../../src/common/solcord/product";
 
-async function flushMutations(): Promise<void> {
-    await new Promise<void>(resolve => setTimeout(resolve, 0));
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+async function waitForMutationResult(predicate: () => boolean, describeState: () => string): Promise<void> {
+    const deadline = Date.now() + 250;
+    while (Date.now() < deadline) {
+        await new Promise<void>(resolve => setTimeout(resolve, 5));
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        if (predicate()) return;
+    }
+    throw new Error(`Timed out waiting for the coalesced DOM adapter scan: ${describeState()}`);
 }
 
 describe("Solcord baseline exact-client DOM adapters", () => {
@@ -135,14 +140,23 @@ describe("Solcord baseline exact-client DOM adapters", () => {
         document.getElementById("servers-a")?.remove();
         document.body.insertAdjacentHTML("afterbegin", `<nav id="servers-b" aria-label="Servers"><div data-list-id="guildsnav"></div></nav>`);
         document.body.insertAdjacentHTML("beforeend", `<li id="chat-messages-1-2"><article id="route-embed" class="embed__new"><a href="https://docs.google.com/document/d/example">Document</a></article></li>`);
-        await flushMutations();
+        await waitForMutationResult(
+            () => document.getElementById("servers-b")?.classList.contains("solcord-layout-region-hidden") === true
+                && document.querySelectorAll("#route-embed > .solcord-embed-control").length === 1
+                && suite.status().unavailable.length === 0,
+            () => `replacement=${document.getElementById("servers-b")?.className ?? "missing"}; controls=${document.querySelectorAll("#route-embed > .solcord-embed-control").length}; unavailable=${JSON.stringify(suite.status().unavailable)}`
+        );
 
         expect(document.getElementById("servers-b")?.classList.contains("solcord-layout-region-hidden")).toBe(true);
         expect(document.querySelectorAll("#route-embed > .solcord-embed-control")).toHaveLength(1);
         expect(suite.status().unavailable).toEqual([]);
 
         document.getElementById("route-embed")?.remove();
-        await flushMutations();
+        await waitForMutationResult(
+            () => document.querySelector(".solcord-embed-control") === null
+                && suite.status().unavailable.join(" ").includes("no loaded rich embed"),
+            () => `controls=${document.querySelectorAll(".solcord-embed-control").length}; status=${JSON.stringify(suite.status())}`
+        );
         expect(document.querySelector(".solcord-embed-control")).toBeNull();
         expect(suite.status().unavailable.join(" ")).toContain("no loaded rich embed");
         suite.stop();

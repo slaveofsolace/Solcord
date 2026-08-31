@@ -98,10 +98,42 @@ export function resolveSolcordEmbedTargets(root: ParentNode): HTMLElement[] {
     return verified.filter(candidate => !verified.some(other => other !== candidate && other.contains(candidate)));
 }
 
+function createBoundedAnimationScheduler(scope: SolcordDisposalScope, callback: () => void): () => void {
+    let active = true;
+    let scheduled = false;
+    let frame = 0;
+    let fallback = 0;
+    const run = () => {
+        if (!active || !scheduled) return;
+        scheduled = false;
+        if (frame) cancelAnimationFrame(frame);
+        if (fallback) window.clearTimeout(fallback);
+        frame = 0;
+        fallback = 0;
+        callback();
+    };
+    const schedule = () => {
+        if (!active || scheduled) return;
+        scheduled = true;
+        frame = requestAnimationFrame(run);
+        fallback = window.setTimeout(run, 120);
+    };
+    scope.own(() => {
+        active = false;
+        scheduled = false;
+        if (frame) cancelAnimationFrame(frame);
+        if (fallback) window.clearTimeout(fallback);
+        frame = 0;
+        fallback = 0;
+    }, "timer");
+    return schedule;
+}
+
 export class SolcordBaselineSuite {
     #scope?: SolcordDisposalScope;
     #status: SolcordBaselineSuiteStatus = {active: false, resources: {}, enabled: [], unavailable: []};
     #runtimeIssues = new Map<string, string>();
+    #statusReconcilers = new Set<() => void>();
 
     constructor(private readonly adapter: SolcordBaselineSuiteAdapter) {}
 
@@ -146,6 +178,7 @@ export class SolcordBaselineSuite {
     }
 
     status(): SolcordBaselineSuiteStatus {
+        for (const reconcile of this.#statusReconcilers) reconcile();
         return structuredClone({...this.#status, resources: this.#scope?.counts() ?? {}, unavailable: [...this.#status.unavailable, ...this.#runtimeIssues.values()]});
     }
 
@@ -154,6 +187,7 @@ export class SolcordBaselineSuite {
         this.#scope = undefined;
         try {scope?.dispose();}
         finally {
+            this.#statusReconcilers.clear();
             this.#runtimeIssues.clear();
             this.#status = {active: false, resources: {}, enabled: [], unavailable: []};
         }
@@ -167,7 +201,6 @@ export class SolcordBaselineSuite {
     #startLayout(scope: SolcordDisposalScope, collapsed: readonly SolcordLayoutRegion[]): void {
         const root = document.documentElement;
         const targets = new Map<SolcordLayoutRegion, HTMLElement>();
-        let frame = 0;
         let suspended = false;
         const clearTargets = () => {
             for (const target of targets.values()) target.classList.remove(LAYOUT_TARGET_CLASS);
@@ -176,7 +209,6 @@ export class SolcordBaselineSuite {
             root.classList.remove(...Object.values(REGION_CLASSES));
         };
         const scan = () => {
-            frame = 0;
             if (suspended) return;
             for (const region of collapsed) {
                 const next = resolveSolcordLayoutTarget(document, region);
@@ -192,7 +224,7 @@ export class SolcordBaselineSuite {
                 this.#setRuntimeIssue(`layout:${region}`);
             }
         };
-        const schedule = () => {if (!frame) frame = requestAnimationFrame(scan);};
+        const schedule = createBoundedAnimationScheduler(scope, scan);
         scope.style("solcord-layout-collapse-runtime", `
             .${LAYOUT_TARGET_CLASS} { display: none !important; }
             .solcord-layout-restore { position: fixed; z-index: 2147483000; left: 12px; bottom: 12px; min-height: 32px; padding: 6px 10px; color: var(--text-normal); background: var(--background-floating); border: 1px solid var(--border-subtle); border-radius: 6px; box-shadow: var(--elevation-high); font: inherit; cursor: pointer; }
@@ -220,10 +252,11 @@ export class SolcordBaselineSuite {
             reveal();
         }, true);
         scan();
+        this.#statusReconcilers.add(scan);
+        scope.own(() => this.#statusReconcilers.delete(scan));
         const observer = new MutationObserver(schedule);
         scope.observe(observer, document.body, {childList: true, subtree: true});
         scope.own(() => {
-            if (frame) cancelAnimationFrame(frame);
             clearTargets();
         }, "element");
     }
@@ -234,7 +267,6 @@ export class SolcordBaselineSuite {
             .solcord-embed-host { position: relative !important; }
             .solcord-embed-host.solcord-embed-collapsed > :not(.solcord-embed-control) { display: none !important; }
         `);
-        let frame = 0;
         const controls = new Map<HTMLElement, {button: HTMLButtonElement; listener: EventListener;}>();
         const releaseDetachedControls = () => {
             for (const [candidate, {button, listener}] of controls) {
@@ -246,7 +278,6 @@ export class SolcordBaselineSuite {
             }
         };
         const scan = () => {
-            frame = 0;
             releaseDetachedControls();
             const candidates = resolveSolcordEmbedTargets(document);
             for (const candidate of candidates) {
@@ -280,12 +311,13 @@ export class SolcordBaselineSuite {
                     : "Embed Controls: no loaded rich embed is present on this route; the adapter is waiting without changing messages.");
             }
         };
-        const schedule = () => {if (!frame) frame = requestAnimationFrame(scan);};
+        const schedule = createBoundedAnimationScheduler(scope, scan);
         scan();
+        this.#statusReconcilers.add(scan);
+        scope.own(() => this.#statusReconcilers.delete(scan));
         const observer = new MutationObserver(schedule);
         scope.observe(observer, document.body, {childList: true, subtree: true});
         scope.own(() => {
-            if (frame) cancelAnimationFrame(frame);
             for (const [candidate, {button, listener}] of controls) {
                 button.removeEventListener("click", listener);
                 button.remove();
