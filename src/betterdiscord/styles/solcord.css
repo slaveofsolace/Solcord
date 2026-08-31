@@ -999,10 +999,10 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-privacy-capabilities > div:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-privacy-capabilities > div > span:first-child { display: grid; gap: 2px; text-transform: capitalize; }
 .solcord-privacy-capabilities small { color: var(--sc-muted); text-transform: none; }
-.solcord-privacy-state { font-size: 11px; font-weight: 700; }
-.solcord-privacy-state-protected { color: var(--sc-success); }
+.solcord-privacy-state { font-size: 12px; font-weight: 750; letter-spacing: 0.01em; line-height: 1.25; }
+.solcord-privacy-state-protected { color: color-mix(in srgb, var(--sc-success) 58%, var(--sc-text)); }
 .solcord-privacy-state-needsreview,
-.solcord-privacy-state-degraded { color: var(--sc-warning); }
+.solcord-privacy-state-degraded { color: color-mix(in srgb, var(--sc-warning) 58%, var(--sc-text)); }
 .solcord-privacy-state-unsupported { color: var(--sc-muted); }
 .solcord-experimental { margin-top: 18px; padding-top: 14px; border: 0; border-top: 1px solid var(--sc-border); }
 .solcord-experimental > .solcord-eyebrow { margin: 0 0 4px; color: var(--sc-warning); }
@@ -1068,6 +1068,8 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     .solcord-wizard-steps { margin-right: 14px; margin-left: 14px; }
     .solcord-setting-row,
     .solcord-privacy-capabilities > div { grid-template-columns: 1fr; gap: 8px; }
+    .solcord-all-clear { display: grid; justify-items: start; gap: 4px; }
+    .solcord-privacy-state { justify-self: start; }
     .solcord-setting-row select { width: 100%; }
     .solcord-wizard-footer .solcord-actions { display: grid; grid-template-columns: auto auto 1fr; width: 100%; }
     .solcord-wizard-footer .solcord-text-button { justify-self: end; }

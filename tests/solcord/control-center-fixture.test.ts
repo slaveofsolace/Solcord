@@ -63,6 +63,15 @@ describe("Solcord isolated Control Center fixture", () => {
         expect(css).toContain("overflow-wrap: anywhere");
     });
 
+    test("keeps narrow status rows and light privacy states readable and actionable", () => {
+        expect(css).toContain(".solcord-all-clear { display: grid; justify-items: start; gap: 4px; }");
+        expect(css).toContain(".solcord-privacy-state { font-size: 12px; font-weight: 750;");
+        expect(css).toContain("color-mix(in srgb, var(--sc-success) 58%, var(--sc-text))");
+        expect(css).toContain("color-mix(in srgb, var(--sc-warning) 58%, var(--sc-text))");
+        expect(fixture).toContain("Review addon");
+        expect(fixture).toContain("solcord-recovery-row");
+    });
+
     test("uses an isolated browser profile with background networking disabled", () => {
         expect(renderer).toContain("mkdtempSync");
         expect(renderer).toContain("--disable-background-networking");
