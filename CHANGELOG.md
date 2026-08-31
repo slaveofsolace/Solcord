@@ -1,5 +1,18 @@
 # Solcord Changelog
 
+## 2.0.0-rc.11 - Responsive motion and bounded local translation
+
+### Fixed
+
+- Choosing an animated background now activates it in one action under the Balanced profile. Lean mode and reduced-motion preferences still suppress ambient work.
+- On-device translation capability checks and jobs now have hard deadlines. An embedded Translator API that stops responding degrades visibly and releases its queue instead of leaving the Control Center spinning.
+- Standalone draft, translation, and private-note text areas now expose explicit accessible names.
+
+### Verified
+
+- All eleven Solcord themes activate independently in Discord Stable without introducing document or Control Center horizontal overflow, and the prior selection restores afterward.
+- Attachment Guard, Permission Lens, People & Spaces validation, and the four local baseline adapters completed non-mutating live interaction checks.
+
 ## 2.0.0-rc.10 - Setup-width containment
 
 ### Fixed

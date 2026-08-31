@@ -140,6 +140,31 @@ describe("Solcord local Translation Desk", () => {
         engine.dispose();
     });
 
+    test("bounds a platform availability probe that never settles", async () => {
+        const engine = new SolcordLocalTranslationEngine(localFactory({
+            availability: () => new Promise(() => {})
+        }), undefined, {availabilityTimeoutMs: 10});
+
+        await expect(engine.availability("en", "es")).rejects.toThrow("availability check timed out");
+        expect(engine.snapshot()).toMatchObject({phase: "degraded", failed: 0, lastResult: "failed", containsPlaintext: false});
+        engine.dispose();
+    });
+
+    test("bounds a translation job when the embedded model ignores cancellation", async () => {
+        let destroyed = 0;
+        const engine = new SolcordLocalTranslationEngine(localFactory({
+            create: async () => ({
+                translate: () => new Promise(() => {}),
+                destroy: () => {destroyed++;}
+            })
+        }), undefined, {jobTimeoutMs: 10});
+
+        await expect(engine.translate("en", "es", "private phrase")).rejects.toThrow("timed out and was canceled");
+        expect(engine.snapshot()).toMatchObject({phase: "degraded", queued: 0, failed: 1, canceled: 0, lastResult: "failed", containsPlaintext: false});
+        expect(destroyed).toBe(1);
+        engine.dispose();
+    });
+
     test("rejects drifted platform shapes instead of guessing", () => {
         expect(resolveSolcordLocalTranslatorFactory({Translator: {availability: async () => "available"}})).toBeUndefined();
         expect(resolveSolcordLocalLanguageDetectorFactory({LanguageDetector: {create: async () => ({})}})).toBeUndefined();

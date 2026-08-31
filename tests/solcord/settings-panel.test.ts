@@ -106,6 +106,18 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).not.toContain("type=\"color\"");
     });
 
+    test("makes an explicit ambient-background choice take effect in one action", () => {
+        expect(panel).toContain("const ambient = effect !== \"off\" && effect !== \"signal\"");
+        expect(panel).toContain("const motion = ambient && appearance.motion !== \"reduced\" ? \"full\" : appearance.motion");
+        expect(panel).toContain("onChange={event => updateAnimatedBackground(event.currentTarget.value as typeof preferences.nativeSuite.motion.effect)}");
+    });
+
+    test("gives every standalone private or composer text area an explicit accessible name", () => {
+        expect(panel).toContain("aria-label=\"Draft to review locally\"");
+        expect(panel).toContain("aria-label=\"Text to translate\"");
+        expect(panel).toContain("aria-label=\"Private local identity note\"");
+    });
+
     test("presents Translation Desk as local-first without disguising network providers as setup dependencies", () => {
         expect(panel).toContain("<option value=\"local\">On-device</option>");
         expect(panel).toContain("Checking this language pair on device");

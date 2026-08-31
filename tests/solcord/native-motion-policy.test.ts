@@ -75,7 +75,7 @@ describe("Solcord native motion performance policy", () => {
         expect(controller.statuses().find(status => status.id === "motion-studio")?.detail).toContain("Rain is off under the current performance policy");
     });
 
-    test("Balanced Full and Visual Subtle both suppress ambient work without any Discord lookup plan", () => {
+    test("Balanced Full honors an explicit ambient choice while Visual Subtle suppresses ambient work", () => {
         expect(planSolcordNativeSuiteLookups({DiscordEffects: true}, false)).toEqual({
             callContext: false,
             audioConsole: false,
@@ -86,14 +86,19 @@ describe("Solcord native motion performance policy", () => {
             voiceHealth: false
         });
 
-        for (const [profile, motion] of [["balanced", "full"], ["visual", "subtle"]] as const) {
-            const {controller, scope} = startMotion(profile, motion, false);
-            expect(document.querySelector("[data-solcord-ambient-effect]")).toBeNull();
-            expect(scope.counts()).toEqual({style: 1});
-            expect(controller.statuses().find(status => status.id === "motion-studio")?.detail).toContain("Rain is off under the current performance policy");
-            controller.dispose();
-            scope.dispose();
-        }
+        const balanced = startMotion("balanced", "full", false);
+        expect(document.querySelectorAll("[data-solcord-ambient-effect][data-effect='rain']")).toHaveLength(1);
+        expect(balanced.controller.statuses().find(status => status.id === "motion-studio")?.detail).toContain("with Rain");
+        balanced.controller.dispose();
+        balanced.scope.dispose();
+        expect(document.querySelector("[data-solcord-ambient-effect]")).toBeNull();
+
+        const subtle = startMotion("visual", "subtle", false);
+        expect(document.querySelector("[data-solcord-ambient-effect]")).toBeNull();
+        expect(subtle.scope.counts()).toEqual({style: 1});
+        expect(subtle.controller.statuses().find(status => status.id === "motion-studio")?.detail).toContain("Rain is off under the current performance policy");
+        subtle.controller.dispose();
+        subtle.scope.dispose();
     });
 
     test("effective Reduced starts no motion-owned styles, listeners, timers, canvases, or observers", () => {

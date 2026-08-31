@@ -195,7 +195,7 @@ export const SOLCORD_PERFORMANCE_POLICIES: Readonly<Record<SolcordPerformancePro
 export function resolveSolcordPerformancePolicy(profile: SolcordPerformanceProfile, motion: SolcordMotion, reduceMotion: boolean): SolcordPerformancePolicy {
     const base = SOLCORD_PERFORMANCE_POLICIES[profile];
     if (reduceMotion || motion === "reduced") return {...base, effectiveMotion: "reduced", ambientEffects: false};
-    if (motion === "full") return {...base, effectiveMotion: profile === "lean" ? "subtle" : "full"};
+    if (motion === "full") return {...base, effectiveMotion: profile === "lean" ? "subtle" : "full", ambientEffects: profile !== "lean"};
     if (motion === "subtle") return {...base, effectiveMotion: "subtle", ambientEffects: false};
     return {...base};
 }

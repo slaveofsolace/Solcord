@@ -132,7 +132,7 @@ describe("Solcord V2 product model", () => {
 
     test("resolves performance and motion without overriding reduced-motion safety", () => {
         expect(resolveSolcordPerformancePolicy("lean", "full", false)).toMatchObject({sampleSeconds: 15, effectiveMotion: "subtle", ambientEffects: false});
-        expect(resolveSolcordPerformancePolicy("balanced", "full", false)).toMatchObject({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: false});
+        expect(resolveSolcordPerformancePolicy("balanced", "full", false)).toMatchObject({sampleSeconds: 5, effectiveMotion: "full", ambientEffects: true});
         expect(resolveSolcordPerformancePolicy("visual", "follow-system", false)).toMatchObject({effectiveMotion: "full", ambientEffects: true});
         expect(resolveSolcordPerformancePolicy("visual", "full", true)).toMatchObject({effectiveMotion: "reduced", ambientEffects: false});
     });

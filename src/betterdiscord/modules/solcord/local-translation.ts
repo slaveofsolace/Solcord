@@ -44,9 +44,16 @@ interface TranslationJob {
     targetLanguage: string;
     text: string;
     controller: AbortController;
+    deadline?: ReturnType<typeof setTimeout>;
+    timeoutExpired: boolean;
     detachExternalAbort(): void;
     resolve(value: string): void;
     reject(error: Error): void;
+}
+
+export interface SolcordLocalTranslationTimingOptions {
+    availabilityTimeoutMs?: number;
+    jobTimeoutMs?: number;
 }
 
 const LANGUAGE_TAG = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/;
@@ -54,6 +61,13 @@ const AVAILABILITY = new Set<SolcordLocalTranslationAvailability>(["available", 
 const MAX_INPUT_CHARACTERS = 16_000;
 const MAX_OUTPUT_CHARACTERS = 64_000;
 const MAX_PENDING_JOBS = 4;
+const DEFAULT_AVAILABILITY_TIMEOUT_MS = 5_000;
+const DEFAULT_JOB_TIMEOUT_MS = 30_000;
+
+function boundedTimeout(value: number | undefined, fallback: number): number {
+    if (!Number.isFinite(value)) return fallback;
+    return Math.max(10, Math.min(120_000, Math.round(value!)));
+}
 
 function cancellationError(message = "Local translation was canceled."): Error {
     const error = new Error(message);
@@ -146,6 +160,8 @@ export function resolveSolcordLocalLanguageDetectorFactory(host: unknown = globa
 export class SolcordLocalTranslationEngine {
     readonly #factory?: SolcordLocalTranslatorFactory;
     readonly #detectorFactory?: SolcordLocalLanguageDetectorFactory;
+    readonly #availabilityTimeoutMs: number;
+    readonly #jobTimeoutMs: number;
     readonly #listeners = new Set<(snapshot: Readonly<SolcordLocalTranslationSnapshot>) => void>();
     readonly #queue: TranslationJob[] = [];
     #phase: SolcordLocalTranslationPhase;
@@ -162,10 +178,13 @@ export class SolcordLocalTranslationEngine {
 
     constructor(
         factory: SolcordLocalTranslatorFactory | undefined = resolveSolcordLocalTranslatorFactory(),
-        detectorFactory: SolcordLocalLanguageDetectorFactory | undefined = resolveSolcordLocalLanguageDetectorFactory()
+        detectorFactory: SolcordLocalLanguageDetectorFactory | undefined = resolveSolcordLocalLanguageDetectorFactory(),
+        timing: SolcordLocalTranslationTimingOptions = {}
     ) {
         this.#factory = factory;
         this.#detectorFactory = detectorFactory;
+        this.#availabilityTimeoutMs = boundedTimeout(timing.availabilityTimeoutMs, DEFAULT_AVAILABILITY_TIMEOUT_MS);
+        this.#jobTimeoutMs = boundedTimeout(timing.jobTimeoutMs, DEFAULT_JOB_TIMEOUT_MS);
         this.#phase = factory ? "available" : "unsupported";
     }
 
@@ -206,9 +225,14 @@ export class SolcordLocalTranslationEngine {
             return "unavailable";
         }
         const controller = new AbortController();
+        let timeoutExpired = false;
         const abort = () => controller.abort();
         signal?.addEventListener("abort", abort, {once: true});
         if (signal?.aborted) controller.abort();
+        const deadline = setTimeout(() => {
+            timeoutExpired = true;
+            controller.abort();
+        }, this.#availabilityTimeoutMs);
         try {
             const raw = await raceAbort(Promise.resolve(this.#factory.availability({sourceLanguage: source, targetLanguage: target})), controller.signal);
             if (!AVAILABILITY.has(raw)) throw new Error("The local Translator availability result changed shape.");
@@ -218,11 +242,18 @@ export class SolcordLocalTranslationEngine {
             return raw;
         }
         catch (error) {
+            if (timeoutExpired) {
+                this.#setState("degraded", 0, "failed");
+                throw new Error("The local Translator availability check timed out.");
+            }
             if (isCancellation(error, controller.signal)) throw cancellationError();
             this.#setState("degraded", 0, "failed");
             throw new Error("The local Translator availability check failed.");
         }
-        finally {signal?.removeEventListener("abort", abort);}
+        finally {
+            clearTimeout(deadline);
+            signal?.removeEventListener("abort", abort);
+        }
     }
 
     translate(sourceLanguage: string, targetLanguage: string, text: string, signal?: AbortSignal): Promise<string> {
@@ -246,10 +277,15 @@ export class SolcordLocalTranslationEngine {
                 targetLanguage: target,
                 text: content,
                 controller,
+                timeoutExpired: false,
                 detachExternalAbort: () => signal?.removeEventListener("abort", abort),
                 resolve,
                 reject
             };
+            job.deadline = setTimeout(() => {
+                job.timeoutExpired = true;
+                controller.abort();
+            }, this.#jobTimeoutMs);
             this.#queue.push(job);
             this.#emit();
             void this.#drain();
@@ -257,7 +293,11 @@ export class SolcordLocalTranslationEngine {
     }
 
     cancelAll(): void {
-        this.#active?.controller.abort();
+        if (this.#active) {
+            this.#active.timeoutExpired = false;
+            clearTimeout(this.#active.deadline);
+            this.#active.controller.abort();
+        }
         // Destroy the cached model as well as aborting its signal. Chromium's
         // documented implementation observes AbortSignal, but disposal keeps
         // cancellation effective if an embedded build drifts and ignores it.
@@ -266,6 +306,8 @@ export class SolcordLocalTranslationEngine {
         this.#instance = undefined;
         this.#instancePair = "";
         for (const job of this.#queue.splice(0)) {
+            job.timeoutExpired = false;
+            clearTimeout(job.deadline);
             job.controller.abort();
             job.detachExternalAbort();
             this.#canceled++;
@@ -315,7 +357,16 @@ export class SolcordLocalTranslationEngine {
                     job.resolve(result);
                 }
                 catch (error) {
-                    if (isCancellation(error, job.controller.signal) || this.#disposed) {
+                    if (job.timeoutExpired && !this.#disposed) {
+                        this.#failed++;
+                        try {this.#instance?.destroy();}
+                        catch {/* a timed-out local model is discarded without provider detail */}
+                        this.#instance = undefined;
+                        this.#instancePair = "";
+                        this.#setState("degraded", 0, "failed");
+                        job.reject(new Error("On-device translation timed out and was canceled."));
+                    }
+                    else if (isCancellation(error, job.controller.signal) || this.#disposed) {
                         this.#canceled++;
                         this.#lastResult = "canceled";
                         job.reject(cancellationError());
@@ -327,6 +378,7 @@ export class SolcordLocalTranslationEngine {
                     }
                 }
                 finally {
+                    clearTimeout(job.deadline);
                     job.detachExternalAbort();
                     this.#active = undefined;
                     this.#emit();
