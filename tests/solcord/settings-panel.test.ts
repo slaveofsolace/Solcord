@@ -167,6 +167,14 @@ describe("Solcord Control Center clarity", () => {
         expect(styles).not.toContain("details:nth-child");
     });
 
+    test("lets skipped-setup users control built-ins and treats archived providers as history", () => {
+        expect(panel).toContain("disabled={busy === name}");
+        expect(panel).toContain("superseded provider record(s) archived");
+        expect(panel).toContain("Their settings and private data remain preserved for rollback.");
+        expect(panel).not.toContain("Complete First Setup once to establish a rollback point before enabling built-ins here.");
+        expect(panel).not.toContain("Complete First Setup once to create a rollback point before enabling these tools.");
+    });
+
     test("invalidates local Composer proof as soon as its draft changes", () => {
         expect(panel).toContain("setComposerDraft(event.currentTarget.value); setComposerProof(undefined);");
         expect(panel).toContain("composerProof?.reviewedDraft === composerDraft");

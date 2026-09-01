@@ -104,10 +104,17 @@ function ActivityBridge() {
 }
 
 function PluginRecovery() {
-    const state = useStateFromStores([PluginDoctor, SolcordRuntime, SolcordSettings], () => ({records: PluginDoctor.snapshot(), integrity: SolcordRuntime.integrityStatus(), curated: SolcordSettings.snapshot().curatedAddons}));
+    const state = useStateFromStores([PluginDoctor, SolcordRuntime, SolcordSettings], () => ({records: PluginDoctor.snapshot(), integrity: SolcordRuntime.integrityStatus(), curated: SolcordSettings.snapshot().curatedAddons, adapters: SolcordRuntime.curatedAdapterStatus()}));
     const [retrying, setRetrying] = useState<string>();
     const [retryStatus, setRetryStatus] = useState("");
-    const quarantined = state.records.filter(record => record.quarantinedAt);
+    const archivedProviders = state.records.filter(record => {
+        if (!record.quarantinedAt) return false;
+        const curated = state.curated[record.addonId];
+        const sourceIsArchived = state.integrity.records.some(integrity => integrity.kind === "addon" && integrity.name === record.addonId && integrity.status === "missing");
+        return Boolean(curated && isSolcordBuiltInAddon(record.addonId, curated.mode) && sourceIsArchived && state.adapters[record.addonId]?.enabled);
+    });
+    const archivedProviderIds = new Set(archivedProviders.map(record => record.addonId));
+    const quarantined = state.records.filter(record => record.quarantinedAt && !archivedProviderIds.has(record.addonId));
     const visibleIntegrity = state.integrity.records.filter(record => record.status !== "match" && record.status !== "missing").slice(0, 12);
     const requestedUnavailable = state.integrity.records.filter(record => record.kind === "addon" && record.status === "missing" && state.curated[record.name]?.selected && !isSolcordBuiltInAddon(record.name, state.curated[record.name]?.mode));
     const retry = async (id: string) => {
@@ -120,6 +127,7 @@ function PluginRecovery() {
     if (!needsReview && !quarantined.length && !requestedUnavailable.length) {
         return <Section title="Plugin Doctor">
             <div className="solcord-all-clear" role="status"><strong>All clear</strong><span>Reviewed files match and no addon is quarantined.</span></div>
+            {archivedProviders.length > 0 && <details className="solcord-secondary-tools"><summary>{archivedProviders.length} superseded provider record(s) archived</summary><p>The old plugin source files are outside the loader. Their settings and private data remain preserved for rollback.</p></details>}
             <details className="solcord-secondary-tools"><summary>Technical details</summary><dl className="solcord-facts"><div><dt>Verified files</dt><dd>{state.integrity.summary.match}</dd></div><div><dt>Optional files absent</dt><dd>{state.integrity.summary.missing}</dd></div></dl></details>
         </Section>;
     }
@@ -133,6 +141,7 @@ function PluginRecovery() {
             </div>)}
         </div> : <p className="solcord-empty">No addon is quarantined.</p>}
         {retryStatus && <p role="status" className="solcord-import-status">{retryStatus}</p>}
+        {archivedProviders.length > 0 && <details className="solcord-secondary-tools"><summary>{archivedProviders.length} superseded provider record(s) archived</summary><p>The old plugin source files are outside the loader. Their settings and private data remain preserved for rollback.</p></details>}
         {visibleIntegrity.length ? <div className="solcord-ledger" aria-label="Add-on integrity requiring review">
             {visibleIntegrity.map(record => <div className="solcord-ledger-row" key={`${record.kind}-${record.name}`}><strong>{record.name}</strong><span>{record.kind} · {record.status}</span><code>{record.reviewedSha256.slice(0, 12)}…{record.installedSha256 ? ` / ${record.installedSha256.slice(0, 12)}…` : ""}</code></div>)}
             {state.integrity.records.filter(record => record.status !== "match" && record.status !== "missing").length > visibleIntegrity.length && <p className="solcord-empty">Showing the first {visibleIntegrity.length} path-free attention records. Sanitized diagnostics contain the complete bounded status list.</p>}
@@ -402,7 +411,6 @@ const BUILTIN_FEATURES_BY_WORKSPACE = Object.freeze({
 
 function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
-        onboarding: SolcordSettings.snapshot().onboarding,
         addons: SolcordSettings.snapshot().curatedAddons,
         adapters: SolcordRuntime.curatedAdapterStatus()
     }));
@@ -440,20 +448,19 @@ function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
                     <span className="solcord-builtin-control">
                         <small className={`solcord-capability solcord-capability-${maturity}`} title={adapter?.reason}>{status}</small>
                         <span className="solcord-switch">
-                            <input type="checkbox" aria-label={`${enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={enabled} disabled={state.onboarding.status !== "complete" || busy === name} onChange={event => void toggle(name, event.currentTarget.checked)} />
+                            <input type="checkbox" aria-label={`${enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={enabled} disabled={busy === name} onChange={event => void toggle(name, event.currentTarget.checked)} />
                             <i aria-hidden="true" />
                         </span>
                     </span>
                 </label>;
             })}
         </div>
-        {state.onboarding.status !== "complete" && <p className="solcord-key-hint">Complete First Setup once to establish a rollback point before enabling built-ins here.</p>}
         {message && <p className="solcord-import-status" role="status">{message}</p>}
     </Section>;
 }
 
 function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
-    const state = useStateFromStores([SolcordRuntime, SolcordSettings], () => ({statuses: SolcordRuntime.nativeSuiteStatus(), preferences: SolcordSettings.snapshot().productPreferences, onboarding: SolcordSettings.snapshot().onboarding, accountGeneration: SolcordRuntime.privateAccountGeneration()}));
+    const state = useStateFromStores([SolcordRuntime, SolcordSettings], () => ({statuses: SolcordRuntime.nativeSuiteStatus(), preferences: SolcordSettings.snapshot().productPreferences, accountGeneration: SolcordRuntime.privateAccountGeneration()}));
     const controller = SolcordRuntime.nativeSuiteController();
     const nativePreferences = state.preferences.nativeSuite;
     const initialObjectId = scope === "friends" ? SolcordRuntime.currentPeopleObjectId() ?? "" : controller?.currentChannelId() ?? "";
@@ -830,7 +837,7 @@ function NativeSuitePanel({scope}: {scope: NativeSuiteScope;}) {
         {scope !== "status" && <>
             {scope === "voice" && <div className="solcord-setting-list"><label className="solcord-setting-row"><span><strong>Voice Health</strong><small>Samples cached connection quality every five seconds while enabled. Never records audio.</small></span><span className="solcord-switch"><input type="checkbox" checked={nativePreferences.voiceHealthEnabled} onChange={event => updateNativePreferences({...nativePreferences, voiceHealthEnabled: event.currentTarget.checked})} /><i aria-hidden="true" /></span></label><details className="solcord-secondary-tools"><summary>Voice indicator surfaces</summary><div className="solcord-control-grid">{([["memberList", "Member list"], ["dmList", "DM list"], ["peopleList", "Friends list"], ["highlightCurrentChannel", "Highlight current call"], ["statusIcons", "Speaking/status detail"], ["currentUser", "Show my indicator"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={nativePreferences.voiceActivity[key]} onChange={event => updateNativePreferences({...nativePreferences, voiceActivity: {...nativePreferences.voiceActivity, [key]: event.currentTarget.checked}})} /> {label}</label>)}</div>{voiceContext && <div className="solcord-actions">{peopleSnapshot?.ignoredVoiceChannelIds.includes(voiceContext.channelId) ? <ActionButton onClick={() => {controller?.includeVoiceChannel(voiceContext.channelId); setActionStatus("Voice indicators restored for this call.");}}>Show this call</ActionButton> : <ActionButton onClick={() => {controller?.ignoreVoiceChannel(voiceContext.channelId); setActionStatus("Voice indicators hidden for this call on this account.");}}>Hide this call</ActionButton>}{voiceContext.guildId && (peopleSnapshot?.ignoredVoiceGuildIds.includes(voiceContext.guildId) ? <ActionButton onClick={() => {controller?.includeVoiceGuild(voiceContext.guildId!); setActionStatus("Voice indicators restored for this server.");}}>Show this server</ActionButton> : <ActionButton onClick={() => {controller?.ignoreVoiceGuild(voiceContext.guildId!); setActionStatus("Voice indicators hidden for this server on this account.");}}>Hide this server</ActionButton>)}</div>}</details></div>}
             {usableScopeStatus.length > 0 && <div className="solcord-native-context-status" role="list" aria-label={`${sectionTitle} availability`}>{usableScopeStatus.map(item => <div role="listitem" key={item.id}><span>{item.title}</span><strong className={`solcord-capability solcord-capability-${item.maturity}`}>{stateLabel[item.maturity]}</strong></div>)}</div>}
-            {scopeStatus.every(item => item.maturity === "off") && <p className="solcord-empty">{state.onboarding.status === "complete" ? "No built-in tools are on. Use the switches above to enable only what you want." : "Complete First Setup once to create a rollback point before enabling these tools."}</p>}
+            {scopeStatus.every(item => item.maturity === "off") && <p className="solcord-empty">No built-in tools are on. Use the switches above to enable only what you want.</p>}
             {!usableScopeStatus.length && unsupportedScopeStatus.length > 0 && <p className="solcord-empty">These tools are unavailable on this Discord build, so no inactive controls are shown.</p>}
             <div className={`solcord-native-tools solcord-native-tools-${scope}`}>
             {scope === "chat" && available("composer-toolkit") && <details><summary>Composer Toolkit</summary><div className="solcord-composer-lab">
@@ -1233,16 +1240,24 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
         document: SolcordSettings.snapshot(),
         health: SolcordRuntime.health(),
         recovery: SolcordRuntime.recoveryMode,
-        quarantined: PluginDoctor.snapshot().filter(record => record.quarantinedAt).length,
+        quarantines: PluginDoctor.snapshot(),
+        integrity: SolcordRuntime.integrityStatus(),
+        adapters: SolcordRuntime.curatedAdapterStatus(),
         activity: SolcordRuntime.activityHealth(),
         relationshipChanges: SolcordRuntime.friendWatchEvents().length,
         dueReminders: SolcordRuntime.returnLaterItems().filter(item => item.dueAt <= Date.now()).length
     }));
+    const quarantined = state.quarantines.filter(record => {
+        if (!record.quarantinedAt) return false;
+        const curated = state.document.curatedAddons[record.addonId];
+        const sourceIsArchived = state.integrity.records.some(integrity => integrity.kind === "addon" && integrity.name === record.addonId && integrity.status === "missing");
+        return !(curated && isSolcordBuiltInAddon(record.addonId, curated.mode) && sourceIsArchived && state.adapters[record.addonId]?.enabled);
+    }).length;
     const failed = state.health.filter(item => item.status === "failed" || item.status === "quarantined").length;
     const drift = state.health.find(item => item.id === "drift-radar");
     const attentionSignals = prioritizeSolcordPulse([
         ...(state.recovery ? [{id: "recovery", priority: 100, tone: "danger" as const, label: "Safe Start is active", detail: "Optional Solcord capabilities are held off until you retry normal startup.", action: "Open recovery"}] : []),
-        ...(failed || state.quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} failed · ${state.quarantined} quarantined`, action: "Review add-ons"}] : []),
+        ...(failed || quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} failed · ${quarantined} quarantined`, action: "Review add-ons"}] : []),
         ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
         ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
         ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Finish setup", detail: "Your saved setup is ready to continue. Nothing has changed yet.", action: "Continue"}] : []),

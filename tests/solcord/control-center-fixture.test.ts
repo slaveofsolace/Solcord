@@ -15,11 +15,11 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(fixture).toContain(`${id}: () =>`);
         }
         expect(fixture).toContain("state === \"wizard\" ? setupScreen()");
-        expect(fixture).toContain("Your choices save as you go. Nothing changes until Apply.");
+        expect(fixture).toContain("Five quick steps. Nothing changes until Apply.");
         expect(fixture).toContain("result.workspaceHeadingCount === expectedHeadingCount");
         expect(fixture).toContain("<div class=\"solcord-section-heading\"><h3>$" + "{title}</h3>");
         expect(fixture).not.toContain("<div class=\"solcord-section-heading\"><h2>$" + "{title}</h2>");
-        expect(fixture).toContain(String.raw`document.querySelector(".solcord-workspace-switcher select").value = workspace;`);
+        expect(fixture).toContain(String.raw`document.querySelector(".solcord-workspace-menu > summary").textContent = workspaceNames[workspace][0];`);
     });
 
     test("measures overflow, focus, contrast, responsive relationships, and reduced motion", () => {
