@@ -111,7 +111,7 @@ describe("Solcord installer security contracts", () => {
     });
 
     test("presents distinct install, update, repair, rollback, and uninstall actions", () => {
-        for (const action of ["Install Solcord", "Update Solcord", "Repair now", "Roll back", "Uninstall"]) {
+        for (const action of ["Install Solcord", "Update Solcord", "Repair Solcord", "Roll back", "Uninstall Solcord"]) {
             expect(installerForm).toContain(JSON.stringify(action));
         }
         expect(installerForm).not.toContain("Repair / Update");
@@ -124,19 +124,24 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("separate-install-update-repair-actions");
     });
 
-    test("uses one recommended action, a compact operation dock, and a visible exact-build signal path", () => {
-        expect(installerForm).toContain("ClientSize = new Size(1080, 700)");
-        expect(installerForm).not.toContain("AutoScroll = true");
-        expect(installerForm).not.toContain("Choose one clear action");
-        expect(installerForm).toContain("BuildBrandRail");
-        expect(installerForm).toContain("Connect Solcord to Discord");
-        expect(installerForm).toContain("BuildSignalPath");
-        expect(installerForm).toContain("All operations");
+    test("uses one recommended action and a legible native setup and recovery flow", () => {
+        expect(installerForm).toContain("ClientSize = new Size(900, 620)");
+        expect(installerForm).toContain("MinimumSize = new Size(760, 600)");
+        expect(installerForm.match(/AutoScroll = true/g)?.length).toBe(1);
+        expect(installerForm).not.toContain("BuildBrandRail");
+        expect(installerForm).not.toContain("BuildSignalPath");
+        expect(installerForm).not.toContain("All operations");
+        expect(installerForm).toContain("Solcord Setup");
+        expect(installerForm).toContain("Manage this installation");
         expect(installerForm).toContain("ButtonTone.Primary");
         expect(installerForm).toContain("_recommendedKey");
         expect(installerForm).toContain("_targets.TabIndex = 0");
-        expect(installerForm).toContain("verify.TabIndex = 7");
-        expect(installerForm).toContain("Recovery files");
+        expect(installerForm).toContain("_verifyAction.TabIndex = 5");
+        expect(installerForm).toContain("Open recovery folder");
+        expect(installerForm).toContain("Height = 44");
+        expect(installerForm).toContain("Color.White");
+        expect(installerForm).not.toContain("DISCORD, REWIRED.");
+        expect(installerForm).not.toContain("ToolTip");
     });
 
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
