@@ -38,69 +38,6 @@ internal static class Program
     }
 }
 
-internal sealed class InstallerForm : Form
-{
-    private readonly InstallerEngine _engine;
-    private readonly ComboBox _targets = new() {DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top};
-    private readonly Label _status = new() {AutoSize = false, Dock = DockStyle.Fill, Padding = new Padding(0, 14, 0, 0)};
-
-    internal InstallerForm(string bundleRoot)
-    {
-        _engine = new InstallerEngine(bundleRoot, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
-        ReleaseManifest manifest = _engine.LoadManifest();
-        Text = "Solcord Installer";
-        Width = 620;
-        Height = 340;
-        MinimumSize = new Size(560, 300);
-        StartPosition = FormStartPosition.CenterScreen;
-        Font = new Font("Segoe UI", 10);
-
-        var title = new Label {Text = $"Solcord {manifest.CandidateLabel}", Font = new Font("Segoe UI Semibold", 22), AutoSize = true, Dock = DockStyle.Top};
-        var subtitle = new Label {Text = "Install, verify, repair, or roll back one hash-bound desktop core. Plugins, themes, settings, and custom CSS are never deleted.", AutoSize = true, MaximumSize = new Size(560, 0), Dock = DockStyle.Top, Padding = new Padding(0, 5, 0, 16)};
-        var buttons = new FlowLayoutPanel {Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Padding = new Padding(0, 14, 0, 0)};
-        AddButton(buttons, "Install", () => Install(false));
-        AddButton(buttons, "Verify", () => Report(_engine.VerifyInstalled() ? $"Installed artifact matches {manifest.CandidateLabel}." : $"Installed artifact does not match {manifest.CandidateLabel}."));
-        AddButton(buttons, "Repair / Update", () => Install(true));
-        AddButton(buttons, "Roll Back / Uninstall", () => Report($"Restored backup from {_engine.RollBack(Target())}."));
-        AddButton(buttons, "Launch selected Discord", () => {_engine.Launch(Target()); Report("Discord launch requested. Solcord does not authenticate or act on the account.");});
-        AddButton(buttons, "Open recovery folder", () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BetterDiscord", "solcord-installer")) {UseShellExecute = true}));
-
-        var layout = new Panel {Dock = DockStyle.Fill, Padding = new Padding(24)};
-        layout.Controls.Add(_status);
-        layout.Controls.Add(buttons);
-        layout.Controls.Add(_targets);
-        layout.Controls.Add(subtitle);
-        layout.Controls.Add(title);
-        Controls.Add(layout);
-        Load += (_, _) => RefreshTargets();
-    }
-
-    private void RefreshTargets()
-    {
-        _targets.Items.Clear();
-        foreach (DiscordTarget target in _engine.DetectTargets()) _targets.Items.Add(target);
-        _targets.DisplayMember = nameof(DiscordTarget.Channel);
-        if (_targets.Items.Count > 0) {_targets.SelectedIndex = 0; Report("Select the exact Discord channel. Close only that client before Install, Repair, or Roll Back.");}
-        else Report("No supported Discord Stable, PTB, or Canary installation was detected.");
-    }
-
-    private DiscordTarget Target() => _targets.SelectedItem as DiscordTarget ?? throw new InvalidOperationException("Select an installed Discord channel first.");
-    private void Install(bool repair)
-    {
-        InstallReceipt receipt = _engine.Install(Target(), repair);
-        Report($"Solcord {receipt.CandidateLabel ?? "unlabeled legacy candidate"} (core {receipt.Version}) installed and hash verified for Discord {receipt.Channel} {receipt.DiscordVersion}. Launch remains your choice.");
-    }
-
-    private void AddButton(Control parent, string label, Action action)
-    {
-        var button = new Button {Text = label, AutoSize = true, Margin = new Padding(0, 0, 8, 8)};
-        button.Click += (_, _) => {try {action();} catch (Exception error) {Report(error.Message);}};
-        parent.Controls.Add(button);
-    }
-
-    private void Report(string message) => _status.Text = message;
-}
-
 internal static class InstallerSelfTest
 {
     private static string SerializeLegacyWithoutCandidateLabel<T>(T value)
@@ -252,6 +189,27 @@ internal static class InstallerSelfTest
             if (File.ReadAllText(Path.Combine(data, "betterdiscord.asar")) != "previous-core") return 3;
             if (File.ReadAllText(Path.Combine(priorApp, "index.js")) != priorIndex || File.ReadAllText(Path.Combine(priorApp, "package.json")) != priorPackage) return 5;
             if (File.Exists(currentReceipt)) return 10;
+
+            stage = "separate-install-update-repair-actions";
+            try {engine.Update(target); return 33;}
+            catch (InvalidOperationException error) when (error.Message.Contains("Choose Install Solcord", StringComparison.Ordinal)) {/* expected */}
+            engine.InstallNew(target);
+            if (!engine.IsCurrentPackageRecorded() || !engine.VerifyInstalled()) return 34;
+            try {engine.Update(target); return 35;}
+            catch (InvalidOperationException error) when (error.Message.Contains("Choose Repair Solcord", StringComparison.Ordinal)) {/* expected */}
+            engine.Repair(target);
+            if (!engine.VerifyInstalled()) return 36;
+
+            stage = "vanilla-uninstall-with-data-preservation";
+            string plugins = Path.Combine(roaming, "BetterDiscord", "plugins");
+            Directory.CreateDirectory(plugins);
+            string ownerPlugin = Path.Combine(plugins, "owner.plugin.js");
+            File.WriteAllText(ownerPlugin, "owner-data");
+            string uninstallBackup = engine.Uninstall(target);
+            if (File.Exists(installedCore) || Directory.Exists(priorApp) || File.Exists(currentReceipt)) return 37;
+            if (File.ReadAllText(ownerPlugin) != "owner-data") return 38;
+            foreach (string name in new[] {"betterdiscord.asar", "index.js", "package.json", "current.json", "uninstall-state.json"})
+                if (!File.Exists(Path.Combine(uninstallBackup, name))) return 39;
             return 0;
         }
         catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}"); return 1;}

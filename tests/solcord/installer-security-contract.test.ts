@@ -12,6 +12,8 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), 
 const engine = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerEngine.cs"), "utf8");
 const embeddedBundle = fs.readFileSync(path.join(root, "installer/Solcord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
 const selfTest = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Program.cs"), "utf8");
+const installerForm = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerForm.cs"), "utf8");
+const installerProject = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Solcord.Installer.csproj"), "utf8");
 const installerReadme = fs.readFileSync(path.join(root, "installer/README.md"), "utf8");
 const fullCi = fs.readFileSync(path.join(root, ".github/workflows/solcord-ci.yml"), "utf8");
 const gitignore = fs.readFileSync(path.join(root, ".gitignore"), "utf8").split(/\r?\n/);
@@ -105,6 +107,37 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("EmbeddedInstallerBundle.ExtractVerified()");
         expect(selfTest).toContain("InstallerSelfTest.Run(bundle.Root)");
         expect(selfTest).not.toContain("string bundle = Path.Combine(root, \"bundle\")");
+    });
+
+    test("presents distinct install, update, repair, rollback, and uninstall actions", () => {
+        for (const action of ["Install Solcord", "Update Solcord", "Repair Solcord", "Roll Back", "Uninstall Solcord"]) {
+            expect(installerForm).toContain(JSON.stringify(action));
+        }
+        expect(installerForm).not.toContain("Repair / Update");
+        expect(installerForm).not.toContain("Roll Back / Uninstall");
+        expect(installerForm).toContain("AccessibleName = title");
+        expect(installerForm).toContain("AutoScaleMode = AutoScaleMode.Dpi");
+        expect(engine).toContain("internal InstallReceipt InstallNew");
+        expect(engine).toContain("internal InstallReceipt Update");
+        expect(engine).toContain("internal InstallReceipt Repair");
+        expect(selfTest).toContain("separate-install-update-repair-actions");
+    });
+
+    test("uses the reviewed Solcord mark for the window and executable", () => {
+        expect(installerProject).toContain("<ApplicationIcon>..\\..\\assets\\branding\\icons\\solcord.ico</ApplicationIcon>");
+        expect(installerProject).toContain("LogicalName=\"Solcord.Installer.Resources.solcord-mark.png\"");
+        expect(installerForm).toContain("Solcord.Installer.Resources.solcord-mark.png");
+        expect(fs.existsSync(path.join(root, "assets/branding/icons/solcord.ico"))).toBeTrue();
+    });
+
+    test("uninstalls only the recognized Solcord core and injector while preserving user data", () => {
+        expect(engine).toContain("internal string Uninstall");
+        expect(engine).toContain("The active injector is not owned by this Solcord installation");
+        expect(engine).toContain("uninstall-backups");
+        expect(engine).toContain("uninstall-state.json");
+        expect(engine).not.toContain("Directory.Delete(appDirectory, recursive: true)");
+        expect(selfTest).toContain("vanilla-uninstall-with-data-preservation");
+        expect(selfTest).toContain("owner.plugin.js");
     });
 
     test("fails closed for an unsafe existing downgrade receipt", () => {

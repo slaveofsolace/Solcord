@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
 const ROOT = resolve(import.meta.dir, "../..");
-const CSS = readFileSync(resolve(ROOT, "src/betterdiscord/styles/solcord.css"), "utf8");
+const CSS = readFileSync(resolve(ROOT, "src/betterdiscord/styles/solcord.css"), "utf8").replace(/\r\n/g, "\n");
 const RUNTIME = readFileSync(resolve(ROOT, "src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
 const SETUP = readFileSync(resolve(ROOT, "src/betterdiscord/ui/solcord/setup-wizard.tsx"), "utf8");
 const THEMES = [
