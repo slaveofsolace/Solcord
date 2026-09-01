@@ -133,6 +133,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).not.toContain("All operations");
         expect(installerForm).toContain("Solcord Setup");
         expect(installerForm).toContain("Manage this installation");
+        expect(installerForm).toContain("_maintenanceList.Dock = DockStyle.Top");
+        expect(installerForm).toContain("_maintenanceList.Height = _actions.Values.Count(action => action.Row.Visible) * 52");
         expect(installerForm).toContain("ButtonTone.Primary");
         expect(installerForm).toContain("_recommendedKey");
         expect(installerForm).toContain("_targets.TabIndex = 0");

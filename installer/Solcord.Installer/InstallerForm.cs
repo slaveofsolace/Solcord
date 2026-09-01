@@ -212,7 +212,7 @@ internal sealed class InstallerForm : Form
 
     private Control BuildMaintenanceList()
     {
-        _maintenanceList.Dock = DockStyle.Fill;
+        _maintenanceList.Dock = DockStyle.Top;
         _maintenanceList.ColumnCount = 1;
         _maintenanceList.RowCount = 3;
         _maintenanceList.BackColor = Surface;
@@ -339,6 +339,7 @@ internal sealed class InstallerForm : Form
         SetManagedAction("repair", targetReady && packageRecorded && !pending);
         SetManagedAction("rollback", targetReady && (managed || pending));
         SetManagedAction("uninstall", targetReady && managed && !pending);
+        _maintenanceList.Height = _actions.Values.Count(action => action.Row.Visible) * 52;
         bool anyMaintenance = _actions.Values.Any(action => action.Row.Visible);
         _maintenanceHeading.Text = anyMaintenance ? "Manage this installation" : "No maintenance needed";
         _verifyAction.Enabled = targetReady && managed && !pending;
