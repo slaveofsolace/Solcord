@@ -23,7 +23,7 @@ Create a JSON evidence-input manifest and record its SHA-256 separately:
 {
   "schemaVersion": 1,
   "kind": "solcord-release-evidence-inputs",
-  "candidateLabel": "v2.0.0-rc.13",
+  "candidateLabel": "v2.0.0-rc.14",
   "sourceCommit": "<40-character lowercase commit>",
   "files": [
     {
