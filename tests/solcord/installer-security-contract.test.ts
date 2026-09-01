@@ -123,6 +123,20 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("separate-install-update-repair-actions");
     });
 
+    test("keeps the installer action center aligned, contextual, and visible without a scroll rail", () => {
+        expect(installerForm).toContain("ClientSize = new Size(1020, 700)");
+        expect(installerForm).not.toContain("AutoScroll = true");
+        expect(installerForm).not.toContain("Choose one clear action");
+        expect(installerForm).not.toContain("BuildBrandRail");
+        expect(installerForm).toContain("Install, update, or recover.");
+        expect(installerForm).toContain("string? recommended = pending ? \"rollback\"");
+        expect(installerForm).toContain("ButtonTone.Primary");
+        expect(installerForm).toContain("TabIndex = int.Parse(index)");
+        expect(installerForm).toContain("_targets.TabIndex = 0");
+        expect(installerForm).toContain("verify.TabIndex = 1");
+        expect(installerForm).toContain("Open recovery folder");
+    });
+
     test("supports a bounded noninteractive update for an explicitly selected Discord channel", () => {
         expect(selfTest).toContain("args.Contains(\"--update\"");
         expect(selfTest).toContain("--update --channel Stable|PTB|Canary");
