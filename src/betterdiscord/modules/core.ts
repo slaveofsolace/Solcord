@@ -13,6 +13,7 @@ import PluginManager from "./pluginmanager";
 import ThemeManager from "./thememanager";
 import Settings from "@stores/settings";
 import JsonStore from "@stores/json";
+import ToastStore from "@stores/toasts";
 import DiscordModules from "./discordmodules";
 
 import Updater from "./updater";
@@ -122,6 +123,11 @@ export default new class Core {
         Logger.log("Startup", "Removing Loading Icon");
         LoadingIcon.hide();
         SolcordRuntime.scheduleDeferredStartup();
+        ToastStore.success(`Solcord ${Config.get("candidate")} active`, {
+            forceShow: true,
+            timeout: 5_000,
+            group: "solcord-startup-identity"
+        });
 
         const previousVersion = JsonStore.get("misc", "version");
         if (Config.get("version") !== previousVersion) {

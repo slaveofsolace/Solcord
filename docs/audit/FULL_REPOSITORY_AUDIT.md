@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 584 |
 | Text files scanned | 569 |
 | Binary files classified | 15 |
-| Text lines scanned | 125,191 |
-| Custom Solcord lines | 32,657 |
+| Text lines scanned | 125,246 |
+| Custom Solcord lines | 32,684 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -30,7 +30,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | DOM queries | 167 | 78 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
-| Synchronous filesystem calls | 763 | 697 |
+| Synchronous filesystem calls | 765 | 699 |
 | Console calls | 79 | 53 |
 | Empty catch blocks | 3 | 1 |
 
@@ -54,7 +54,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |
 | 15 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 16 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
-| 17 | `installer/Solcord.Installer/InstallerEngine.cs` | 660 | 46.6 KiB |
+| 17 | `installer/Solcord.Installer/InstallerEngine.cs` | 671 | 47.4 KiB |
 | 18 | `src/common/solcord/v2-feature-models.ts` | 660 | 36.0 KiB |
 | 19 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
 | 20 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |

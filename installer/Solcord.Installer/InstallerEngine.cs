@@ -23,6 +23,8 @@ internal sealed class InstallerEngine
     private readonly Func<string, int> _runningProcessCount;
     private readonly Action<string>? _mutationHook;
 
+    internal string? LastLauncherWarning {get; private set;}
+
     internal InstallerEngine(string bundleRoot, string localAppData, string roamingAppData, Func<string, int>? runningProcessCount = null, Action<string>? mutationHook = null)
     {
         _bundleRoot = Path.GetFullPath(bundleRoot);
@@ -130,6 +132,7 @@ internal sealed class InstallerEngine
 
     internal InstallReceipt Install(DiscordTarget target, bool repair = false)
     {
+        LastLauncherWarning = null;
         ReleaseManifest manifest = LoadManifest();
         string artifact = VerifyBundle(manifest);
         RequireAllDiscordStopped();
@@ -185,6 +188,8 @@ internal sealed class InstallerEngine
             injectorReplaced = true;
             InstallInjector(target, injector.OriginalModule, installed);
             WriteAtomic(Path.Combine(receiptRoot, "current.json"), JsonSerializer.Serialize(receipt, new JsonSerializerOptions {WriteIndented = true}));
+            try {SolcordLauncher.Ensure(target, _roamingAppData);}
+            catch (Exception error) {LastLauncherWarning = $"Solcord was installed, but its Windows Search entry could not be refreshed ({error.GetType().Name}).";}
             try {File.Delete(pendingReceipt);}
             catch {/* current.json durably records the successful install; a matching stale pending receipt is reconciled before the next mutation */}
             return receipt;
@@ -236,6 +241,7 @@ internal sealed class InstallerEngine
 
     internal string RollBack(DiscordTarget target)
     {
+        LastLauncherWarning = null;
         RequireAllDiscordStopped();
         RejectLinkedPath(_localAppData, target.ExecutablePath);
         string backupRoot = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "backups");
@@ -255,11 +261,14 @@ internal sealed class InstallerEngine
         if (state.Injector.HadAppDirectory != (state.Injector.IndexSha256 is not null && state.Injector.PackageSha256 is not null) || state.Injector.IndexSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.IndexSha256) || state.Injector.PackageSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.PackageSha256)) throw new InvalidDataException("The rollback injector metadata is invalid.");
         RestoreBackup(target, backupDirectory, state, true, true);
         File.Delete(receiptFile);
+        try {SolcordLauncher.Remove(_roamingAppData);}
+        catch (Exception error) {LastLauncherWarning = $"The previous installation was restored, but the Solcord Windows Search entry needs manual cleanup ({error.GetType().Name}).";}
         return backupDirectory;
     }
 
     internal string Uninstall(DiscordTarget target)
     {
+        LastLauncherWarning = null;
         ReleaseManifest manifest = LoadManifest();
         VerifyBundle(manifest);
         RequireAllDiscordStopped();
@@ -323,6 +332,8 @@ internal sealed class InstallerEngine
             Directory.Delete(appDirectory, recursive: false);
             File.Delete(installedCore);
             File.Delete(receiptFile);
+            try {SolcordLauncher.Remove(_roamingAppData);}
+            catch (Exception error) {LastLauncherWarning = $"Solcord was removed, but its Windows Search entry needs manual cleanup ({error.GetType().Name}).";}
             return backupDirectory;
         }
         catch (Exception uninstallError)

@@ -13,6 +13,7 @@ const engine = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Inst
 const embeddedBundle = fs.readFileSync(path.join(root, "installer/Solcord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
 const selfTest = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Program.cs"), "utf8");
 const installerForm = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerForm.cs"), "utf8");
+const launcher = fs.readFileSync(path.join(root, "installer/Solcord.Installer/SolcordLauncher.cs"), "utf8");
 const installerProject = fs.readFileSync(path.join(root, "installer/Solcord.Installer/Solcord.Installer.csproj"), "utf8");
 const installerReadme = fs.readFileSync(path.join(root, "installer/README.md"), "utf8");
 const fullCi = fs.readFileSync(path.join(root, ".github/workflows/solcord-ci.yml"), "utf8");
@@ -110,7 +111,7 @@ describe("Solcord installer security contracts", () => {
     });
 
     test("presents distinct install, update, repair, rollback, and uninstall actions", () => {
-        for (const action of ["Install Solcord", "Update Solcord", "Repair Solcord", "Roll Back", "Uninstall Solcord"]) {
+        for (const action of ["Install Solcord", "Update Solcord", "Repair now", "Roll back", "Uninstall"]) {
             expect(installerForm).toContain(JSON.stringify(action));
         }
         expect(installerForm).not.toContain("Repair / Update");
@@ -123,18 +124,35 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("separate-install-update-repair-actions");
     });
 
-    test("keeps the installer action center aligned, contextual, and visible without a scroll rail", () => {
-        expect(installerForm).toContain("ClientSize = new Size(980, 660)");
+    test("uses one recommended action, a compact operation dock, and a visible exact-build signal path", () => {
+        expect(installerForm).toContain("ClientSize = new Size(1080, 700)");
         expect(installerForm).not.toContain("AutoScroll = true");
         expect(installerForm).not.toContain("Choose one clear action");
-        expect(installerForm).not.toContain("BuildBrandRail");
-        expect(installerForm).toContain("Choose an action");
-        expect(installerForm).toContain("string? recommended = pending ? \"rollback\"");
+        expect(installerForm).toContain("BuildBrandRail");
+        expect(installerForm).toContain("Connect Solcord to Discord");
+        expect(installerForm).toContain("BuildSignalPath");
+        expect(installerForm).toContain("All operations");
         expect(installerForm).toContain("ButtonTone.Primary");
-        expect(installerForm).toContain("TabIndex = int.Parse(index)");
+        expect(installerForm).toContain("_recommendedKey");
         expect(installerForm).toContain("_targets.TabIndex = 0");
-        expect(installerForm).toContain("verify.TabIndex = 1");
-        expect(installerForm).toContain("Open recovery folder");
+        expect(installerForm).toContain("verify.TabIndex = 7");
+        expect(installerForm).toContain("Recovery files");
+    });
+
+    test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
+        expect(launcher).toContain("Start Menu\", \"Programs");
+        expect(launcher).toContain("Solcord.lnk");
+        expect(launcher).toContain("Launch Discord with Solcord");
+        expect(launcher).toContain("launcher.json");
+        expect(launcher).toContain("An unrecognized Solcord launcher entry already exists");
+        expect(launcher).toContain("EnsureSafePath(channelRoot, launchTarget)");
+        expect(launcher).toContain("Marshal.FinalReleaseComObject");
+        expect(engine).toContain("SolcordLauncher.Ensure");
+        expect(engine).toContain("SolcordLauncher.Remove");
+        const rollback = engine.slice(engine.indexOf("internal string RollBack"), engine.indexOf("internal string Uninstall"));
+        expect(rollback).toContain("SolcordLauncher.Remove(_roamingAppData)");
+        expect(installerForm).toContain("cannot misrepresent the restored runtime");
+        expect(installerProject).toContain("Solcord.Installer.Resources.solcord.ico");
     });
 
     test("supports a bounded noninteractive update for an explicitly selected Discord channel", () => {

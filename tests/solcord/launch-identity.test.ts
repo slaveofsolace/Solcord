@@ -6,6 +6,7 @@ import {resolve} from "node:path";
 
 
 const source = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/loadingicon.ts"), "utf8");
+const core = readFileSync(resolve(import.meta.dir, "../../src/betterdiscord/modules/core.ts"), "utf8");
 
 describe("Solcord launch identity", () => {
     test("defers launch motion and branding to Discord's native splash", () => {
@@ -20,5 +21,13 @@ describe("Solcord launch identity", () => {
         expect(source).toContain("static hide(): void {return;}");
         expect(source).not.toContain("CustomEvent");
         expect(source).not.toContain("fetch(");
+    });
+
+    test("confirms the exact Solcord candidate after the connected renderer is ready", () => {
+        expect(core).toContain("ToastStore.success(`Solcord ");
+        expect(core).toContain("Config.get(\"candidate\")");
+        expect(core).toContain("forceShow: true");
+        expect(core).toContain("group: \"solcord-startup-identity\"");
+        expect(core.indexOf("await this.waitForConnection()")).toBeLessThan(core.indexOf("solcord-startup-identity"));
     });
 });
