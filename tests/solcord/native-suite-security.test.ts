@@ -952,6 +952,7 @@ describe("Solcord native-suite security boundaries", () => {
         controllers.push({controller, scope});
         const effect = document.querySelector<HTMLElement>("[data-solcord-ambient-effect]");
         expect(effect?.dataset.effect).toBe("rain");
+        expect(effect?.style.zIndex).toBe("0");
         expect(effect?.querySelectorAll("span")).toHaveLength(24);
         expect(effect?.style.getPropertyValue("--solcord-effect-color")).toBe("#abcdef");
         expect(effect?.style.getPropertyValue("--solcord-effect-opacity")).toBe("0.65");
@@ -993,6 +994,7 @@ describe("Solcord native-suite security boundaries", () => {
             controllers.push({controller, scope});
             const canvas = document.querySelector<HTMLCanvasElement>("canvas[data-solcord-ambient-effect][data-effect='field']");
             expect(canvas).not.toBeNull();
+            expect(canvas?.style.zIndex).toBe("0");
             nextFrame?.(48);
             expect(strokes).toBeGreaterThan(0);
             controller.dispose();
@@ -1032,6 +1034,7 @@ describe("Solcord native-suite security boundaries", () => {
             controllers.push({controller, scope});
             const canvas = document.querySelector<HTMLCanvasElement>("canvas[data-solcord-ambient-effect][data-effect='work-field']");
             expect(canvas).not.toBeNull();
+            expect(canvas?.style.zIndex).toBe("0");
             expect(glyphs).toBeGreaterThan(0);
             nextFrame?.(96);
             controller.dispose();

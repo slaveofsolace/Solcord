@@ -1593,6 +1593,7 @@ export class SolcordNativeSuiteController {
         if (providers.includes("DiscordEffects") && ambientEffectsAllowed && ["snow", "rain", "embers"].includes(motionPreferences.effect)) {
             const container = document.createElement("div");
             container.className = "solcord-ambient-effect";
+            container.style.zIndex = "0";
             container.dataset.solcordAmbientEffect = "true";
             container.dataset.effect = motionPreferences.effect;
             container.setAttribute("aria-hidden", "true");
@@ -1638,6 +1639,7 @@ export class SolcordNativeSuiteController {
         const context = canvas.getContext("2d", {alpha: true});
         if (!context) return;
         canvas.className = "solcord-ambient-effect solcord-flow-field";
+        canvas.style.zIndex = "0";
         canvas.dataset.solcordAmbientEffect = "true";
         canvas.dataset.effect = "field";
         canvas.setAttribute("aria-hidden", "true");
@@ -1755,6 +1757,7 @@ export class SolcordNativeSuiteController {
         const context = canvas.getContext("2d", {alpha: true});
         if (!context) return;
         canvas.className = "solcord-ambient-effect solcord-flow-field";
+        canvas.style.zIndex = "0";
         canvas.dataset.solcordAmbientEffect = "true";
         canvas.dataset.effect = "work-field";
         canvas.setAttribute("aria-hidden", "true");

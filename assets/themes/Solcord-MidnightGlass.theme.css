@@ -201,3 +201,8 @@ body {
     *::before,
     *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 }
+
+/* Decorative fields belong behind Discord media, dialogs, and controls. */
+[data-solcord-ambient-effect] { z-index: 0 !important; }
+body:has(> [data-solcord-ambient-effect]) > #app-mount { position: relative; z-index: 1; isolation: isolate; }
+body::before { z-index: 0 !important; }

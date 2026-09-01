@@ -234,7 +234,7 @@ html:not([data-solcord-mode="follow-discord"])[data-solcord-mode] :is(body, #app
 
 html:not([data-solcord-mode="follow-discord"])[data-solcord-mode] body::before {
     position: fixed;
-    z-index: 2147480000;
+    z-index: 0;
     inset: 0;
     content: "";
     pointer-events: none;
@@ -242,6 +242,13 @@ html:not([data-solcord-mode="follow-discord"])[data-solcord-mode] body::before {
     background-size: 180px 180px;
     mix-blend-mode: soft-light;
     opacity: 0.035;
+}
+
+html:not([data-solcord-mode="follow-discord"])[data-solcord-mode] body > #app-mount,
+body:has(> [data-solcord-ambient-effect]) > #app-mount {
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
 }
 
 html[data-solcord-mode="solcord-light"] body::before { mix-blend-mode: multiply; opacity: 0.022; }
@@ -385,6 +392,10 @@ html[data-solcord-effective-motion] #app-mount [class*="panels_"] :is(button, [r
 /* Defense in depth: the runtime also avoids creating these nodes when the
  * resolved policy forbids ambient work. If a stale adapter survives a live
  * profile change, Lean/Balanced and reduced motion still cannot paint it. */
+[data-solcord-ambient-effect] {
+    z-index: 0 !important;
+}
+
 html:not([data-solcord-performance="visual"]) [data-solcord-ambient-effect],
 html[data-solcord-effective-motion="reduced"] [data-solcord-ambient-effect] {
     display: none !important;
