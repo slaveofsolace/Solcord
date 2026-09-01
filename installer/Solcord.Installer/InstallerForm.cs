@@ -33,8 +33,10 @@ internal sealed class InstallerForm : Form
     private readonly Button _recoveryAction;
     private readonly Label _maintenanceHeading = new();
     private readonly TableLayoutPanel _maintenanceList = new();
+    private readonly TableLayoutPanel _workspace = new();
     private readonly Dictionary<string, ActionVisual> _actions = new(StringComparer.Ordinal);
     private string? _recommendedKey;
+    private Color _stateBorder = Color.FromArgb(118, 171, 163);
 
     internal InstallerForm(string bundleRoot)
     {
@@ -105,20 +107,27 @@ internal sealed class InstallerForm : Form
     private Control BuildWorkspace()
     {
         var scroll = new Panel {Dock = DockStyle.Fill, BackColor = Canvas, AutoScroll = true};
-        var workspace = new TableLayoutPanel {AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Dock = DockStyle.Top, BackColor = Canvas, ColumnCount = 1, RowCount = 6, Padding = new Padding(42, 10, 42, 10), Margin = Padding.Empty};
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
-        workspace.Controls.Add(BuildTargetField(), 0, 0);
-        workspace.Controls.Add(BuildStatePanel(), 0, 1);
-        workspace.Controls.Add(BuildPrimaryAction(), 0, 2);
-        workspace.Controls.Add(BuildMaintenanceHeader(), 0, 3);
-        workspace.Controls.Add(BuildMaintenanceList(), 0, 4);
-        workspace.Controls.Add(BuildUtilities(), 0, 5);
-        scroll.Controls.Add(workspace);
+        _workspace.AutoSize = true;
+        _workspace.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _workspace.Dock = DockStyle.Top;
+        _workspace.BackColor = Canvas;
+        _workspace.ColumnCount = 1;
+        _workspace.RowCount = 6;
+        _workspace.Padding = new Padding(42, 10, 42, 10);
+        _workspace.Margin = Padding.Empty;
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
+        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+        _workspace.Controls.Add(BuildTargetField(), 0, 0);
+        _workspace.Controls.Add(BuildStatePanel(), 0, 1);
+        _workspace.Controls.Add(BuildPrimaryAction(), 0, 2);
+        _workspace.Controls.Add(BuildMaintenanceHeader(), 0, 3);
+        _workspace.Controls.Add(BuildMaintenanceList(), 0, 4);
+        _workspace.Controls.Add(BuildUtilities(), 0, 5);
+        scroll.Controls.Add(_workspace);
         return scroll;
     }
 
@@ -162,7 +171,7 @@ internal sealed class InstallerForm : Form
         _statePanel.Margin = new Padding(0, 4, 0, 8);
         _statePanel.Padding = new Padding(22, 10, 22, 10);
         _statePanel.BackColor = TealWash;
-        _statePanel.Paint += (_, args) => {using var border = new Pen(Color.FromArgb(118, 171, 163), 1); args.Graphics.DrawRectangle(border, 0, 0, _statePanel.ClientSize.Width - 1, _statePanel.ClientSize.Height - 1);};
+        _statePanel.Paint += (_, args) => {using var border = new Pen(_stateBorder, 1); args.Graphics.DrawRectangle(border, 0, 0, _statePanel.ClientSize.Width - 1, _statePanel.ClientSize.Height - 1);};
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
@@ -339,7 +348,9 @@ internal sealed class InstallerForm : Form
         SetManagedAction("repair", targetReady && packageRecorded && !pending);
         SetManagedAction("rollback", targetReady && (managed || pending));
         SetManagedAction("uninstall", targetReady && managed && !pending);
-        _maintenanceList.Height = _actions.Values.Count(action => action.Row.Visible) * 52;
+        int visibleMaintenanceRows = _actions.Values.Count(action => action.Row.Visible);
+        _maintenanceList.Height = visibleMaintenanceRows * 52;
+        _workspace.RowStyles[4].Height = visibleMaintenanceRows * 52;
         bool anyMaintenance = _actions.Values.Any(action => action.Row.Visible);
         _maintenanceHeading.Text = anyMaintenance ? "Manage this installation" : "No maintenance needed";
         _verifyAction.Enabled = targetReady && managed && !pending;
@@ -366,6 +377,8 @@ internal sealed class InstallerForm : Form
         _stateTitle.Text = title;
         _stateBody.Text = body;
         _statePanel.BackColor = danger || warning ? WarningWash : TealWash;
+        _stateBorder = danger ? Danger : warning ? Warning : Color.FromArgb(118, 171, 163);
+        _statePanel.Invalidate();
         _recommendedKey = recommendedKey;
         _primaryAction.Enabled = recommendedKey is not null;
         _primaryAction.Text = recommendedKey switch {"install" => "Install Solcord", "update" => "Update Solcord", "repair" => "Repair Solcord", "rollback" => "Roll back", "launch" => "Open Solcord", _ => "No action available"};
