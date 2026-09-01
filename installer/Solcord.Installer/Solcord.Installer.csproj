@@ -7,6 +7,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>SolcordInstaller</AssemblyName>
     <RootNamespace>Solcord.Installer</RootNamespace>
+    <AssemblyTitle>Solcord Installer</AssemblyTitle>
+    <Description>Install, update, repair, roll back, or uninstall Solcord for Discord.</Description>
+    <ApplicationIcon>..\..\assets\branding\icons\solcord.ico</ApplicationIcon>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -19,6 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\branding\icons\solcord-mark-256.png" LogicalName="Solcord.Installer.Resources.solcord-mark.png" />
     <EmbeddedResource Include="$(SolcordEmbeddedArtifact)" LogicalName="Solcord.Installer.Resources.solcord.asar" Condition="'$(SolcordEmbeddedArtifact)' != ''" />
     <EmbeddedResource Include="$(SolcordEmbeddedBuildManifest)" LogicalName="Solcord.Installer.Resources.solcord-build-manifest.json" Condition="'$(SolcordEmbeddedBuildManifest)' != ''" />
     <EmbeddedResource Include="$(SolcordEmbeddedInstallerManifest)" LogicalName="Solcord.Installer.Resources.solcord-installer-manifest.json" Condition="'$(SolcordEmbeddedInstallerManifest)' != ''" />

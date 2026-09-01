@@ -7,7 +7,7 @@ import {resolve} from "node:path";
 
 const REPOSITORY_ROOT = resolve(import.meta.dir, "../..");
 const WIZARD_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/setup-wizard.tsx"), "utf8");
-const WIZARD_CSS = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styles/solcord.css"), "utf8");
+const WIZARD_CSS = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/styles/solcord.css"), "utf8").replace(/\r\n/g, "\n");
 const CATALOG_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/catalog.ts"), "utf8");
 const PRODUCT_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/common/solcord/product.ts"), "utf8");
 const PANEL_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/panel.tsx"), "utf8");
