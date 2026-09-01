@@ -237,7 +237,9 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("const navigateFromSearch = (next: SolcordWorkspaceId) => {");
         expect(panel).toContain("setWorkspaceQuery(\"\")");
         expect(panel).toContain("onClick={() => navigateFromSearch(item.id)}");
-        expect(panel).toContain("onChange={event => navigateFromSearch(event.currentTarget.value as SolcordWorkspaceId)}>{SOLCORD_WORKSPACES.map");
+        expect(panel).toContain("<details className=\"solcord-workspace-menu\"><summary>{selectedWorkspace.label}</summary>");
+        expect(panel).toContain("onClick={event => navigateFromCompactMenu(event, item.id)}");
+        expect(panel).not.toContain("<select value={workspace}");
         expect(panel).not.toContain("value={workspace} onChange={event => setWorkspace(event.currentTarget.value as SolcordWorkspaceId)}>{visibleWorkspaces.map");
     });
 

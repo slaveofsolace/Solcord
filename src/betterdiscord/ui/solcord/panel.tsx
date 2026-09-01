@@ -53,6 +53,20 @@ function ActionButton({children, onClick, tone = "neutral", disabled = false}: {
     return <button type="button" className={`solcord-action solcord-action-${tone}`} onClick={onClick} disabled={disabled}>{children}</button>;
 }
 
+function PreferenceSlider({label, value, min, max, suffix = "", onCommit}: {label: string; value: number; min: number; max: number; suffix?: string; onCommit(value: number): void;}) {
+    const [draft, setDraft] = useState(value);
+    useEffect(() => setDraft(value), [value]);
+    const commit = () => {
+        const normalized = Math.max(min, Math.min(max, Math.round(draft)));
+        setDraft(normalized);
+        if (normalized !== value) onCommit(normalized);
+    };
+    return <label className="solcord-range-field">
+        <span>{label}<output>{draft}{suffix}</output></span>
+        <input type="range" min={min} max={max} value={draft} aria-label={label} onChange={event => setDraft(Number(event.currentTarget.value))} onPointerUp={commit} onKeyUp={commit} onBlur={commit} />
+    </label>;
+}
+
 function RuntimeStatusDetails() {
     const health = useStateFromStores(SolcordRuntime, () => SolcordRuntime.health());
     return <div className="solcord-module-table" role="list" aria-label="Read-only Solcord runtime status">
@@ -1226,17 +1240,17 @@ function SessionPulse({openWorkspace, openSetup}: {openWorkspace(workspace: Solc
     }));
     const failed = state.health.filter(item => item.status === "failed" || item.status === "quarantined").length;
     const drift = state.health.find(item => item.id === "drift-radar");
-    const signals = prioritizeSolcordPulse([
+    const attentionSignals = prioritizeSolcordPulse([
         ...(state.recovery ? [{id: "recovery", priority: 100, tone: "danger" as const, label: "Safe Start is active", detail: "Optional Solcord capabilities are held off until you retry normal startup.", action: "Open recovery"}] : []),
-        ...(failed || state.quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} module failure(s), ${state.quarantined} quarantined add-on(s).`, action: "Review add-ons"}] : []),
+        ...(failed || state.quarantined ? [{id: "addons", priority: 90, tone: "danger" as const, label: "Add-ons need attention", detail: `${failed} failed · ${state.quarantined} quarantined`, action: "Review add-ons"}] : []),
         ...(state.activity?.status === "attention" ? [{id: "activity", priority: 85, tone: "attention" as const, label: "Activity Bridge needs review", detail: "The bounded compatibility ledger reported attention.", action: "Inspect Activity Bridge"}] : []),
         ...(drift?.status === "failed" || drift?.status === "quarantined" ? [{id: "drift", priority: 80, tone: "attention" as const, label: "Discord adapter drift", detail: drift.detail, action: "Open diagnostics"}] : []),
         ...(state.document.onboarding.status === "pending" ? [{id: "setup", priority: 75, tone: "attention" as const, label: "Finish setup", detail: "Your saved setup is ready to continue. Nothing has changed yet.", action: "Continue"}] : []),
         ...(state.dueReminders ? [{id: "return-later", priority: 65, tone: "attention" as const, label: "Return Later is due", detail: `${state.dueReminders} local reminder(s) are ready.`, action: "Open People"}] : []),
-        ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} relationship transition(s) are available in this session.`, action: "Open People"}] : []),
-        {id: "healthy", priority: 1, tone: "ok", label: "Session checks complete", detail: "Activity policy, recovery state, and local module health were read without collecting account content."}
+        ...(state.relationshipChanges ? [{id: "friend-watch", priority: 60, tone: "ok" as const, label: "Relationship history updated", detail: `${state.relationshipChanges} local change(s)`, action: "Open People"}] : [])
     ]);
-    return <Section title="Session Pulse" summary="What needs attention now.">
+    const signals = attentionSignals.length ? attentionSignals : [{id: "healthy", priority: 1, tone: "ok" as const, label: "All clear", detail: "No Solcord action needs attention."}];
+    return <Section title="Right now">
         <div className="solcord-pulse-list">{signals.map(signal => <article key={signal.id} className={`solcord-pulse solcord-pulse-${signal.tone}`}><div><strong>{signal.label}</strong><p>{signal.detail}</p></div>{signal.action && <ActionButton onClick={() => signal.id === "setup" ? openSetup() : openWorkspace(signal.id === "activity" ? "voice" : signal.id === "return-later" || signal.id === "friend-watch" ? "friends" : "recovery")}>{signal.action}</ActionButton>}</article>)}</div>
     </Section>;
 }
@@ -1321,36 +1335,42 @@ const SOLCORD_EFFECT_COLORS = Object.freeze([
 function AppearanceWorkspace() {
     const preferences = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().productPreferences);
     const appearance = preferences.appearance;
-    const update = (next: SolcordAppearancePreferences) => void SolcordRuntime.setProductPreferences({...preferences, appearance: next});
-    const updateMotionEffect = (next: Partial<typeof preferences.nativeSuite.motion>) => void SolcordRuntime.setProductPreferences({...preferences, nativeSuite: {...preferences.nativeSuite, motion: {...preferences.nativeSuite.motion, ...next}}});
+    const [saveStatus, setSaveStatus] = useState("");
+    const persist = (next: SolcordProductPreferences) => {
+        setSaveStatus("Saving…");
+        void SolcordRuntime.setProductPreferences(next).then(() => setSaveStatus("Saved")).catch(() => setSaveStatus("Not saved. Previous setting restored."));
+    };
+    const update = (next: SolcordAppearancePreferences) => persist({...preferences, appearance: next});
+    const updateMotionEffect = (next: Partial<typeof preferences.nativeSuite.motion>) => persist({...preferences, nativeSuite: {...preferences.nativeSuite, motion: {...preferences.nativeSuite.motion, ...next}}});
     const updateAnimatedBackground = (effect: typeof preferences.nativeSuite.motion.effect) => {
         const ambient = effect !== "off" && effect !== "signal";
         const motion = ambient && appearance.motion !== "reduced" ? "full" : appearance.motion;
-        void SolcordRuntime.setProductPreferences({
+        persist({
             ...preferences,
             appearance: {...appearance, motion},
             nativeSuite: {...preferences.nativeSuite, motion: {...preferences.nativeSuite.motion, effect}}
         });
     };
     return <>
-        <Section title="Theme and layout" summary="Theme the whole Discord shell, not only this panel.">
+        <Section title="Theme and layout" summary="Changes save immediately and apply across Discord.">
             <div className="solcord-appearance-controls">
                 <label>Mode<select value={appearance.mode} onChange={event => update({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
                 <label>Accent<select value={appearance.accent} onChange={event => update({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
                 <label>Density<select value={appearance.density} onChange={event => update({...appearance, density: event.currentTarget.value as SolcordAppearancePreferences["density"]})}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
                 <label>Motion<select value={appearance.motion} onChange={event => update({...appearance, motion: event.currentTarget.value as SolcordAppearancePreferences["motion"]})}><option value="follow-system">Use performance profile</option><option value="full">Full</option><option value="subtle">Subtle</option><option value="reduced">Reduced</option></select></label>
                 <label>Animated background<select value={preferences.nativeSuite.motion.effect === "stars" ? "field" : preferences.nativeSuite.motion.effect} onChange={event => updateAnimatedBackground(event.currentTarget.value as typeof preferences.nativeSuite.motion.effect)}><option value="off">Off</option><option value="field">SOL Flow</option><option value="work-field">Work Field</option><option value="embers">Ember Drift</option><option value="snow">Quiet Snow</option><option value="rain">Signal Rain</option><option value="signal">Click Signal only</option></select></label>
-                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <label>Effect amount<input type="number" min="1" max="24" value={preferences.nativeSuite.motion.particleCount} onChange={event => updateMotionEffect({particleCount: Number(event.currentTarget.value)})} /></label>}
+                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <PreferenceSlider label="Effect amount" min={1} max={24} value={preferences.nativeSuite.motion.particleCount} onCommit={particleCount => updateMotionEffect({particleCount})} />}
                 {preferences.nativeSuite.motion.effect !== "off" && <fieldset className="solcord-effect-color">
                     <legend>Effect color</legend>
                     <div role="radiogroup" aria-label="Effect color">
-                        {[...SOLCORD_EFFECT_COLORS, ...(SOLCORD_EFFECT_COLORS.some(option => option.value === preferences.nativeSuite.motion.color) ? [] : [{label: "Current custom", value: preferences.nativeSuite.motion.color}])].map(option => <button key={option.value} type="button" role="radio" aria-checked={preferences.nativeSuite.motion.color === option.value} aria-label={`Use ${option.label} effect color`} title={option.label} onClick={() => updateMotionEffect({color: option.value})}><i aria-hidden="true" style={{backgroundColor: option.value}} /></button>)}
+                        {[...SOLCORD_EFFECT_COLORS, ...(SOLCORD_EFFECT_COLORS.some(option => option.value === preferences.nativeSuite.motion.color) ? [] : [{label: "Custom", value: preferences.nativeSuite.motion.color}])].map(option => <button key={option.value} type="button" role="radio" aria-checked={preferences.nativeSuite.motion.color === option.value} aria-label={`Use ${option.label} effect color`} onClick={() => updateMotionEffect({color: option.value})}><i aria-hidden="true" style={{backgroundColor: option.value}} /><span>{option.label}</span></button>)}
                     </div>
                 </fieldset>}
-                {preferences.nativeSuite.motion.effect !== "off" && <label>Effect opacity %<input type="number" min="10" max="100" value={preferences.nativeSuite.motion.opacityPercent} onChange={event => updateMotionEffect({opacityPercent: Number(event.currentTarget.value)})} /></label>}
-                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <label>Effect speed %<input type="number" min="25" max="300" value={preferences.nativeSuite.motion.speedPercent} onChange={event => updateMotionEffect({speedPercent: Number(event.currentTarget.value)})} /></label>}
+                {preferences.nativeSuite.motion.effect !== "off" && <PreferenceSlider label="Effect opacity" suffix="%" min={10} max={100} value={preferences.nativeSuite.motion.opacityPercent} onCommit={opacityPercent => updateMotionEffect({opacityPercent})} />}
+                {preferences.nativeSuite.motion.effect !== "off" && preferences.nativeSuite.motion.effect !== "signal" && <PreferenceSlider label="Effect speed" suffix="%" min={25} max={300} value={preferences.nativeSuite.motion.speedPercent} onCommit={speedPercent => updateMotionEffect({speedPercent})} />}
                 <label>Message shape<select value={appearance.messageShape} onChange={event => update({...appearance, messageShape: event.currentTarget.value as SolcordAppearancePreferences["messageShape"]})}><option value="discord">Discord default</option><option value="seamed">Quiet 1px seams</option></select></label>
             </div>
+            <p className="solcord-save-status" role="status" aria-live="polite">{saveStatus}</p>
             <details className="solcord-secondary-tools"><summary>Animation surfaces</summary><div className="solcord-control-grid">{([["messages", "Messages"], ["channels", "Channels"], ["servers", "Servers"], ["members", "Members"], ["modals", "Dialogs"], ["popouts", "Menus and popouts"], ["settings", "Settings"], ["tooltips", "Tooltips"], ["threads", "Threads"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={preferences.nativeSuite.motion.surfaces[key]} onChange={event => updateMotionEffect({surfaces: {...preferences.nativeSuite.motion.surfaces, [key]: event.currentTarget.checked}})} /> {label}</label>)}</div></details>
             <div className={`solcord-live-preview solcord-mode-${appearance.mode} solcord-accent-${appearance.accent}`}><span>Appearance preview</span><strong>Reply context stays readable at every density.</strong><small>Focus, warning, success, and danger keep distinct semantic colors.</small><button type="button">Keyboard focus sample</button></div>
         </Section>
@@ -1519,6 +1539,10 @@ export default function SolcordPanel() {
         setWorkspaceQuery("");
         setWorkspaceFocus(undefined);
     };
+    const navigateFromCompactMenu = (event: React.MouseEvent<HTMLButtonElement>, next: SolcordWorkspaceId) => {
+        event.currentTarget.closest("details")?.removeAttribute("open");
+        navigateFromSearch(next);
+    };
     useEffect(() => {
         const focusCatalog = workspace === "extensions" && workspaceFocus === "catalog";
         const focusSetup = workspace === "overview" && workspaceFocus === "setup";
@@ -1545,23 +1569,23 @@ export default function SolcordPanel() {
         setWorkspaceFocus("setup");
         setWorkspace("overview");
     };
-    return <main className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
+    return <main role="main" aria-label="Solcord Control Center" className={`solcord-panel solcord-density-${appearance.density} solcord-motion-${appearance.motion}`}>
         <header className="solcord-header">
             <div className="solcord-mark" aria-hidden="true"><img src={solcordMark} alt="" /></div>
             <div className="solcord-header-copy"><h1>Solcord</h1><p>Control Center</p>{!Config.isCleanCandidateBuild && <span className="solcord-build-warning" role="status">Diagnostic build</span>}</div>
         </header>
         {recoveryMode && <div className="solcord-recovery-banner" role="alert">
-            <div><strong>Startup recovery mode is active.</strong><p>Only Plugin Doctor loaded after three interrupted starts within ten minutes. Nothing will be re-enabled silently.</p></div>
-            <ActionButton tone="danger" onClick={() => void SolcordRuntime.leaveRecoveryMode()}>Try normal startup</ActionButton>
+            <div><strong>Safe Start</strong><p>Solcord features are paused after interrupted launches.</p></div>
+            <ActionButton onClick={() => void SolcordRuntime.leaveRecoveryMode()}>Resume Solcord</ActionButton>
         </div>}
-        <div className="solcord-control-center">
+        <div className={`solcord-control-center${onboarding.status === "pending" ? " solcord-control-center-setup" : ""}`}>
             <nav className="solcord-workspace-nav" aria-label="Solcord settings">
                 <label className="solcord-workspace-search"><span className="sr-only">Filter Solcord settings</span><input type="search" value={workspaceQuery} placeholder="Find a setting" onChange={event => setWorkspaceQuery(event.currentTarget.value)} /></label>
                 <div className="solcord-workspace-nav-list" aria-label={workspaceQuery.trim() ? `${visibleWorkspaces.length} matching Solcord sections` : undefined}>{WORKSPACE_GROUPS.map(group => {
                     const items = visibleWorkspaces.filter(item => group.ids.includes(item.id));
                     return items.length ? <section key={group.label} aria-label={group.label}><p>{group.label}</p>{items.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => navigateFromSearch(item.id)}><strong>{item.label}</strong></button>)}</section> : null;
                 })}{!visibleWorkspaces.length && <p className="solcord-nav-empty">No matching setting</p>}</div>
-                <label className="solcord-workspace-switcher"><span>Section</span><select value={workspace} onChange={event => navigateFromSearch(event.currentTarget.value as SolcordWorkspaceId)}>{SOLCORD_WORKSPACES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+                <details className="solcord-workspace-menu"><summary>{selectedWorkspace.label}</summary><div>{SOLCORD_WORKSPACES.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={event => navigateFromCompactMenu(event, item.id)}>{item.label}</button>)}</div></details>
             </nav>
             <div ref={workspaceRef} className="solcord-workspace" data-workspace={workspace}>
                 {workspace === "overview" && onboarding.status === "pending" ? <SetupWizard /> : <>
@@ -1569,7 +1593,6 @@ export default function SolcordPanel() {
                 {workspace === "overview" && <>
                     {onboarding.status === "skipped" && <div className="solcord-setup-reminder"><span><strong>Setup is saved for later.</strong><small>Nothing changed. Resume whenever you are ready.</small></span><ActionButton onClick={openSetup}>Resume</ActionButton></div>}
                     <SessionPulse openWorkspace={setWorkspace} openSetup={openSetup} />
-                    <ActivityBridge />
                 </>}
                 {workspace === "appearance" && <><AppearanceWorkspace /><BuiltInFeatureSwitches scope="appearance" /></>}
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}

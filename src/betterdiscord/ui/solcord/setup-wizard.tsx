@@ -115,10 +115,9 @@ function StepNavigation({step, setStep, disabled}: {step: number; setStep(step: 
 
 function WelcomeStep() {
     return <div className="solcord-wizard-body solcord-welcome-step">
-        <p className="solcord-eyebrow">Private desktop client mod</p>
-        <h3>Make Discord yours without hiding the tradeoffs.</h3>
-        <p>Solcord is an independent BetterDiscord-based client modification. Discord does not officially support client mods, so updates can break adapters and optional capabilities may carry platform risk.</p>
-        <p className="solcord-callout"><strong>Your account stays yours.</strong> Solcord does not extract tokens, automate your account, send messages, join calls, open Activities, or enable private history without a separate choice.</p>
+        <h3>Welcome to Solcord</h3>
+        <p>A private BetterDiscord fork with recovery, themes, and local tools. Discord updates can still break optional features.</p>
+        <p className="solcord-callout"><strong>You stay in control.</strong> Solcord never sends, joins, records, or enables private history without your action.</p>
     </div>;
 }
 
@@ -140,8 +139,8 @@ function PerformanceStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(
     const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
     const policy = resolveSolcordPerformancePolicy(profile, draft.productPreferences.appearance.motion, reducedByOs);
     return <div className="solcord-wizard-body">
-        <h3>Choose how Solcord spends resources</h3>
-        <p>This policy is real: it bounds performance sampling and caps motion. Disabled tools remain fully stopped in every profile.</p>
+        <h3>Performance</h3>
+        <p>Balanced is recommended. Disabled tools stay stopped in every profile.</p>
         <div className="solcord-segmented" role="radiogroup" aria-label="Setup performance profile">{(Object.keys(SOLCORD_PERFORMANCE_POLICIES) as SolcordPerformanceProfile[]).map(id => <button key={id} type="button" role="radio" aria-checked={profile === id} onClick={() => onChange({...draft, productPreferences: {...draft.productPreferences, performanceProfile: id}})}><strong>{id[0].toUpperCase() + id.slice(1)}</strong><small>{SOLCORD_PERFORMANCE_POLICIES[id].description}</small></button>)}</div>
         <details className="solcord-review-details"><DisclosureSummary title="Performance details" detail={`${policy.effectiveMotion} motion · sampling no faster than every ${policy.sampleSeconds} seconds`} /><dl className="solcord-facts"><div><dt>Effective motion</dt><dd>{policy.effectiveMotion}</dd></div><div><dt>Sampling interval</dt><dd>at least {policy.sampleSeconds} seconds</dd></div><div><dt>Windows reduced motion</dt><dd>{reducedByOs ? "honored" : "not requested"}</dd></div></dl></details>
     </div>;
@@ -193,7 +192,7 @@ function ThemeStep({value, appearance, performanceProfile, onChange, onAppearanc
     useFullShellAppearancePreview(appearance, performanceProfile);
     return <div className="solcord-wizard-body">
         <h3>Choose your look</h3>
-        <p>Choose the product mode first. The live preview covers the full Discord shell and restores your saved appearance when you leave this step.</p>
+        <p>Preview the full Discord shell. Leaving this step restores your saved look.</p>
         <div className="solcord-appearance-controls">
             <label>Mode<select value={appearance.mode} onChange={event => onAppearance({...appearance, mode: event.currentTarget.value as SolcordAppearancePreferences["mode"]})}><option value="follow-discord">Follow Discord</option><option value="solcord-dark">Solcord Dark</option><option value="solcord-light">Solcord Light</option><option value="oled">OLED</option></select></label>
             <label>Accent<select value={appearance.accent} onChange={event => onAppearance({...appearance, accent: event.currentTarget.value as SolcordAppearancePreferences["accent"]})}><option value="system">Discord / system</option><option value="glacier">Glacier cyan</option><option value="signal">Signal amber</option><option value="coral">Coral</option><option value="forest">Forest</option></select></label>
@@ -236,12 +235,12 @@ function PrivacyStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(valu
     });
     return <div className="solcord-wizard-body">
         <h3>Choose your privacy baseline</h3>
-        <p>Strict Privacy blocks verified optional reporting and activity discovery. Chat, calls, media, moderation, safety, sign-in, and Discord security updates continue normally.</p>
+        <p>Strict Privacy blocks verified optional reporting. Discord essentials keep working.</p>
         <div className="solcord-choice-grid solcord-choice-grid-two">
             <label className="solcord-choice-row"><input type="radio" name="privacy-profile" checked={privacy.profile === "strict"} onChange={() => setPrivacyProfile("strict")} /><span><strong>Strict Privacy</strong><small>Recommended. Optional telemetry, crash reports, game discovery, and automatic Solcord checks stay off.</small></span></label>
             <label className="solcord-choice-row"><input type="radio" name="privacy-profile" checked={privacy.profile !== "strict"} onChange={() => setPrivacyProfile("standard")} /><span><strong>Standard</strong><small>Discord optional reporting may run. Solcord update checks remain manual.</small></span></label>
         </div>
-        <h3>Local safety tools</h3>
+        <h3>Safety tools</h3>
         <div className="solcord-choice-stack">
             <label className="solcord-choice-row"><input type="checkbox" checked={safety.linkLens} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, linkLens: event.currentTarget.checked}}})} /><span><strong>Link Lens</strong><small>Review external links before opening them. Discord navigation is not intercepted.</small></span></label>
             <label className="solcord-choice-row"><input type="checkbox" checked={safety.attachmentGuard} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, attachmentGuard: event.currentTarget.checked}}})} /><span><strong>Attachment review</strong><small>Inspect a file locally before upload. Solcord never submits it for you.</small></span></label>
@@ -280,7 +279,7 @@ function AddonStep({draft, toggle, selectRecommended}: {draft: SolcordSetupDraft
     const selectedReadyCount = readyDecisions.filter(decision => selected.has(decision.name)).length;
     const selectedPendingCount = pendingDecisions.filter(decision => selected.has(decision.name)).length;
     return <div className="solcord-wizard-body">
-        <div className="solcord-wizard-inline-heading"><div><h3>Choose useful features</h3><p>{selectedReadyCount} of {readyDecisions.length} selected. Runtime adapters validate after Apply; an unsupported adapter stays off.</p></div><div className="solcord-actions"><button type="button" className="solcord-action" onClick={selectRecommended}>Select recommended 3</button><button type="button" className="solcord-action" onClick={() => readyDecisions.forEach(decision => toggle(decision.name, false))}>Clear</button></div></div>
+        <div className="solcord-wizard-inline-heading"><div><h3>Features</h3><p>{selectedReadyCount} of {readyDecisions.length} selected. Anything unavailable stays off.</p></div><div className="solcord-actions"><button type="button" className="solcord-action" onClick={selectRecommended}>Recommended</button><button type="button" className="solcord-action" onClick={() => readyDecisions.forEach(decision => toggle(decision.name, false))}>Clear</button></div></div>
         <div className="solcord-addon-groups">
             {readyGroups.map(group => <fieldset key={group.id} className="solcord-addon-group">
                 <legend><span>{group.title}</span><small>{group.summary}</small></legend>
@@ -416,7 +415,7 @@ export default function SetupWizard() {
     ][step];
 
     return <section ref={wizardRef} className="solcord-wizard" aria-labelledby="solcord-setup-title" aria-busy={busy}>
-        <div className="solcord-wizard-title"><div><p className="solcord-eyebrow">First setup</p><h2 id="solcord-setup-title">Make Solcord yours</h2><p>Your choices save as you go. Nothing changes until Apply.</p></div><span>Step {step + 1} of {WIZARD_STEPS.length}</span></div>
+        <div className="solcord-wizard-title"><div><p className="solcord-eyebrow">First setup</p><h2 id="solcord-setup-title">Set up Solcord</h2><p>Five quick steps. Nothing changes until Apply.</p></div><span>{step + 1} / {WIZARD_STEPS.length}</span></div>
         <div className="solcord-wizard-progress" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length} aria-valuenow={step + 1}><span style={{width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`}} /></div>
         <StepNavigation step={step} setStep={setStep} disabled={busy} />
         <div key={step} className="solcord-wizard-current-step" role="group" aria-label={`${WIZARD_STEPS[step]} setup step`}>{stepContent}</div>

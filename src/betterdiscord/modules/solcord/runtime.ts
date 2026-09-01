@@ -812,6 +812,11 @@ class SolcordRuntimeStore extends Store {
         const next = SolcordSettings.snapshot().productPreferences;
         this.#applyProductPresentation();
         this.#synchronizeBaselineSuite();
+        // Preference controls are renderer UI, so publish the persisted state
+        // before any volatile Discord adapter is reconciled.  A slow module
+        // lookup must never make a click look ignored.  If reconciliation
+        // fails, the rollback below publishes the restored state separately.
+        this.emitChange();
         const motionRuntimeChanged = previous.performanceProfile !== next.performanceProfile
             || previous.appearance.motion !== next.appearance.motion;
         if (JSON.stringify(previous.nativeSuite) !== JSON.stringify(next.nativeSuite) || motionRuntimeChanged) {

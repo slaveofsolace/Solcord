@@ -124,11 +124,11 @@ describe("Solcord installer security contracts", () => {
     });
 
     test("keeps the installer action center aligned, contextual, and visible without a scroll rail", () => {
-        expect(installerForm).toContain("ClientSize = new Size(1020, 700)");
+        expect(installerForm).toContain("ClientSize = new Size(980, 660)");
         expect(installerForm).not.toContain("AutoScroll = true");
         expect(installerForm).not.toContain("Choose one clear action");
         expect(installerForm).not.toContain("BuildBrandRail");
-        expect(installerForm).toContain("Install, update, or recover.");
+        expect(installerForm).toContain("Choose an action");
         expect(installerForm).toContain("string? recommended = pending ? \"rollback\"");
         expect(installerForm).toContain("ButtonTone.Primary");
         expect(installerForm).toContain("TabIndex = int.Parse(index)");

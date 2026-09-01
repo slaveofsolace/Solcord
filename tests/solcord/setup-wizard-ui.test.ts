@@ -64,9 +64,9 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-search { display: none; }");
-        expect(WIZARD_CSS).toContain(".solcord-workspace-switcher { display: grid;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: sticky; z-index: 4; isolation: isolate; top: 0;");
-        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 84px; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-menu { display: block; width: 100%; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: static; z-index: auto;");
+        expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace { min-width: 0; padding-top: 12px; }");
         expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
         expect(PANEL_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
@@ -130,8 +130,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("<CatalogBrowser />");
         expect(PANEL_SOURCE).toContain("<SetupWizard />");
         expect(WIZARD_SOURCE).toContain("catalog candidates still need a runtime or security gate");
-        expect(WIZARD_SOURCE).toContain("Runtime adapters validate after Apply; an unsupported adapter stays off.");
-        expect(WIZARD_SOURCE).toContain("Select recommended 3");
+        expect(WIZARD_SOURCE).toContain("Anything unavailable stays off.");
+        expect(WIZARD_SOURCE).toContain(">Recommended</button>");
         expect(WIZARD_SOURCE).toContain("Runtime check pending");
         expect(WIZARD_SOURCE).not.toContain("{decision.statusLabel}");
         expect(WIZARD_CSS).toContain(".solcord-addon-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px;");
