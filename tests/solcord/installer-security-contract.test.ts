@@ -124,7 +124,7 @@ describe("Solcord installer security contracts", () => {
     });
 
     test("supports a bounded noninteractive update for an explicitly selected Discord channel", () => {
-        expect(selfTest).toContain('args.Contains("--update"');
+        expect(selfTest).toContain("args.Contains(\"--update\"");
         expect(selfTest).toContain("--update --channel Stable|PTB|Canary");
         expect(selfTest).toContain("args.Length != 3");
         expect(selfTest).toContain("engine.Update(target)");
