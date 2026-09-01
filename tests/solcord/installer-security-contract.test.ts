@@ -123,6 +123,14 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("separate-install-update-repair-actions");
     });
 
+    test("supports a bounded noninteractive update for an explicitly selected Discord channel", () => {
+        expect(selfTest).toContain('args.Contains("--update"');
+        expect(selfTest).toContain("--update --channel Stable|PTB|Canary");
+        expect(selfTest).toContain("args.Length != 3");
+        expect(selfTest).toContain("engine.Update(target)");
+        expect(selfTest).not.toContain("engine.Uninstall(target);\n            return 0;");
+    });
+
     test("uses the reviewed Solcord mark for the window and executable", () => {
         expect(installerProject).toContain("<ApplicationIcon>..\\..\\assets\\branding\\icons\\solcord.ico</ApplicationIcon>");
         expect(installerProject).toContain("LogicalName=\"Solcord.Installer.Resources.solcord-mark.png\"");

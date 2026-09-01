@@ -23,6 +23,7 @@ internal static class Program
                 return 1;
             }
         }
+        if (args.Contains("--update", StringComparer.OrdinalIgnoreCase)) return RunUpdate(args);
         ApplicationConfiguration.Initialize();
         try
         {
@@ -33,6 +34,34 @@ internal static class Program
         catch (Exception error)
         {
             MessageBox.Show(error.Message, "Solcord Installer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 1;
+        }
+    }
+
+    private static int RunUpdate(string[] args)
+    {
+        try
+        {
+            int channelFlag = Array.FindIndex(args, value => value.Equals("--channel", StringComparison.OrdinalIgnoreCase));
+            if (args.Length != 3 || channelFlag < 0 || channelFlag + 1 >= args.Length)
+                throw new ArgumentException("Usage: SolcordInstaller.exe --update --channel Stable|PTB|Canary");
+            string channel = args[channelFlag + 1];
+            if (channel is not ("Stable" or "PTB" or "Canary"))
+                throw new ArgumentException("The Discord channel must be Stable, PTB, or Canary.");
+
+            using EmbeddedInstallerBundle bundle = EmbeddedInstallerBundle.ExtractVerified();
+            var engine = new InstallerEngine(
+                bundle.Root,
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+            DiscordTarget target = engine.DetectTargets().SingleOrDefault(candidate => candidate.Channel == channel)
+                ?? throw new InvalidOperationException($"Discord {channel} is not installed.");
+            engine.Update(target);
+            return 0;
+        }
+        catch (Exception error)
+        {
+            Console.Error.WriteLine($"update:{error.GetType().Name}:{error.Message}");
             return 1;
         }
     }
