@@ -1572,7 +1572,7 @@ export default function SolcordPanel() {
                     const items = visibleWorkspaces.filter(item => group.ids.includes(item.id));
                     return items.length ? <section key={group.label} aria-label={group.label}><p>{group.label}</p>{items.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={() => navigateFromSearch(item.id)}><strong>{item.label}</strong></button>)}</section> : null;
                 })}{!visibleWorkspaces.length && <p className="solcord-nav-empty">No matching setting</p>}</div>
-                <details className="solcord-workspace-menu"><summary>{selectedWorkspace.label}</summary><div>{SOLCORD_WORKSPACES.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={event => navigateFromCompactMenu(event, item.id)}>{item.label}</button>)}</div></details>
+                <details className="solcord-workspace-menu"><summary aria-label={`Change workspace. Current workspace: ${selectedWorkspace.label}`}>Workspaces</summary><div>{SOLCORD_WORKSPACES.map(item => <button key={item.id} type="button" aria-current={workspace === item.id ? "page" : undefined} onClick={event => navigateFromCompactMenu(event, item.id)}>{item.label}</button>)}</div></details>
             </nav>
             <div ref={workspaceRef} className="solcord-workspace" data-workspace={workspace}>
                 {workspace === "overview" && onboarding.status === "pending" ? <SetupWizard /> : <>

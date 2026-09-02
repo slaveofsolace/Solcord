@@ -877,12 +877,14 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
     .solcord-workspace-nav { position: static; z-index: auto; display: block; max-height: none; padding: 8px 0 12px; overflow: visible; background: var(--sc-surface-0); border-right: 0; border-bottom: 1px solid var(--sc-border); box-shadow: none; }
     .solcord-workspace-search { display: none; }
     .solcord-workspace-nav-list { display: none; }
-    .solcord-workspace-menu { display: block; width: 100%; }
-    .solcord-workspace-menu > summary { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 8px 10px; color: var(--sc-text); background: var(--sc-surface-1); border: 1px solid var(--sc-border-strong); border-radius: 4px; font-weight: 650; cursor: pointer; list-style: none; }
+    .solcord-workspace-menu { position: relative; display: block; width: max-content; max-width: 100%; margin-left: auto; }
+    .solcord-workspace-menu > summary { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 34px; padding: 5px 8px; color: var(--sc-muted); background: transparent; border: 1px solid transparent; border-radius: 3px; font-size: 12px; font-weight: 650; cursor: pointer; list-style: none; }
     .solcord-workspace-menu > summary::-webkit-details-marker { display: none; }
-    .solcord-workspace-menu > summary::after { content: "Change"; color: var(--sc-muted); font-size: 11px; font-weight: 600; }
-    .solcord-workspace-menu[open] > summary::after { content: "Close"; }
-    .solcord-workspace-menu > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 6px 0 0; }
+    .solcord-workspace-menu > summary:hover { color: var(--sc-text); background: var(--sc-surface-1); }
+    .solcord-workspace-menu > summary:focus-visible { color: var(--sc-text); outline: 2px solid var(--sc-focus); outline-offset: 2px; }
+    .solcord-workspace-menu > summary::after { content: "\25BE"; color: currentcolor; font-size: 12px; line-height: 1; }
+    .solcord-workspace-menu[open] > summary::after { content: "\25B4"; }
+    .solcord-workspace-menu > div { position: absolute; z-index: 20; top: calc(100% + 6px); right: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; width: min(420px, calc(100cqw - 40px)); max-width: calc(100vw - 48px); max-height: min(420px, 60vh); padding: 6px; overflow-y: auto; background: var(--sc-surface-1); border: 1px solid var(--sc-border-strong); border-radius: 4px; box-shadow: 0 12px 28px rgb(0 0 0 / 28%); }
     .solcord-workspace-menu button { min-height: 38px; padding: 7px 9px; border-radius: 3px; }
     .solcord-workspace { scroll-margin-top: 12px; }
     .solcord-control-grid { grid-template-columns: 1fr 1fr; }

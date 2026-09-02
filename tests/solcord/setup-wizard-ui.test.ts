@@ -70,7 +70,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain(".solcord-wizard-steps { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav-list { display: none; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-search { display: none; }");
-        expect(WIZARD_CSS).toContain(".solcord-workspace-menu { display: block; width: 100%; }");
+        expect(WIZARD_CSS).toContain(".solcord-workspace-menu { position: relative; display: block; width: max-content; max-width: 100%; margin-left: auto; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: static; z-index: auto;");
         expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace { min-width: 0; padding-top: 12px; }");
