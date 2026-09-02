@@ -67,7 +67,7 @@ The machine-readable install manifest records exact backup and rollback paths af
 
 The normal RC path is designed to take about one minute on a typical Windows PC after download. This is a usability target, not a time guarantee.
 
-1. Download `SolcordInstaller.exe` and the release-level `SHA256SUMS.txt` from the same owner-controlled `v2.0.0-rc.32` release. The complete review bundle is also available inside the delivery ZIP under its exact generated name.
+1. Download `SolcordInstaller.exe` and the release-level `SHA256SUMS.txt` from the same owner-controlled `v2.0.0-rc.33` release. The complete review bundle is also available inside the delivery ZIP under its exact generated name.
 2. Compare the executable hash with the `installer/SolcordInstaller.exe` entry in the release-level `SHA256SUMS.txt`; that nested evidence name applies byte-for-byte to the root-published executable. Stop on any mismatch.
 3. Save anything in progress, run `SolcordInstaller.exe`, confirm the detected Stable/PTB/Canary version, and choose **Install Solcord**. The installer closes only that selected Discord process tree when required.
 4. Choose **Verify files**, then **Open Solcord**. A fresh install opens **User Settings → Solcord Suite** on Welcome after Discord is ready; an update or repair preserves completed setup.

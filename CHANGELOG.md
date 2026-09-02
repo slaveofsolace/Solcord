@@ -1,5 +1,18 @@
 # Solcord Changelog
 
+## 2.0.0-rc.33 - Reliable Windows artifact publication
+
+### Fixed
+
+- The installer builder now tolerates a short Windows sharing-lock race when atomically publishing a completed candidate directory.
+- Publication still refuses an existing destination, an unexpected staging path, symlinks, unrelated filesystem errors, or an exhausted retry budget.
+
+### Verification boundary
+
+- RC32 remains preserved as the candidate that exposed the hosted Windows rename race; its artifacts are not overwritten.
+- Runtime behavior is unchanged from the live-accepted RC31 parent apart from embedded source provenance and candidate identity.
+- The exact source matrix, deterministic installer build, hosted Windows build, security diff, and installed-client startup checks are rerun against RC33 before publication.
+
 ## 2.0.0-rc.32 - Final release guidance and immutable identity
 
 ### Changed

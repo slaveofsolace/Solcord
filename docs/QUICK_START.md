@@ -1,6 +1,6 @@
 # Solcord quick start
 
-This guide applies to `v2.0.0-rc.32` on the official Solcord release page. The steps are written for someone who has never installed a Discord client mod.
+This guide applies to `v2.0.0-rc.33` on the official Solcord release page. The steps are written for someone who has never installed a Discord client mod.
 
 On a typical Windows PC, the normal install is designed to take about one minute after the files are downloaded. That is a usability target, not a guarantee; Windows review prompts, Discord shutdown, recovery, and first-run choices can take longer.
 
@@ -11,8 +11,8 @@ On a typical Windows PC, the normal install is designed to take about one minute
 
 Download both files into the same folder:
 
-- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.32/SolcordInstaller.exe)
-- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.32/SHA256SUMS.txt)
+- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.33/SolcordInstaller.exe)
+- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.33/SHA256SUMS.txt)
 
 The assembled candidate stores the executable at `installer/SolcordInstaller.exe` inside its local evidence directory. Release publishing maps that exact hash-verified file to the root GitHub asset name `SolcordInstaller.exe`; it does not rebuild or change its bytes. `release-manifest.json` records this mapping and the installer build-receipt hash.
 

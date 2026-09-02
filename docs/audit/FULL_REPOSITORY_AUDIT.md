@@ -10,11 +10,11 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 
 | Measure | Count |
 | --- | ---: |
-| Persistent tracked files | 590 |
-| Text files scanned | 575 |
+| Persistent tracked files | 593 |
+| Text files scanned | 578 |
 | Binary files classified | 15 |
-| Text lines scanned | 126,211 |
-| Custom Solcord lines | 33,148 |
+| Text lines scanned | 126,373 |
+| Custom Solcord lines | 33,221 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -25,12 +25,12 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Signal | Whole tree | Custom Solcord surfaces |
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 0 |
-| Timer calls | 49 | 4 |
+| Timer calls | 50 | 5 |
 | Mutation observers | 20 | 4 |
 | DOM queries | 178 | 84 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
-| Synchronous filesystem calls | 779 | 713 |
+| Synchronous filesystem calls | 784 | 713 |
 | Console calls | 79 | 53 |
 | Empty catch blocks | 3 | 1 |
 
@@ -49,7 +49,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 9 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 10 | `tests/solcord/disposable-acceptance.test.ts` | 1,160 | 56.1 KiB |
 | 11 | `src/betterdiscord/modules/solcord/store.ts` | 1,113 | 58.2 KiB |
-| 12 | `CHANGELOG.md` | 1,097 | 36.0 KiB |
+| 12 | `CHANGELOG.md` | 1,110 | 36.8 KiB |
 | 13 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
 | 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 15 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |

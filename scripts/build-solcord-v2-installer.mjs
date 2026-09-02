@@ -8,6 +8,7 @@ import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 import * as asar from "@electron/asar";
 import {SOLCORD_PRODUCT_IDENTITY} from "../src/common/solcord/product-identity.ts";
+import {publishGeneratedDirectory} from "./helpers/publish-directory.mjs";
 
 const [artifactInput, outputInput, sourceCommit] = process.argv.slice(2);
 if (!artifactInput || !outputInput || !/^[0-9a-f]{40}$/.test(sourceCommit ?? "")) {
@@ -210,9 +211,9 @@ try {
     const expectedEntries = [...checksumNames, "SHA256SUMS.txt", receiptName].sort();
     if (JSON.stringify(finalEntries) !== JSON.stringify(expectedEntries)) throw new Error("The release-candidate directory contains an unexpected file set.");
 
-    fs.renameSync(staging, output);
+    const publication = await publishGeneratedDirectory(staging, output);
     published = true;
-    console.log(JSON.stringify({output, version: postBuild.build.version, candidateLabel: postBuild.build.candidateLabel, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), installerReceiptFile: receiptName, installerReceiptSha256, embeddedResources: "PASS", selfTest: "PASS", releaseFiles: finalEntries}, null, 2));
+    console.log(JSON.stringify({output, version: postBuild.build.version, candidateLabel: postBuild.build.candidateLabel, sourceCommit, artifactSha256: artifactHash, installerSha256: hashFile(path.join(output, "SolcordInstaller.exe")), installerReceiptFile: receiptName, installerReceiptSha256, embeddedResources: "PASS", selfTest: "PASS", publicationAttempts: publication.attempts, releaseFiles: finalEntries}, null, 2));
 } finally {
     removeGeneratedDirectory(inputRoot, os.tmpdir(), "solcord-installer-input-");
     removeGeneratedDirectory(validationRoot, os.tmpdir(), "solcord-installer-validation-");

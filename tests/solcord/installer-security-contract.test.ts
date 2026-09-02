@@ -8,6 +8,7 @@ const root = path.resolve(import.meta.dir, "../..");
 const builderPath = path.join(root, "scripts", "build-solcord-v2-installer.mjs");
 const obsoleteBuilderPath = path.join(root, "scripts", "build-solcord-installer.cjs");
 const builder = fs.readFileSync(builderPath, "utf8");
+const publisher = fs.readFileSync(path.join(root, "scripts/helpers/publish-directory.mjs"), "utf8");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const engine = fs.readFileSync(path.join(root, "installer/Solcord.Installer/InstallerEngine.cs"), "utf8");
 const embeddedBundle = fs.readFileSync(path.join(root, "installer/Solcord.Installer/EmbeddedInstallerBundle.cs"), "utf8");
@@ -74,6 +75,10 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("rc.18446744073709551616");
         expect(selfTest).toContain("ulong.MaxValue");
         expect(builder).toContain("The release-candidate directory contains an unexpected file set");
+        expect(builder).toContain("await publishGeneratedDirectory(staging, output)");
+        expect(publisher).toContain("RETRYABLE_WINDOWS_RENAME_ERRORS");
+        expect(publisher).toContain("The installer output directory appeared before publication completed");
+        expect(publisher).not.toContain("copyFileSync");
         expect(builder.indexOf("const selfTest = spawnSync")).toBeLessThan(builder.indexOf("const publishedFiles"));
     });
 

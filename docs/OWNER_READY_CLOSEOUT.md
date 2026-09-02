@@ -6,13 +6,13 @@ This page is the current product-status source for the unsigned Solcord V2 relea
 
 - Integration branch: `development`
 - Preserved releases: every previously published release remains immutable
-- Current reviewed candidate: `v2.0.0-rc.32`
+- Current reviewed candidate: `v2.0.0-rc.33`
 - Target: Discord Stable on Windows, using the existing BetterDiscord injector and `BdApi` compatibility contracts
 - Distribution: unsigned prerelease with SHA-256 manifests, exact rollback identity, and no SmartScreen-reputation claim
 
 Exact source, ASAR, installer, Discord version, profile type, backup, and rollback hashes belong in the external release-evidence manifest generated from the frozen commit.
 
-Current RC32 status: source, package, installer self-test, deterministic rebuild, production dependency audit, formal security scan, hosted CI, owner-profile installation, two clean starts, installer repair, and the complete nine-route Control Center sweep have passed. The exact source, ASAR, installer, backup, and release-evidence hashes remain authoritative; authenticated account-affecting actions are intentionally outside automated acceptance.
+Current RC33 status is bound by the external release-evidence manifest generated from the frozen source. This source document does not claim that packaging, hosted CI, installation, or startup checks passed before their exact-candidate receipts exist. The complete nine-route Control Center sweep and runtime behavior are retained from the unchanged live-accepted RC31 implementation; authenticated account-affecting actions remain intentionally outside automated acceptance.
 
 ## Product status
 
@@ -45,7 +45,7 @@ The status labels above describe implemented behavior plus retained adapter evid
 
 ## Exact-client acceptance
 
-The following checks passed on the reviewed RC32 runtime or remain explicitly identified as retained regression evidence in the external receipt.
+The following checks passed on the unchanged live-accepted runtime parent or remain explicitly identified as retained regression evidence in the RC33 external receipt.
 
 - The current Discord Stable client loaded the exact candidate in a filesystem-isolated acceptance root with the expected source/ASAR identity and no duplicate bootstrap.
 - All four baseline runtime adapters survived restart together, then returned to zero styles, elements, classes, observers, listeners, timers, and previews after disable.
@@ -85,7 +85,7 @@ They remain measured technical debt. Do not churn public exports or upstream own
 
 Safe source, disposable-runtime, packaging, recovery, accessibility, and documentation work runs without repeated owner pauses. Optional owner validation covers authenticated or account-affecting interactions that automated acceptance deliberately does not perform:
 
-1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. RC32 does not alter those accepted mechanisms.
+1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. RC33 does not alter those accepted mechanisms.
 2. Confirm First Setup's final preview before applying it to the signed-in profile.
 3. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
 
@@ -97,4 +97,4 @@ The release is owner-ready only when the exact candidate survives two clean laun
 - A green build does not prove a Discord interaction until the exact client and candidate complete it.
 - Solcord does not extract tokens, automate accounts, forge entitlements, reveal hidden content, or silently record/upload media.
 - Existing owner plugins, themes, Custom CSS, and private databases are preserved; their presence is not compatibility certification.
-- Published historical candidates remain immutable. RC32 is an unsigned prerelease candidate, not a signed stable release.
+- Published historical candidates remain immutable. RC33 is an unsigned prerelease candidate, not a signed stable release.
