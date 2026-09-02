@@ -132,7 +132,7 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).not.toContain("BuildSignalPath");
         expect(installerForm).not.toContain("All operations");
         expect(installerForm).toContain("Solcord Setup");
-        expect(installerForm).toContain('"Recovery"');
+        expect(installerForm).toContain("\"Recovery\"");
         expect(installerForm).toContain("_maintenanceList.Dock = DockStyle.Top");
         expect(installerForm).toContain("_workspace.RowStyles[4].Height = visibleMaintenanceRows * 52");
         expect(installerForm).toContain("_statePanel.Invalidate()");
@@ -143,8 +143,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("Open recovery folder");
         expect(installerForm).toContain("Height = 44");
         expect(installerForm).toContain("Color.White");
-        expect(installerForm).toContain('"Try again"');
-        expect(installerForm).not.toContain('"No action available"');
+        expect(installerForm).toContain("\"Try again\"");
+        expect(installerForm).not.toContain("\"No action available\"");
         expect(engine).toContain("_stopDiscordProcesses(running)");
         expect(engine).toContain("IsTrustedDiscordExecutable");
         expect(selfTest).toContain("automatic-discord-stop-install");
