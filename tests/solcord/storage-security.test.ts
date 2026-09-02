@@ -747,21 +747,21 @@ describe("Solcord setup transaction security", () => {
     });
 
     test("reconciles the exact completed prior V2 transaction after its staging directory is gone", async () => {
-        const transactionId = "mtdpz4ge-c611de3c9350d8f4";
+        const transactionId = "mth2os1r-c8fbfd7117f03996";
         const journalRoot = path.join(appDataPath, "BetterDiscord", "solcord-transactions-v1");
         fs.mkdirSync(journalRoot, {recursive: true});
         const priorThemes = [
-            ["Solcord-Default.theme.css", "50aaa06cf3dc7ee910e6049035224d960fdf0b51c47dd4b1adecce01d148000b"],
-            ["Solcord-ObsidianThread.theme.css", "2f45ef7e3588100a23a63d026620ab71781dbb51e2dddaa5a4edb2b37f8b4938"],
-            ["Solcord-CarbonEmber.theme.css", "7ef521640e254c42d1ac33de3938ce65b897183c5e8ff134713bcf7fde9d459d"],
-            ["Solcord-MidnightGlass.theme.css", "3ba5ee16dd488292cbbbb87a7472285a58347d745d2a8ca765e341376cc6d11b"],
-            ["Solcord-PaperSignal.theme.css", "db3ec833356f7f44c3d18ab3396c52d69ab8f9c7ba2500e7d6dbac9741f90482"],
-            ["Solcord-Threadline.theme.css", "722537b7bde7146a00b8ed4ae7f407a36b65a8f877208ae967a2da3132e3c26e"],
-            ["Solcord-SignalBlock.theme.css", "02d28e95a841743bb2e8e63d43b20618e71afdda33e2cfc89dacd68504afdac0"],
-            ["Solcord-RelayClassic.theme.css", "e7e78d4995cfc233a92dd2c10135e76ec918eb86dac0cae70cbafeab7cce1faa"],
-            ["Solcord-Workshop.theme.css", "ceb581b50dd0fc51aeb76359a8a68ae532996c4e4774917ea7196584fcb6067c"],
-            ["Solcord-QuietRead.theme.css", "dc8d3e5eab2e599785d9b5bd997f1183e2937113c7bd864bd7a5b96525635e47"],
-            ["Solcord-NightTransit.theme.css", "36bfabf3f165e5db9cd7abd16c42413f6d601a5169d660bbd90e8b06fc07b625"]
+            ["Solcord-Default.theme.css", "04b664abb2d089644e2faf680928b79ff2782058c42b9974666ceb978aa6a8f8"],
+            ["Solcord-ObsidianThread.theme.css", "8be041a038f7b7a601632e27dae0c1bd5b07fa9b22982192912a5a92e4f3bab9"],
+            ["Solcord-CarbonEmber.theme.css", "ccf2e481b2586cc133c7ce64cae04d9f561cb005421061224d6185d88c3972a9"],
+            ["Solcord-MidnightGlass.theme.css", "6159a4b043a2e1975239c344ab34e4069b6d44e23463a906952b7149b1e4451b"],
+            ["Solcord-PaperSignal.theme.css", "4d39b5bfcc9592c733b1a55af8dbe76d1b42c9d51e1ee138aa42b46bef087a3b"],
+            ["Solcord-Threadline.theme.css", "332608df6d5b7eba3f1688ada59e9ec7aa24dde90c832f4db88989e4cd3500bb"],
+            ["Solcord-SignalBlock.theme.css", "2084412cb304af92db7a21d4f9473ba9af24fb149da9385bfc282374c581ffda"],
+            ["Solcord-RelayClassic.theme.css", "f94e6b71f777fd59dc69a978d3e24f487e119ec4b5308053a47b73b77f28a79f"],
+            ["Solcord-Workshop.theme.css", "b9c0f371de5726d96643a723257eacb041a58b52b509b5e51f8d56e97d5b83ae"],
+            ["Solcord-QuietRead.theme.css", "580bdcd0a0ef19f0fc894e674bd4c150a92a0bae20047272a48f1dcce5db0340"],
+            ["Solcord-NightTransit.theme.css", "245f2731675eacb0c65e42fba19e5aad9619c83ab0d95a6a27699951ec61e30d"]
         ] as const;
         const journal = {
             version: 1,
