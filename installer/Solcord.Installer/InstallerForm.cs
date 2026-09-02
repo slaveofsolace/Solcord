@@ -8,6 +8,7 @@ internal sealed class InstallerForm : Form
 {
     private static readonly Color Canvas = Color.FromArgb(247, 245, 240);
     private static readonly Color Surface = Color.FromArgb(255, 255, 253);
+    private static readonly Color BrandTile = Color.FromArgb(24, 37, 39);
     private static readonly Color Ink = Color.FromArgb(23, 29, 31);
     private static readonly Color Body = Color.FromArgb(55, 66, 69);
     private static readonly Color Muted = Color.FromArgb(91, 105, 108);
@@ -98,9 +99,9 @@ internal sealed class InstallerForm : Form
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _brandMarkHost.Name = "brandMarkSafeArea";
         _brandMarkHost.Anchor = AnchorStyles.None;
-        _brandMarkHost.BackColor = Color.Transparent;
+        _brandMarkHost.BackColor = BrandTile;
         _brandMarkHost.Margin = Padding.Empty;
-        _brandMarkHost.Padding = new Padding(3);
+        _brandMarkHost.Padding = new Padding(4);
         _brandMarkHost.MinimumSize = new Size(48, 48);
         _brandMarkHost.MaximumSize = new Size(48, 48);
         _brandMarkHost.Size = new Size(48, 48);
@@ -108,7 +109,7 @@ internal sealed class InstallerForm : Form
         _brandMark.Dock = DockStyle.Fill;
         _brandMark.Margin = Padding.Empty;
         _brandMark.SizeMode = PictureBoxSizeMode.Zoom;
-        _brandMark.BackColor = Color.Transparent;
+        _brandMark.BackColor = BrandTile;
         _brandMark.Image = LoadBrandMark();
         _brandMark.AccessibleName = "Solcord cord-cut S mark";
         _brandMark.TabStop = false;

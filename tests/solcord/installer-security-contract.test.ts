@@ -140,6 +140,9 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("primary-action-collapsed");
         expect(installerForm).toContain("maintenance-action-geometry");
         expect(installerForm).toContain("Built with BetterDiscord, created by @Sleeve of Solace.");
+        expect(installerForm).toContain("private static readonly Color BrandTile = Color.FromArgb(24, 37, 39);");
+        expect(installerForm).toContain("_brandMarkHost.BackColor = BrandTile;");
+        expect(installerForm).toContain("_brandMark.BackColor = BrandTile;");
         expect(installerForm).toContain("SizeType.AutoSize");
         expect(installerForm).not.toContain("visibleMaintenanceRows * 52");
         expect(installerForm).toContain("_statePanel.Invalidate()");
