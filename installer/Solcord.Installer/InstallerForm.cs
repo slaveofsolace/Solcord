@@ -273,12 +273,9 @@ internal sealed class InstallerForm : Form
 
     private Control ActionRow(string key, string title, string description, int tabIndex, int rowIndex, ButtonTone tone = ButtonTone.Outline)
     {
-        var row = new TableLayoutPanel {Dock = DockStyle.Fill, AutoSize = false, Height = 48, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Surface, Margin = Padding.Empty, Padding = new Padding(16, 4, 14, 4)};
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124));
-        row.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var row = new Panel {Dock = DockStyle.Fill, AutoSize = false, Height = 48, MinimumSize = new Size(0, 44), BackColor = Surface, Margin = Padding.Empty, Padding = Padding.Empty, AccessibleName = title};
         row.Paint += (_, args) => {if (rowIndex < 2) {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 18, row.ClientSize.Height - 1, row.ClientSize.Width - 14, row.ClientSize.Height - 1);}};
-        var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = new Padding(0, 0, 14, 0)};
+        var copy = new TableLayoutPanel {ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 19));
         copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var name = NewLabel(title, 9.5f, FontStyle.Bold, Ink);
@@ -289,17 +286,24 @@ internal sealed class InstallerForm : Form
         copy.Controls.Add(name, 0, 0);
         copy.Controls.Add(details, 0, 1);
         var button = NewButton(title.Replace("Solcord", "").Trim(), tone);
-        button.Anchor = AnchorStyles.Right;
+        button.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         button.AutoSize = false;
         button.Size = new Size(112, 36);
-        button.Margin = new Padding(8, 0, 0, 0);
+        button.Margin = Padding.Empty;
         button.TextAlign = ContentAlignment.MiddleCenter;
         button.TabIndex = tabIndex;
         button.AccessibleName = title;
         button.AccessibleDescription = description;
         button.Click += (_, _) => RunOperation(key);
-        row.Controls.Add(copy, 0, 0);
-        row.Controls.Add(button, 1, 0);
+        row.Controls.Add(copy);
+        row.Controls.Add(button);
+        row.SizeChanged += (_, _) => {
+            int right = 14;
+            int buttonTop = Math.Max(0, (row.ClientSize.Height - button.Height) / 2);
+            button.Location = new Point(Math.Max(16, row.ClientSize.Width - right - button.Width), buttonTop);
+            int copyWidth = Math.Max(120, button.Left - 30);
+            copy.Bounds = new Rectangle(16, 4, copyWidth, Math.Max(1, row.ClientSize.Height - 8));
+        };
         _actions[key] = new ActionVisual(title, description, row, button, tone, rowIndex);
         return row;
     }
