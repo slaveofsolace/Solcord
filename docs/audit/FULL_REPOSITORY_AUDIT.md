@@ -51,7 +51,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 11 | `src/betterdiscord/modules/solcord/store.ts` | 1,113 | 58.2 KiB |
 | 12 | `CHANGELOG.md` | 1,084 | 35.3 KiB |
 | 13 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
-| 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |
+| 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 15 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 16 | `installer/Solcord.Installer/InstallerEngine.cs` | 767 | 52.0 KiB |
 | 17 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
@@ -70,7 +70,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 5 | `src/betterdiscord/styles/solcord.css` | 1,203 | 90.6 KiB |
 | 6 | `tests/solcord/disposable-acceptance.test.ts` | 1,160 | 56.1 KiB |
 | 7 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
-| 8 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |
+| 8 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 9 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 10 | `src/common/solcord/v2-feature-models.ts` | 660 | 36.0 KiB |
 | 11 | `tests/solcord/settings.test.ts` | 589 | 31.2 KiB |
