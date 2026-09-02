@@ -686,7 +686,9 @@ internal sealed class InstallerEngine
                         if (process.CloseMainWindow() && process.WaitForExit(2500)) continue;
                         if (!process.HasExited)
                         {
-                            process.Kill(entireProcessTree: true);
+                            // Every Discord process is enumerated and validated independently.
+                            // Do not terminate arbitrary descendants that Discord may have launched.
+                            process.Kill();
                             if (!process.WaitForExit(5000)) failures.Add($"{processName} {process.Id}");
                         }
                     }
