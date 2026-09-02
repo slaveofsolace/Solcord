@@ -118,7 +118,43 @@ try {
         `-p:SolcordEmbeddedInstallerManifest=${stagedInstallerManifest}`,
         "-o", staging
     ], {stdio: "inherit", windowsHide: true});
-    if (publish.status !== 0) throw new Error(`dotnet publish failed with status ${publish.status}.`);
+    let publishStatus = publish.status;
+    if (publishStatus !== 0) {
+        // Some repaired .NET 9 Windows installations fail inside the CLI's workload
+        // inventory before `dotnet publish` reaches MSBuild. The SDK's direct MSBuild
+        // entry point does not need that unrelated inventory, so retry the same
+        // publish target through the exact SDK selected by `dotnet --version`.
+        const selectedSdk = spawnSync("dotnet", ["--version"], {encoding: "utf8", windowsHide: true});
+        const locatedHost = spawnSync("where.exe", ["dotnet"], {encoding: "utf8", windowsHide: true});
+        const sdkVersion = selectedSdk.status === 0 ? selectedSdk.stdout.trim() : "";
+        const dotnetHost = locatedHost.status === 0 ? locatedHost.stdout.split(/\r?\n/).map(line => line.trim()).find(Boolean) : undefined;
+        if (!/^\d+\.\d+\.\d+$/.test(sdkVersion) || !dotnetHost || !path.isAbsolute(dotnetHost) || path.basename(dotnetHost).toLowerCase() !== "dotnet.exe") {
+            throw new Error(`dotnet publish failed with status ${publishStatus}, and the selected SDK could not be verified for a direct retry.`);
+        }
+        requireRegularFile(dotnetHost, 1024 * 1024, "The selected dotnet host is missing or unsafe.");
+        const msbuild = path.join(path.dirname(dotnetHost), "sdk", sdkVersion, "MSBuild.dll");
+        requireRegularFile(msbuild, 32 * 1024 * 1024, "The selected SDK MSBuild entry point is missing or unsafe.");
+        const directPublish = spawnSync(dotnetHost, [
+            msbuild,
+            project,
+            "-restore",
+            "-target:Publish",
+            "-property:Configuration=Release",
+            "-property:RuntimeIdentifier=win-x64",
+            "-property:SelfContained=true",
+            "-property:PublishSingleFile=true",
+            "-property:IncludeNativeLibrariesForSelfExtract=true",
+            "-property:PublishTrimmed=false",
+            "-property:MSBuildEnableWorkloadResolver=false",
+            "-property:SolcordRequireEmbeddedBundle=true",
+            `-property:SolcordEmbeddedArtifact=${stagedArtifact}`,
+            `-property:SolcordEmbeddedBuildManifest=${stagedBuildManifest}`,
+            `-property:SolcordEmbeddedInstallerManifest=${stagedInstallerManifest}`,
+            `-property:PublishDir=${staging}${path.sep}`
+        ], {stdio: "inherit", windowsHide: true});
+        publishStatus = directPublish.status;
+    }
+    if (publishStatus !== 0) throw new Error(`dotnet publish failed with status ${publishStatus}.`);
     if (gitText(["rev-parse", "HEAD"]).toLowerCase() !== sourceCommit || gitText(["status", "--porcelain=v1", "--untracked-files=all"])) throw new Error("The source changed while the installer was being built.");
     if (hashFile(artifact) !== artifactHash || hashFile(sourceBuildManifest) !== sourceBuildManifestHash || hashFile(stagedArtifact) !== artifactHash || hashFile(stagedBuildManifest) !== sourceBuildManifestHash) throw new Error("Fresh build output changed while the installer was being built, or its private staging copy no longer matches.");
 

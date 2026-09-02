@@ -40,6 +40,10 @@ describe("Solcord installer security contracts", () => {
         expect(builder).toContain("\"--self-contained\", \"true\"");
         expect(builder).toContain("\"-p:PublishSingleFile=true\"");
         expect(builder).toContain("\"-r\", \"win-x64\"");
+        expect(builder).toContain("the selected SDK could not be verified for a direct retry");
+        expect(builder).toContain("-property:MSBuildEnableWorkloadResolver=false");
+        expect(builder).toContain("-target:Publish");
+        expect(builder).toContain("requireRegularFile(msbuild");
     });
 
     test("embeds the exact manifest-bound resources before publishing transparent release references", () => {
