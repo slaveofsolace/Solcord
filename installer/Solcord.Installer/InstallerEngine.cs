@@ -21,17 +21,25 @@ internal sealed class InstallerEngine
     private readonly string _localAppData;
     private readonly string _roamingAppData;
     private readonly Func<string, int> _runningProcessCount;
+    private readonly Action<IReadOnlyList<string>> _stopDiscordProcesses;
     private readonly Action<string>? _mutationHook;
 
     internal string? LastLauncherWarning {get; private set;}
 
-    internal InstallerEngine(string bundleRoot, string localAppData, string roamingAppData, Func<string, int>? runningProcessCount = null, Action<string>? mutationHook = null)
+    internal InstallerEngine(
+        string bundleRoot,
+        string localAppData,
+        string roamingAppData,
+        Func<string, int>? runningProcessCount = null,
+        Action<string>? mutationHook = null,
+        Action<IReadOnlyList<string>>? discordProcessStopper = null)
     {
         _bundleRoot = Path.GetFullPath(bundleRoot);
         _localAppData = Path.GetFullPath(localAppData);
         _roamingAppData = Path.GetFullPath(roamingAppData);
         _runningProcessCount = runningProcessCount ?? (name => Process.GetProcessesByName(name).Length);
         _mutationHook = mutationHook;
+        _stopDiscordProcesses = discordProcessStopper ?? StopDiscordProcesses;
     }
 
     internal ReleaseManifest LoadManifest()
@@ -640,7 +648,57 @@ internal sealed class InstallerEngine
     private void RequireAllDiscordStopped()
     {
         string[] running = new[] {"Discord", "DiscordPTB", "DiscordCanary"}.Where(name => _runningProcessCount(name) > 0).ToArray();
-        if (running.Length > 0) throw new InvalidOperationException($"Close every running Discord desktop channel before changing the shared Solcord core ({string.Join(", ", running)}). The installer will not terminate them silently.");
+        if (running.Length == 0) return;
+        _stopDiscordProcesses(running);
+        string[] remaining = running.Where(name => _runningProcessCount(name) > 0).ToArray();
+        if (remaining.Length > 0) throw new InvalidOperationException($"Discord could not close automatically ({string.Join(", ", remaining)}). Quit it from the system tray, then try again.");
+    }
+
+    private void StopDiscordProcesses(IReadOnlyList<string> processNames)
+    {
+        var failures = new List<string>();
+        foreach (string processName in processNames)
+        {
+            string trustedRoot = Path.GetFullPath(Path.Combine(_localAppData, processName)).TrimEnd(Path.DirectorySeparatorChar);
+            foreach (Process process in Process.GetProcessesByName(processName))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        if (process.HasExited) continue;
+                        string? executable = process.MainModule?.FileName;
+                        if (executable is null || !IsTrustedDiscordExecutable(trustedRoot, processName, executable))
+                        {
+                            failures.Add($"{processName} {process.Id}");
+                            continue;
+                        }
+
+                        if (process.CloseMainWindow() && process.WaitForExit(2500)) continue;
+                        if (!process.HasExited)
+                        {
+                            process.Kill(entireProcessTree: true);
+                            if (!process.WaitForExit(5000)) failures.Add($"{processName} {process.Id}");
+                        }
+                    }
+                    catch (InvalidOperationException) {/* Process exited between inspection and shutdown. */}
+                    catch {failures.Add($"{processName} {process.Id}");}
+                }
+            }
+        }
+
+        if (failures.Count > 0)
+        {
+            string joined = string.Join(", ", failures.Distinct(StringComparer.Ordinal));
+            throw new InvalidOperationException($"Discord could not close automatically ({joined}). Quit it from the system tray, then try again.");
+        }
+    }
+
+    private static bool IsTrustedDiscordExecutable(string trustedRoot, string processName, string executable)
+    {
+        string full = Path.GetFullPath(executable);
+        return Path.GetFileName(full).Equals($"{processName}.exe", StringComparison.OrdinalIgnoreCase)
+            && full.StartsWith($"{trustedRoot}{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void RejectReparsePoint(string directory)

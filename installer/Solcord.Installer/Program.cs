@@ -103,8 +103,28 @@ internal static class InstallerSelfTest
             ReleaseManifest manifest = engine.LoadManifest();
             string artifact = engine.VerifyBundle(manifest);
             DiscordTarget target = engine.DetectTargets().Single() with {ProcessName = "SolcordInstallerSelfTestNoProcess"};
-            stage = "install";
-            InstallReceipt receipt = engine.Install(target);
+            int stubbornStopAttempts = 0;
+            var stubbornEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, name => name == "Discord" ? 1 : 0, null, names =>
+            {
+                if (!names.SequenceEqual(new[] {"Discord"})) throw new InvalidDataException("fixture process set");
+                stubbornStopAttempts++;
+            });
+            stage = "automatic-discord-stop-refusal";
+            try {stubbornEngine.Install(target); return 40;}
+            catch (InvalidOperationException error) when (error.Message.Contains("could not close automatically", StringComparison.Ordinal)) {/* expected */}
+            if (stubbornStopAttempts != 1) return 41;
+
+            int simulatedDiscordProcesses = 1;
+            bool automaticStopUsed = false;
+            var autoStoppingEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, name => name == "Discord" ? simulatedDiscordProcesses : 0, null, names =>
+            {
+                if (!names.SequenceEqual(new[] {"Discord"})) throw new InvalidDataException("fixture process set");
+                automaticStopUsed = true;
+                simulatedDiscordProcesses = 0;
+            });
+            stage = "automatic-discord-stop-install";
+            InstallReceipt receipt = autoStoppingEngine.Install(target);
+            if (!automaticStopUsed || simulatedDiscordProcesses != 0) return 42;
             if (!engine.VerifyInstalled()) return 2;
             if (!File.ReadAllText(Path.Combine(resources, "app", "index.js")).Contains("betterdiscord.asar", StringComparison.OrdinalIgnoreCase)) return 4;
             string currentReceipt = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");

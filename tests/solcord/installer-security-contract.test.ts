@@ -125,14 +125,14 @@ describe("Solcord installer security contracts", () => {
     });
 
     test("uses one recommended action and a legible native setup and recovery flow", () => {
-        expect(installerForm).toContain("ClientSize = new Size(900, 620)");
+        expect(installerForm).toContain("ClientSize = new Size(900, 650)");
         expect(installerForm).toContain("MinimumSize = new Size(760, 600)");
         expect(installerForm.match(/AutoScroll = true/g)?.length).toBe(1);
         expect(installerForm).not.toContain("BuildBrandRail");
         expect(installerForm).not.toContain("BuildSignalPath");
         expect(installerForm).not.toContain("All operations");
         expect(installerForm).toContain("Solcord Setup");
-        expect(installerForm).toContain("Manage this installation");
+        expect(installerForm).toContain('"Recovery"');
         expect(installerForm).toContain("_maintenanceList.Dock = DockStyle.Top");
         expect(installerForm).toContain("_workspace.RowStyles[4].Height = visibleMaintenanceRows * 52");
         expect(installerForm).toContain("_statePanel.Invalidate()");
@@ -143,6 +143,11 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("Open recovery folder");
         expect(installerForm).toContain("Height = 44");
         expect(installerForm).toContain("Color.White");
+        expect(installerForm).toContain('"Try again"');
+        expect(installerForm).not.toContain('"No action available"');
+        expect(engine).toContain("_stopDiscordProcesses(running)");
+        expect(engine).toContain("IsTrustedDiscordExecutable");
+        expect(selfTest).toContain("automatic-discord-stop-install");
         expect(installerForm).not.toContain("DISCORD, REWIRED.");
         expect(installerForm).not.toContain("ToolTip");
     });
@@ -159,7 +164,7 @@ describe("Solcord installer security contracts", () => {
         expect(engine).toContain("SolcordLauncher.Remove");
         const rollback = engine.slice(engine.indexOf("internal string RollBack"), engine.indexOf("internal string Uninstall"));
         expect(rollback).toContain("SolcordLauncher.Remove(_roamingAppData)");
-        expect(installerForm).toContain("cannot misrepresent the restored runtime");
+        expect(installerForm).toContain("The Solcord shortcut was removed.");
         expect(installerProject).toContain("Solcord.Installer.Resources.solcord.ico");
     });
 
