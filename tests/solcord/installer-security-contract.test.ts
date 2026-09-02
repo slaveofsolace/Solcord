@@ -146,7 +146,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("_targets.TabIndex = 0");
         expect(installerForm).toContain("_verifyAction.TabIndex = 5");
         expect(installerForm).toContain("Open recovery folder");
-        expect(installerForm).toContain("Height = 44");
+        expect(installerForm).toContain("MinimumSize = new Size(0, 44)");
+        expect(installerForm).toContain("Height = 36");
         expect(installerForm).toContain("Color.White");
         expect(installerForm).toContain("\"Try again\"");
         expect(installerForm).not.toContain("\"No action available\"");
@@ -161,6 +162,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).not.toContain("DISCORD, REWIRED.");
         expect(installerForm).not.toContain("ToolTip");
         expect(installerForm).toContain("ValidateGeometryMatrix");
+        expect(installerForm).toContain("ValidateStableChrome");
+        expect(installerForm).toContain("workspace-scroll-moved-fixed-chrome");
         expect(installerForm).toContain("new[] {96, 120, 144, 192}");
         expect(installerForm).toContain("new Size(760, 600), new Size(900, 650)");
         expect(selfTest).toContain("dpi-layout-matrix");

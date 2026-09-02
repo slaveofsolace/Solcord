@@ -35,6 +35,11 @@ internal sealed class InstallerForm : Form
     private readonly Label _maintenanceHeading = new();
     private readonly TableLayoutPanel _maintenanceList = new();
     private readonly TableLayoutPanel _workspace = new();
+    private readonly Panel _header = new();
+    private readonly Panel _workspaceScroll = new();
+    private readonly Panel _footer = new();
+    private readonly Panel _brandMarkHost = new();
+    private readonly PictureBox _brandMark = new();
     private readonly Panel _primaryRow = new();
     private readonly Dictionary<string, ActionVisual> _actions = new(StringComparer.Ordinal);
     private string? _recommendedKey;
@@ -70,9 +75,9 @@ internal sealed class InstallerForm : Form
     private Control BuildShell()
     {
         var shell = new TableLayoutPanel {Dock = DockStyle.Fill, BackColor = Canvas, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, Padding = Padding.Empty};
-        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
         shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         shell.Controls.Add(BuildHeader(), 0, 0);
         shell.Controls.Add(BuildWorkspace(), 0, 1);
         shell.Controls.Add(BuildFooter(), 0, 2);
@@ -81,41 +86,65 @@ internal sealed class InstallerForm : Form
 
     private Control BuildHeader()
     {
-        var header = new Panel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 82), BackColor = Surface, Padding = new Padding(40, 15, 40, 13)};
-        header.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, header.ClientSize.Height - 1, header.ClientSize.Width, header.ClientSize.Height - 1);};
+        _header.Name = "installerHeader";
+        _header.Dock = DockStyle.Fill;
+        _header.AutoSize = false;
+        _header.Margin = Padding.Empty;
+        _header.BackColor = Surface;
+        _header.Padding = new Padding(36, 10, 36, 10);
+        _header.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, _header.ClientSize.Height - 1, _header.ClientSize.Width, _header.ClientSize.Height - 1);};
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 62));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        var markHost = new Panel {Dock = DockStyle.Fill, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = new Padding(4), MinimumSize = new Size(54, 54)};
-        var mark = new PictureBox {Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(2), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent, Image = LoadBrandMark(), AccessibleName = "Solcord cord-cut S mark", TabStop = false};
-        markHost.Controls.Add(mark);
+        _brandMarkHost.Name = "brandMarkSafeArea";
+        _brandMarkHost.Anchor = AnchorStyles.None;
+        _brandMarkHost.BackColor = Color.Transparent;
+        _brandMarkHost.Margin = Padding.Empty;
+        _brandMarkHost.Padding = new Padding(3);
+        _brandMarkHost.MinimumSize = new Size(48, 48);
+        _brandMarkHost.MaximumSize = new Size(48, 48);
+        _brandMarkHost.Size = new Size(48, 48);
+        _brandMark.Name = "brandMark";
+        _brandMark.Dock = DockStyle.Fill;
+        _brandMark.Margin = Padding.Empty;
+        _brandMark.SizeMode = PictureBoxSizeMode.Zoom;
+        _brandMark.BackColor = Color.Transparent;
+        _brandMark.Image = LoadBrandMark();
+        _brandMark.AccessibleName = "Solcord cord-cut S mark";
+        _brandMark.TabStop = false;
+        _brandMarkHost.Controls.Add(_brandMark);
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         copy.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        var title = NewLabel("Solcord Setup", 20f, FontStyle.Bold, Ink);
+        var title = NewLabel("Solcord Setup", 19f, FontStyle.Bold, Ink);
         title.Dock = DockStyle.Fill;
         title.TextAlign = ContentAlignment.BottomLeft;
-        var subtitle = NewLabel("Install or recover Solcord.", 9.5f, FontStyle.Regular, Body);
+        var subtitle = NewLabel("Install, repair, or restore Solcord.", 9.25f, FontStyle.Regular, Body);
         subtitle.Dock = DockStyle.Fill;
         subtitle.TextAlign = ContentAlignment.TopLeft;
         copy.Controls.Add(title, 0, 0);
         copy.Controls.Add(subtitle, 0, 1);
-        layout.Controls.Add(markHost, 0, 0);
+        layout.Controls.Add(_brandMarkHost, 0, 0);
         layout.Controls.Add(copy, 1, 0);
-        header.Controls.Add(layout);
-        return header;
+        _header.Controls.Add(layout);
+        return _header;
     }
 
     private Control BuildWorkspace()
     {
-        var scroll = new Panel {Dock = DockStyle.Fill, BackColor = Canvas, AutoScroll = true};
+        _workspaceScroll.Name = "installerWorkspaceScroll";
+        _workspaceScroll.Dock = DockStyle.Fill;
+        _workspaceScroll.Margin = Padding.Empty;
+        _workspaceScroll.Padding = Padding.Empty;
+        _workspaceScroll.BackColor = Canvas;
+        _workspaceScroll.AutoScroll = true;
         _workspace.AutoSize = true;
         _workspace.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         _workspace.Dock = DockStyle.Top;
         _workspace.BackColor = Canvas;
         _workspace.ColumnCount = 1;
         _workspace.RowCount = 6;
-        _workspace.Padding = new Padding(40, 16, 40, 16);
+        _workspace.Padding = new Padding(36, 12, 36, 12);
         _workspace.Margin = Padding.Empty;
         for (int i = 0; i < _workspace.RowCount; i++) _workspace.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _workspace.Controls.Add(BuildTargetField(), 0, 0);
@@ -124,14 +153,14 @@ internal sealed class InstallerForm : Form
         _workspace.Controls.Add(BuildMaintenanceHeader(), 0, 3);
         _workspace.Controls.Add(BuildMaintenanceList(), 0, 4);
         _workspace.Controls.Add(BuildUtilities(), 0, 5);
-        scroll.Controls.Add(_workspace);
-        return scroll;
+        _workspaceScroll.Controls.Add(_workspace);
+        return _workspaceScroll;
     }
 
     private Control BuildTargetField()
     {
-        var field = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Canvas, Margin = new Padding(0, 0, 0, 10), Padding = Padding.Empty};
-        field.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 148));
+        var field = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 40), ColumnCount = 2, RowCount = 1, BackColor = Canvas, Margin = new Padding(0, 0, 0, 8), Padding = Padding.Empty};
+        field.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 136));
         field.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         field.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var label = NewLabel("Version", 9.5f, FontStyle.Bold, Ink);
@@ -140,7 +169,7 @@ internal sealed class InstallerForm : Form
         _targets.DropDownStyle = ComboBoxStyle.DropDownList;
         _targets.FormattingEnabled = true;
         _targets.Dock = DockStyle.Fill;
-        _targets.Margin = new Padding(0, 6, 0, 6);
+        _targets.Margin = new Padding(0, 5, 0, 5);
         _targets.BackColor = Surface;
         _targets.ForeColor = Ink;
         _targets.FlatStyle = FlatStyle.Flat;
@@ -157,9 +186,9 @@ internal sealed class InstallerForm : Form
     {
         _statePanel.Dock = DockStyle.Top;
         _statePanel.AutoSize = true;
-        _statePanel.MinimumSize = new Size(0, 84);
-        _statePanel.Margin = new Padding(0, 0, 0, 10);
-        _statePanel.Padding = new Padding(20, 10, 18, 10);
+        _statePanel.MinimumSize = new Size(0, 76);
+        _statePanel.Margin = new Padding(0, 0, 0, 8);
+        _statePanel.Padding = new Padding(18, 8, 16, 8);
         _statePanel.BackColor = TealWash;
         _statePanel.Paint += (_, args) => {
             using var accent = new SolidBrush(_stateBorder);
@@ -168,14 +197,14 @@ internal sealed class InstallerForm : Form
             args.Graphics.DrawLine(rule, 4, _statePanel.ClientSize.Height - 1, _statePanel.ClientSize.Width, _statePanel.ClientSize.Height - 1);
         };
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 17));
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 16));
+        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _stateKind.Dock = DockStyle.Fill;
         _stateKind.Font = new Font("Segoe UI Variable Text", 9f, FontStyle.Bold);
         _stateKind.ForeColor = Teal;
         _stateTitle.Dock = DockStyle.Fill;
-        _stateTitle.Font = new Font("Segoe UI Variable Text", 15f, FontStyle.Bold);
+        _stateTitle.Font = new Font("Segoe UI Variable Text", 14f, FontStyle.Bold);
         _stateTitle.ForeColor = Ink;
         _stateBody.Dock = DockStyle.Fill;
         _stateBody.Font = new Font("Segoe UI Variable Text", 9.25f, FontStyle.Regular);
@@ -199,7 +228,7 @@ internal sealed class InstallerForm : Form
         _primaryRow.Dock = DockStyle.Top;
         _primaryRow.AutoSize = true;
         _primaryRow.BackColor = Canvas;
-        _primaryRow.Padding = new Padding(0, 0, 0, 12);
+        _primaryRow.Padding = new Padding(0, 0, 0, 10);
         _primaryAction.Dock = DockStyle.Left;
         _primaryAction.Width = 224;
         _primaryAction.TabIndex = 1;
@@ -211,7 +240,7 @@ internal sealed class InstallerForm : Form
 
     private Control BuildMaintenanceHeader()
     {
-        var header = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 34), ColumnCount = 1, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = Padding.Empty};
+        var header = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 30), ColumnCount = 1, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = Padding.Empty};
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _maintenanceHeading.Text = "Recovery";
         _maintenanceHeading.Font = new Font("Segoe UI Variable Text", 11f, FontStyle.Bold);
@@ -274,7 +303,7 @@ internal sealed class InstallerForm : Form
 
     private Control BuildUtilities()
     {
-        var utilities = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 48), ColumnCount = 3, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = new Padding(0, 8, 0, 0)};
+        var utilities = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 44), ColumnCount = 3, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = new Padding(0, 6, 0, 0)};
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 144));
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 196));
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -298,11 +327,16 @@ internal sealed class InstallerForm : Form
 
     private Control BuildFooter()
     {
-        var footer = new Panel {Dock = DockStyle.Bottom, AutoSize = true, MinimumSize = new Size(0, 50), BackColor = Surface, Padding = new Padding(40, 7, 30, 7)};
-        footer.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, 0, footer.ClientSize.Width, 0);};
+        _footer.Name = "installerFooter";
+        _footer.Dock = DockStyle.Fill;
+        _footer.AutoSize = false;
+        _footer.Margin = Padding.Empty;
+        _footer.BackColor = Surface;
+        _footer.Padding = new Padding(36, 6, 24, 6);
+        _footer.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, 0, _footer.ClientSize.Width, 0);};
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 102));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
         var note = NewLabel("Built with BetterDiscord, created by @Sleeve of Solace.", 8.75f, FontStyle.Regular, Muted);
         note.Dock = DockStyle.Fill;
         note.TextAlign = ContentAlignment.MiddleLeft;
@@ -314,8 +348,8 @@ internal sealed class InstallerForm : Form
         close.Click += (_, _) => Close();
         layout.Controls.Add(note, 0, 0);
         layout.Controls.Add(close, 1, 0);
-        footer.Controls.Add(layout);
-        return footer;
+        _footer.Controls.Add(layout);
+        return _footer;
     }
 
     private void RefreshTargets()
@@ -463,7 +497,7 @@ internal sealed class InstallerForm : Form
 
     private static Button NewButton(string text, ButtonTone tone)
     {
-        var button = new Button {Text = text, Height = 44, Padding = new Padding(14, 0, 14, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, UseVisualStyleBackColor = false, Font = new Font("Segoe UI Variable Text", 9.25f, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter};
+        var button = new Button {Text = text, Height = 36, Padding = new Padding(12, 0, 12, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, UseVisualStyleBackColor = false, Font = new Font("Segoe UI Variable Text", 9.25f, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter};
         ApplyButtonTone(button, tone);
         return button;
     }
@@ -521,9 +555,35 @@ internal sealed class InstallerForm : Form
                 );
                 form.CreateControl();
                 PerformLayoutTree(form);
-                ValidateControlTree(form, $"{dpi}dpi/{logicalClient.Width}x{logicalClient.Height}");
+                string context = $"{dpi}dpi/{logicalClient.Width}x{logicalClient.Height}";
+                ValidateControlTree(form, context);
+                ValidateStableChrome(form, context);
             }
         }
+    }
+
+    private static void ValidateStableChrome(InstallerForm form, string context)
+    {
+        const int tolerance = 2;
+        Rectangle header = form._header.Bounds;
+        Rectangle workspace = form._workspaceScroll.Bounds;
+        Rectangle footer = form._footer.Bounds;
+        if (header.Top > tolerance || Math.Abs(header.Bottom - workspace.Top) > tolerance || Math.Abs(workspace.Bottom - footer.Top) > tolerance || Math.Abs(footer.Bottom - form.ClientSize.Height) > tolerance)
+            throw new InvalidDataException($"installer-layout:{context}:fixed-chrome-gap-or-overlap");
+
+        Padding safe = form._brandMarkHost.Padding;
+        if (form._brandMark.Left < safe.Left || form._brandMark.Top < safe.Top || form._brandMark.Right > form._brandMarkHost.ClientSize.Width - safe.Right || form._brandMark.Bottom > form._brandMarkHost.ClientSize.Height - safe.Bottom)
+            throw new InvalidDataException($"installer-layout:{context}:brand-mark-outside-safe-area");
+
+        if (workspace.Width <= 0 || workspace.Height <= 0)
+            throw new InvalidDataException($"installer-layout:{context}:workspace-scroll-owner-empty");
+
+        Rectangle headerBefore = form._header.Bounds;
+        Rectangle footerBefore = form._footer.Bounds;
+        form._workspaceScroll.AutoScrollPosition = new Point(0, Math.Min(72, Math.Max(0, form._workspace.Height - form._workspaceScroll.ClientSize.Height)));
+        PerformLayoutTree(form);
+        if (form._header.Bounds != headerBefore || form._footer.Bounds != footerBefore)
+            throw new InvalidDataException($"installer-layout:{context}:workspace-scroll-moved-fixed-chrome");
     }
 
     private static void PerformLayoutTree(Control control)
