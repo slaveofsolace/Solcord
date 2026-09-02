@@ -108,7 +108,7 @@ internal static class InstallerSelfTest
             {
                 if (!names.SequenceEqual(new[] {"Discord"})) throw new InvalidDataException("fixture process set");
                 stubbornStopAttempts++;
-            });
+            }, _ => {});
             stage = "automatic-discord-stop-refusal";
             try {stubbornEngine.Install(target); return 40;}
             catch (InvalidOperationException error) when (error.Message.Contains("could not close automatically", StringComparison.Ordinal)) {/* expected */}
@@ -121,7 +121,7 @@ internal static class InstallerSelfTest
                 if (!names.SequenceEqual(new[] {"Discord"})) throw new InvalidDataException("fixture process set");
                 automaticStopUsed = true;
                 simulatedDiscordProcesses = 0;
-            });
+            }, _ => {});
             stage = "automatic-discord-stop-install";
             InstallReceipt receipt = autoStoppingEngine.Install(target);
             if (!automaticStopUsed || simulatedDiscordProcesses != 0) return 42;

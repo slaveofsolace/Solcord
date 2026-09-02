@@ -147,6 +147,9 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).not.toContain("\"No action available\"");
         expect(engine).toContain("_stopDiscordProcesses(running)");
         expect(engine).toContain("IsTrustedDiscordExecutable");
+        expect(engine).toContain("attempt < 30");
+        expect(engine).toContain("_delay(100)");
+        expect(selfTest).toContain("automatic-discord-stop-refusal");
         expect(selfTest).toContain("automatic-discord-stop-install");
         expect(installerForm).not.toContain("DISCORD, REWIRED.");
         expect(installerForm).not.toContain("ToolTip");

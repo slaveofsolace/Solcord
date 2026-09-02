@@ -22,6 +22,7 @@ internal sealed class InstallerEngine
     private readonly string _roamingAppData;
     private readonly Func<string, int> _runningProcessCount;
     private readonly Action<IReadOnlyList<string>> _stopDiscordProcesses;
+    private readonly Action<int> _delay;
     private readonly Action<string>? _mutationHook;
 
     internal string? LastLauncherWarning {get; private set;}
@@ -32,7 +33,8 @@ internal sealed class InstallerEngine
         string roamingAppData,
         Func<string, int>? runningProcessCount = null,
         Action<string>? mutationHook = null,
-        Action<IReadOnlyList<string>>? discordProcessStopper = null)
+        Action<IReadOnlyList<string>>? discordProcessStopper = null,
+        Action<int>? delay = null)
     {
         _bundleRoot = Path.GetFullPath(bundleRoot);
         _localAppData = Path.GetFullPath(localAppData);
@@ -40,6 +42,7 @@ internal sealed class InstallerEngine
         _runningProcessCount = runningProcessCount ?? (name => Process.GetProcessesByName(name).Length);
         _mutationHook = mutationHook;
         _stopDiscordProcesses = discordProcessStopper ?? StopDiscordProcesses;
+        _delay = delay ?? Thread.Sleep;
     }
 
     internal ReleaseManifest LoadManifest()
@@ -650,7 +653,13 @@ internal sealed class InstallerEngine
         string[] running = new[] {"Discord", "DiscordPTB", "DiscordCanary"}.Where(name => _runningProcessCount(name) > 0).ToArray();
         if (running.Length == 0) return;
         _stopDiscordProcesses(running);
-        string[] remaining = running.Where(name => _runningProcessCount(name) > 0).ToArray();
+        string[] remaining = running;
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            remaining = running.Where(name => _runningProcessCount(name) > 0).ToArray();
+            if (remaining.Length == 0) return;
+            _delay(100);
+        }
         if (remaining.Length > 0) throw new InvalidOperationException($"Discord could not close automatically ({string.Join(", ", remaining)}). Quit it from the system tray, then try again.");
     }
 
