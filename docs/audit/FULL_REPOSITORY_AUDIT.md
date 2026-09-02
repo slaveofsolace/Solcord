@@ -13,8 +13,8 @@ The scan is exhaustive at the text-line level. It is not a substitute for semant
 | Persistent tracked files | 585 |
 | Text files scanned | 570 |
 | Binary files classified | 15 |
-| Text lines scanned | 125,447 |
-| Custom Solcord lines | 32,697 |
+| Text lines scanned | 125,459 |
+| Custom Solcord lines | 32,700 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -53,8 +53,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 13 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
 | 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 51.7 KiB |
 | 15 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
-| 16 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
-| 17 | `installer/Solcord.Installer/InstallerEngine.cs` | 729 | 50.0 KiB |
+| 16 | `installer/Solcord.Installer/InstallerEngine.cs` | 738 | 50.3 KiB |
+| 17 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
 | 18 | `src/common/solcord/v2-feature-models.ts` | 660 | 36.0 KiB |
 | 19 | `src/betterdiscord/api/contextmenu.ts` | 651 | 21.9 KiB |
 | 20 | `src/betterdiscord/ui/settings.tsx` | 621 | 23.9 KiB |
