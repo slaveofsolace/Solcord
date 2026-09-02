@@ -44,6 +44,9 @@ describe("Solcord installer security contracts", () => {
         expect(builder).toContain("-property:MSBuildEnableWorkloadResolver=false");
         expect(builder).toContain("-target:Publish");
         expect(builder).toContain("requireRegularFile(msbuild");
+        expect(builder).toContain("The existing installer restore graph changed during the failed CLI publish");
+        const directPublish = builder.slice(builder.indexOf("const directPublish"), builder.indexOf("publishStatus = directPublish.status"));
+        expect(directPublish).not.toContain("\"-restore\"");
     });
 
     test("embeds the exact manifest-bound resources before publishing transparent release references", () => {

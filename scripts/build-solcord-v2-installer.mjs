@@ -104,6 +104,8 @@ try {
     fs.writeFileSync(stagedInstallerManifest, `${JSON.stringify(manifest, null, 2)}\n`, {encoding: "utf8", flag: "wx"});
 
     const project = path.join(repo, "installer", "Solcord.Installer", "Solcord.Installer.csproj");
+    const restoreGraph = path.join(path.dirname(project), "obj", "project.assets.json");
+    const restoreGraphHash = fs.existsSync(restoreGraph) ? hashFile(restoreGraph) : undefined;
     const publish = spawnSync("dotnet", [
         "publish", project,
         "-c", "Release",
@@ -134,10 +136,21 @@ try {
         requireRegularFile(dotnetHost, 1024 * 1024, "The selected dotnet host is missing or unsafe.");
         const msbuild = path.join(path.dirname(dotnetHost), "sdk", sdkVersion, "MSBuild.dll");
         requireRegularFile(msbuild, 32 * 1024 * 1024, "The selected SDK MSBuild entry point is missing or unsafe.");
+        if (!restoreGraphHash) throw new Error("The direct SDK retry requires an existing verified installer restore graph.");
+        requireRegularFile(restoreGraph, 1024 * 1024, "The existing installer restore graph is missing or unsafe.");
+        if (hashFile(restoreGraph) !== restoreGraphHash) throw new Error("The existing installer restore graph changed during the failed CLI publish.");
+        const restored = JSON.parse(fs.readFileSync(restoreGraph, "utf8"));
+        const restoredProject = restored?.project?.restore?.projectPath;
+        const restoredTargets = Object.keys(restored?.targets ?? {});
+        if (restored?.version !== 3
+            || typeof restoredProject !== "string"
+            || path.resolve(restoredProject).toLowerCase() !== project.toLowerCase()
+            || !restoredTargets.some(target => target.endsWith("/win-x64"))) {
+            throw new Error("The existing installer restore graph is not bound to this project and runtime.");
+        }
         const directPublish = spawnSync(dotnetHost, [
             msbuild,
             project,
-            "-restore",
             "-target:Publish",
             "-property:Configuration=Release",
             "-property:RuntimeIdentifier=win-x64",
