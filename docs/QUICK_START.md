@@ -1,24 +1,22 @@
 # Solcord quick start
 
-This guide applies only after `v2.0.0-rc.5` appears on the official Solcord release page with matching installer and checksum assets. Until then, RC5 is a candidate under review—not a downloadable release. The steps are written for someone who has never installed a Discord client mod.
+This guide applies to `v2.0.0-rc.31` on the official Solcord release page. The steps are written for someone who has never installed a Discord client mod.
 
 On a typical Windows PC, the normal install is designed to take about one minute after the files are downloaded. That is a usability target, not a guarantee; Windows review prompts, Discord shutdown, recovery, and first-run choices can take longer.
 
 > [!WARNING]
-> Solcord RC5 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord`, confirm that the release is actually published, and compare its SHA-256 value with `SHA256SUMS.txt` before opening it. `release-manifest.json` is the separate machine-readable evidence manifest.
+> Solcord RC31 is not code-signed. Windows may call it an unknown publisher. Download only from `slaveofsolace/Solcord` and compare the installer SHA-256 with `SHA256SUMS.txt` before opening it. `release-manifest.json` is the separate machine-readable evidence manifest.
 
 ## 1. Download
 
 Download both files into the same folder:
 
-- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/SolcordInstaller.exe)
-- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/SHA256SUMS.txt)
+- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.31/SolcordInstaller.exe)
+- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.31/SHA256SUMS.txt)
 
 The assembled candidate stores the executable at `installer/SolcordInstaller.exe` inside its local evidence directory. Release publishing maps that exact hash-verified file to the root GitHub asset name `SolcordInstaller.exe`; it does not rebuild or change its bytes. `release-manifest.json` records this mapping and the installer build-receipt hash.
 
-The six walkthrough images in this guide are optional release assets captured only after exact-candidate acceptance. When published, their exact names are `01-download.png`, `02-quit-discord.png`, `03-install.png`, `04-verified.png`, `05-first-setup.png`, and `06-recovery.png`; each published image must also appear as a hash-bound evidence file. A missing image never weakens checksum or installer verification.
-
-![Download Solcord and its checksum list](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/01-download.png)
+Walkthrough images are optional release assets. If present, each one is hash-bound in the release evidence; their absence does not weaken installer verification.
 
 Optional verification in PowerShell:
 
@@ -28,29 +26,21 @@ Get-FileHash .\SolcordInstaller.exe -Algorithm SHA256
 
 Compare the result with the `installer/SolcordInstaller.exe` entry in `SHA256SUMS.txt`; that nested evidence name applies byte-for-byte to the root-published `SolcordInstaller.exe`. Stop if it differs.
 
-## 2. Quit Discord
+## 2. Save anything in progress
 
-Right-click Discord in the Windows system tray and choose **Quit Discord**. Closing only the main window is not enough.
-
-![Quit Discord before installation](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/02-quit-discord.png)
+Leave voice calls and save any unfinished message. The installer closes only the selected Discord desktop channel when a file change requires it, waits for that exact process tree to exit, and then continues. It does not close unrelated applications.
 
 ## 3. Install
 
-Open the installer. Check the detected Discord channel and installation path, then select **Install**. Solcord refuses to write if Discord is still running or its embedded files fail verification.
-
-![Install the verified Solcord artifact](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/03-install.png)
+Open the installer. Confirm the **Version** row shows the Discord channel and version you use, such as `Stable · 1.0.9255`, then choose the one available primary action: **Install Solcord** or **Update Solcord**. Solcord refuses to write if its embedded files fail verification or the selected Discord process cannot be stopped safely.
 
 ## 4. Verify and launch
 
-Select **Verify** after installation. When the installer reports the expected artifact and backup receipt, select **Launch Discord**.
-
-![Verify the installed artifact before launch](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/04-verified.png)
+Select **Verify files** after installation. When the installer reports that the installed files match, select **Open Solcord**.
 
 ## 5. Complete First Setup
 
-Open **User Settings → Solcord Suite**. First Setup previews the selected theme, built-ins, privacy choices, and complete change list before applying anything. Skipping setup leaves the current addon and theme state unchanged.
-
-![Solcord First Setup](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/05-first-setup.png)
+A fresh installation opens **User Settings → Solcord Suite** on Welcome after Discord is ready. First Setup previews the selected theme, built-ins, privacy choices, and complete change list before applying anything. **Finish later** preserves the draft and leaves the current addon and theme state unchanged. Existing completed profiles do not reopen setup after an update or repair.
 
 Recommended first check:
 
@@ -62,8 +52,6 @@ Recommended first check:
 
 ## Recovery
 
-If Discord fails to open correctly, quit it and run the same installer. Choose **Rollback / Uninstall** and use the exact backup shown by Recovery. Do not delete `%APPDATA%\BetterDiscord`, your plugins, themes, Custom CSS, or private addon databases.
-
-![Solcord recovery and Plugin Doctor](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.5/06-recovery.png)
+If Discord fails to open correctly, run the same installer and choose **Roll back**. **Repair**, **Roll back**, and **Uninstall** are separate actions with separate explanations. Do not delete `%APPDATA%\BetterDiscord`, your plugins, themes, Custom CSS, or private addon databases.
 
 For manual recovery and backup details, read [Install and rollback](INSTALL_AND_ROLLBACK.md).

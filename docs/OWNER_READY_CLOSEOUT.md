@@ -5,14 +5,14 @@ This page is the current product-status source for the unsigned Solcord V2 relea
 ## Release line
 
 - Integration branch: `development`
-- Preserved releases: `v2.0.0-rc.2`, `v2.0.0-rc.3`, and `v2.0.0-rc.4`
-- Current source-changing candidate: `v2.0.0-rc.5`
+- Preserved releases: every previously published release remains immutable
+- Current reviewed candidate: `v2.0.0-rc.31`
 - Target: Discord Stable on Windows, using the existing BetterDiscord injector and `BdApi` compatibility contracts
 - Distribution: unsigned prerelease with SHA-256 manifests, exact rollback identity, and no SmartScreen-reputation claim
 
 Exact source, ASAR, installer, Discord version, profile type, backup, and rollback hashes belong in the external release-evidence manifest generated from the frozen commit.
 
-Current RC5 branch status: source, package, installer-self-test, security, and isolated fixture gates are in progress or complete. The exact RC5 ASAR has not yet been launched in the signed-in owner profile. Earlier exact-client results below remain useful regression evidence, but they do not certify a newer source SHA.
+Current RC31 status: source, package, installer self-test, deterministic rebuild, production dependency audit, formal security scan, hosted CI, owner-profile installation, two clean starts, installer repair, and the complete nine-route Control Center sweep have passed. The exact source, ASAR, installer, backup, and release-evidence hashes remain authoritative; authenticated account-affecting actions are intentionally outside automated acceptance.
 
 ## Product status
 
@@ -41,11 +41,11 @@ Current RC5 branch status: source, package, installer-self-test, security, and i
 
 First Setup is transactional and resumable. The exact disposable client passed forward/back navigation, pause/resume, final preview, Apply and verify, eleven-theme installation, restart persistence, and private-default behavior. Automated malformed-state, interrupted-recovery, and rollback coverage remains green. Skipping changes only the onboarding marker.
 
-The status labels above describe implemented behavior plus retained adapter evidence. They are not a claim that every volatile Discord lookup has passed against the current RC5 ASAR. Current-build live status is recorded separately in the external release manifest; an unvalidated adapter continues to report `Unavailable` rather than borrowing a neighboring module's result.
+The status labels above describe implemented behavior plus retained adapter evidence. Current-build live status is recorded separately in the external release manifest; an unvalidated adapter continues to report `Unavailable` rather than borrowing a neighboring module's result.
 
-## Prior exact-client acceptance retained
+## Exact-client acceptance
 
-The following checks passed on the previously reviewed exact-client candidate. They are retained as regression evidence only. They must be repeated for the final RC5 source and ASAR before RC5 is called owner-ready.
+The following checks passed on the reviewed RC31 runtime or remain explicitly identified as retained regression evidence in the external receipt.
 
 - The current Discord Stable client loaded the exact candidate in a filesystem-isolated acceptance root with the expected source/ASAR identity and no duplicate bootstrap.
 - All four baseline runtime adapters survived restart together, then returned to zero styles, elements, classes, observers, listeners, timers, and previews after disable.
@@ -85,7 +85,7 @@ They remain measured technical debt. Do not churn public exports or upstream own
 
 Safe source, disposable-runtime, packaging, recovery, accessibility, and documentation work runs without repeated owner pauses. Optional owner validation covers authenticated or account-affecting interactions that automated acceptance deliberately does not perform:
 
-1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. RC5 does not alter those accepted mechanisms.
+1. Recheck Codenames and one second Discord Activity after a future Activity Bridge or preload-policy change. RC31 does not alter those accepted mechanisms.
 2. Confirm First Setup's final preview before applying it to the signed-in profile.
 3. Review Friend Watch's live-profile passive state; export or clear is optional and must not involve changing a relationship.
 
@@ -97,4 +97,4 @@ The release is owner-ready only when the exact candidate survives two clean laun
 - A green build does not prove a Discord interaction until the exact client and candidate complete it.
 - Solcord does not extract tokens, automate accounts, forge entitlements, reveal hidden content, or silently record/upload media.
 - Existing owner plugins, themes, Custom CSS, and private databases are preserved; their presence is not compatibility certification.
-- `v2.0.0-rc.2`, `v2.0.0-rc.3`, and `v2.0.0-rc.4` remain immutable. RC5 is a new artifact line.
+- Published historical candidates remain immutable. RC31 is an unsigned prerelease candidate, not a signed stable release.
