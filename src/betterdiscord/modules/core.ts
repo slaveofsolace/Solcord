@@ -80,6 +80,9 @@ export default new class Core {
         Logger.log("Startup", "Waiting for connection...");
         await this.waitForConnection();
 
+        Logger.log("Startup", "Checking first-install setup handoff");
+        await SolcordRuntime.openPendingFirstSetup();
+
         Logger.log("Startup", "Initializing FloatingWindows");
         FloatingWindows.initialize();
 

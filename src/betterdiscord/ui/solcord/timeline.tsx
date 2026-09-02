@@ -4,6 +4,7 @@ import {useStateFromStores} from "@ui/hooks";
 import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings from "@modules/solcord/store";
 import type {SolcordTimelinePolicy} from "@modules/solcord/contracts";
+import SolcordSwitch from "./switch";
 
 const {useState} = React;
 
@@ -75,7 +76,7 @@ export default function MessageTimelinePanel() {
     return <section className="solcord-section">
         <div className="solcord-section-heading"><h2>Message Timeline</h2><p>A private local journal for messages this running client actually observes. Persistent segments are encrypted when secure storage is available; DMs are the default and servers require channel-by-channel opt-in.</p></div>
         <div className="solcord-timeline-toolbar">
-            <label><input type="checkbox" checked={state.policy.enabled} onChange={event => update({enabled: event.currentTarget.checked})} /> Timeline {state.policy.enabled ? "on" : "off"}</label>
+            <label><SolcordSwitch label="Enable Message Timeline" checked={state.policy.enabled} onChange={value => update({enabled: value})} /> Timeline {state.policy.enabled ? "on" : "off"}</label>
             <label>Retention<select value={state.policy.retention} onChange={event => update({retention: event.currentTarget.value as SolcordTimelinePolicy["retention"]})}><option value="session">Session</option><option value="24-hours">24 hours</option><option value="7-days">7 days</option><option value="30-days">30 days</option><option value="90-days">90 days</option><option value="manual">Manual clear</option></select></label>
             <label>Content<select value={state.policy.content} onChange={event => update({content: event.currentTarget.value as SolcordTimelinePolicy["content"]})}><option value="text-only">Text only</option><option value="text-and-metadata">Text + attachment metadata</option><option value="encrypted-media" disabled>Encrypted media — not accepted</option></select></label>
             <button type="button" className="solcord-action" disabled={!state.currentChannel.eligible} onClick={() => void toggleCurrentChannel()}>{state.currentChannel.included ? "Remove current server channel" : "Add current server channel"}</button>
@@ -86,10 +87,10 @@ export default function MessageTimelinePanel() {
             <div className="solcord-control-grid">
                 {([[
                     "ignoreSelf", "Ignore my messages"
-                ], ["ignoreBots", "Ignore bots"], ["ignoreBlockedUsers", "Ignore blocked users"], ["ignoreMutedChannels", "Ignore muted channels"], ["ignoreMutedGuilds", "Ignore muted servers"], ["ignoreNsfw", "Ignore age-restricted channels"], ["alwaysLogDms", "Always include DMs"], ["alwaysLogGhostPings", "Keep ghost pings"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={state.policy.filters[key]} onChange={event => update({filters: {...state.policy.filters, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                ], ["ignoreBots", "Ignore bots"], ["ignoreBlockedUsers", "Ignore blocked users"], ["ignoreMutedChannels", "Ignore muted channels"], ["ignoreMutedGuilds", "Ignore muted servers"], ["ignoreNsfw", "Ignore age-restricted channels"], ["alwaysLogDms", "Always include DMs"], ["alwaysLogGhostPings", "Keep ghost pings"]] as const).map(([key, label]) => <label key={key}><SolcordSwitch label={label} checked={state.policy.filters[key]} onChange={value => update({filters: {...state.policy.filters, [key]: value}})} /> {label}</label>)}
                 {([[
                     "showDeletedMessages", "Show deleted"
-                ], ["showEditedMessages", "Show edited"], ["showPurgedMessages", "Show bulk-deleted"], ["showDeletedCount", "Show deleted count"], ["showEditedCount", "Show edited count"], ["reverseOrder", "Oldest first"]] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={state.policy.display[key]} onChange={event => update({display: {...state.policy.display, [key]: event.currentTarget.checked}})} /> {label}</label>)}
+                ], ["showEditedMessages", "Show edited"], ["showPurgedMessages", "Show bulk-deleted"], ["showDeletedCount", "Show deleted count"], ["showEditedCount", "Show edited count"], ["reverseOrder", "Oldest first"]] as const).map(([key, label]) => <label key={key}><SolcordSwitch label={label} checked={state.policy.display[key]} onChange={value => update({display: {...state.policy.display, [key]: value}})} /> {label}</label>)}
                 <label>Edit versions<input type="number" min="1" max="100" value={state.policy.display.maxShownEdits} onChange={event => update({display: {...state.policy.display, maxShownEdits: Number(event.currentTarget.value)}})} /></label>
             </div>
         </details>

@@ -134,7 +134,12 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("Solcord Setup");
         expect(installerForm).toContain("\"Recovery\"");
         expect(installerForm).toContain("_maintenanceList.Dock = DockStyle.Top");
-        expect(installerForm).toContain("_workspace.RowStyles[4].Height = visibleMaintenanceRows * 52");
+        expect(installerForm).toContain("NewLabel(\"Version\"");
+        expect(installerForm).toContain("$\"{target.Channel} · {target.Version}\"");
+        expect(installerForm).toContain("new Size(112, 36)");
+        expect(installerForm).toContain("Built with BetterDiscord, created by @Sleeve of Solace.");
+        expect(installerForm).toContain("SizeType.AutoSize");
+        expect(installerForm).not.toContain("visibleMaintenanceRows * 52");
         expect(installerForm).toContain("_statePanel.Invalidate()");
         expect(installerForm).toContain("ButtonTone.Primary");
         expect(installerForm).toContain("_recommendedKey");
@@ -155,6 +160,26 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("automatic-discord-stop-install");
         expect(installerForm).not.toContain("DISCORD, REWIRED.");
         expect(installerForm).not.toContain("ToolTip");
+        expect(installerForm).toContain("ValidateGeometryMatrix");
+        expect(installerForm).toContain("new[] {96, 120, 144, 192}");
+        expect(installerForm).toContain("new Size(760, 600), new Size(900, 650)");
+        expect(selfTest).toContain("dpi-layout-matrix");
+    });
+
+    test("creates a receipt-bound first-setup handoff only for a verified first install", () => {
+        expect(engine).toContain("internal sealed record SolcordFirstSetupIntent");
+        expect(engine).toContain("WriteFirstSetupIntent(receipt)");
+        expect(engine).toContain("first-setup-intent.json");
+        expect(engine).toContain("Guid.NewGuid().ToString(\"N\")");
+        const installNew = engine.slice(engine.indexOf("internal InstallReceipt InstallNew"), engine.indexOf("internal InstallReceipt Update"));
+        const update = engine.slice(engine.indexOf("internal InstallReceipt Update"), engine.indexOf("internal InstallReceipt Repair"));
+        const repair = engine.slice(engine.indexOf("internal InstallReceipt Repair"), engine.indexOf("internal bool VerifyInstalled"));
+        expect(installNew).toContain("WriteFirstSetupIntent(receipt)");
+        expect(update).not.toContain("WriteFirstSetupIntent");
+        expect(repair).not.toContain("WriteFirstSetupIntent");
+        expect(selfTest).toContain("first-setup-intent.json");
+        expect(selfTest).toContain("File.ReadAllText(firstSetupIntent) != originalIntent");
+        expect(selfTest).toContain("File.Exists(firstSetupIntent) || !engine.VerifyInstalled()");
     });
 
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {

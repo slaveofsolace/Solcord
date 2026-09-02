@@ -12,37 +12,12 @@ import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan, type SolcordSetu
 import {resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_SETUP_STEPS, type SolcordAppearancePreferences, type SolcordPerformanceProfile, type SolcordSetupPreset} from "@common/solcord/product";
 
 import {SOLCORD_ADDON_GROUPS} from "./catalog";
+import {scrollSolcordSettingsTarget} from "./scroll-owner";
+import SolcordSwitch from "./switch";
 
 const {useEffect, useMemo, useRef, useState} = React;
 
 const WIZARD_STEPS = SOLCORD_SETUP_STEPS;
-
-function stickySetupNavigationOffset(target: HTMLElement, navigation: HTMLElement | null): number {
-    if (!navigation || getComputedStyle(navigation).position !== "sticky") return 0;
-    const navigationRect = navigation.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    const horizontallyOverlaps = navigationRect.left < targetRect.right && navigationRect.right > targetRect.left;
-    return horizontallyOverlaps ? Math.ceil(navigationRect.height) + 12 : 0;
-}
-
-function scrollSolcordSetupTarget(target: HTMLElement | null): void {
-    if (!target) return;
-    const navigation = target.closest(".solcord-control-center")?.querySelector<HTMLElement>(".solcord-workspace-nav") ?? null;
-    const stickyOffset = stickySetupNavigationOffset(target, navigation);
-    let scrollOwner = target.parentElement;
-    while (scrollOwner) {
-        const overflowY = getComputedStyle(scrollOwner).overflowY;
-        if (/auto|scroll|overlay/.test(overflowY) && scrollOwner.scrollHeight > scrollOwner.clientHeight) break;
-        scrollOwner = scrollOwner.parentElement;
-    }
-    if (!scrollOwner) {
-        target.scrollIntoView({block: "start"});
-        if (stickyOffset) globalThis.scrollBy?.({top: -stickyOffset, behavior: "auto"});
-        return;
-    }
-    const targetOffset = target.getBoundingClientRect().top - scrollOwner.getBoundingClientRect().top;
-    scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: "auto"});
-}
 
 const THEME_NOTES: Record<SolcordThemeId, string> = {
     "solcord-default": "Recommended · Graphite, warm text, oxidized teal, and ember reserved for warnings.",
@@ -242,17 +217,17 @@ function PrivacyStep({draft, onChange}: {draft: SolcordSetupDraft; onChange(valu
         </div>
         <h3>Safety tools</h3>
         <div className="solcord-choice-stack">
-            <label className="solcord-choice-row"><input type="checkbox" checked={safety.linkLens} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, linkLens: event.currentTarget.checked}}})} /><span><strong>Link Lens</strong><small>Review external links before opening them. Discord navigation is not intercepted.</small></span></label>
-            <label className="solcord-choice-row"><input type="checkbox" checked={safety.attachmentGuard} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, attachmentGuard: event.currentTarget.checked}}})} /><span><strong>Attachment review</strong><small>Inspect a file locally before upload. Solcord never submits it for you.</small></span></label>
+            <label className="solcord-choice-row"><SolcordSwitch label="Enable Link Lens" checked={safety.linkLens} onChange={value => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, linkLens: value}}})} /><span><strong>Link Lens</strong><small>Review external links before opening them. Discord navigation is not intercepted.</small></span></label>
+            <label className="solcord-choice-row"><SolcordSwitch label="Enable attachment review" checked={safety.attachmentGuard} onChange={value => onChange({...draft, productPreferences: {...draft.productPreferences, safety: {...safety, attachmentGuard: value}}})} /><span><strong>Attachment review</strong><small>Inspect a file locally before upload. Solcord never submits it for you.</small></span></label>
         </div>
         <details className="solcord-review-details">
             <DisclosureSummary title="Optional private history" detail="Off by default · local, account-scoped, and clearable" />
             <p>These features are off by default. They use only data already loaded by this client and make no extra Discord requests.</p>
             <div className="solcord-choice-stack">
-            <label className="solcord-choice-row"><input type="checkbox" checked={friendWatch.enabled} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, enabled: event.currentTarget.checked}}})} /><span><strong>Friend Watch</strong><small>Relationship transitions only; 30-day encrypted local retention by default. It never guesses who blocked you.</small></span></label>
-            <label className="solcord-choice-row"><input type="checkbox" disabled={!friendWatch.enabled} checked={friendWatch.includeDisplaySnapshot} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, includeDisplaySnapshot: event.currentTarget.checked}}})} /><span><strong>Keep display snapshots</strong><small>Store the already-loaded display name inside the encrypted account history. Turn this off to keep only an account-scoped subject key.</small></span></label>
+            <label className="solcord-choice-row"><SolcordSwitch label="Enable Friend Watch" checked={friendWatch.enabled} onChange={value => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, enabled: value}}})} /><span><strong>Friend Watch</strong><small>Relationship transitions only; 30-day encrypted local retention by default. It never guesses who blocked you.</small></span></label>
+            <label className="solcord-choice-row"><SolcordSwitch label="Keep Friend Watch display snapshots" disabled={!friendWatch.enabled} checked={friendWatch.includeDisplaySnapshot} onChange={value => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, includeDisplaySnapshot: value}}})} /><span><strong>Keep display snapshots</strong><small>Store the already-loaded display name inside the encrypted account history. Turn this off to keep only an account-scoped subject key.</small></span></label>
             <label className="solcord-choice-row"><span><strong>Local notifications</strong><small>Daily shows one bounded in-app summary after a new transition; per-event is capped to prevent notification storms.</small></span><select aria-label="Friend Watch notification mode" disabled={!friendWatch.enabled} value={friendWatch.digest} onChange={event => onChange({...draft, productPreferences: {...draft.productPreferences, friendWatch: {...friendWatch, digest: event.currentTarget.value as typeof friendWatch.digest}}})}><option value="off">Off</option><option value="daily">Daily in-app</option><option value="per-event">Per event, local</option></select></label>
-            <label className="solcord-choice-row"><input type="checkbox" checked={draft.timelinePolicy.enabled} onChange={event => onChange({...draft, timelinePolicy: {...draft.timelinePolicy, enabled: event.currentTarget.checked}})} /><span><strong>Message Timeline</strong><small>DM-only, text-only, seven days by default. This stores observed message edits/deletes locally.</small></span></label>
+            <label className="solcord-choice-row"><SolcordSwitch label="Enable Message Timeline" checked={draft.timelinePolicy.enabled} onChange={value => onChange({...draft, timelinePolicy: {...draft.timelinePolicy, enabled: value}})} /><span><strong>Message Timeline</strong><small>DM-only, text-only, seven days by default. This stores observed message edits/deletes locally.</small></span></label>
             </div>
             <p className="solcord-callout">Without Windows secure storage, private history becomes session-only.</p>
         </details>
@@ -285,7 +260,7 @@ function AddonStep({draft, toggle, selectRecommended}: {draft: SolcordSetupDraft
                 <legend><span>{group.title}</span><small>{group.summary}</small></legend>
                 {group.addons.map(addon => {
                     return <label key={addon.name} className="solcord-addon-choice">
-                            <input type="checkbox" checked={selected.has(addon.name)} onChange={event => toggle(addon.name, event.currentTarget.checked)} />
+                            <SolcordSwitch label={`${selected.has(addon.name) ? "Disable" : "Enable"} ${addon.name}`} checked={selected.has(addon.name)} onChange={value => toggle(addon.name, value)} />
                             <span><strong>{addon.label}</strong><small>{addon.summary}</small></span>
                             <span className="solcord-review-chip">Runtime check pending</span>
                         </label>;
@@ -360,8 +335,13 @@ export default function SetupWizard() {
         catch {setStatus("Your setup choices could not be saved. The durable draft was left unchanged; check disk access and retry before applying.");}
     }, [draft]);
     useEffect(() => {
-        scrollSolcordSetupTarget(wizardRef.current);
+        const frame = requestAnimationFrame(() => scrollSolcordSettingsTarget(wizardRef.current, "target"));
+        return () => cancelAnimationFrame(frame);
     }, [step]);
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => void SolcordRuntime.acknowledgeFirstSetupIntent());
+        return () => cancelAnimationFrame(frame);
+    }, []);
     const setDraft = (update: SolcordSetupDraft | ((current: SolcordSetupDraft) => SolcordSetupDraft)) => setDraftState(current => typeof update === "function" ? update(current) : update);
     const toggle = (name: string, enabled: boolean) => setDraft(current => ({...current, selectedAddons: enabled ? [...new Set([...current.selectedAddons, name])] : current.selectedAddons.filter(item => item !== name)}));
     const setStep = (next: number) => {

@@ -38,17 +38,17 @@ const scenarios = [
     {name: "overview-dark-effective-125", width: 1093, height: 614, query: "workspace=overview&state=degraded&mode=solcord-dark&scale=125"},
     {name: "privacy-light-effective-150", width: 911, height: 512, query: "workspace=privacy&state=degraded&mode=solcord-light&scale=150"},
     {name: "recovery-dark-effective-200", width: 683, height: 384, query: "workspace=recovery&state=degraded&mode=solcord-dark&scale=200"},
-    {name: "theme-solcord-default", width: 960, height: 720, query: "workspace=overview&state=healthy&mode=follow-discord&theme=solcord-default&scale=100"},
-    {name: "theme-obsidian-thread", width: 960, height: 720, query: "workspace=privacy&state=healthy&mode=follow-discord&theme=obsidian-thread&scale=100"},
-    {name: "theme-carbon-ember", width: 960, height: 720, query: "workspace=chat&state=healthy&mode=follow-discord&theme=carbon-ember&scale=100"},
-    {name: "theme-midnight-glass", width: 960, height: 720, query: "workspace=voice&state=healthy&mode=follow-discord&theme=midnight-glass&scale=100"},
-    {name: "theme-paper-signal", width: 960, height: 720, query: "workspace=friends&state=healthy&mode=follow-discord&theme=paper-signal&scale=100"},
-    {name: "theme-threadline", width: 960, height: 720, query: "workspace=extensions&state=healthy&mode=follow-discord&theme=threadline&scale=100"},
-    {name: "theme-signal-block", width: 960, height: 720, query: "workspace=recovery&state=degraded&mode=follow-discord&theme=signal-block&scale=100"},
-    {name: "theme-relay-classic", width: 960, height: 720, query: "workspace=performance&state=healthy&mode=follow-discord&theme=relay-classic&scale=100"},
-    {name: "theme-workshop", width: 960, height: 720, query: "workspace=overview&state=wizard&mode=follow-discord&theme=workshop&scale=100"},
-    {name: "theme-quiet-read", width: 960, height: 720, query: "workspace=appearance&state=healthy&mode=follow-discord&theme=quiet-read&motion=reduced&scale=100"},
-    {name: "theme-night-transit", width: 960, height: 720, query: "workspace=voice&state=degraded&mode=follow-discord&theme=night-transit&scale=100"}
+    {name: "theme-solcord-default", width: 960, height: 720, query: "workspace=overview&state=healthy&mode=follow-discord&theme=solcord-default&switches=1&scale=100"},
+    {name: "theme-obsidian-thread", width: 960, height: 720, query: "workspace=privacy&state=healthy&mode=follow-discord&theme=obsidian-thread&switches=1&scale=100"},
+    {name: "theme-carbon-ember", width: 960, height: 720, query: "workspace=chat&state=healthy&mode=follow-discord&theme=carbon-ember&switches=1&scale=100"},
+    {name: "theme-midnight-glass", width: 960, height: 720, query: "workspace=voice&state=healthy&mode=follow-discord&theme=midnight-glass&switches=1&scale=100"},
+    {name: "theme-paper-signal", width: 960, height: 720, query: "workspace=friends&state=healthy&mode=follow-discord&theme=paper-signal&switches=1&scale=100"},
+    {name: "theme-threadline", width: 960, height: 720, query: "workspace=extensions&state=healthy&mode=follow-discord&theme=threadline&switches=1&scale=100"},
+    {name: "theme-signal-block", width: 960, height: 720, query: "workspace=recovery&state=degraded&mode=follow-discord&theme=signal-block&switches=1&scale=100"},
+    {name: "theme-relay-classic", width: 960, height: 720, query: "workspace=performance&state=healthy&mode=follow-discord&theme=relay-classic&switches=1&scale=100"},
+    {name: "theme-workshop", width: 960, height: 720, query: "workspace=overview&state=wizard&mode=follow-discord&theme=workshop&switches=1&scale=100"},
+    {name: "theme-quiet-read", width: 960, height: 720, query: "workspace=appearance&state=healthy&mode=follow-discord&theme=quiet-read&motion=reduced&switches=1&scale=100"},
+    {name: "theme-night-transit", width: 960, height: 720, query: "workspace=voice&state=degraded&mode=follow-discord&theme=night-transit&switches=1&scale=100"}
 ];
 
 mkdirSync(output, {recursive: true});

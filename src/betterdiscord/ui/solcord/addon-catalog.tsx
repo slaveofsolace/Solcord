@@ -10,6 +10,7 @@ import {isSolcordBuiltInAddon, resolveCommunityAddon} from "@common/solcord/buil
 import {inferSolcordPermissionCard, type SolcordPermissionCard} from "@common/solcord/product";
 
 import {SOLCORD_ADDON_GROUPS, SOLCORD_ADDON_PRESENTATION} from "./catalog";
+import SolcordSwitch from "./switch";
 
 const {useMemo, useState} = React;
 const OFFICIAL_PLUGIN_STORE = "https://betterdiscord.app/plugins";
@@ -87,7 +88,7 @@ export function CuratedAddonSet() {
                         const visibleTone = addon.quarantine || addon.adapter?.conflict ? "solcord-status-quarantined" : addon.enabled ? "solcord-status-active" : "solcord-status-stopped";
                         return <div className="solcord-curated-row" key={addon.name}>
                             <div><div className="solcord-module-name"><strong>{presentation.label}</strong><span className={`solcord-status ${visibleTone}`}>{visibleState}</span></div><p>{presentation.summary}</p><details className="solcord-secondary-tools"><summary>Technical details</summary><p>{addon.installed ? `Local ${addon.version}` : "Catalog reference only"} · {addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()} · {addon.integrity?.status ?? "integrity unavailable"}</p>{addon.permissions && <PermissionCard permissions={addon.permissions} />}{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{addon.adapter?.conflict && <small className="solcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.installable && <small className="solcord-error">Owner-enabled local state is preserved, but Solcord will not re-enable this candidate.</small>}{addon.quarantine && <small className="solcord-error">{addon.quarantine}</small>}</details></div>
-                            <label className="solcord-toggle"><input type="checkbox" aria-label={`${addon.enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={event => void toggle(addon.name, event.currentTarget.checked)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
+                            <label className="solcord-toggle"><SolcordSwitch label={`${addon.enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={value => void toggle(addon.name, value)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
                         </div>;
                     })}
                 </div>

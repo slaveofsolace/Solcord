@@ -94,7 +94,7 @@ describe("Solcord Control Center clarity", () => {
 
     test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
         expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
-        expect(panel).toContain("aria-label=\"Enable Solcord Fake Deafen\"");
+        expect(panel).toContain("label=\"Enable Solcord Fake Deafen\"");
         expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
@@ -310,7 +310,7 @@ describe("Solcord Control Center clarity", () => {
 
     test("uses a dedicated setup workspace and only a compact reminder after deferral", () => {
         expect(panel).toContain("const focusSetup = workspace === \"overview\" && workspaceFocus === \"setup\"");
-        expect(panel).toContain("document.querySelector<HTMLElement>(\".solcord-wizard\")");
+        expect(panel).toContain("workspaceRef.current?.querySelector<HTMLElement>(\".solcord-wizard\")");
         expect(panel).toContain("onboarding.status === \"pending\" ? <SetupWizard />");
         expect(panel).toContain("function SetupManagement({openSetup}: {openSetup: () => void})");
         expect(panel).toContain("<ActionButton onClick={openSetup}>Reopen setup</ActionButton>");

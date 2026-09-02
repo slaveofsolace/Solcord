@@ -10,6 +10,7 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        ApplicationConfiguration.Initialize();
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
         {
             try
@@ -24,7 +25,6 @@ internal static class Program
             }
         }
         if (args.Contains("--update", StringComparer.OrdinalIgnoreCase)) return RunUpdate(args);
-        ApplicationConfiguration.Initialize();
         try
         {
             using EmbeddedInstallerBundle bundle = EmbeddedInstallerBundle.ExtractVerified();
@@ -82,6 +82,8 @@ internal static class InstallerSelfTest
         string stage = "prepare";
         try
         {
+            stage = "dpi-layout-matrix";
+            InstallerForm.ValidateGeometryMatrix(embeddedBundleRoot);
             string local = Path.Combine(root, "local");
             string roaming = Path.Combine(root, "roaming");
             string discord = Path.Combine(local, "Discord", "app-1.2.3");
@@ -244,10 +246,27 @@ internal static class InstallerSelfTest
             catch (InvalidOperationException error) when (error.Message.Contains("Choose Install Solcord", StringComparison.Ordinal)) {/* expected */}
             engine.InstallNew(target);
             if (!engine.IsCurrentPackageRecorded() || !engine.VerifyInstalled()) return 34;
+            string firstSetupIntent = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "first-setup-intent.json");
+            if (!File.Exists(firstSetupIntent)) return 43;
+            SolcordFirstSetupIntent? setupIntent = JsonSerializer.Deserialize<SolcordFirstSetupIntent>(File.ReadAllText(firstSetupIntent));
+            if (setupIntent is null
+                || setupIntent.Version != 1
+                || setupIntent.Purpose != "first-setup"
+                || setupIntent.Channel != target.Channel
+                || setupIntent.DiscordVersion != target.Version
+                || setupIntent.SourceCommit != manifest.SourceCommit
+                || setupIntent.ArtifactSha256 != manifest.ArtifactSha256
+                || setupIntent.Attempts != 0) return 44;
+            string originalIntent = File.ReadAllText(firstSetupIntent);
             try {engine.Update(target); return 35;}
             catch (InvalidOperationException error) when (error.Message.Contains("Choose Repair Solcord", StringComparison.Ordinal)) {/* expected */}
             engine.Repair(target);
             if (!engine.VerifyInstalled()) return 36;
+            if (File.ReadAllText(firstSetupIntent) != originalIntent) return 45;
+            File.Delete(firstSetupIntent);
+            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), SourceCommit = new string('b', 40), CandidateLabel = previousCandidate}));
+            engine.Update(target);
+            if (File.Exists(firstSetupIntent) || !engine.VerifyInstalled()) return 46;
 
             stage = "vanilla-uninstall-with-data-preservation";
             string plugins = Path.Combine(roaming, "BetterDiscord", "plugins");

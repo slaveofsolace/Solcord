@@ -184,6 +184,14 @@ export default new class IPCRenderer {
         return invokePrivate(IPCEvents.SETUP_AUDIT, {capability});
     }
 
+    claimSolcordFirstSetupIntent(capability: string) {
+        return invokePrivate(IPCEvents.FIRST_SETUP_INTENT_CLAIM, {capability});
+    }
+
+    acknowledgeSolcordFirstSetupIntent(capability: string, intentId: string) {
+        return invokePrivate(IPCEvents.FIRST_SETUP_INTENT_ACKNOWLEDGE, {capability, intentId});
+    }
+
     previewSolcordProviderArchive(capability: string, request: unknown) {
         return invokePrivate(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, this.#privateRequest(capability, request));
     }

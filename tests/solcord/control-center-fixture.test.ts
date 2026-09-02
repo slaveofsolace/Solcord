@@ -27,6 +27,12 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(fixture).toContain(contract);
         }
         expect(fixture).toContain("nativeRowSpacingFailures");
+        expect(fixture).toContain("switchStateFailures");
+        expect(fixture).toContain("switchFocusVisible");
+        expect(fixture).toContain("data-switch-matrix");
+        expect(fixture).toContain("solcord-switch-track");
+        expect(fixture).toContain("solcord-switch-thumb");
+        expect(fixture).not.toContain("<i></i>");
         expect(fixture).toContain("compactNavigationGeometry");
         expect(fixture).toContain("opaqueBackground:");
         expect(fixture).toContain("People and Spaces");
@@ -43,8 +49,10 @@ describe("Solcord isolated Control Center fixture", () => {
         }
         for (const theme of ["solcord-default", "obsidian-thread", "carbon-ember", "midnight-glass", "paper-signal", "threadline", "signal-block", "relay-classic", "workshop", "quiet-read", "night-transit"]) {
             expect(renderer).toContain(`theme=${theme}`);
+            expect(renderer).toContain(`theme=${theme}&`);
             expect(fixture).toContain(`"${theme}"`);
         }
+        expect(renderer.match(/switches=1/g)).toHaveLength(11);
     });
 
     test("keeps the normal header quiet and qualifies diagnostic builds without narrow overflow", () => {

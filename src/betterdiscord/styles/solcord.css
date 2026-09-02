@@ -458,12 +458,6 @@ html[data-solcord-effective-motion="subtle"] .solcord-panel :is(button, input, s
 .solcord-builtin-switches { max-width: 700px; }
 .solcord-builtin-control .solcord-capability { justify-self: auto; }
 .solcord-setting-rows small { color: var(--sc-muted); line-height: 1.35; }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"] { appearance: none; position: relative; width: 38px; height: 22px; flex: 0 0 38px; margin: 0; background: var(--sc-surface-2); border: 1px solid var(--sc-border-strong); border-radius: 999px; cursor: pointer; transition: background-color 110ms ease-out, border-color 110ms ease-out; }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]::after { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; content: ""; background: var(--sc-muted); border-radius: 50%; transition: transform 110ms ease-out, background-color 110ms ease-out; }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:checked { background: color-mix(in srgb, var(--sc-accent) 82%, var(--sc-surface-1)); border-color: var(--sc-accent); }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:checked::after { background: var(--sc-surface-0); transform: translateX(16px); }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:focus-visible { outline: 3px solid var(--solcord-focus, var(--solcord-sea)); outline-offset: 2px; }
-:is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.48; }
 .solcord-inline-options { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; color: var(--sc-text); background: var(--sc-surface-1); border: 0; }
 .solcord-inline-options label { display: flex; align-items: center; gap: 7px; }
 .solcord-media-shelf { margin-top: var(--sc-space-4); }
@@ -586,8 +580,7 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-status-quarantined { color: var(--solcord-danger-text, var(--solcord-coral)); }
 .solcord-status-starting { color: var(--solcord-warning-text, var(--solcord-amber)); }
 .solcord-maturity { color: var(--text-muted); }
-.solcord-toggle { display: grid; justify-items: center; gap: 4px; min-width: 44px; font-size: 11px; color: var(--text-muted); }
-.solcord-toggle input { width: 18px; height: 18px; accent-color: var(--solcord-sea); }
+.solcord-toggle { display: grid; justify-items: center; gap: 5px; min-width: 50px; font-size: 11px; color: var(--text-muted); }
 .solcord-actions,
 .solcord-dialog-actions,
 .solcord-scrubber-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
@@ -1031,13 +1024,17 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-setting-row > span:first-child { display: grid; gap: 8px; min-width: 0; }
 .solcord-setting-row small { color: var(--sc-muted); line-height: 1.35; }
 .solcord-setting-row select { box-sizing: border-box; min-width: 132px; min-height: 36px; padding: 6px 9px; color: var(--sc-text); background: var(--input-background, var(--sc-surface-2)); border: 1px solid var(--sc-border-strong); border-radius: 4px; }
-.solcord-switch { position: relative; display: inline-flex; width: 36px; height: 20px; flex: 0 0 36px; }
-.solcord-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.solcord-switch i { width: 36px; height: 20px; background: var(--interactive-muted, var(--sc-surface-2)); border: 1px solid var(--sc-border-strong); border-radius: 10px; transition: background-color 120ms ease; pointer-events: none; }
-.solcord-switch i::after { display: block; width: 14px; height: 14px; margin: 2px; content: ""; background: var(--sc-text); border-radius: 50%; transition: transform 120ms ease; }
-.solcord-switch input:checked + i { background: var(--sc-accent); border-color: var(--sc-accent); }
-.solcord-switch input:checked + i::after { color: var(--sc-surface-0); transform: translateX(16px); }
-.solcord-switch input:focus-visible + i { outline: 3px solid var(--solcord-focus, var(--solcord-sea)); outline-offset: 2px; }
+.solcord-switch { position: relative; display: inline-flex !important; width: 38px; height: 22px; flex: 0 0 38px; align-items: center; }
+.solcord-switch > input { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.solcord-switch-track { position: absolute; inset: 0; display: block !important; background: #60666B; border: 1px solid color-mix(in srgb, var(--sc-text) 25%, var(--sc-border)); border-radius: 999px; transition: background-color 120ms ease-out, border-color 120ms ease-out; pointer-events: none; }
+.solcord-switch-thumb { position: absolute; top: 3px; left: 3px; display: block !important; width: 14px; height: 14px; background: #FFFFFF; border: 1px solid rgb(0 0 0 / 18%); border-radius: 50%; box-shadow: 0 1px 2px rgb(0 0 0 / 28%); transition: transform 120ms ease-out; }
+.solcord-switch > input:checked + .solcord-switch-track { background: var(--sc-accent); border-color: var(--sc-accent); }
+.solcord-switch > input:checked + .solcord-switch-track .solcord-switch-thumb { transform: translateX(16px); }
+.solcord-switch > input:not(:disabled):hover + .solcord-switch-track { border-color: color-mix(in srgb, var(--sc-accent) 68%, var(--sc-border-strong)); }
+.solcord-switch > input:checked:not(:disabled):hover + .solcord-switch-track { background: color-mix(in srgb, var(--sc-accent) 86%, var(--sc-text)); }
+.solcord-switch > input:focus-visible + .solcord-switch-track { outline: 3px solid var(--solcord-focus, var(--solcord-sea)); outline-offset: 2px; }
+.solcord-switch > input:disabled { cursor: not-allowed; }
+.solcord-switch > input:disabled + .solcord-switch-track { opacity: 0.46; filter: saturate(0.45); }
 .solcord-privacy-summary { margin: 0; padding: 8px 0; color: var(--sc-muted); border: 0; line-height: 1.45; }
 .solcord-privacy-command { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; padding: 0 0 14px; }
 .solcord-privacy-command p { max-width: 68ch; margin: 5px 0 0; color: var(--sc-muted); }

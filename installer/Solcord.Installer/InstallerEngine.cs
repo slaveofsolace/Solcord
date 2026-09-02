@@ -10,6 +10,7 @@ namespace Solcord.Installer;
 internal sealed record ReleaseManifest(string Version, string CandidateLabel, string SourceCommit, string ArtifactSha256, string ArtifactFile, string BuildManifestSha256, int SchemaVersion, string SupportedDiscord, string ReleaseNotes);
 internal sealed record DiscordTarget(string Channel, string Version, string ExecutablePath, string ProcessName);
 internal sealed record InstallReceipt(string Version, string SourceCommit, string ArtifactSha256, string Channel, string DiscordVersion, string InstalledAtUtc, string? BackupDirectory, string? CandidateLabel = null);
+internal sealed record SolcordFirstSetupIntent(int Version, string IntentId, string Purpose, string Channel, string DiscordVersion, string SourceCommit, string ArtifactSha256, string CreatedAtUtc, int Attempts);
 internal sealed record InjectorBackupState(bool HadAppDirectory, string OriginalModule, string Channel, string DiscordVersion, string? IndexSha256, string? PackageSha256);
 internal sealed record BackupState(bool HadCore, string? ExistingCoreSha256, string InstalledArtifactSha256, string CandidateVersion, string CandidateSourceCommit, InjectorBackupState Injector, string? CandidateLabel = null);
 internal sealed record UninstallBackupState(string Channel, string DiscordVersion, string CandidateLabel, string CoreSha256, string IndexSha256, string PackageSha256, string ReceiptSha256);
@@ -225,7 +226,10 @@ internal sealed class InstallerEngine
     {
         if (HasPendingRecovery()) throw new InvalidOperationException("A previous operation needs Roll Back before a new installation.");
         if (HasManagedInstall()) throw new InvalidOperationException("Solcord is already managed on this PC. Choose Update, Repair, Roll Back, or Uninstall.");
-        return Install(target);
+        InstallReceipt receipt = Install(target);
+        try {WriteFirstSetupIntent(receipt);}
+        catch (Exception error) {LastLauncherWarning = $"Solcord was installed, but automatic First Setup could not be scheduled ({error.GetType().Name}). Open Solcord Suite to start it manually.";}
+        return receipt;
     }
 
     internal InstallReceipt Update(DiscordTarget target)
@@ -369,6 +373,29 @@ internal sealed class InstallerEngine
         if (current is null || !File.Exists(current.ExecutablePath)) throw new FileNotFoundException("The selected Discord executable changed after detection.");
         RejectLinkedPath(_localAppData, current.ExecutablePath);
         Process.Start(new ProcessStartInfo(current.ExecutablePath) {UseShellExecute = true});
+    }
+
+    private void WriteFirstSetupIntent(InstallReceipt receipt)
+    {
+        if (!Regex.IsMatch(receipt.SourceCommit, "^[0-9a-f]{40}$") || !Sha256Pattern.IsMatch(receipt.ArtifactSha256)) throw new InvalidDataException("The verified install receipt cannot authorize First Setup.");
+        string root = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer");
+        RejectLinkedPath(_roamingAppData, root);
+        Directory.CreateDirectory(root);
+        RejectReparsePoint(root);
+        string target = Path.Combine(root, "first-setup-intent.json");
+        RejectLinkedPath(root, target);
+        var intent = new SolcordFirstSetupIntent(
+            1,
+            Guid.NewGuid().ToString("N"),
+            "first-setup",
+            receipt.Channel,
+            receipt.DiscordVersion,
+            receipt.SourceCommit,
+            receipt.ArtifactSha256,
+            DateTime.UtcNow.ToString("O"),
+            0
+        );
+        WriteAtomic(target, JsonSerializer.Serialize(intent, new JsonSerializerOptions {WriteIndented = true}));
     }
 
     internal static string HashFile(string file)

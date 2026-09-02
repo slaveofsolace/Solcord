@@ -298,6 +298,8 @@ const TIMELINE_IPC = Object.freeze({
     reconcileSetup: IPC.reconcileSolcordSetup.bind(IPC),
     rollbackSetup: IPC.rollbackSolcordSetup.bind(IPC),
     auditSetup: IPC.auditSolcordSetup.bind(IPC),
+    claimFirstSetupIntent: IPC.claimSolcordFirstSetupIntent.bind(IPC),
+    acknowledgeFirstSetupIntent: IPC.acknowledgeSolcordFirstSetupIntent.bind(IPC),
     previewProviderArchive: IPC.previewSolcordProviderArchive.bind(IPC),
     applyProviderArchive: IPC.applySolcordProviderArchive.bind(IPC),
     rollbackProviderArchive: IPC.rollbackSolcordProviderArchive.bind(IPC),
@@ -379,6 +381,7 @@ class SolcordRuntimeStore extends Store {
     #privacyReceipts: PrivacyDecisionReceipt[] = [];
     #privacySequence = 0;
     #strictCommunityPolicyBusy = false;
+    #firstSetupIntentId?: string;
 
     initialize(): Promise<void> {
         if (this.#initializePromise) return this.#initializePromise;
@@ -583,6 +586,38 @@ class SolcordRuntimeStore extends Store {
             register();
             return true;
         }) === true;
+    }
+
+    async openPendingFirstSetup(): Promise<boolean> {
+        try {
+            const claim = await this.#withPrivateCapability(capability => boundedSolcordStartupOperation(TIMELINE_IPC.claimFirstSetupIntent(capability))) as {pending?: boolean; intentId?: unknown;};
+            if (claim.pending !== true || typeof claim.intentId !== "string" || !/^[0-9a-f]{32}$/.test(claim.intentId)) return false;
+            const intentId = claim.intentId;
+            if (SolcordSettings.snapshot().onboarding.status !== "pending") {
+                await this.#withPrivateCapability(capability => boundedSolcordStartupOperation(TIMELINE_IPC.acknowledgeFirstSetupIntent(capability, intentId)));
+                return false;
+            }
+            SolcordSettings.setOnboardingStep(0);
+            this.#firstSetupIntentId = intentId;
+            SettingsRenderer.openSettingsPage("solcord");
+            return true;
+        }
+        catch (error) {
+            Logger.warn("Solcord", `Automatic First Setup stayed closed (${errorName(error)}); Discord startup continues.`);
+            return false;
+        }
+    }
+
+    async acknowledgeFirstSetupIntent(): Promise<boolean> {
+        const intentId = this.#firstSetupIntentId;
+        if (!intentId) return false;
+        try {
+            const result = await this.#withPrivateCapability(capability => boundedSolcordStartupOperation(TIMELINE_IPC.acknowledgeFirstSetupIntent(capability, intentId))) as {acknowledged?: boolean;};
+            if (result.acknowledged !== true) return false;
+            this.#firstSetupIntentId = undefined;
+            return true;
+        }
+        catch {return false;}
     }
 
     startupPhaseSnapshot(): SolcordStartupPhaseReceipt[] {

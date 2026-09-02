@@ -10,6 +10,8 @@ import SolcordFriendWatch from "./solcord-friend-watch";
 import SolcordAudienceGuard from "./solcord-audience-guard";
 import SolcordPeopleState from "./solcord-people-state";
 import SolcordSetup from "./solcord-setup";
+import {SolcordFirstSetupIntentStore} from "./solcord-first-setup-intent";
+import {resolveSolcordBetterDiscordRoot} from "./solcord-data-root";
 import SolcordProviderArchive from "./solcord-provider-archive";
 import SolcordTranslationCredentials from "./solcord-translation-credentials";
 import SolcordLocalIdentityNotes from "./solcord-local-identity-notes";
@@ -219,6 +221,7 @@ const requireTrustedSolcordSender = (event: IpcMainInvokeEvent): void => {
 };
 
 const timelineAuthority = new SolcordTimelineIpcAuthority();
+const SolcordFirstSetupIntent = new SolcordFirstSetupIntentStore({betterDiscordRoot: () => resolveSolcordBetterDiscordRoot(app.getPath("userData"))});
 const timelineReleaseHooks = new WeakSet<Electron.WebContents>();
 
 const ensureTimelineReleaseHook = (sender: Electron.WebContents): void => {
@@ -344,6 +347,16 @@ const auditSolcordSetup = (event: IpcMainInvokeEvent, request: unknown) => {
     timelineAuthority.authorize(event.sender.id, request, false);
     return SolcordSetup.auditIntegrity();
 };
+const claimSolcordFirstSetupIntent = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    timelineAuthority.authorize(event.sender.id, request, false);
+    return SolcordFirstSetupIntent.claim();
+};
+const acknowledgeSolcordFirstSetupIntent = (event: IpcMainInvokeEvent, request: unknown) => {
+    requireTrustedSolcordSender(event);
+    const authorized = timelineAuthority.authorize(event.sender.id, request, false);
+    return SolcordFirstSetupIntent.acknowledge(authorized.request.intentId);
+};
 const previewSolcordProviderArchive = (event: IpcMainInvokeEvent, request: unknown) => {
     requireTrustedSolcordSender(event);
     const authorized = timelineAuthority.authorize(event.sender.id, request, false);
@@ -455,6 +468,8 @@ export default class IPCMain {
             ipc.handle(IPCEvents.SETUP_RECONCILE, reconcileSolcordSetup);
             ipc.handle(IPCEvents.SETUP_ROLLBACK, rollbackSolcordSetup);
             ipc.handle(IPCEvents.SETUP_AUDIT, auditSolcordSetup);
+            ipc.handle(IPCEvents.FIRST_SETUP_INTENT_CLAIM, claimSolcordFirstSetupIntent);
+            ipc.handle(IPCEvents.FIRST_SETUP_INTENT_ACKNOWLEDGE, acknowledgeSolcordFirstSetupIntent);
             ipc.handle(IPCEvents.PROVIDER_ARCHIVE_PREVIEW, previewSolcordProviderArchive);
             ipc.handle(IPCEvents.PROVIDER_ARCHIVE_APPLY, applySolcordProviderArchive);
             ipc.handle(IPCEvents.PROVIDER_ARCHIVE_ROLLBACK, rollbackSolcordProviderArchive);

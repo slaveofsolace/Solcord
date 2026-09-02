@@ -12,6 +12,8 @@ const CATALOG_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/
 const PRODUCT_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/common/solcord/product.ts"), "utf8");
 const PANEL_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/panel.tsx"), "utf8");
 const RUNTIME_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/modules/solcord/runtime.ts"), "utf8");
+const SCROLL_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/scroll-owner.ts"), "utf8");
+const SWITCH_SOURCE = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/switch.tsx"), "utf8");
 
 function stepLabels(): string[] {
     const declaration = PRODUCT_SOURCE.match(/SOLCORD_SETUP_STEPS = Object\.freeze\(\[([^\]]+)] as const\)/s)?.[1];
@@ -30,13 +32,17 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_SOURCE).toContain("SolcordSettings.setSetupDraft(draft)");
         expect(WIZARD_SOURCE).toContain("The durable draft was left unchanged");
         expect(WIZARD_SOURCE).toContain("Solcord could not save this setup step");
-        expect(WIZARD_SOURCE).toContain("function scrollSolcordSetupTarget(target: HTMLElement | null): void");
-        expect(WIZARD_SOURCE).toContain("/auto|scroll|overlay/.test(overflowY) && scrollOwner.scrollHeight > scrollOwner.clientHeight");
-        expect(WIZARD_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
-        expect(WIZARD_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
-        expect(WIZARD_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
-        expect(WIZARD_SOURCE).toContain("scrollSolcordSetupTarget(wizardRef.current)");
-        expect(WIZARD_SOURCE).not.toContain("wizardRef.current?.scrollIntoView");
+        expect(WIZARD_SOURCE).toContain("scrollSolcordSettingsTarget(wizardRef.current, \"target\")");
+        expect(WIZARD_SOURCE).toContain("SolcordRuntime.acknowledgeFirstSetupIntent()");
+        expect(RUNTIME_SOURCE).toContain("this.#withPrivateCapability(capability => boundedSolcordStartupOperation(TIMELINE_IPC.claimFirstSetupIntent(capability)))");
+        expect(RUNTIME_SOURCE).toContain("this.#withPrivateCapability(capability => boundedSolcordStartupOperation(TIMELINE_IPC.acknowledgeFirstSetupIntent(capability, intentId)))");
+        expect(RUNTIME_SOURCE).not.toContain("boundedSolcordStartupOperation(this.#withPrivateCapability(capability => TIMELINE_IPC.claimFirstSetupIntent(capability)))");
+        expect(SCROLL_SOURCE).toContain("findSolcordSettingsScrollOwner(target)");
+        expect(SCROLL_SOURCE).toContain("/^(auto|scroll|overlay)$/.test(getComputedStyle(candidate).overflowY)");
+        expect(SCROLL_SOURCE).toContain("mode === \"upward-only\" && desired >= owner.scrollTop");
+        expect(SCROLL_SOURCE).toContain("owner.scrollTo({top: desired, behavior: \"auto\"})");
+        expect(SCROLL_SOURCE).not.toContain("scrollIntoView");
+        expect(SCROLL_SOURCE).not.toContain("globalThis.scrollBy");
         expect(WIZARD_SOURCE).toContain("<section ref={wizardRef} className=\"solcord-wizard\"");
         expect(WIZARD_SOURCE).toContain("role=\"progressbar\"");
         expect(WIZARD_CSS).toContain(".solcord-wizard-steps { box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; min-width: 0; max-width: 100%");
@@ -68,13 +74,15 @@ describe("Solcord beginner-first setup UI", () => {
         expect(WIZARD_CSS).toContain(".solcord-workspace-nav { position: static; z-index: auto;");
         expect(WIZARD_CSS).toContain(".solcord-workspace { scroll-margin-top: 12px; }");
         expect(WIZARD_CSS).toContain(".solcord-workspace { min-width: 0; padding-top: 12px; }");
-        expect(PANEL_SOURCE).toContain("function scrollSolcordTarget(target: HTMLElement | null): void");
-        expect(PANEL_SOURCE).toContain("navigationRect.left < targetRect.right && navigationRect.right > targetRect.left");
-        expect(PANEL_SOURCE).toContain("globalThis.scrollBy?.({top: -stickyOffset, behavior: \"auto\"})");
-        expect(PANEL_SOURCE).toContain("scrollOwner.scrollTo({top: Math.max(0, scrollOwner.scrollTop + targetOffset - stickyOffset), behavior: \"auto\"})");
-        expect(PANEL_SOURCE).not.toContain("workspaceRef.current?.scrollIntoView");
-        expect(WIZARD_CSS).toContain(":is(.solcord-setting-rows > label, .solcord-control-grid > label, .solcord-toggle) > input[type=\"checkbox\"] { appearance: none;");
-        expect(WIZARD_CSS).toContain("> input[type=\"checkbox\"]:focus-visible");
+        expect(PANEL_SOURCE).toContain("scrollSolcordSettingsTarget(workspaceRef.current, \"upward-only\")");
+        expect(PANEL_SOURCE).not.toContain("scrollIntoView");
+        expect(PANEL_SOURCE).not.toContain("globalThis.scrollBy");
+        expect(SWITCH_SOURCE).toContain("role=\"switch\"");
+        expect(SWITCH_SOURCE).toContain("solcord-switch-track");
+        expect(SWITCH_SOURCE).toContain("solcord-switch-thumb");
+        expect(WIZARD_CSS).toContain(".solcord-switch-thumb { position: absolute;");
+        expect(WIZARD_CSS).toContain("background: #FFFFFF;");
+        expect(WIZARD_CSS).not.toContain("input[type=\"checkbox\"]::after");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 760px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 680px)");
         expect(WIZARD_CSS).toContain("@container solcord-panel (max-width: 520px)");
@@ -145,7 +153,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(catalogSource).toContain("addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)");
         expect(catalogSource).toContain("<summary>Technical details</summary>");
         expect(catalogSource).not.toContain("clean-room built-in");
-        expect(catalogSource).toMatch(/aria-label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
+        expect(catalogSource).toMatch(/label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
         expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");

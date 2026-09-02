@@ -70,9 +70,9 @@ internal sealed class InstallerForm : Form
     private Control BuildShell()
     {
         var shell = new TableLayoutPanel {Dock = DockStyle.Fill, BackColor = Canvas, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, Padding = Padding.Empty};
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
+        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         shell.Controls.Add(BuildHeader(), 0, 0);
         shell.Controls.Add(BuildWorkspace(), 0, 1);
         shell.Controls.Add(BuildFooter(), 0, 2);
@@ -81,13 +81,13 @@ internal sealed class InstallerForm : Form
 
     private Control BuildHeader()
     {
-        var header = new Panel {Dock = DockStyle.Fill, BackColor = Surface, Padding = new Padding(40, 17, 40, 15)};
+        var header = new Panel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 82), BackColor = Surface, Padding = new Padding(40, 15, 40, 13)};
         header.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, header.ClientSize.Height - 1, header.ClientSize.Width, header.ClientSize.Height - 1);};
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 58));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 62));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        var markHost = new Panel {Dock = DockStyle.Fill, BackColor = Color.Transparent, Margin = Padding.Empty};
-        var mark = new PictureBox {Location = new Point(0, 3), Size = new Size(44, 44), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent, Image = LoadBrandMark(), AccessibleName = "Solcord cord-cut S mark", TabStop = false};
+        var markHost = new Panel {Dock = DockStyle.Fill, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = new Padding(4), MinimumSize = new Size(54, 54)};
+        var mark = new PictureBox {Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(2), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent, Image = LoadBrandMark(), AccessibleName = "Solcord cord-cut S mark", TabStop = false};
         markHost.Controls.Add(mark);
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
@@ -115,14 +115,9 @@ internal sealed class InstallerForm : Form
         _workspace.BackColor = Canvas;
         _workspace.ColumnCount = 1;
         _workspace.RowCount = 6;
-        _workspace.Padding = new Padding(40, 14, 40, 14);
+        _workspace.Padding = new Padding(40, 16, 40, 16);
         _workspace.Margin = Padding.Empty;
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        _workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+        for (int i = 0; i < _workspace.RowCount; i++) _workspace.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _workspace.Controls.Add(BuildTargetField(), 0, 0);
         _workspace.Controls.Add(BuildStatePanel(), 0, 1);
         _workspace.Controls.Add(BuildPrimaryAction(), 0, 2);
@@ -135,22 +130,24 @@ internal sealed class InstallerForm : Form
 
     private Control BuildTargetField()
     {
-        var field = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = Padding.Empty};
-        field.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 154));
+        var field = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Canvas, Margin = new Padding(0, 0, 0, 10), Padding = Padding.Empty};
+        field.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 148));
         field.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        field.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        var label = NewLabel("Discord channel", 9.5f, FontStyle.Bold, Ink);
+        field.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var label = NewLabel("Version", 9.5f, FontStyle.Bold, Ink);
         label.Dock = DockStyle.Fill;
         label.TextAlign = ContentAlignment.MiddleLeft;
         _targets.DropDownStyle = ComboBoxStyle.DropDownList;
+        _targets.FormattingEnabled = true;
         _targets.Dock = DockStyle.Fill;
-        _targets.Margin = new Padding(0, 7, 0, 7);
+        _targets.Margin = new Padding(0, 6, 0, 6);
         _targets.BackColor = Surface;
         _targets.ForeColor = Ink;
         _targets.FlatStyle = FlatStyle.Flat;
         _targets.TabIndex = 0;
-        _targets.AccessibleName = "Discord installation channel";
-        _targets.AccessibleDescription = "Choose Stable, PTB, or Canary when installed.";
+        _targets.AccessibleName = "Discord version";
+        _targets.AccessibleDescription = "Choose an installed Stable, PTB, or Canary version.";
+        _targets.Format += (_, eventArgs) => {if (eventArgs.ListItem is DiscordTarget target) eventArgs.Value = $"{target.Channel} · {target.Version}";};
         field.Controls.Add(label, 0, 0);
         field.Controls.Add(_targets, 1, 0);
         return field;
@@ -158,9 +155,11 @@ internal sealed class InstallerForm : Form
 
     private Control BuildStatePanel()
     {
-        _statePanel.Dock = DockStyle.Fill;
-        _statePanel.Margin = new Padding(0, 3, 0, 5);
-        _statePanel.Padding = new Padding(20, 9, 18, 9);
+        _statePanel.Dock = DockStyle.Top;
+        _statePanel.AutoSize = true;
+        _statePanel.MinimumSize = new Size(0, 84);
+        _statePanel.Margin = new Padding(0, 0, 0, 10);
+        _statePanel.Padding = new Padding(20, 10, 18, 10);
         _statePanel.BackColor = TealWash;
         _statePanel.Paint += (_, args) => {
             using var accent = new SolidBrush(_stateBorder);
@@ -168,10 +167,10 @@ internal sealed class InstallerForm : Form
             args.Graphics.FillRectangle(accent, 0, 0, 4, _statePanel.ClientSize.Height);
             args.Graphics.DrawLine(rule, 4, _statePanel.ClientSize.Height - 1, _statePanel.ClientSize.Width, _statePanel.ClientSize.Height - 1);
         };
-        var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
+        var copy = new TableLayoutPanel {Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 17));
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
-        copy.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _stateKind.Dock = DockStyle.Fill;
         _stateKind.Font = new Font("Segoe UI Variable Text", 9f, FontStyle.Bold);
         _stateKind.ForeColor = Teal;
@@ -181,8 +180,13 @@ internal sealed class InstallerForm : Form
         _stateBody.Dock = DockStyle.Fill;
         _stateBody.Font = new Font("Segoe UI Variable Text", 9.25f, FontStyle.Regular);
         _stateBody.ForeColor = Body;
+        _stateBody.AutoSize = true;
         _stateBody.AutoEllipsis = false;
         _stateBody.AccessibleName = "Installation state details";
+        _statePanel.SizeChanged += (_, _) => {
+            int width = Math.Max(160, _statePanel.ClientSize.Width - _statePanel.Padding.Horizontal);
+            if (_stateBody.MaximumSize.Width != width) _stateBody.MaximumSize = new Size(width, 0);
+        };
         copy.Controls.Add(_stateKind, 0, 0);
         copy.Controls.Add(_stateTitle, 0, 1);
         copy.Controls.Add(_stateBody, 0, 2);
@@ -192,9 +196,10 @@ internal sealed class InstallerForm : Form
 
     private Control BuildPrimaryAction()
     {
-        _primaryRow.Dock = DockStyle.Fill;
+        _primaryRow.Dock = DockStyle.Top;
+        _primaryRow.AutoSize = true;
         _primaryRow.BackColor = Canvas;
-        _primaryRow.Padding = new Padding(0, 4, 0, 6);
+        _primaryRow.Padding = new Padding(0, 0, 0, 12);
         _primaryAction.Dock = DockStyle.Left;
         _primaryAction.Width = 224;
         _primaryAction.TabIndex = 1;
@@ -206,7 +211,7 @@ internal sealed class InstallerForm : Form
 
     private Control BuildMaintenanceHeader()
     {
-        var header = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = Padding.Empty};
+        var header = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 34), ColumnCount = 1, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = Padding.Empty};
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _maintenanceHeading.Text = "Recovery";
         _maintenanceHeading.Font = new Font("Segoe UI Variable Text", 11f, FontStyle.Bold);
@@ -220,12 +225,14 @@ internal sealed class InstallerForm : Form
     private Control BuildMaintenanceList()
     {
         _maintenanceList.Dock = DockStyle.Top;
+        _maintenanceList.AutoSize = true;
+        _maintenanceList.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         _maintenanceList.ColumnCount = 1;
         _maintenanceList.RowCount = 3;
         _maintenanceList.BackColor = Surface;
         _maintenanceList.Margin = Padding.Empty;
         _maintenanceList.Padding = Padding.Empty;
-        for (int i = 0; i < 3; i++) _maintenanceList.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        for (int i = 0; i < 3; i++) _maintenanceList.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _maintenanceList.Controls.Add(ActionRow("repair", "Repair Solcord", "Reinstall this exact package if files are missing or damaged.", 2, 0), 0, 0);
         _maintenanceList.Controls.Add(ActionRow("rollback", "Roll back", "Restore the verified backup made before the last change.", 3, 1), 0, 1);
         _maintenanceList.Controls.Add(ActionRow("uninstall", "Uninstall Solcord", "Remove Solcord and keep plugins, themes, settings, and recovery files.", 4, 2, ButtonTone.Danger), 0, 2);
@@ -234,14 +241,14 @@ internal sealed class InstallerForm : Form
 
     private Control ActionRow(string key, string title, string description, int tabIndex, int rowIndex, ButtonTone tone = ButtonTone.Outline)
     {
-        var row = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Surface, Margin = Padding.Empty, Padding = new Padding(16, 4, 14, 4)};
+        var row = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Surface, Margin = Padding.Empty, Padding = new Padding(16, 4, 14, 4)};
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 144));
-        row.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124));
+        row.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         row.Paint += (_, args) => {if (rowIndex < 2) {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 18, row.ClientSize.Height - 1, row.ClientSize.Width - 14, row.ClientSize.Height - 1);}};
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = new Padding(0, 0, 14, 0)};
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 21));
-        copy.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 19));
+        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var name = NewLabel(title, 9.5f, FontStyle.Bold, Ink);
         name.Dock = DockStyle.Fill;
         var details = NewLabel(description, 8.5f, FontStyle.Regular, Body);
@@ -250,7 +257,9 @@ internal sealed class InstallerForm : Form
         copy.Controls.Add(name, 0, 0);
         copy.Controls.Add(details, 0, 1);
         var button = NewButton(title.Replace("Solcord", "").Trim(), tone);
-        button.Dock = DockStyle.Fill;
+        button.Anchor = AnchorStyles.Right;
+        button.AutoSize = false;
+        button.Size = new Size(112, 36);
         button.Margin = new Padding(8, 0, 0, 0);
         button.TextAlign = ContentAlignment.MiddleCenter;
         button.TabIndex = tabIndex;
@@ -265,7 +274,7 @@ internal sealed class InstallerForm : Form
 
     private Control BuildUtilities()
     {
-        var utilities = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = new Padding(0, 5, 0, 0)};
+        var utilities = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 48), ColumnCount = 3, RowCount = 1, BackColor = Canvas, Margin = Padding.Empty, Padding = new Padding(0, 8, 0, 0)};
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 144));
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 196));
         utilities.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -289,12 +298,12 @@ internal sealed class InstallerForm : Form
 
     private Control BuildFooter()
     {
-        var footer = new Panel {Dock = DockStyle.Fill, BackColor = Surface, Padding = new Padding(40, 7, 30, 7)};
+        var footer = new Panel {Dock = DockStyle.Bottom, AutoSize = true, MinimumSize = new Size(0, 50), BackColor = Surface, Padding = new Padding(40, 7, 30, 7)};
         footer.Paint += (_, args) => {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 0, 0, footer.ClientSize.Width, 0);};
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 102));
-        var note = NewLabel("Built on BetterDiscord.", 8.75f, FontStyle.Regular, Muted);
+        var note = NewLabel("Built with BetterDiscord, created by @Sleeve of Solace.", 8.75f, FontStyle.Regular, Muted);
         note.Dock = DockStyle.Fill;
         note.TextAlign = ContentAlignment.MiddleLeft;
         var close = NewButton("Close", ButtonTone.Outline);
@@ -313,7 +322,6 @@ internal sealed class InstallerForm : Form
     {
         _targets.Items.Clear();
         foreach (DiscordTarget target in _engine.DetectTargets()) _targets.Items.Add(target);
-        _targets.DisplayMember = nameof(DiscordTarget.Channel);
         if (_targets.Items.Count > 0) _targets.SelectedIndex = 0;
         else {SetState("Discord not found", "Install Discord first", "Stable, PTB, or Canary was not detected on this PC.", StateTone.Warning, null); SetActionAvailability(false, false, false, false, false);}
     }
@@ -347,12 +355,8 @@ internal sealed class InstallerForm : Form
         SetManagedAction("repair", targetReady && packageRecorded && !pending);
         SetManagedAction("rollback", targetReady && (managed || pending));
         SetManagedAction("uninstall", targetReady && managed && !pending);
-        int visibleMaintenanceRows = _actions.Values.Count(action => action.Row.Visible);
-        _maintenanceList.Height = visibleMaintenanceRows * 52;
-        _workspace.RowStyles[4].Height = visibleMaintenanceRows * 52;
         bool anyMaintenance = _actions.Values.Any(action => action.Row.Visible);
         _maintenanceHeading.Visible = anyMaintenance;
-        _workspace.RowStyles[3].Height = anyMaintenance ? 36 : 0;
         _verifyAction.Enabled = targetReady && managed && !pending;
         ApplyButtonTone(_verifyAction, ButtonTone.Outline);
         _recoveryAction.Enabled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BetterDiscord", "solcord-installer"));
@@ -364,7 +368,6 @@ internal sealed class InstallerForm : Form
         ActionVisual visual = _actions[key];
         visual.Row.Visible = visible;
         visual.Button.Enabled = visible;
-        _maintenanceList.RowStyles[visual.RowIndex].Height = visible ? 52 : 0;
         ApplyButtonTone(visual.Button, visual.Tone);
     }
 
@@ -383,7 +386,6 @@ internal sealed class InstallerForm : Form
         _primaryAction.Enabled = recommendedKey is not null;
         _primaryAction.Visible = recommendedKey is not null;
         _primaryRow.Visible = recommendedKey is not null;
-        _workspace.RowStyles[2].Height = recommendedKey is null ? 0 : 54;
         _primaryAction.Text = primaryLabel ?? recommendedKey switch {"install" => "Install Solcord", "update" => "Update Solcord", "repair" => "Repair Solcord", "rollback" => "Roll back", "launch" => "Open Solcord", _ => "Continue"};
         _primaryAction.AccessibleDescription = body;
         ApplyButtonTone(_primaryAction, ButtonTone.Primary);
@@ -492,6 +494,72 @@ internal sealed class InstallerForm : Form
         if (stream is null) return null;
         using var source = Image.FromStream(stream);
         return new Bitmap(source);
+    }
+
+    internal static void ValidateGeometryMatrix(string bundleRoot)
+    {
+        foreach (int dpi in new[] {96, 120, 144, 192})
+        {
+            float scale = dpi / 96F;
+            foreach (Size logicalClient in new[] {new Size(760, 600), new Size(900, 650)})
+            {
+                using var form = new InstallerForm(bundleRoot);
+                form.SetActionAvailability(true, true, false, true, false);
+                form.SetState(
+                    "Action needed",
+                    "Update Solcord couldn't finish",
+                    "Discord could not close automatically. Quit it from the system tray, then try again; plugins, themes, settings, and recovery files remain unchanged.",
+                    StateTone.Danger,
+                    "update",
+                    "Try again"
+                );
+                form.MinimumSize = Size.Empty;
+                form.Scale(new SizeF(scale, scale));
+                form.ClientSize = new Size(
+                    (int)Math.Ceiling(logicalClient.Width * scale),
+                    (int)Math.Ceiling(logicalClient.Height * scale)
+                );
+                form.CreateControl();
+                PerformLayoutTree(form);
+                ValidateControlTree(form, $"{dpi}dpi/{logicalClient.Width}x{logicalClient.Height}");
+            }
+        }
+    }
+
+    private static void PerformLayoutTree(Control control)
+    {
+        control.PerformLayout();
+        foreach (Control child in control.Controls) PerformLayoutTree(child);
+        control.PerformLayout();
+    }
+
+    private static void ValidateControlTree(Control parent, string context)
+    {
+        const int tolerance = 2;
+        bool allowsVerticalOverflow = parent is ScrollableControl scrollOwner && scrollOwner.AutoScroll;
+        foreach (Control child in parent.Controls)
+        {
+            if (!child.Visible) continue;
+            if (child.Width <= 0 || child.Height <= 0) throw new InvalidDataException($"installer-layout:{context}:{child.Name}:{child.GetType().Name}:empty");
+            if (child.Left < -tolerance || child.Top < -tolerance || child.Right > parent.ClientSize.Width + tolerance || !allowsVerticalOverflow && child.Bottom > parent.ClientSize.Height + tolerance)
+                throw new InvalidDataException($"installer-layout:{context}:{child.Name}:{child.GetType().Name}:outside-parent");
+
+            if (child is Button button && !string.IsNullOrWhiteSpace(button.Text))
+            {
+                Size text = TextRenderer.MeasureText(button.Text, button.Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+                if (text.Width + button.Padding.Horizontal + 6 > button.ClientSize.Width || text.Height + 6 > button.ClientSize.Height)
+                    throw new InvalidDataException($"installer-layout:{context}:{button.Text}:button-text-clipped");
+            }
+            else if (child is Label label && !string.IsNullOrWhiteSpace(label.Text) && !label.AutoEllipsis)
+            {
+                Size proposal = new(Math.Max(1, label.ClientSize.Width), int.MaxValue);
+                Size text = TextRenderer.MeasureText(label.Text, label.Font, proposal, TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
+                if (text.Height > label.ClientSize.Height + tolerance)
+                    throw new InvalidDataException($"installer-layout:{context}:{label.Text}:label-text-clipped");
+            }
+
+            ValidateControlTree(child, context);
+        }
     }
 
     private enum ButtonTone {Primary, Outline, Danger}
