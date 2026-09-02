@@ -143,6 +143,9 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("private static readonly Color BrandTile = Color.FromArgb(24, 37, 39);");
         expect(installerForm).toContain("_brandMarkHost.BackColor = BrandTile;");
         expect(installerForm).toContain("_brandMark.BackColor = BrandTile;");
+        expect(installerForm).toContain("layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));");
+        expect(installerForm).toContain("_brandMarkHost.Dock = DockStyle.Fill;");
+        expect(installerForm).toContain("brand-mark-safe-area-collapsed");
         expect(installerForm).toContain("SizeType.AutoSize");
         expect(installerForm).not.toContain("visibleMaintenanceRows * 52");
         expect(installerForm).toContain("_statePanel.Invalidate()");

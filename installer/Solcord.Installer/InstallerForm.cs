@@ -97,14 +97,13 @@ internal sealed class InstallerForm : Form
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         _brandMarkHost.Name = "brandMarkSafeArea";
-        _brandMarkHost.Anchor = AnchorStyles.None;
+        _brandMarkHost.Dock = DockStyle.Fill;
         _brandMarkHost.BackColor = BrandTile;
-        _brandMarkHost.Margin = Padding.Empty;
+        _brandMarkHost.Margin = new Padding(4, 5, 4, 5);
         _brandMarkHost.Padding = new Padding(4);
         _brandMarkHost.MinimumSize = new Size(48, 48);
-        _brandMarkHost.MaximumSize = new Size(48, 48);
-        _brandMarkHost.Size = new Size(48, 48);
         _brandMark.Name = "brandMark";
         _brandMark.Dock = DockStyle.Fill;
         _brandMark.Margin = Padding.Empty;
@@ -579,6 +578,10 @@ internal sealed class InstallerForm : Form
         Rectangle footer = form._footer.Bounds;
         if (header.Top > tolerance || Math.Abs(header.Bottom - workspace.Top) > tolerance || Math.Abs(workspace.Bottom - footer.Top) > tolerance || Math.Abs(footer.Bottom - form.ClientSize.Height) > tolerance)
             throw new InvalidDataException($"installer-layout:{context}:fixed-chrome-gap-or-overlap");
+
+        int expectedBrandSize = (int)Math.Round(48 * scale);
+        if (form._brandMarkHost.ClientSize.Width + tolerance < expectedBrandSize || form._brandMarkHost.ClientSize.Height + tolerance < expectedBrandSize)
+            throw new InvalidDataException($"installer-layout:{context}:brand-mark-safe-area-collapsed");
 
         Padding safe = form._brandMarkHost.Padding;
         if (form._brandMark.Left < safe.Left || form._brandMark.Top < safe.Top || form._brandMark.Right > form._brandMarkHost.ClientSize.Width - safe.Right || form._brandMark.Bottom > form._brandMarkHost.ClientSize.Height - safe.Bottom)
