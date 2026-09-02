@@ -137,6 +137,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("NewLabel(\"Version\"");
         expect(installerForm).toContain("$\"{target.Channel} · {target.Version}\"");
         expect(installerForm).toContain("new Size(112, 36)");
+        expect(installerForm).toContain("primary-action-collapsed");
+        expect(installerForm).toContain("maintenance-action-geometry");
         expect(installerForm).toContain("Built with BetterDiscord, created by @Sleeve of Solace.");
         expect(installerForm).toContain("SizeType.AutoSize");
         expect(installerForm).not.toContain("visibleMaintenanceRows * 52");

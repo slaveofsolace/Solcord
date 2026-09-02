@@ -226,11 +226,14 @@ internal sealed class InstallerForm : Form
     private Control BuildPrimaryAction()
     {
         _primaryRow.Dock = DockStyle.Top;
-        _primaryRow.AutoSize = true;
+        _primaryRow.AutoSize = false;
+        _primaryRow.Height = 46;
         _primaryRow.BackColor = Canvas;
         _primaryRow.Padding = new Padding(0, 0, 0, 10);
-        _primaryAction.Dock = DockStyle.Left;
-        _primaryAction.Width = 224;
+        _primaryAction.Dock = DockStyle.None;
+        _primaryAction.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        _primaryAction.Size = new Size(224, 36);
+        _primaryAction.Location = Point.Empty;
         _primaryAction.TabIndex = 1;
         _primaryAction.AccessibleName = "Recommended action";
         _primaryAction.Click += (_, _) => {if (_recommendedKey is not null) RunOperation(_recommendedKey);};
@@ -270,7 +273,7 @@ internal sealed class InstallerForm : Form
 
     private Control ActionRow(string key, string title, string description, int tabIndex, int rowIndex, ButtonTone tone = ButtonTone.Outline)
     {
-        var row = new TableLayoutPanel {Dock = DockStyle.Top, AutoSize = true, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Surface, Margin = Padding.Empty, Padding = new Padding(16, 4, 14, 4)};
+        var row = new TableLayoutPanel {Dock = DockStyle.Fill, AutoSize = false, Height = 48, MinimumSize = new Size(0, 44), ColumnCount = 2, RowCount = 1, BackColor = Surface, Margin = Padding.Empty, Padding = new Padding(16, 4, 14, 4)};
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124));
         row.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -420,6 +423,7 @@ internal sealed class InstallerForm : Form
         _primaryAction.Enabled = recommendedKey is not null;
         _primaryAction.Visible = recommendedKey is not null;
         _primaryRow.Visible = recommendedKey is not null;
+        _primaryRow.Height = recommendedKey is null ? 0 : 46;
         _primaryAction.Text = primaryLabel ?? recommendedKey switch {"install" => "Install Solcord", "update" => "Update Solcord", "repair" => "Repair Solcord", "rollback" => "Roll back", "launch" => "Open Solcord", _ => "Continue"};
         _primaryAction.AccessibleDescription = body;
         ApplyButtonTone(_primaryAction, ButtonTone.Primary);
@@ -557,12 +561,12 @@ internal sealed class InstallerForm : Form
                 PerformLayoutTree(form);
                 string context = $"{dpi}dpi/{logicalClient.Width}x{logicalClient.Height}";
                 ValidateControlTree(form, context);
-                ValidateStableChrome(form, context);
+                ValidateStableChrome(form, context, scale);
             }
         }
     }
 
-    private static void ValidateStableChrome(InstallerForm form, string context)
+    private static void ValidateStableChrome(InstallerForm form, string context, float scale)
     {
         const int tolerance = 2;
         Rectangle header = form._header.Bounds;
@@ -577,6 +581,19 @@ internal sealed class InstallerForm : Form
 
         if (workspace.Width <= 0 || workspace.Height <= 0)
             throw new InvalidDataException($"installer-layout:{context}:workspace-scroll-owner-empty");
+
+        if (form._primaryRow.Visible && (form._primaryRow.Height < form._primaryAction.Height || !form._primaryAction.Visible || form._primaryAction.Width <= 0 || form._primaryAction.Height <= 0))
+            throw new InvalidDataException($"installer-layout:{context}:primary-action-collapsed");
+
+        foreach (ActionVisual visual in form._actions.Values.Where(action => action.Row.Visible))
+        {
+            int minimumRow = (int)Math.Floor(44 * scale) - tolerance;
+            int maximumRow = (int)Math.Ceiling(52 * scale) + tolerance;
+            int expectedButtonWidth = (int)Math.Round(112 * scale);
+            int expectedButtonHeight = (int)Math.Round(36 * scale);
+            if (visual.Row.Height < minimumRow || visual.Row.Height > maximumRow || Math.Abs(visual.Button.Width - expectedButtonWidth) > tolerance || Math.Abs(visual.Button.Height - expectedButtonHeight) > tolerance)
+                throw new InvalidDataException($"installer-layout:{context}:{visual.Title}:maintenance-action-geometry");
+        }
 
         Rectangle headerBefore = form._header.Bounds;
         Rectangle footerBefore = form._footer.Bounds;
