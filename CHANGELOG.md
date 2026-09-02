@@ -1,5 +1,18 @@
 # Solcord Changelog
 
+## 2.0.0-rc.32 - Final release guidance and immutable identity
+
+### Changed
+
+- Download, installation, First Setup, update, verification, and recovery guidance now matches the current installer instead of pointing to the historical RC5 release line.
+- RC32 uses a new candidate identity because the installer correctly refuses to bind changed source bytes to the preserved RC31 label.
+
+### Verification boundary
+
+- Runtime implementation is unchanged from the live-accepted RC31 parent apart from embedded source provenance and candidate identity.
+- The complete source matrix, deterministic installer build, exact-client startup, and release evidence are rerun against RC32 before publication.
+- The Windows executable remains unsigned and may show an unknown-publisher warning.
+
 ## 2.0.0-rc.11 - Responsive motion and bounded local translation
 
 ### Fixed

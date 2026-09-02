@@ -6,7 +6,7 @@ Solcord V2 RC is installed only after tests, lint, type checks, production build
 
 Published historical candidates remain immutable. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
 
-RC31 carries the repaired DPI-aware installer, receipt-bound First Setup handoff, one native Control Center scroll owner, the canonical accessible switch, strict privacy defaults, and the full first-party suite without the broad diagnostic runtime hold. Its installer self-test covers install, update, repair, downgrade refusal, interrupted recovery, rollback, and uninstall in isolated targets. Audience Guard remains encrypted and account-bound when Electron `safeStorage` is available; it still makes no per-person media-delivery claim.
+RC32 carries the repaired DPI-aware installer, receipt-bound First Setup handoff, one native Control Center scroll owner, the canonical accessible switch, strict privacy defaults, and the full first-party suite without the broad diagnostic runtime hold. Its installer self-test covers install, update, repair, downgrade refusal, interrupted recovery, rollback, and uninstall in isolated targets. Audience Guard remains encrypted and account-bound when Electron `safeStorage` is available; it still makes no per-person media-delivery claim.
 
 The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Applying setup to the signed-in owner profile, Message Timeline persistence, and Link Lens's external-link modal remain separate optional choices even though disposable setup acceptance is complete.
 
@@ -67,7 +67,7 @@ The machine-readable install manifest records exact backup and rollback paths af
 
 The normal RC path is designed to take about one minute on a typical Windows PC after download. This is a usability target, not a time guarantee.
 
-1. Download `SolcordInstaller.exe` and the release-level `SHA256SUMS.txt` from the same owner-controlled `v2.0.0-rc.31` release. The complete review bundle is also available inside the delivery ZIP under its exact generated name.
+1. Download `SolcordInstaller.exe` and the release-level `SHA256SUMS.txt` from the same owner-controlled `v2.0.0-rc.32` release. The complete review bundle is also available inside the delivery ZIP under its exact generated name.
 2. Compare the executable hash with the `installer/SolcordInstaller.exe` entry in the release-level `SHA256SUMS.txt`; that nested evidence name applies byte-for-byte to the root-published executable. Stop on any mismatch.
 3. Save anything in progress, run `SolcordInstaller.exe`, confirm the detected Stable/PTB/Canary version, and choose **Install Solcord**. The installer closes only that selected Discord process tree when required.
 4. Choose **Verify files**, then **Open Solcord**. A fresh install opens **User Settings → Solcord Suite** on Welcome after Discord is ready; an update or repair preserves completed setup.
@@ -92,7 +92,7 @@ The setup rollback action restores the recorded prior plugin/theme enabled state
 
 ## Owner Activity acceptance
 
-The owner reported Activities working for the accepted live build. RC31 does not broaden Activity Bridge or its same-package preload policy. Re-run the authenticated matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
+The owner reported Activities working for the accepted live build. RC32 does not broaden Activity Bridge or its same-package preload policy. Re-run the authenticated matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
 
 1. Open Solcord Suite → Activity Bridge and confirm the unrestricted override reads **Off by default**.
 2. In a designated low-risk server/channel, start **Codenames** yourself. Wait for READY and complete one join/leave/rejoin cycle.
