@@ -13,8 +13,8 @@ This inventory is a text scan, not a semantic review or live Discord test. Curre
 | Persistent tracked files | 617 |
 | Text files scanned | 602 |
 | Binary files classified | 15 |
-| Text lines scanned | 129,555 |
-| Custom Solcord lines | 35,393 |
+| Text lines scanned | 129,758 |
+| Custom Solcord lines | 35,407 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -48,11 +48,11 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 8 | `src/betterdiscord/styles/solcord.css` | 1,218 | 92.2 KiB |
 | 9 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 10 | `tests/solcord/disposable-acceptance.test.ts` | 1,160 | 56.1 KiB |
-| 11 | `CHANGELOG.md` | 1,143 | 40.7 KiB |
+| 11 | `CHANGELOG.md` | 1,150 | 41.4 KiB |
 | 12 | `src/betterdiscord/modules/solcord/store.ts` | 1,100 | 58.7 KiB |
-| 13 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
-| 14 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
-| 15 | `installer/Solcord.Installer/InstallerEngine.cs` | 847 | 56.2 KiB |
+| 13 | `installer/Solcord.Installer/InstallerEngine.cs` | 936 | 63.7 KiB |
+| 14 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
+| 15 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 16 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 17 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
 | 18 | `installer/Solcord.Installer/InstallerForm.cs` | 699 | 39.3 KiB |
