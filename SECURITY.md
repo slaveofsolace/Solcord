@@ -1,9 +1,15 @@
-# Solcord security policy
+# Security policy
 
-Do not open a public issue containing a Discord token, private message/server content, account identifier, raw crash log, or absolute local path.
+## Report a vulnerability privately
 
-For ordinary bugs, use the repository issue template and attach only Solcord’s sanitized diagnostics export. For a sensitive vulnerability, contact the repository owner privately through an owner-designated channel before disclosure. No private reporting endpoint is claimed until one is configured in GitHub.
+Use [Report a vulnerability](https://github.com/slaveofsolace/Solcord/security/advisories/new). GitHub private vulnerability reporting is enabled for this repository. You will need to sign in to submit a report.
 
-Supported code is the current `development` branch and explicitly published Solcord releases. A local build artifact is not a release.
+Include the affected Solcord version or commit, the component, reproduction steps, and the potential impact. Use a minimal fixture with invented data. Never include Discord tokens, real private messages, account identifiers, private databases, or raw crash logs.
 
-See [docs/SECURITY_AND_PRIVACY.md](docs/SECURITY_AND_PRIVACY.md) for threat boundaries, data retention, updater policy, and prohibited capabilities.
+Keep exploit details out of public issues until the report has been reviewed and a disclosure plan agreed. For ordinary bugs, use the [bug report form](https://github.com/slaveofsolace/Solcord/issues/new?template=BUG-REPORT.yml) and follow the [screenshot and diagnostics guidance](SUPPORT.md#report-a-bug).
+
+## Supported source
+
+Reports should identify the published release or exact `development` commit they affect. Development builds and unreleased candidates are not stable releases; an installer or artifact is supported only under its recorded version and limitations.
+
+The [privacy guide](docs/SECURITY_AND_PRIVACY.md) explains local data and network behavior. The [security architecture](docs/development/SECURITY_ARCHITECTURE.md) describes the trust boundaries and implementation safeguards.

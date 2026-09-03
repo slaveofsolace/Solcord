@@ -1,5 +1,7 @@
 # Historical RC5 backend lifecycle soak — 4fe8008e
 
+> Version-specific test evidence. See [Release status](../STATUS.md) for the current candidate.
+
 This preserved receipt covers source-only, renderer-independent lifecycle testing for the earlier RC5 source checkpoint `4fe8008e25be2cd658b9d6b14bae6f5ab52173e4`, based on `development@01a65c48f7c0317219991e50e9e279bfdff19026`. It is historical regression evidence and does not certify the current candidate.
 
 ## Historical 118250cc follow-up

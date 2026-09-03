@@ -1,5 +1,7 @@
 # Solcord V1 productization checkpoint
 
+> Preserved implementation and acceptance notes. Use [Release status](../STATUS.md) for the current release line.
+
 ## 2026-08-26 closeout update
 
 This section supersedes older counts and live-state descriptions below while retaining them as historical evidence.

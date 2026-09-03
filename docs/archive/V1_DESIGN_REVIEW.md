@@ -1,4 +1,6 @@
-# Authored-interface triage
+# V1 design review
+
+> Historical design review. This does not certify the current interface.
 
 The productization wave was scanned with the local `anti-ai-slop-triage` detector against the README, visual contract, checkpoint, Solcord settings UI, styles, and installer. Six lexical/design candidates were reviewed manually.
 
