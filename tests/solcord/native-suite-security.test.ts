@@ -631,8 +631,8 @@ describe("Solcord native-suite security boundaries", () => {
     test("reports provider readiness individually and applies reversible loaded-DOM People and Spaces behavior", () => {
         const host = document.createElement("div");
         host.innerHTML = `
-            <div class="channel_test" style="order:7"><a href="/channels/@me/111">Pinned DM</a></div>
-            <li style="display:grid"><a href="/channels/222">Guild</a></li>
+            <nav data-list-id="private-channels"><div class="channel_test" style="order:7"><a href="/channels/@me/111">Pinned DM</a></div></nav>
+            <nav data-list-id="guildsnav"><li style="display:grid"><a href="/channels/222">Guild</a></li></nav>
         `;
         document.body.append(host);
         const scope = new SolcordDisposalScope();
@@ -704,7 +704,7 @@ describe("Solcord native-suite security boundaries", () => {
 
     test("applies recent-first pins, unread badges, and Streamer-Mode-only server hiding", async () => {
         const host = document.createElement("div");
-        host.innerHTML = `<div class="channel_dm-one"><a href="/channels/@me/111">One</a></div><div class="channel_dm-two"><a href="/channels/@me/112">Two</a></div><li class="guild"><a href="/channels/222">Guild</a></li>`;
+        host.innerHTML = `<nav data-list-id="private-channels"><div class="channel_dm-one"><a href="/channels/@me/111">One</a></div><div class="channel_dm-two"><a href="/channels/@me/112">Two</a></div></nav><nav data-list-id="guildsnav"><li class="guild"><a href="/channels/222">Guild</a></li></nav>`;
         document.body.append(host);
         let streamerMode = false;
         let streamerListener: (() => void) | undefined;

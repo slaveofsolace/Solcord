@@ -7,6 +7,8 @@ interface DisposalRecord {
 
 export class SolcordDisposalScope {
     #records: DisposalRecord[] = [];
+    #children = new Set<SolcordDisposalScope>();
+    #parent?: SolcordDisposalScope;
     #disposed = false;
 
     get disposed(): boolean {
@@ -16,7 +18,18 @@ export class SolcordDisposalScope {
     counts(): Record<string, number> {
         const counts: Record<string, number> = {};
         for (const record of this.#records) counts[record.kind] = (counts[record.kind] ?? 0) + 1;
+        for (const child of this.#children) {
+            for (const [kind, count] of Object.entries(child.counts())) counts[kind] = (counts[kind] ?? 0) + count;
+        }
         return counts;
+    }
+
+    fork(): SolcordDisposalScope {
+        if (this.#disposed) throw new Error("Cannot extend a disposed Solcord scope.");
+        const child = new SolcordDisposalScope();
+        child.#parent = this;
+        this.#children.add(child);
+        return child;
     }
 
     own(dispose: () => void, kind: SolcordResourceKind = "other"): () => void {
@@ -41,16 +54,18 @@ export class SolcordDisposalScope {
     }
 
     timeout(callback: () => void, delay: number): number {
+        if (this.#disposed) return 0;
         let handle = 0;
         const release = this.own(() => globalThis.clearTimeout(handle), "timer");
         handle = globalThis.setTimeout(() => {
             release();
-            callback();
+            if (!this.#disposed) callback();
         }, delay) as unknown as number;
         return handle;
     }
 
     idle(callback: () => void, timeout = 1_500): void {
+        if (this.#disposed) return;
         const host = globalThis as typeof globalThis & {
             requestIdleCallback?: (callback: () => void, options?: {timeout: number;}) => number;
             cancelIdleCallback?: (handle: number) => void;
@@ -71,6 +86,7 @@ export class SolcordDisposalScope {
     }
 
     interval(callback: () => void, delay: number): number {
+        if (this.#disposed) return 0;
         const handle = globalThis.setInterval(callback, delay) as unknown as number;
         this.own(() => globalThis.clearInterval(handle), "interval");
         return handle;
@@ -99,11 +115,15 @@ export class SolcordDisposalScope {
     }
 
     dispose(): void {
-        if (this.#disposed && !this.#records.length) return;
+        if (this.#disposed && !this.#records.length && !this.#children.size) return;
         this.#disposed = true;
         const records = this.#records.splice(0).reverse();
         const failed: DisposalRecord[] = [];
         const errors: unknown[] = [];
+        for (const child of [...this.#children].reverse()) {
+            try {child.dispose();}
+            catch (error) {errors.push(error);}
+        }
         for (const record of records) {
             try {record.dispose();}
             catch (error) {
@@ -116,6 +136,10 @@ export class SolcordDisposalScope {
             // resource. Retain ownership so a later stop/retry can attempt the
             // exact cleanup again and resource counts remain truthful.
             this.#records.push(...failed.reverse());
+        }
+        if (!this.#records.length && !this.#children.size) {
+            if (this.#parent) this.#parent.#children.delete(this);
+            this.#parent = undefined;
         }
         if (errors.length) throw new AggregateError(errors, "Solcord resource cleanup failed.");
     }

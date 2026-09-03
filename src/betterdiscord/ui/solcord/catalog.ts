@@ -11,6 +11,14 @@ export interface SolcordAddonGroup {
     addons: readonly SolcordAddonPresentation[];
 }
 
+export function visibleSolcordCommunityGroups(
+    groups: readonly SolcordAddonGroup[],
+    states: ReadonlyArray<{name: string; builtIn: boolean; installed: boolean; quarantine?: string;}>
+): SolcordAddonGroup[] {
+    const visibleNames = new Set(states.filter(addon => !addon.builtIn && (addon.installed || Boolean(addon.quarantine))).map(addon => addon.name));
+    return groups.map(group => ({...group, addons: group.addons.filter(addon => visibleNames.has(addon.name))})).filter(group => group.addons.length > 0);
+}
+
 export const SOLCORD_ADDON_GROUPS: readonly SolcordAddonGroup[] = [
     {
         id: "privacy-interaction",

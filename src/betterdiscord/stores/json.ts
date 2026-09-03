@@ -1,12 +1,20 @@
 import fs from "@polyfill/fs";
 import path from "path";
+import crypto from "crypto";
+import {deepEqual} from "fast-equals";
 import Store from "./base";
 import Config from "./config";
 import Logger from "@common/logger";
-import {useInsertionEffect, useState} from "react";
+import {useCallback, useSyncExternalStore} from "react";
 
 
 export type Files = "settings" | "plugins" | "themes" | "misc" | "addon-store";
+
+function parseData(text: string): Record<string, unknown> {
+    const value: unknown = JSON.parse(text);
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError("Settings data must be a JSON object.");
+    return value as Record<string, unknown>;
+}
 
 class JsonStore extends Store {
     private cache: Record<Files, Record<string, unknown> | undefined> = {
@@ -38,27 +46,31 @@ class JsonStore extends Store {
         this.cache[file] = this.#ensureData(file);
         if (typeof value === "undefined") {
             if (typeof key === "string") throw new Error("Cannot save string as JSON");
+            this.#save(file, key);
             this.cache[file] = key;
         }
         else {
             if (typeof key !== "string") throw new Error("Cannot use object as key");
+            this.#save(file, {...this.cache[file], [key]: value});
             this.cache[file][key] = value;
         }
-
-        this.#save(file);
+        this.#notifyCommitted();
     }
 
     public delete(file: Files, key: string) {
         this.cache[file] = this.#ensureData(file);
+        const next = {...this.cache[file]};
+        delete next[key];
+        this.#save(file, next);
         delete this.cache[file][key];
-        this.#save(file);
+        this.#notifyCommitted();
     }
 
     #ensureData(file: Files): Record<string, unknown> {
         if (typeof (this.cache[file]) !== "undefined") return this.cache[file]; // Already have data cached
         let data;
         try {
-            data = JSON.parse(fs.readFileSync(path.resolve(Config.get("channelPath"), `${file}.json`)).toString());
+            data = parseData(fs.readFileSync(path.resolve(Config.get("channelPath"), `${file}.json`)).toString());
         }
         catch {
             data = {};
@@ -66,9 +78,31 @@ class JsonStore extends Store {
         return data;
     }
 
-    #save(file: Files) {
-        fs.writeFileSync(path.resolve(Config.get("channelPath"), `${file}.json`), JSON.stringify(this.cache[file], null, 4));
-        this.emitChange();
+    #save(file: Files, value: Record<string, unknown>) {
+        this.#writeJson(path.resolve(Config.get("channelPath"), `${file}.json`), value);
+    }
+
+    #writeJson(target: string, value: Record<string, unknown>) {
+        // Serialize before touching disk, then publish the complete file once.
+        // Cache mutation and notification happen only after this succeeds.
+        const content = JSON.stringify(value, null, 4);
+        const temporary = `${target}.${crypto.randomUUID()}.tmp`;
+        try {
+            fs.writeFileSync(temporary, content, {flag: "wx", originalFs: false});
+            fs.renameSync(temporary, target);
+        }
+        catch (error) {
+            if ((error as NodeJS.ErrnoException)?.code !== "EEXIST") {
+                try {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
+                catch {/* preserve the original write error */}
+            }
+            throw error;
+        }
+    }
+
+    #notifyCommitted() {
+        try {this.emitChange();}
+        catch {Logger.warn("JsonStore", "A settings listener failed after the data was saved.");}
     }
 
     // Plugin data
@@ -84,7 +118,7 @@ class JsonStore extends Store {
 
         try {
             // Getting here means not cached, read from disk
-            this.pluginCache[pluginName] = JSON.parse(fs.readFileSync(this.#getPluginFile(pluginName)).toString());
+            this.pluginCache[pluginName] = parseData(fs.readFileSync(this.#getPluginFile(pluginName)).toString());
         }
         catch {
             // Setup blank data if parse fails
@@ -97,12 +131,12 @@ class JsonStore extends Store {
         const before = this.pluginCache[pluginName];
 
         try {
-            this.pluginCache[pluginName] = JSON.parse(fs.readFileSync(this.#getPluginFile(pluginName)).toString());
-            this.emitChange();
+            this.pluginCache[pluginName] = parseData(fs.readFileSync(this.#getPluginFile(pluginName)).toString());
+            if (!deepEqual(before, this.pluginCache[pluginName])) this.#notifyCommitted();
             return true;
         }
         catch (err) {
-            Logger.err("JsonStore", "recache: ", err);
+            Logger.error("JsonStore", "recache: ", err);
             return false;
         }
         finally {
@@ -123,8 +157,8 @@ class JsonStore extends Store {
             };
 
             for (const k of beforeSet) {
-                if (afterSet.has(k)) result.changed.push(k);
-                else result.deleted.push(k);
+                if (!afterSet.has(k)) result.deleted.push(k);
+                else if (!deepEqual(before[k], after[k])) result.changed.push(k);
             }
 
             for (const k of afterSet) {
@@ -143,9 +177,8 @@ class JsonStore extends Store {
         }
     }
 
-    #savePluginData(pluginName: string) {
-        fs.writeFileSync(this.#getPluginFile(pluginName), JSON.stringify(this.pluginCache[pluginName], null, 4));
-        this.emitChange();
+    #savePluginData(pluginName: string, value: Record<string, unknown>) {
+        this.#writeJson(this.#getPluginFile(pluginName), value);
     }
 
     public getData<T>(pluginName: string, key: string): T {
@@ -155,33 +188,30 @@ class JsonStore extends Store {
 
     public useData<T>(pluginName: string, key: string): T {
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const [state, setState] = useState(() => this.getData<T>(pluginName, key));
-
+        const subscribe = useCallback((notify: () => void) => this.addPluginChangeListener(pluginName, notify, key), [pluginName, key]);
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        useInsertionEffect(() => {
-            const listener = () => setState(() => this.getData<T>(pluginName, key));
-
-            listener();
-
-            return this.addPluginChangeListener(pluginName, listener, key);
-        }, []);
-
-        return state;
+        const snapshot = useCallback(() => this.getData<T>(pluginName, key), [pluginName, key]);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        return useSyncExternalStore(subscribe, snapshot, snapshot);
     }
 
     public setData(pluginName: string, key: string, value: unknown) {
         if (value === undefined) return; // Can't set undefined, use deletePluginData
         this.#ensurePluginData(pluginName); // Ensure plugin data, if any, is cached
 
+        this.#savePluginData(pluginName, {...this.pluginCache[pluginName], [key]: value});
         this.pluginCache[pluginName][key] = value;
-        this.#savePluginData(pluginName);
+        this.#notifyCommitted();
         this.emitPluginChangeListeners(pluginName, key, value);
     }
 
     public deleteData(pluginName: string, key: string) {
         this.#ensurePluginData(pluginName); // Ensure plugin data, if any, is cached
+        const next = {...this.pluginCache[pluginName]};
+        delete next[key];
+        this.#savePluginData(pluginName, next);
         delete this.pluginCache[pluginName][key];
-        this.#savePluginData(pluginName);
+        this.#notifyCommitted();
         this.emitPluginChangeListeners(pluginName, key);
     }
 
@@ -192,12 +222,11 @@ class JsonStore extends Store {
 
         for (const element of pluginListeners.all) {
             // So plugins can do arguments.length === 1 to see if it was a delete
-            if (arguments.length === 3) {
-                element(key, newData);
+            try {
+                if (arguments.length === 3) element(key, newData);
+                else element(key);
             }
-            else {
-                element(key);
-            }
+            catch {Logger.warn("JsonStore", "A plugin data listener failed after the data was saved.");}
         }
 
         if (!pluginListeners.keys.has(key)) return;
@@ -206,12 +235,11 @@ class JsonStore extends Store {
 
         for (const element of listeners) {
             // So plugins can do arguments.length === 0 to see if it was a delete
-            if (arguments.length === 3) {
-                element(newData);
+            try {
+                if (arguments.length === 3) element(newData);
+                else element();
             }
-            else {
-                element();
-            }
+            catch {Logger.warn("JsonStore", "A plugin data listener failed after the data was saved.");}
         }
     }
 

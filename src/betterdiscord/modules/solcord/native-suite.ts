@@ -13,6 +13,7 @@ import {
     SolcordTranslationDeskController,
     SolcordVoiceHealthController,
     SolcordVoiceNoteStudioController,
+    SOLCORD_TRANSLATION_MAX_PREVIEWS,
     SOLCORD_VOICE_NOTE_MAX_BYTES,
     SOLCORD_VOICE_NOTE_MAX_DURATION_MS,
     type SolcordCallSnapshot,
@@ -312,6 +313,20 @@ function stopMediaStreamTracks(stream: MediaStream): void {
 export const SOLCORD_TRANSLATION_RESPONSE_MAX_BYTES = 1024 * 1024;
 export const SOLCORD_VOICE_NOTE_STOP_TIMEOUT_MS = 2_000;
 
+export function solcordFlowPairCount(width: number, amount: number): number {
+    const maximum = width < 620 ? 20 : 32;
+    return Math.round(6 + (maximum - 6) * (Math.max(1, Math.min(24, amount)) - 1) / 23);
+}
+
+export function solcordFlowPalette(color: string, light: boolean): string[] {
+    const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+    const channels = match ? match.slice(1).map(part => Number.parseInt(part, 16)) : [159, 184, 255];
+    return [0.34, 0.24, 0.16].map((alpha, index) => {
+        const rgb = channels.map(channel => Math.round(channel * (light ? 0.62 - index * 0.06 : 1 - index * 0.08)));
+        return `rgba(${rgb.join(",")},${alpha})`;
+    });
+}
+
 export async function readBoundedTranslationJson(response: Response): Promise<unknown> {
     const declaredSize = Number(response.headers.get("content-length"));
     if (Number.isFinite(declaredSize) && declaredSize > SOLCORD_TRANSLATION_RESPONSE_MAX_BYTES) {
@@ -352,8 +367,7 @@ export class SolcordNativeSuiteController {
     readonly #status = new Map<SolcordNativeSuiteStatus["id"], SolcordNativeSuiteStatus>();
     readonly #providerReadiness = new Map<string, boolean>();
     readonly #providerAvailability = new Map<string, boolean>();
-    readonly #timestampTitles = new Map<HTMLElement, string | null>();
-    readonly #timestampText = new Map<HTMLElement, string>();
+    readonly #timestamps = new Map<HTMLElement, {datetime: string; originalTitle: string | null; originalNodes?: ChildNode[]; renderedTitle?: string; renderedText?: string;}>();
     readonly #peopleDomOriginals = new Map<HTMLElement, {display: string; order: string; ariaLabel: string | null; title: string | null;}>();
     #composer?: SolcordComposerToolkitController;
     #call?: SolcordCallContextController;
@@ -365,6 +379,8 @@ export class SolcordNativeSuiteController {
     #glance?: SolcordChannelGlanceController;
     #notifications?: SolcordNotificationReviewController;
     #motion?: SolcordMotionStudioController;
+    #motionScope?: SolcordDisposalScope;
+    #motionSignature?: string;
     #permissions?: SolcordPermissionLensController;
     #identityNotes?: SolcordLocalIdentityNotesController;
     #voiceHealth?: SolcordVoiceHealthController;
@@ -378,6 +394,7 @@ export class SolcordNativeSuiteController {
     #voicePreviewPending = false;
     readonly #voiceStateListeners = new Set<(phase: SolcordVoiceNotePhase) => void>();
     #translationEndpoints = new Map<string, string>();
+    readonly #translationRequests = new Set<SolcordDisposalScope>();
     #focusIds: string[] = [];
     #releaseFocusObserver?: () => void;
     #glanceTooltip?: HTMLElement;
@@ -415,6 +432,23 @@ export class SolcordNativeSuiteController {
 
     statuses(): SolcordNativeSuiteStatus[] {
         return [...this.#status.values()].map(status => structuredClone(status));
+    }
+
+    configureMotion(preferences: SolcordNativeSuiteAdapter["motionPreferences"], policy: SolcordNativeMotionPolicy, addons: Readonly<Record<"BetterAnimations" | "DiscordEffects", boolean>>): void {
+        if (this.#disposed || !this.#started) throw new Error("Solcord motion is not running.");
+        const providers = Object.keys(addons).filter(name => addons[name as keyof typeof addons]).sort();
+        const signature = JSON.stringify([preferences, policy, providers]);
+        if (signature === this.#motionSignature) return;
+        // Motion preferences must not cancel voice previews, translation jobs,
+        // or loaded People state owned by neighboring providers.
+        this.#motionScope?.dispose();
+        this.#motionScope = undefined;
+        this.#motion?.dispose();
+        this.#motion = undefined;
+        this.#adapter.motionPreferences = structuredClone(preferences);
+        this.#adapter.motionPolicy = {...policy};
+        this.#enabled.set("motion-studio", providers);
+        this.#startMotionStudio();
     }
 
     providerReady(name: string): boolean {
@@ -503,6 +537,7 @@ export class SolcordNativeSuiteController {
     previewTranslation(provider: SolcordTranslationProvider, endpoint: string | undefined, source: string, target: string, text: string) {
         if (!this.#translation) throw new Error("Translation Desk is unavailable.");
         const preview = this.#translation.preview(provider, endpoint, source, target, text);
+        if (this.#translationEndpoints.size >= SOLCORD_TRANSLATION_MAX_PREVIEWS) this.#translationEndpoints.delete(this.#translationEndpoints.keys().next().value!);
         this.#translationEndpoints.set(preview.id, provider === "deepl" ? "https://api-free.deepl.com/v2/translate" : new URL(endpoint!).toString());
         return preview;
     }
@@ -513,6 +548,8 @@ export class SolcordNativeSuiteController {
     }
 
     async executeReviewedTranslation(previewId: string, credential = ""): Promise<string> {
+        if (this.#disposed) throw new Error("Translation Desk is off.");
+        if (this.#translationRequests.size >= SOLCORD_TRANSLATION_MAX_PREVIEWS) throw new Error("Wait for the current translations to finish before starting another.");
         const endpoint = this.#translationEndpoints.get(previewId);
         this.#translationEndpoints.delete(previewId);
         if (!endpoint) throw new Error("Translation endpoint review expired.");
@@ -523,7 +560,10 @@ export class SolcordNativeSuiteController {
         if (Date.now() > intent.expiresAt) throw new Error("Translation confirmation expired.");
         if (intent.payload.provider === "deepl" && (!credential || credential.length > 512 || hasUnsafeControl(credential))) throw new Error("A valid DeepL credential is required.");
         const controller = new AbortController();
-        const timeout = globalThis.setTimeout(() => controller.abort(), 15_000);
+        const request = this.#scope.fork();
+        this.#translationRequests.add(request);
+        request.own(() => controller.abort(), "other");
+        request.timeout(() => controller.abort(), 15_000);
         try {
             const headers = new Headers({"content-type": "application/json"});
             if (intent.payload.provider === "deepl") headers.set("authorization", `DeepL-Auth-Key ${credential}`);
@@ -536,13 +576,26 @@ export class SolcordNativeSuiteController {
                     ? {text: [intent.payload.text], source_lang: intent.payload.sourceLanguage === "auto" ? undefined : intent.payload.sourceLanguage, target_lang: intent.payload.targetLanguage}
                     : {q: intent.payload.text, source: intent.payload.sourceLanguage, target: intent.payload.targetLanguage, format: "text", ...(credential ? {api_key: credential} : {})})
             });
+            if (controller.signal.aborted || this.#disposed) throw new Error("Translation was canceled.");
+            if (this.#adapter.externalProvidersAllowed?.() !== true) throw new Error("External translation is now off.");
             if (!response.ok) throw new Error(`Translation provider returned HTTP ${response.status}.`);
             const value = await readBoundedTranslationJson(response) as {translations?: Array<{text?: unknown;}>; translatedText?: unknown;};
+            if (controller.signal.aborted || this.#disposed) throw new Error("Translation was canceled.");
+            if (this.#adapter.externalProvidersAllowed?.() !== true) throw new Error("External translation is now off.");
             const translated = intent.payload.provider === "deepl" ? value.translations?.[0]?.text : value.translatedText;
             if (typeof translated !== "string" || translated.length > 64_000) throw new Error("Translation provider returned an invalid response.");
             return translated;
         }
-        finally {globalThis.clearTimeout(timeout);}
+        finally {
+            request.dispose();
+            this.#translationRequests.delete(request);
+        }
+    }
+
+    cancelExternalTranslations(): void {
+        this.#translationEndpoints.clear();
+        for (const request of this.#translationRequests) request.dispose();
+        this.#translationRequests.clear();
     }
 
     pinDm(id: string): void {if (!this.#people) throw new Error("People and Spaces is unavailable."); this.#people.pinDm(id); this.#savePeople();}
@@ -561,6 +614,12 @@ export class SolcordNativeSuiteController {
     includeVoiceGuild(id: string): void {if (!this.#people) throw new Error("People and Spaces is unavailable."); this.#people.includeVoiceGuild(id); this.#savePeople(); this.#renderCallPresence(Boolean(this.#call?.summary().connected));}
     currentVoiceContext() {return this.#adapter.currentVoiceContext?.();}
     peopleSnapshot() {return this.#people?.snapshot();}
+
+    updatePeoplePersistence(persistent: boolean): void {
+        if (this.#disposed || !this.#people) return;
+        this.#adapter.peopleStatePersistence = persistent ? "encrypted" : "session";
+        this.#refreshPeopleStatus();
+    }
 
     loadedFriendList(query = "", sort: "name" | "status" = "name", category: "visible" | "favorites" | "hidden" | "blocked" | "incoming" | "outgoing" | "ignored" = "visible"): Array<{id: string; label: string; status: "online" | "idle" | "dnd" | "offline" | "unknown"; relationship: "friend" | "blocked" | "incoming" | "outgoing" | "ignored"; favorite: boolean; hidden: boolean; relationshipSince?: number; mutualGuildCount?: number;}> {
         if (!this.#people || !this.#adapter.loadedFriends) throw new Error("Better Friend List is unavailable.");
@@ -837,7 +896,7 @@ export class SolcordNativeSuiteController {
         if (this.#disposed) return;
         this.#disposed = true;
         this.cancelVoiceNote();
-        this.#translationEndpoints.clear();
+        this.cancelExternalTranslations();
         this.#localTranslation?.dispose();
         this.#localTranslation = undefined;
         this.#restorePeopleDom();
@@ -928,6 +987,7 @@ export class SolcordNativeSuiteController {
             if (counter.dataset.overLimit !== overLimitValue) counter.dataset.overLimit = overLimitValue;
         };
         const sync = () => {
+            if (this.#disposed || this.#scope.disposed) return;
             if (providers.includes("CharCounter")) {
                 const editors = document.querySelectorAll<HTMLElement>("[role='textbox'][contenteditable='true']");
                 for (const editor of editors) {
@@ -963,37 +1023,49 @@ export class SolcordNativeSuiteController {
                 }
             }
             if (!providers.includes("CompleteTimestamps")) return;
-            for (const element of document.querySelectorAll<HTMLElement>("time[datetime]:not([data-solcord-complete-time])")) {
-                const date = new Date(element.getAttribute("datetime") ?? "");
+            for (const element of this.#timestamps.keys()) if (!element.isConnected) this.#restoreTimestamp(element);
+            for (const element of document.querySelectorAll<HTMLElement>("time[datetime]")) {
+                const datetime = element.getAttribute("datetime") ?? "";
+                const previous = this.#timestamps.get(element);
+                if (previous?.datetime === datetime
+                    && (previous.renderedText === undefined || element.textContent === previous.renderedText)
+                    && (previous.renderedTitle === undefined || element.title === previous.renderedTitle)) continue;
+                if (previous) this.#restoreTimestamp(element);
+                const date = new Date(datetime);
                 if (!Number.isNaN(date.valueOf())) {
                     const surface = timestampSurface(element);
                     if (!placeEnabled(surface) && !tooltipEnabled(surface)) continue;
-                    if (!this.#timestampTitles.has(element)) this.#timestampTitles.set(element, element.getAttribute("title"));
+                    const decoration: {datetime: string; originalTitle: string | null; originalNodes?: ChildNode[]; renderedTitle?: string; renderedText?: string;} = {datetime, originalTitle: element.getAttribute("title")};
+                    this.#timestamps.set(element, decoration);
                     element.dataset.solcordCompleteTime = "true";
                     if (tooltipEnabled(surface)) {
-                        element.title = timestampFormat === "iso"
+                        decoration.renderedTitle = timestampFormat === "iso"
                             ? date.toISOString()
                             : timestampFormat === "compact"
                                 ? date.toLocaleString(undefined, {dateStyle: "short", timeStyle: "short"})
                                 : date.toLocaleString(undefined, {dateStyle: "full", timeStyle: "long"});
+                        element.title = decoration.renderedTitle;
                     }
                     if (placeEnabled(surface)) {
-                        if (!this.#timestampText.has(element)) this.#timestampText.set(element, element.textContent ?? "");
-                        element.textContent = timestampFormat === "iso"
+                        decoration.originalNodes = [...element.childNodes];
+                        decoration.renderedText = timestampFormat === "iso"
                             ? date.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC")
                             : date.toLocaleString(undefined, {dateStyle: timestampFormat === "compact" ? "short" : "medium", timeStyle: timestampFormat === "compact" ? "short" : "medium"});
+                        element.textContent = decoration.renderedText;
                     }
                 }
             }
         };
-        const observer = new MutationObserver(sync);
-        // Editor input events cover text changes. Observing every character-data mutation
-        // also observes the counter's own text and can create a renderer-saturating loop.
-        this.#scope.observe(observer, document.body, {childList: true, subtree: true});
-        if (providers.includes("CharCounter")) this.#scope.listen(document, "input", sync);
-        this.#scope.own(() => document.querySelectorAll("[data-solcord-composer-count],[data-solcord-input-count]").forEach(element => element.remove()), "element");
-        this.#scope.own(() => this.#restoreTimestampTitles(), "element");
-        sync();
+        if (providers.includes("CharCounter") || providers.includes("CompleteTimestamps")) {
+            const observer = new MutationObserver(sync);
+            // Only native datetime attributes need observation. Input events cover
+            // text edits without observing the counter's own text mutations.
+            this.#scope.observe(observer, document.body, {childList: true, subtree: true, ...(providers.includes("CompleteTimestamps") ? {attributes: true, attributeFilter: ["datetime"]} : {})});
+            if (providers.includes("CharCounter")) this.#scope.listen(document, "input", sync);
+            this.#scope.own(() => document.querySelectorAll("[data-solcord-composer-count],[data-solcord-input-count]").forEach(element => element.remove()), "element");
+            this.#scope.own(() => this.#restoreTimestampTitles(), "element");
+            sync();
+        }
         this.#setProviderReady("CharCounter", providers.includes("CharCounter"));
         this.#setProviderReady("CompleteTimestamps", providers.includes("CompleteTimestamps"));
         this.#setStatus("composer-toolkit", "ready", "Character count, complete local timestamps, guarded splitting, and native reply composition are active without sending.", providers);
@@ -1102,21 +1174,30 @@ export class SolcordNativeSuiteController {
     }
 
     #renderCallBadge(connected: boolean): void {
-        document.querySelector("[data-solcord-call-badge]")?.remove();
-        if (!connected) return;
+        const existing = document.querySelector<HTMLElement>("[data-solcord-call-badge]");
         const summary = this.#call?.summary();
-        if (!summary?.connected) return;
+        const showTime = this.#providerReadiness.get("CallTimeCounter") === true;
+        const showViewers = this.#providerReadiness.get("ShowSpectators") === true;
+        if (!connected || !summary?.connected || (!showTime && !showViewers)) {existing?.remove(); return;}
         const host = document.querySelector<HTMLElement>("[class*='panels']");
-        if (!host) return;
-        const badge = document.createElement("div");
+        if (!host) {existing?.remove(); return;}
+        const badge = existing ?? document.createElement("div");
         badge.dataset.solcordCallBadge = "true";
         badge.className = "solcord-call-badge";
-        badge.setAttribute("role", "status");
+        badge.setAttribute("role", showTime ? "timer" : "status");
+        badge.setAttribute("aria-live", showTime ? "off" : "polite");
         const totalSeconds = Math.floor(summary.elapsedMs / 1_000);
         const elapsed = `${String(Math.floor(totalSeconds / 3_600)).padStart(2, "0")}:${String(Math.floor(totalSeconds / 60) % 60).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
-        const viewers = summary.viewerLabels.length ? ` · Watching: ${summary.viewerLabels.slice(0, 3).join(", ")}${summary.viewerLabels.length > 3 ? ` +${summary.viewerLabels.length - 3}` : ""}` : (summary.viewerCount ? ` · ${summary.viewerCount} watching` : "");
-        badge.textContent = `${elapsed} · ${summary.participantCount} in call · ${summary.speakerCount} speaking${viewers}`;
-        host.prepend(badge);
+        const parts: string[] = showTime ? [elapsed, `${summary.participantCount} in call`] : [];
+        if (this.#providerReadiness.get("VoiceActivity")) parts.push(`${summary.speakerCount} speaking`);
+        if (showViewers) {
+            parts.push(summary.viewerLabels.length
+                ? `Watching: ${summary.viewerLabels.slice(0, 3).join(", ")}${summary.viewerLabels.length > 3 ? ` +${summary.viewerLabels.length - 3}` : ""}`
+                : `${summary.viewerCount} watching`);
+        }
+        const text = parts.join(" · ");
+        if (badge.textContent !== text) badge.textContent = text;
+        if (badge.parentElement !== host) host.prepend(badge);
     }
 
     #renderCallPresence(connected: boolean): void {
@@ -1139,9 +1220,11 @@ export class SolcordNativeSuiteController {
         const participants = new Set(summary.participantIds);
         const speakers = new Set(summary.speakerIds);
         const preferences = this.#adapter.voiceActivityPreferences ?? {memberList: true, dmList: true, peopleList: true, highlightCurrentChannel: true, statusIcons: true, currentUser: true};
+        const renderedHosts: HTMLElement[] = [];
         for (const host of document.querySelectorAll<HTMLElement>("[data-user-id], [data-list-item-id*='members-'], [data-list-item-id*='voice'], [data-list-item-id*='private-channels'], [data-list-item-id*='people']")) {
+            if (host.matches("img,input,br,hr,area,link,meta,source,track,wbr") || renderedHosts.some(parent => parent.contains(host))) continue;
             const identity = host.dataset.userId ?? host.dataset.listItemId ?? "";
-            const userId = identity.match(/(?:^|\D)(\d{1,32})(?:\D|$)/)?.[1];
+            const userId = identity.match(/(?:^|\D)(\d{1,32})\D*$/)?.[1];
             if (!userId || !participants.has(userId)) continue;
             const listIdentity = (host.dataset.listItemId ?? "").toLocaleLowerCase();
             const isMember = listIdentity.includes("members-") || Boolean(host.closest("[class*='membersWrap'], [class*='members_']"));
@@ -1149,6 +1232,7 @@ export class SolcordNativeSuiteController {
             const isPeople = listIdentity.includes("people") || Boolean(host.closest("[class*='peopleList'], [class*='people_list']"));
             if ((isMember && !preferences.memberList) || (isDm && !preferences.dmList) || (isPeople && !preferences.peopleList)) continue;
             if (userId === this.#adapter.voiceActivityCurrentUserId && !preferences.currentUser) continue;
+            renderedHosts.push(host);
             const speaking = speakers.has(userId);
             const presence = speaking && preferences.statusIcons ? "speaking" : "connected";
             const label = speaking && preferences.statusIcons ? "Speaking" : "In voice";
@@ -1341,10 +1425,15 @@ export class SolcordNativeSuiteController {
         for (const provider of ["PinDMs", "ServerHider", "EditServers"] as const) this.#setProviderReady(provider, providers.includes(provider));
         this.#setProviderReady("ServerDetails", providers.includes("ServerDetails") && typeof this.#adapter.guildDetails === "function");
         this.#setProviderReady("BetterFriendList", providers.includes("BetterFriendList") && typeof this.#adapter.loadedFriends === "function");
+        this.#refreshPeopleStatus();
+    }
+
+    #refreshPeopleStatus(): void {
+        const providers = this.#enabled.get("people-and-spaces") ?? [];
         const missing = providers.filter(provider => !this.#providerReadiness.get(provider));
         this.#setStatus("people-and-spaces", missing.length ? "degraded" : "ready", missing.length
-            ? `Local pins, hidden servers, aliases, and loaded server details are active; ${missing.join(" and ")} still needs a complete replacement.`
-            : `Local pins, hidden servers, aliases, and loaded server details are active. ${this.#adapter.peopleStatePersistence === "encrypted" ? "Private account state is encrypted for restart persistence." : "Private account state is session-only because secure persistence is unavailable."}`, providers);
+            ? `${missing.join(" and ")} could not validate its Discord adapter. Other selected People features remain on.`
+            : `Selected People features are on. ${this.#adapter.peopleStatePersistence === "encrypted" ? "Private account state is encrypted for restart persistence." : "Private account state is session-only because secure persistence is unavailable."}`, providers);
     }
 
     #savePeople(): void {
@@ -1384,10 +1473,12 @@ export class SolcordNativeSuiteController {
     #applyPeopleDom(): void {
         if (!this.#people) return;
         const state = this.#people.snapshot();
+        const providers = this.#enabled.get("people-and-spaces") ?? [];
         const peoplePreferences = this.#adapter.peoplePreferences ?? {showRelationshipDates: true, showMutualGuildCounts: true, pinIcon: true, pinUnreadAmount: true, pinChannelAmount: true, sortPinnedByRecent: false, serverHiderStreamOnly: false, pinCategories: {friends: true, groups: true, bots: true, blocked: true, others: true}};
+        const pinnedDmIds = providers.includes("PinDMs") ? state.pinnedDmIds : [];
         const recentPinnedIds = peoplePreferences.sortPinnedByRecent && this.#adapter.dmLastMessageTimestamp
-            ? [...state.pinnedDmIds].sort((left, right) => this.#adapter.dmLastMessageTimestamp!(right) - this.#adapter.dmLastMessageTimestamp!(left))
-            : state.pinnedDmIds;
+            ? [...pinnedDmIds].sort((left, right) => this.#adapter.dmLastMessageTimestamp!(right) - this.#adapter.dmLastMessageTimestamp!(left))
+            : pinnedDmIds;
         const categoryOrder = ["friends", "groups", "bots", "blocked", "others"] as const;
         const categoryLabels = {friends: "Friends", groups: "Group DMs", bots: "Bots", blocked: "Blocked", others: "Other DMs"} as const;
         const categoryRank = new Map(categoryOrder.map((category, index) => [category, index]));
@@ -1399,15 +1490,16 @@ export class SolcordNativeSuiteController {
             const category = categoryFor(id);
             if (!firstPinnedByCategory.has(category)) firstPinnedByCategory.set(category, id);
         }
-        const hidden = new Set(state.hiddenGuildIds);
-        const hideServersNow = !peoplePreferences.serverHiderStreamOnly || this.#adapter.streamerModeActive?.() === true;
+        const hidden = new Set(providers.includes("ServerHider") ? state.hiddenGuildIds : []);
+        const hideServersNow = hidden.size > 0 && (!peoplePreferences.serverHiderStreamOnly || this.#adapter.streamerModeActive?.() === true);
         this.#restorePeopleDom();
         for (const link of document.querySelectorAll<HTMLAnchorElement>("a[href^='/channels/']")) {
             const match = link.getAttribute("href")?.match(/^\/channels\/(@me|\d{1,32})(?:\/(\d{1,32}))?\/?$/);
             if (!match) continue;
             const [, scopeId, channelId] = match;
-            const container = link.closest<HTMLElement>("li, [class*='listItem'], [class*='channel_']") ?? link;
-            if (scopeId === "@me" && channelId && pinned.has(channelId)) {
+            const container = link.closest<HTMLElement>("[data-list-item-id^='guildsnav___'], li, [class*='listItem'], [class*='channel_']") ?? link;
+            const nativeDmRow = link.closest("[data-list-id^='private-channels'], [data-list-item-id^='private-channels']");
+            if (scopeId === "@me" && nativeDmRow && channelId && pinned.has(channelId)) {
                 this.#rememberPeopleDom(container);
                 container.dataset.solcordPinnedDm = "true";
                 container.dataset.solcordPinIcon = String(peoplePreferences.pinIcon);
@@ -1424,15 +1516,17 @@ export class SolcordNativeSuiteController {
                     }
                 }
             }
-            if (scopeId !== "@me" && hideServersNow && hidden.has(scopeId)) {
+            // A channel/message link contains the same server ID as a guild
+            // icon. Only the native guild rail is a server-presentation target.
+            if (scopeId === "@me" || !link.closest("[data-list-id='guildsnav'], [data-list-id^='guildsnav-'], [data-list-item-id^='guildsnav___']")) continue;
+            if (hideServersNow && hidden.has(scopeId)) {
                 this.#rememberPeopleDom(container);
                 container.dataset.solcordHiddenGuild = "true";
                 container.style.display = "none";
                 continue;
             }
-            if (scopeId === "@me") continue;
-            const alias = state.guildAliases[scopeId];
-            const details = this.#adapter.guildDetails?.(scopeId);
+            const alias = providers.includes("EditServers") ? state.guildAliases[scopeId] : undefined;
+            const details = providers.includes("ServerDetails") ? this.#adapter.guildDetails?.(scopeId) : undefined;
             if (!alias && !details) continue;
             this.#rememberPeopleDom(link);
             const label = alias || details?.name || link.getAttribute("aria-label") || "Server";
@@ -1535,11 +1629,13 @@ export class SolcordNativeSuiteController {
 
     #startMotionStudio(): void {
         const providers = this.#enabled.get("motion-studio") ?? [];
-        this.#setProvidersReady(providers, false);
+        this.#motionSignature = JSON.stringify([this.#adapter.motionPreferences, this.#adapter.motionPolicy, [...providers].sort()]);
+        this.#setProvidersReady(["BetterAnimations", "DiscordEffects"], false);
         if (!providers.length) {
             this.#setStatus("motion-studio", "off", "Turn on Motion Studio to load it.", []);
             return;
         }
+        const scope = this.#motionScope = this.#scope.fork();
         this.#motion = new SolcordMotionStudioController();
         const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
         const policy = this.#adapter.motionPolicy ?? {
@@ -1555,7 +1651,7 @@ export class SolcordNativeSuiteController {
             effectsEnabled: interactionMotionAllowed && providers.includes("DiscordEffects")
         });
         const motionPreferences = this.#adapter.motionPreferences ?? {effect: "signal" as const, particleCount: 10, color: "#9fb8ff", opacityPercent: 42, speedPercent: 100, starAngleDegrees: -28, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}};
-        const surfaceSelectors = [
+        const surfaceSelectors = providers.includes("BetterAnimations") ? [
             motionPreferences.surfaces.messages && "#app-mount [id^='chat-messages-']",
             motionPreferences.surfaces.channels && "#app-mount [data-list-item-id*='channels___']",
             motionPreferences.surfaces.servers && "#app-mount [data-list-item-id*='guildsnav___']",
@@ -1565,12 +1661,12 @@ export class SolcordNativeSuiteController {
             motionPreferences.surfaces.settings && "#app-mount [class*='contentRegion_'] > [class*='contentColumn_']",
             motionPreferences.surfaces.tooltips && "#app-mount [role='tooltip']",
             motionPreferences.surfaces.threads && "#app-mount [class*='threadSidebar_']"
-        ].filter((selector): selector is string => Boolean(selector)).join(",");
-        if (providers.length && interactionMotionAllowed) this.#scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms}${surfaceSelectors ? `${surfaceSelectors}{animation:solcord-native-enter var(--solcord-native-motion) ease-out}` : ""}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}.solcord-interaction-effect{position:fixed;z-index:10002;width:18px;height:18px;margin:-9px;border:2px solid var(--solcord-effect-color,var(--solcord-accent,var(--brand-500)));border-radius:50%;pointer-events:none;animation:solcord-native-effect 420ms ease-out forwards}@keyframes solcord-native-effect{from{opacity:var(--solcord-effect-opacity,.42);transform:scale(.35)}to{opacity:0;transform:scale(1.8)}}.solcord-ambient-effect{position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;contain:strict}.solcord-flow-field{width:100%;height:100%;opacity:var(--solcord-effect-opacity,.42);mix-blend-mode:screen;filter:saturate(.9) contrast(1.04)}html[data-solcord-mode='solcord-light'] .solcord-flow-field,.theme-light .solcord-flow-field{mix-blend-mode:multiply;filter:saturate(.72) contrast(.96)}.solcord-ambient-effect span{position:absolute;opacity:var(--solcord-effect-opacity,.42);will-change:transform,opacity}.solcord-ambient-effect[data-effect='snow'] span{top:-12px;width:6px;height:6px;border-radius:50%;background:var(--solcord-effect-color,var(--text-normal));animation:solcord-fall 9s linear infinite}.solcord-ambient-effect[data-effect='rain'] span{top:-24px;width:2px;height:18px;background:var(--solcord-effect-color,var(--text-muted));animation:solcord-fall 1.8s linear infinite}.solcord-ambient-effect[data-effect='embers'] span{bottom:-10px;width:3px;height:7px;border-radius:55% 45% 50% 50%;background:var(--solcord-effect-color,#ff755f);animation:solcord-rise 10s ease-in infinite;transform-origin:center}.solcord-ambient-effect[data-effect='embers'] span:nth-child(3n){width:2px;height:5px;opacity:calc(var(--solcord-effect-opacity,.42) * .72)}@keyframes solcord-fall{from{transform:translate3d(0,-4vh,0);opacity:0}10%{opacity:var(--solcord-effect-opacity,.42)}to{transform:translate3d(0,105vh,0);opacity:0}}@keyframes solcord-rise{from{transform:translate3d(0,4vh,0) rotate(0deg);opacity:0}14%{opacity:var(--solcord-effect-opacity,.42)}72%{opacity:calc(var(--solcord-effect-opacity,.42) * .7)}to{transform:translate3d(var(--solcord-ember-drift,18px),-108vh,0) rotate(190deg);opacity:0}}`);
+        ].filter((selector): selector is string => Boolean(selector)).join(",") : "";
+        if (providers.length && interactionMotionAllowed) scope.style("solcord-native-motion", `:root{--solcord-native-motion:${settings.durationMs}ms}${surfaceSelectors ? `${surfaceSelectors}{animation:solcord-native-enter var(--solcord-native-motion) ease-out}` : ""}@keyframes solcord-native-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:none}}.solcord-interaction-effect{position:fixed;z-index:10002;width:18px;height:18px;margin:-9px;border:2px solid var(--solcord-effect-color,var(--solcord-accent,var(--brand-500)));border-radius:50%;pointer-events:none;animation:solcord-native-effect 420ms ease-out forwards}@keyframes solcord-native-effect{from{opacity:var(--solcord-effect-opacity,.42);transform:scale(.35)}to{opacity:0;transform:scale(1.8)}}.solcord-ambient-effect{position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;contain:strict}.solcord-flow-field{width:100%;height:100%;opacity:var(--solcord-effect-opacity,.42);mix-blend-mode:screen;filter:saturate(.9) contrast(1.04)}html[data-solcord-mode='solcord-light'] .solcord-flow-field,.theme-light .solcord-flow-field{mix-blend-mode:multiply;filter:saturate(.72) contrast(.96)}html[data-solcord-mode='solcord-dark'] .solcord-flow-field{mix-blend-mode:screen;filter:saturate(.9) contrast(1.04)}.solcord-ambient-effect span{position:absolute;opacity:var(--solcord-effect-opacity,.42);will-change:transform,opacity}.solcord-ambient-effect[data-effect='snow'] span{top:-12px;width:6px;height:6px;border-radius:50%;background:var(--solcord-effect-color,var(--text-normal));animation:solcord-fall 9s linear infinite}.solcord-ambient-effect[data-effect='rain'] span{top:-24px;width:2px;height:18px;background:var(--solcord-effect-color,var(--text-muted));animation:solcord-fall 1.8s linear infinite}.solcord-ambient-effect[data-effect='embers'] span{bottom:-10px;width:3px;height:7px;border-radius:55% 45% 50% 50%;background:var(--solcord-effect-color,#ff755f);animation:solcord-rise 10s ease-in infinite;transform-origin:center}.solcord-ambient-effect[data-effect='embers'] span:nth-child(3n){width:2px;height:5px;opacity:calc(var(--solcord-effect-opacity,.42) * .72)}@keyframes solcord-fall{from{transform:translate3d(0,-4vh,0);opacity:0}10%{opacity:var(--solcord-effect-opacity,.42)}to{transform:translate3d(0,105vh,0);opacity:0}}@keyframes solcord-rise{from{transform:translate3d(0,4vh,0) rotate(0deg);opacity:0}14%{opacity:var(--solcord-effect-opacity,.42)}72%{opacity:calc(var(--solcord-effect-opacity,.42) * .7)}to{transform:translate3d(var(--solcord-ember-drift,18px),-108vh,0) rotate(190deg);opacity:0}}`);
         this.#setProviderReady("BetterAnimations", providers.includes("BetterAnimations"));
         this.#setProviderReady("DiscordEffects", providers.includes("DiscordEffects"));
         if (providers.includes("DiscordEffects") && interactionMotionAllowed && motionPreferences.effect === "signal") {
-            this.#scope.listen(document, "click", event => {
+            scope.listen(document, "click", event => {
                 if (!(event instanceof MouseEvent) || !(event.target instanceof Element) || !event.target.closest("button,[role='button'],a")) return;
                 const effect = document.createElement("span");
                 effect.className = "solcord-interaction-effect";
@@ -1580,15 +1676,16 @@ export class SolcordNativeSuiteController {
                 effect.style.left = `${event.clientX}px`;
                 effect.style.top = `${event.clientY}px`;
                 document.body.append(effect);
-                this.#scope.timeout(() => effect.remove(), 450);
+                scope.timeout(() => effect.remove(), 450);
             });
-            this.#scope.own(() => document.querySelectorAll("[data-solcord-interaction-effect]").forEach(element => element.remove()), "element");
+            scope.own(() => document.querySelectorAll("[data-solcord-interaction-effect]").forEach(element => element.remove()), "element");
         }
+        let backgroundMounted = true;
         if (providers.includes("DiscordEffects") && ambientEffectsAllowed && ["field", "stars"].includes(motionPreferences.effect)) {
-            this.#mountSolFlow(motionPreferences.opacityPercent, motionPreferences.speedPercent, motionPreferences.particleCount);
+            backgroundMounted = this.#mountSolFlow(motionPreferences.opacityPercent, motionPreferences.speedPercent, motionPreferences.particleCount, motionPreferences.color);
         }
         if (providers.includes("DiscordEffects") && ambientEffectsAllowed && motionPreferences.effect === "work-field") {
-            this.#mountWorkField(motionPreferences.opacityPercent, motionPreferences.speedPercent, motionPreferences.particleCount, motionPreferences.color);
+            backgroundMounted = this.#mountWorkField(motionPreferences.opacityPercent, motionPreferences.speedPercent, motionPreferences.particleCount, motionPreferences.color);
         }
         if (providers.includes("DiscordEffects") && ambientEffectsAllowed && ["snow", "rain", "embers"].includes(motionPreferences.effect)) {
             const container = document.createElement("div");
@@ -1613,7 +1710,7 @@ export class SolcordNativeSuiteController {
                 container.append(particle);
             }
             document.body.append(container);
-            this.#scope.own(() => container.remove(), "element");
+            scope.own(() => container.remove(), "element");
         }
         const effectLabel: Readonly<Record<typeof motionPreferences.effect, string>> = {
             "off": "Off",
@@ -1631,13 +1728,17 @@ export class SolcordNativeSuiteController {
             : effectRequested && motionPreferences.effect !== "signal" && !ambientEffectsAllowed
                 ? `${policy.effectiveMotion === "subtle" ? "Subtle" : "Full"} interaction motion is active. ${effectLabel[motionPreferences.effect]} is off under the current performance policy.`
                 : `${policy.effectiveMotion === "subtle" ? "Subtle" : "Full"} interaction motion is active${effectRequested ? ` with ${effectLabel[motionPreferences.effect]}` : ""}; every owned effect is removed on disable.`;
-        this.#setStatus("motion-studio", "ready", detail, providers);
+        if (!backgroundMounted) this.#setProviderReady("DiscordEffects", false);
+        this.#setStatus("motion-studio", backgroundMounted ? "ready" : "unsupported", backgroundMounted ? detail : "This client could not create the selected background canvas. Other enabled tools remain available; choose a particle background or turn this effect off.", providers);
     }
 
-    #mountSolFlow(opacityPercent: number, speedPercent: number, density: number): void {
+    #mountSolFlow(opacityPercent: number, speedPercent: number, density: number, color: string): boolean {
+        const scope = this.#motionScope!;
         const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d", {alpha: true});
-        if (!context) return;
+        let context: CanvasRenderingContext2D | null;
+        try {context = canvas.getContext("2d", {alpha: true});}
+        catch {return false;}
+        if (!context) return false;
         canvas.className = "solcord-ambient-effect solcord-flow-field";
         canvas.style.zIndex = "0";
         canvas.dataset.solcordAmbientEffect = "true";
@@ -1645,7 +1746,7 @@ export class SolcordNativeSuiteController {
         canvas.setAttribute("aria-hidden", "true");
         canvas.style.setProperty("--solcord-effect-opacity", String(Math.max(10, Math.min(100, opacityPercent)) / 100));
         document.body.append(canvas);
-        this.#scope.own(() => canvas.remove(), "element");
+        scope.own(() => canvas.remove(), "element");
 
         type FlowPair = {angle: number; radius: number; previousRadius: number; turn: number; previousTurn: number; speed: number; bend: number; phase: number; tint: number;};
         const pairs: FlowPair[] = [];
@@ -1655,6 +1756,8 @@ export class SolcordNativeSuiteController {
         let exitRadius = 1;
         let frame = 0;
         let previousTime = 0;
+        let simulationTime = 0;
+        const motionScale = Math.max(0.25, Math.min(3, speedPercent / 100));
         let stopped = false;
         const seed = (index: number, salt: number): number => {
             const value = Math.sin(index * 91.713 + salt * 37.117) * 43_758.5453;
@@ -1668,7 +1771,7 @@ export class SolcordNativeSuiteController {
             pair.previousTurn = pair.turn;
         };
         const populate = (): void => {
-            const count = width < 620 ? 16 : Math.max(18, Math.min(32, 16 + Math.round(density)));
+            const count = solcordFlowPairCount(width, density);
             pairs.length = 0;
             for (let index = 0; index < count; index++) {
                 const jitter = (seed(index, 1) - 0.5) * (tau / count) * 0.78;
@@ -1678,7 +1781,7 @@ export class SolcordNativeSuiteController {
                     previousRadius: 0,
                     turn: 0,
                     previousTurn: 0,
-                    speed: (11 + seed(index, 5) * 10) * Math.max(0.25, Math.min(3, speedPercent / 100)),
+                    speed: 11 + seed(index, 5) * 10,
                     bend: (seed(index, 6) > 0.5 ? 1 : -1) * (0.025 + seed(index, 8) * 0.06),
                     phase: seed(index, 7) * tau,
                     tint: Math.floor(seed(index, 9) * 3)
@@ -1699,9 +1802,10 @@ export class SolcordNativeSuiteController {
             context.setTransform(ratio, 0, 0, ratio, 0, 0);
             populate();
         };
-        const palette = (): string[] => document.documentElement.dataset.solcordMode === "solcord-light" || document.querySelector(".theme-light")
-            ? ["rgba(167,47,35,.30)", "rgba(49,91,74,.24)", "rgba(90,78,65,.18)"]
-            : ["rgba(255,117,95,.34)", "rgba(118,168,145,.24)", "rgba(225,206,181,.16)"];
+        const palette = (): string[] => {
+            const mode = document.documentElement.dataset.solcordMode;
+            return solcordFlowPalette(color, mode === "solcord-light" || ((!mode || mode === "follow-discord") && Boolean(document.querySelector(".theme-light"))));
+        };
         const point = (pair: FlowPair, opposite: boolean, previous: boolean, time: number): [number, number, number] => {
             const radius = previous ? pair.previousRadius : pair.radius;
             const turn = previous ? pair.previousTurn : pair.turn;
@@ -1727,8 +1831,9 @@ export class SolcordNativeSuiteController {
             if (stopped) return;
             frame = requestAnimationFrame(draw);
             if (document.hidden || time - previousTime < 32) return;
-            const delta = Math.min(0.05, Math.max(0.001, (time - previousTime) / 1_000));
+            const delta = Math.min(0.05, Math.max(0.001, (time - previousTime) / 1_000)) * motionScale;
             previousTime = time;
+            simulationTime += delta * 1_000;
             context.save();
             context.globalCompositeOperation = "destination-out";
             context.fillStyle = "rgba(0,0,0,.072)";
@@ -1740,22 +1845,26 @@ export class SolcordNativeSuiteController {
                 pair.previousTurn = pair.turn;
                 pair.radius += pair.speed * delta;
                 pair.turn += pair.bend * delta;
-                stroke(pair, index, false, colors, time);
-                stroke(pair, index, true, colors, time);
+                stroke(pair, index, false, colors, simulationTime);
+                stroke(pair, index, true, colors, simulationTime);
                 if (pair.radius >= exitRadius) reset(pair, index);
             });
             context.globalAlpha = 1;
         };
         resize();
-        this.#scope.listen(globalThis, "resize", resize, {passive: true});
+        scope.listen(globalThis, "resize", resize, {passive: true});
         frame = requestAnimationFrame(draw);
-        this.#scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        return true;
     }
 
-    #mountWorkField(opacityPercent: number, speedPercent: number, density: number, color: string): void {
+    #mountWorkField(opacityPercent: number, speedPercent: number, density: number, color: string): boolean {
+        const scope = this.#motionScope!;
         const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d", {alpha: true});
-        if (!context) return;
+        let context: CanvasRenderingContext2D | null;
+        try {context = canvas.getContext("2d", {alpha: true});}
+        catch {return false;}
+        if (!context) return false;
         canvas.className = "solcord-ambient-effect solcord-flow-field";
         canvas.style.zIndex = "0";
         canvas.dataset.solcordAmbientEffect = "true";
@@ -1763,7 +1872,7 @@ export class SolcordNativeSuiteController {
         canvas.setAttribute("aria-hidden", "true");
         canvas.style.setProperty("--solcord-effect-opacity", String(Math.max(10, Math.min(100, opacityPercent)) / 100));
         document.body.append(canvas);
-        this.#scope.own(() => canvas.remove(), "element");
+        scope.own(() => canvas.remove(), "element");
 
         type Pulse = {x: number; y: number; startedAt: number;};
         const pointer = {x: 0.54, y: 0.46};
@@ -1855,11 +1964,12 @@ export class SolcordNativeSuiteController {
         };
         resize();
         draw(performance.now());
-        this.#scope.listen(globalThis, "resize", resize, {passive: true});
-        this.#scope.listen(globalThis, "pointermove", updatePointer, {passive: true});
-        this.#scope.listen(globalThis, "pointerdown", startPulse, {passive: true});
+        scope.listen(globalThis, "resize", resize, {passive: true});
+        scope.listen(globalThis, "pointermove", updatePointer, {passive: true});
+        scope.listen(globalThis, "pointerdown", startPulse, {passive: true});
         frame = requestAnimationFrame(render);
-        this.#scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        return true;
     }
 
     #startVoiceHealth(): void {
@@ -1927,15 +2037,20 @@ export class SolcordNativeSuiteController {
         }
     }
 
-    #restoreTimestampTitles(): void {
-        for (const [element, title] of this.#timestampTitles) {
-            delete element.dataset.solcordCompleteTime;
-            if (title === null) element.removeAttribute("title");
-            else element.setAttribute("title", title);
+    #restoreTimestamp(element: HTMLElement): void {
+        const decoration = this.#timestamps.get(element);
+        if (!decoration) return;
+        this.#timestamps.delete(element);
+        delete element.dataset.solcordCompleteTime;
+        if (decoration.renderedTitle !== undefined && element.title === decoration.renderedTitle) {
+            if (decoration.originalTitle === null) element.removeAttribute("title");
+            else element.title = decoration.originalTitle;
         }
-        for (const [element, text] of this.#timestampText) element.textContent = text;
-        this.#timestampTitles.clear();
-        this.#timestampText.clear();
+        if (decoration.originalNodes && element.textContent === decoration.renderedText) element.replaceChildren(...decoration.originalNodes);
+    }
+
+    #restoreTimestampTitles(): void {
+        for (const element of this.#timestamps.keys()) this.#restoreTimestamp(element);
     }
 
     #setProviderReady(provider: string, ready: boolean): void {

@@ -5,6 +5,8 @@ import SolcordRuntime from "@modules/solcord/runtime";
 import SolcordSettings from "@modules/solcord/store";
 import type {SolcordTimelinePolicy} from "@modules/solcord/contracts";
 import SolcordSwitch from "./switch";
+import ActionButton from "./action-button";
+import {useSolcordWrite} from "./use-action";
 
 const {useState} = React;
 
@@ -32,7 +34,7 @@ export default function MessageTimelinePanel() {
         entries: SolcordRuntime.timelineEntries(),
         currentChannel: SolcordRuntime.timelineCurrentChannel()
     }));
-    const update = (value: Partial<SolcordTimelinePolicy>) => void SolcordRuntime.setTimelinePolicy(value);
+    const update = useSolcordWrite((value: Partial<SolcordTimelinePolicy>) => SolcordRuntime.setTimelinePolicy(value), () => setStatusMessage("The setting was not saved. Try again, or open Recovery."));
     const clear = async () => {
         if (!window.confirm("Clear the active account’s Solcord Message Timeline? This removes the encrypted local segments and the current renderer journal. It cannot be undone.")) return;
         let outcome = await SolcordRuntime.clearTimeline(false);
@@ -79,9 +81,9 @@ export default function MessageTimelinePanel() {
             <label><SolcordSwitch label="Enable Message Timeline" checked={state.policy.enabled} onChange={value => update({enabled: value})} /> Timeline {state.policy.enabled ? "on" : "off"}</label>
             <label>Retention<select value={state.policy.retention} onChange={event => update({retention: event.currentTarget.value as SolcordTimelinePolicy["retention"]})}><option value="session">Session</option><option value="24-hours">24 hours</option><option value="7-days">7 days</option><option value="30-days">30 days</option><option value="90-days">90 days</option><option value="manual">Manual clear</option></select></label>
             <label>Content<select value={state.policy.content} onChange={event => update({content: event.currentTarget.value as SolcordTimelinePolicy["content"]})}><option value="text-only">Text only</option><option value="text-and-metadata">Text + attachment metadata</option><option value="encrypted-media" disabled>Encrypted media — not accepted</option></select></label>
-            <button type="button" className="solcord-action" disabled={!state.currentChannel.eligible} onClick={() => void toggleCurrentChannel()}>{state.currentChannel.included ? "Remove current server channel" : "Add current server channel"}</button>
-            <button type="button" className="solcord-action" onClick={() => void exportTimeline()}>Export JSON</button>
-            <button type="button" className="solcord-action solcord-action-danger" onClick={() => void clear()}>Clear Timeline</button>
+            <ActionButton disabled={!state.currentChannel.eligible} onClick={toggleCurrentChannel}>{state.currentChannel.included ? "Remove current server channel" : "Add current server channel"}</ActionButton>
+            <ActionButton onClick={exportTimeline}>Export JSON</ActionButton>
+            <ActionButton tone="danger" onClick={clear}>Clear Timeline</ActionButton>
         </div>
         <details className="solcord-secondary-tools"><summary>Filters and display</summary>
             <div className="solcord-control-grid">
@@ -111,7 +113,8 @@ export default function MessageTimelinePanel() {
                 {entry.attachments.length > 0 && <ul className="solcord-attachment-metadata">{entry.attachments.map((attachment, index) => <li key={`${attachment.name}-${index}`}>{attachment.name}{attachment.contentType ? ` · ${attachment.contentType}` : ""}{typeof attachment.size === "number" ? ` · ${bytesLabel(attachment.size)}` : ""}</li>)}</ul>}
             </article>)}
             {!state.entries.length && <p className="solcord-empty">No in-scope message event has been observed in this session. Solcord does not backfill history.</p>}
-            {state.entries.length > 100 && <p className="solcord-empty">Showing the 100 most recent records in settings. Export includes the complete bounded local event set only when its read succeeds.</p>}
+            {state.entries.length > 0 && !visibleEntries.length && <p className="solcord-empty">No records match the selected display filters.</p>}
+            {visibleEntries.length > 100 && <p className="solcord-empty">Showing the 100 {state.policy.display.reverseOrder ? "oldest" : "most recent"} matching records. Export includes the complete bounded local event set only when its read succeeds.</p>}
         </div>
         <p className="solcord-callout">Message meaning never depends on color: deleted entries carry a “Deleted” label and edit history carries an “Edited” label. Message bodies and identifiers are excluded from Solcord diagnostics and ordinary settings exports.</p>
     </section>;

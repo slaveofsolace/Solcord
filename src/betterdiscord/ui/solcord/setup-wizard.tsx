@@ -139,7 +139,8 @@ const SOLCORD_PRESENTATION_ATTRIBUTES = [
     "data-solcord-motion",
     "data-solcord-message-shape",
     "data-solcord-performance",
-    "data-solcord-effective-motion"
+    "data-solcord-effective-motion",
+    "data-solcord-ambient-motion"
 ] as const;
 
 function useFullShellAppearancePreview(appearance: SolcordAppearancePreferences, performanceProfile: SolcordPerformanceProfile): void {
@@ -153,7 +154,9 @@ function useFullShellAppearancePreview(appearance: SolcordAppearancePreferences,
         root.dataset.solcordMotion = appearance.motion;
         root.dataset.solcordMessageShape = appearance.messageShape;
         root.dataset.solcordPerformance = performanceProfile;
-        root.dataset.solcordEffectiveMotion = resolveSolcordPerformancePolicy(performanceProfile, appearance.motion, reducedByOs).effectiveMotion;
+        const policy = resolveSolcordPerformancePolicy(performanceProfile, appearance.motion, reducedByOs);
+        root.dataset.solcordEffectiveMotion = policy.effectiveMotion;
+        root.dataset.solcordAmbientMotion = String(policy.ambientEffects);
         return () => {
             for (const [attribute, value] of previous) {
                 if (value === null) root.removeAttribute(attribute);

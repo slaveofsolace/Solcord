@@ -9,8 +9,9 @@ import {SOLCORD_CATALOG_INDEX, SOLCORD_CATALOG_SNAPSHOT, SOLCORD_RUNTIME_ADDONS}
 import {isSolcordBuiltInAddon, resolveCommunityAddon} from "@common/solcord/builtin-addons";
 import {inferSolcordPermissionCard, type SolcordPermissionCard} from "@common/solcord/product";
 
-import {SOLCORD_ADDON_GROUPS, SOLCORD_ADDON_PRESENTATION} from "./catalog";
+import {SOLCORD_ADDON_GROUPS, SOLCORD_ADDON_PRESENTATION, visibleSolcordCommunityGroups} from "./catalog";
 import SolcordSwitch from "./switch";
+import {useSolcordAction} from "./use-action";
 
 const {useMemo, useState} = React;
 const OFFICIAL_PLUGIN_STORE = "https://betterdiscord.app/plugins";
@@ -32,7 +33,6 @@ function PermissionCard({permissions}: {permissions: SolcordPermissionCard;}) {
 }
 
 export function CuratedAddonSet() {
-    const [busy, setBusy] = useState<string>();
     const [message, setMessage] = useState("");
     const state = useStateFromStores([PluginManager, SolcordSettings, PluginDoctor, SolcordRuntime], () => {
         const settings = SolcordSettings.snapshot();
@@ -62,23 +62,18 @@ export function CuratedAddonSet() {
             })
         };
     });
-    const toggle = async (name: string, enabled: boolean) => {
-        setBusy(name);
+    const {pending: busy, run: toggle} = useSolcordAction(async (name: string, enabled: boolean) => {
         setMessage("");
         const succeeded = await SolcordRuntime.setCuratedAddonEnabled(name, enabled);
         setMessage(succeeded ? `${SOLCORD_ADDON_PRESENTATION.get(name)?.label ?? name} ${enabled ? "enabled" : "disabled"}.` : `${name} stayed off because a security, dependency, integrity, action, or runtime gate is not accepted.`);
-        setBusy(undefined);
-    };
+    }, () => setMessage("The plugin change did not finish. Try again, or open Recovery."));
     const canManage = state.onboarding.status === "complete";
-    const communityGroups = SOLCORD_ADDON_GROUPS.map(group => ({
-        ...group,
-        addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)
-    })).filter(group => group.addons.length > 0);
+    const communityGroups = visibleSolcordCommunityGroups(SOLCORD_ADDON_GROUPS, state.addons);
     return <section className="solcord-section">
-        <div className="solcord-section-heading"><h2>Optional community plugins</h2><p>Installed community files stay separate from Solcord built-ins and remain owner-managed.</p></div>
+        <div className="solcord-section-heading"><h3>Installed community plugins</h3><p>Optional files installed separately from Solcord&apos;s built-in tools.</p></div>
         <details className="solcord-secondary-tools"><summary>Integrity summary</summary><p>{state.integrity.summary.match} verified · {state.integrity.summary.missing} optional file(s) absent · {state.integrity.summary.attention + state.integrity.summary.unavailable} held for review. An absent optional file is not an error.</p></details>
-        {!canManage && <p className="solcord-callout">Complete First Setup once to establish a rollback point before changing community plugins.</p>}
-        <div className="solcord-curated-groups">
+        {communityGroups.length > 0 && !canManage && <p className="solcord-callout">Complete First Setup once to establish a rollback point before changing community plugins.</p>}
+        {communityGroups.length > 0 ? <div className="solcord-curated-groups">
             {communityGroups.map(group => <details key={group.id}>
                 <summary><span><strong>{group.title}</strong><small>{group.summary}</small></span><span>{group.addons.filter(addon => state.addons.find(item => item.name === addon.name)?.enabled).length} / {group.addons.length} on</span></summary>
                 <div className="solcord-curated-list">
@@ -88,12 +83,12 @@ export function CuratedAddonSet() {
                         const visibleTone = addon.quarantine || addon.adapter?.conflict ? "solcord-status-quarantined" : addon.enabled ? "solcord-status-active" : "solcord-status-stopped";
                         return <div className="solcord-curated-row" key={addon.name}>
                             <div><div className="solcord-module-name"><strong>{presentation.label}</strong><span className={`solcord-status ${visibleTone}`}>{visibleState}</span></div><p>{presentation.summary}</p><details className="solcord-secondary-tools"><summary>Technical details</summary><p>{addon.installed ? `Local ${addon.version}` : "Catalog reference only"} · {addon.installable ? "runtime accepted" : addon.securityDisposition.toLocaleLowerCase()} · {addon.integrity?.status ?? "integrity unavailable"}</p>{addon.permissions && <PermissionCard permissions={addon.permissions} />}{addon.integrity?.installedSha256 && <small>Reviewed <code>{addon.integrity.reviewedSha256.slice(0, 12)}…</code> · installed <code>{addon.integrity.installedSha256.slice(0, 12)}…</code></small>}{addon.adapter?.conflict && <small className="solcord-error">{addon.adapter.reason}</small>}{addon.enabled && !addon.installable && <small className="solcord-error">Owner-enabled local state is preserved, but Solcord will not re-enable this candidate.</small>}{addon.quarantine && <small className="solcord-error">{addon.quarantine}</small>}</details></div>
-                            <label className="solcord-toggle"><SolcordSwitch label={`${addon.enabled ? "Disable" : "Enable"} ${presentation.label}`} checked={addon.enabled} disabled={!canManage || !addon.installed || busy === addon.name || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={value => void toggle(addon.name, value)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
+                            <label className="solcord-toggle"><SolcordSwitch label={presentation.label} checked={addon.enabled} disabled={!canManage || !addon.installed || busy || (!addon.enabled && !addon.builtIn && !addon.installable)} onChange={value => toggle(addon.name, value)} /><span>{addon.enabled ? "On" : "Off"}</span></label>
                         </div>;
                     })}
                 </div>
             </details>)}
-        </div>
+        </div> : <p className="solcord-empty">No reviewed community plugin is installed or held for review. Built-in tools are managed in their workspaces.</p>}
         {message && <p className="solcord-import-status" role="status">{message}</p>}
     </section>;
 }
@@ -113,7 +108,7 @@ export function CatalogBrowser() {
     }, [query, type, disposition]);
     const visible = matches.slice(0, 80);
     return <section className="solcord-section">
-        <div className="solcord-section-heading"><h2>Catalog snapshot</h2><p>Browse 323 metadata-indexed BetterDiscord store records. Forty-seven plugin payloads were statically screened and 36 received manual dispositions. Theme entries are reference-only and cannot be installed here because Solcord has not approved their source and licenses. Browsing never downloads or enables anything.</p><div className="solcord-actions"><button type="button" onClick={() => window.open(OFFICIAL_PLUGIN_STORE, "_blank", "noopener,noreferrer")}>Open official plugin store</button></div></div>
+        <div className="solcord-section-heading"><h3>Catalog snapshot</h3><p>Reference entries from the BetterDiscord store. Browsing does not download or enable plugins or themes.</p><div className="solcord-actions"><button className="solcord-action" type="button" onClick={() => window.open(OFFICIAL_PLUGIN_STORE, "_blank", "noopener,noreferrer")}>Open official plugin store</button></div></div>
         <dl className="solcord-facts solcord-catalog-facts"><div><dt>Plugins</dt><dd>{SOLCORD_CATALOG_SNAPSHOT.pluginCount} · <code>{SOLCORD_CATALOG_SNAPSHOT.pluginSha256.slice(0, 12)}…</code></dd></div><div><dt>Themes</dt><dd>{SOLCORD_CATALOG_SNAPSHOT.themeCount} · <code>{SOLCORD_CATALOG_SNAPSHOT.themeSha256.slice(0, 12)}…</code></dd></div><div><dt>Review date</dt><dd>{SOLCORD_CATALOG_SNAPSHOT.reviewedAt}</dd></div><div><dt>Installed integrity</dt><dd>{integrity.summary.match} verified · {integrity.summary.missing} missing · {integrity.summary.attention + integrity.summary.unavailable} held</dd></div></dl>
         <div className="solcord-catalog-controls">
             <label>Search<input type="search" value={query} onChange={event => setQuery(event.currentTarget.value)} placeholder="name, author, tag, behavior" /></label>

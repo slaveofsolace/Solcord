@@ -70,6 +70,8 @@ export class SolcordPrivacyPolicyAdapter {
     readonly #options: PrivacyPolicyAdapterOptions;
     #records: PrivacyCapabilityRecord[] = [];
     #sequence = 0;
+    #started = false;
+    #diagnosticsComplete = true;
 
     constructor(options: PrivacyPolicyAdapterOptions) {
         this.#options = options;
@@ -79,8 +81,12 @@ export class SolcordPrivacyPolicyAdapter {
         return structuredClone(this.#records);
     }
 
+    get diagnosticsComplete(): boolean {return this.#diagnosticsComplete;}
+
     start(): PrivacyCapabilityRecord[] {
         if (this.#options.scope.disposed) return [];
+        if (this.#started) return this.records();
+        this.#started = true;
         const grouped = new Map<PrivacyMethodSpec["dataClass"], PrivacyMethodSpec[]>();
         for (const spec of this.#options.specs) {
             if (!spec.id || !METHOD_KEY.test(spec.key)) continue;
@@ -114,11 +120,15 @@ export class SolcordPrivacyPolicyAdapter {
                 catch {valid = false;}
                 if (!resolved || !valid) continue;
 
-                const release = this.#options.patcher.instead(PATCH_CALLER, resolved.module, resolved.key, (thisObject, args, original) => {
-                    if (!privacyCategoryBlocked(this.#options.preferences(), dataClass)) return Reflect.apply(original, thisObject, args);
-                    if (spec.intercept) return spec.intercept(thisObject, args, original);
-                    return spec.blockedValue(thisObject, args);
-                }, {forcePatch: false});
+                let release: (() => void) | null | undefined;
+                try {
+                    release = this.#options.patcher.instead(PATCH_CALLER, resolved.module, resolved.key, (thisObject, args, original) => {
+                        if (!privacyCategoryBlocked(this.#options.preferences(), dataClass)) return Reflect.apply(original, thisObject, args);
+                        if (spec.intercept) return spec.intercept(thisObject, args, original);
+                        return spec.blockedValue(thisObject, args);
+                    }, {forcePatch: false});
+                }
+                catch {continue;}
                 if (typeof release !== "function") continue;
                 this.#options.scope.own(release, "patch");
                 protectedCount++;
@@ -141,6 +151,7 @@ export class SolcordPrivacyPolicyAdapter {
     }
 
     #record(dataClass: PrivacyMethodSpec["dataClass"], decision: "allow" | "block" | "hold", result: "applied" | "not-applicable" | "adapter-drift"): void {
-        this.#options.receipt(createPrivacyDecisionReceipt(++this.#sequence, (this.#options.now ?? Date.now)(), dataClass, decision, result));
+        try {this.#options.receipt(createPrivacyDecisionReceipt(++this.#sequence, (this.#options.now ?? Date.now)(), dataClass, decision, result));}
+        catch {this.#diagnosticsComplete = false;}
     }
 }

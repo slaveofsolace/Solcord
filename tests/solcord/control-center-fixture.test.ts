@@ -28,6 +28,11 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(fixture).toContain(contract);
         }
         expect(fixture).toContain("nativeRowSpacingFailures");
+        expect(fixture).toContain("settingHintSpacingFailures");
+        expect(fixture).toContain("actionHintSpacingFailures");
+        expect(fixture).toContain("getPropertyValue(\"--sc-space-3\")");
+        expect(fixture).toContain("labelRange.getClientRects()");
+        expect(fixture).toContain("hintTop - labelBottom < 7");
         expect(fixture).toContain("switchStateFailures");
         expect(fixture).toContain("switchFocusVisible");
         expect(fixture).toContain("data-switch-matrix");
@@ -54,6 +59,24 @@ describe("Solcord isolated Control Center fixture", () => {
             expect(fixture).toContain(`"${theme}"`);
         }
         expect(renderer.match(/switches=1/g)).toHaveLength(11);
+    });
+
+    test("uses the real standalone HUD label and native reset instead of an unrelated settings-row substitute", () => {
+        expect(fixture).toContain("Show the local performance overlay");
+        expect(fixture).toContain("<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> opens Command Deck.");
+        expect(fixture).toContain("font: 14px/1 var(--font-primary)");
+        expect(fixture).toContain("h1, h2, h3, p { margin: 0; }");
+        expect(fixture).not.toContain("Idle diagnostics");
+        expect(css).toContain(".solcord-panel :where(label:has(> .solcord-switch))");
+        expect(css).toContain(".solcord-key-hint { margin: var(--sc-space-2) 0 0;");
+        expect(css).toContain(".solcord-key-hint kbd { display: inline-block;");
+    });
+
+    test("keeps Audience Guard action notes separated using the shared spacing scale", () => {
+        expect(fixture).toContain("Encrypted storage is available. Enable the adapter");
+        expect(fixture).toContain("Clear private list");
+        expect(fixture).toContain("note.getBoundingClientRect().top - controls.getBoundingClientRect().bottom");
+        expect(css).toContain(".solcord-panel :where(.solcord-actions, .solcord-dialog-actions, .solcord-inline-field, .solcord-control-grid) + p { margin-block-start: var(--sc-space-3); }");
     });
 
     test("keeps the normal header quiet and qualifies diagnostic builds without narrow overflow", () => {

@@ -59,8 +59,11 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("placeholder=\"Find a setting\"");
     });
 
-    test("keeps unsupported adapters out of the primary tool status strip", () => {
+    test("avoids repeating healthy tool titles while keeping real limitations visible", () => {
         expect(panel).toContain("const usableScopeStatus = scopeStatus.filter(item => item.maturity !== \"unsupported\" && item.maturity !== \"off\")");
+        expect(panel).toContain("const attentionScopeStatus = scopeStatus.filter(item => item.maturity === \"degraded\" || item.maturity === \"needs-setup\" || item.maturity === \"unsupported\")");
+        expect(panel).not.toContain("{usableScopeStatus.map(item =>");
+        expect(panel).toContain("<small>{item.detail}</small>");
         expect(panel).toContain("These tools are unavailable on this Discord build, so no inactive controls are shown.");
     });
 
@@ -94,7 +97,7 @@ describe("Solcord Control Center clarity", () => {
 
     test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
         expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
-        expect(panel).toContain("label=\"Enable Solcord Fake Deafen\"");
+        expect(panel).toContain("label=\"Fake Deafen\"");
         expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
@@ -168,7 +171,8 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("lets skipped-setup users control built-ins and treats archived providers as history", () => {
-        expect(panel).toContain("disabled={busy === name}");
+        expect(panel).toContain("disabled={busy}");
+        expect(panel).toContain("useSolcordAction");
         expect(panel).toContain("superseded provider record(s) archived");
         expect(panel).toContain("Their settings and private data remain preserved for rollback.");
         expect(panel).not.toContain("Complete First Setup once to establish a rollback point before enabling built-ins here.");
@@ -181,6 +185,12 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("role=\"status\" aria-live=\"polite\"");
         expect(panel).toContain("<NativeSuitePanel key=\"chat\" scope=\"chat\" />");
         expect(panel).not.toContain("onChange={event => setComposerDraft(event.currentTarget.value)}");
+    });
+
+    test("invalidates safety reviews as soon as the reviewed URL or MIME changes", () => {
+        expect(panel).toContain("aria-label=\"Link to inspect\" onChange={event => {setInput(event.currentTarget.value); setInspection(undefined);}}");
+        expect(panel).toContain("setInput(event.currentTarget.value); setSource(\"url\"); setInspection(undefined);");
+        expect(panel).toContain("setMime(event.currentTarget.value); setInspection(undefined);");
     });
 
     test("renders Channel Glance as bounded accessible rows rather than a raw message dump", () => {

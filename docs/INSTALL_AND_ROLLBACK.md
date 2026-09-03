@@ -1,14 +1,14 @@
 # Windows install and rollback
 
-Solcord V2 RC is installed only after tests, lint, type checks, production build, packaging, security review, artifact hashing, disposable acceptance, and rollback proof pass. Installation follows the exact reviewed candidate and leaves Windows security, authentication, and permission dialogs manual.
+For a normal installation, start with the [quick start](QUICK_START.md). This page explains what the installer changes, how recovery works, and the additional checks used when building a release. Windows security and sign-in prompts remain yours to review.
 
-## Current live checkpoint
+## Published build and acceptance boundaries
 
 Published historical candidates remain immutable. The owner-machine install manifest, not this repository page, identifies whichever exact build is currently installed in the signed-in profile.
 
-RC32 carries the repaired DPI-aware installer, receipt-bound First Setup handoff, one native Control Center scroll owner, the canonical accessible switch, strict privacy defaults, and the full first-party suite without the broad diagnostic runtime hold. Its installer self-test covers install, update, repair, downgrade refusal, interrupted recovery, rollback, and uninstall in isolated targets. Audience Guard remains encrypted and account-bound when Electron `safeStorage` is available; it still makes no per-person media-delivery claim.
+The published download is [v2.0.0-rc.33](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.33). Work on the current audit branch is not included in that download. Its automated installer evidence covers install, update, repair, downgrade refusal, interrupted recovery, rollback, and uninstall in isolated targets; that is not a claim that those destructive cases were exercised against the signed-in owner profile.
 
-The local machine-readable install evidence is authoritative for the exact repository SHA, artifact SHA-256, backup directory, rollback script, Discord version, and process set. Those owner-machine paths are intentionally not embedded in repository documentation. Applying setup to the signed-in owner profile, Message Timeline persistence, and Link Lens's external-link modal remain separate optional choices even though disposable setup acceptance is complete.
+The local install receipt identifies the exact source commit, core hash, Discord version, and backup. Those owner-machine paths are intentionally not embedded here. New source changes require new build and runtime evidence. Audience Guard uses account-bound encrypted storage only when Electron's secure storage is available, and reports session-only storage otherwise. It does not provide per-person control over Discord's media delivery.
 
 ## Compatibility paths
 
@@ -17,9 +17,11 @@ The local machine-readable install evidence is authoritative for the exact repos
 - Existing plugin folder: `%APPDATA%\BetterDiscord\plugins`
 - Existing theme folder: `%APPDATA%\BetterDiscord\themes`
 - Existing stable settings: `%APPDATA%\BetterDiscord\data\stable`
-- Preserved vanilla escape hatch: the existing Desktop “Discord Activities (Vanilla)” launcher
+- Recovery receipts and backups: `%APPDATA%\BetterDiscord\solcord-installer`
 
 The installed filename remains `betterdiscord.asar` because that is the existing injector contract. This is an intentional compatibility identifier, not product branding.
+
+A separately prepared vanilla launcher may be retained as an additional escape hatch. It is not created by the standard installer and is not required to install Solcord.
 
 ## Pre-install gate
 
@@ -47,18 +49,20 @@ Do not copy `%APPDATA%\Discord`, `%APPDATA%\BetterDiscord`, tokens, Timeline dat
 
 Disposable acceptance does not authorize messages, uploads, notification reads, voice joins, recordings, streams, OAuth, links, or Activity launches. The owner performs those actions after reviewing the prepared build. The copied runtime is evidence only for the exact artifact hash and Discord version recorded in its manifest.
 
-## Reversible install procedure
+## Maintainer installation checks
+
+End users do not need Bun, repository access, or these source-install steps. Use the downloaded installer unless you are deliberately validating a reviewed source build.
 
 1. Post the exact close/install action in the active task.
-2. Ask Discord to close gracefully and wait for its processes to exit. Do not kill unrelated processes.
+2. Close all Discord desktop channels before changing the shared core. Use the installer to request graceful shutdown and, when necessary, terminate only processes verified as belonging to those Discord installations. Never kill unrelated processes by name.
 3. Create a timestamped backup outside the repository under the task evidence directory.
 4. Copy, without deleting originals, the current injector entry point, installed core asar, stable settings, plugin files, theme files, Custom CSS, MessageLoggerV2 files/data, any Solcord Timeline state, and compatibility state. Record SHA-256 values and relative paths without reading private message content.
-5. Preserve the vanilla launcher unchanged and hash it.
+5. Preserve any existing vanilla recovery launcher unchanged; do not assume one exists.
 6. Copy the verified `solcord.asar` to a staged install path; hash again and require equality.
 7. Run `bun run inject release stable`. Release mode verifies and atomically stages `dist/solcord.asar` to `%APPDATA%\BetterDiscord\data\betterdiscord.asar`, then creates the standard Discord resource injector pointing at that compatibility target. Do not overwrite plugins, themes, settings, or Custom CSS.
 8. Launch Discord Stable normally. Do not start an Activity, join voice, send, upload, or authorize anything.
 9. Confirm Discord stays open, Solcord settings/About render, Activity Bridge reports the restricted policy, and no crash loop or duplicate injection is visible.
-10. Open the first-run setup preview but do not press **Apply and verify**. Existing addon/theme states must remain unchanged until the owner reviews the complete diff and presses it.
+10. Open First Setup and review the proposed choices. Existing addon/theme states must remain unchanged until **Apply**. Destructive setup and rollback tests belong in an isolated profile, not the signed-in owner's profile.
 11. Leave Discord open for the owner.
 
 The machine-readable install manifest records exact backup and rollback paths after execution. Until that manifest exists, this document describes the procedure but is not evidence that installation or backup occurred.
@@ -69,32 +73,38 @@ The normal RC path is designed to take about one minute on a typical Windows PC 
 
 1. Download `SolcordInstaller.exe` and the release-level `SHA256SUMS.txt` from the same owner-controlled `v2.0.0-rc.33` release. The complete review bundle is also available inside the delivery ZIP under its exact generated name.
 2. Compare the executable hash with the `installer/SolcordInstaller.exe` entry in the release-level `SHA256SUMS.txt`; that nested evidence name applies byte-for-byte to the root-published executable. Stop on any mismatch.
-3. Save anything in progress, run `SolcordInstaller.exe`, confirm the detected Stable/PTB/Canary version, and choose **Install Solcord**. The installer closes only that selected Discord process tree when required.
+3. Save anything in progress and leave active calls. Run `SolcordInstaller.exe`, confirm **Version** (Stable, PTB, or Canary), and choose **Install Solcord** or **Update Solcord**. Because the core is shared, the installer closes verified running Discord desktop channels, not just the selected one.
 4. Choose **Verify files**, then **Open Solcord**. A fresh install opens **User Settings → Solcord Suite** on Welcome after Discord is ready; an update or repair preserves completed setup.
 
 The RC executable is unsigned. Windows may display an unknown-publisher warning. Do not disable Windows security or automate its prompts. The published guide must use screenshots captured from this exact RC executable; source mockups and images from an older build are not installation evidence.
 
 ## Installer behavior
 
-`installer/Solcord.Installer` is the original Solcord Windows installer source. A candidate bundle places one self-contained Windows x64 `SolcordInstaller.exe`, `solcord.asar`, the authoritative `solcord-build-manifest.json`, `solcord-installer-manifest.json`, installer-only `SHA256SUMS.txt`, and `solcord-installer-build-receipt.json` together. The receipt's SHA-256 is retained outside the bundle before release assembly. No separate .NET installation is required to run it. The builder accepts only a clean exact `HEAD`, recreates the ignored `dist` directory from that source, and proves that the new ASAR byte count and SHA-256 match both the post-build source manifest and the ASAR's embedded provenance. It rechecks `HEAD`, cleanliness, and generated hashes after publishing, then rehashes the staged payload. The installer detects Discord Stable, PTB, and Canary, shows the selected target/version, refuses any shared-core mutation while any of those Discord channels is running, verifies the manifest-bound ASAR before and after installation, captures and verifies stable prior-core and injector backup snapshots, and supports Verify, Repair/Update, Roll Back/Uninstall, and explicit launch.
+`installer/Solcord.Installer` is the Solcord Windows installer source. A candidate bundle places one self-contained Windows x64 `SolcordInstaller.exe`, `solcord.asar`, the authoritative `solcord-build-manifest.json`, `solcord-installer-manifest.json`, installer-only `SHA256SUMS.txt`, and `solcord-installer-build-receipt.json` together. The receipt's SHA-256 is retained outside the bundle before release assembly. No separate .NET installation is required to run it. The builder accepts only a clean exact `HEAD`, recreates the ignored `dist` directory from that source, and proves that the new ASAR byte count and SHA-256 match both the post-build source manifest and the ASAR's embedded provenance. It rechecks `HEAD`, cleanliness, and generated hashes after publishing, then rehashes the staged payload.
 
-It never deletes plugins, themes, settings, custom CSS, MessageLogger data, Timeline data, Friend Watch data, provider archives, or translation credential stores. It does not terminate Discord, bypass Windows prompts, authenticate, start an Activity, or perform account actions. Its lifecycle self-test uses disposable directories and verifies install, exact hash, refusal of oversized receipts, receipt-bound rollback, refusal of a rogue newer backup, refusal of a tampered injector backup, preservation of an unexpected current-core change during automatic recovery, canonicalization of an identical stale pending receipt, and retry after an injected partial-rollback interruption. A `pending.json` receipt is durable before mutation; a successful install becomes `current.json`, while a failed update retains pending recovery. Rollback recognizes the candidate and already-restored hashes, restores the injector before the core, and is safe to retry from a mixed state. It refuses to replace or delete a current core whose hash is neither the installed candidate nor the captured prior core, including during automatic recovery. It accepts only the exact direct-child backup recorded by the selected recovery receipt and validates every restored hash before mutation. Launch re-detects and containment-checks the selected channel/version/path. The current candidate is unsigned and self-contained; it is not a stable installer until signing or independently authenticated release metadata, SmartScreen, clean install/update/rollback, and stable-link evidence pass.
+The installer detects Stable, PTB, and Canary and displays the selected version. Before a core change, it asks verified Discord processes to exit gracefully, then terminates only verified remaining Discord processes if necessary. It refuses the change if safe shutdown cannot be completed. It verifies the core before and after installation and records a checked backup of the previous core and injector.
 
-The core ASAR and injector entry files are replaced as separately verified filesystem operations, not as one kernel-atomic transaction, and the installer does not claim a durable parent-directory flush on Windows. A power loss or process failure between those surfaces can leave a mixed state. The pending recovery receipt and idempotent state classification make the tested interruption retryable, but they do not turn the two replacements into one atomic filesystem operation. Keep the receipt-bound backup and vanilla launcher available; recover through the verified rollback path before relaunching Discord.
+Each action is separate: **Install**, **Update**, **Repair**, **Roll back**, **Uninstall**, **Verify files**, **Open recovery folder**, and **Open Solcord**. Repair reinstalls this package; Update installs a different version. Roll back restores the receipt-bound backup; Uninstall removes Solcord's injector/core without deleting user data. Opening Discord is an explicit action.
+
+It never deletes plugins, themes, settings, custom CSS, MessageLogger data, Timeline data, Friend Watch data, provider archives, or translation credential stores. It does not bypass Windows prompts, authenticate, start an Activity, or perform account actions. Its lifecycle self-test uses disposable directories and verifies install, exact hash, refusal of oversized receipts, receipt-bound rollback, refusal of a rogue newer backup, refusal of a tampered injector backup, preservation of an unexpected current-core change during automatic recovery, canonicalization of an identical stale pending receipt, and retry after an injected partial-rollback interruption. A `pending.json` receipt is durable before mutation; a successful install becomes `current.json`, while a failed update retains pending recovery. Rollback recognizes the candidate and already-restored hashes, restores the injector before the core, and is safe to retry from a mixed state. It refuses to replace or delete a current core whose hash is neither the installed candidate nor the captured prior core, including during automatic recovery. It accepts only the exact direct-child backup recorded by the selected recovery receipt and validates every restored hash before mutation. Launch re-detects and containment-checks the selected channel/version/path. The candidate is unsigned and self-contained; automated lifecycle checks do not make it a signed stable release.
+
+The core ASAR and injector entry files are replaced as separately verified filesystem operations, not as one kernel-atomic transaction, and the installer does not claim a durable parent-directory flush on Windows. A power loss or process failure between those surfaces can leave a mixed state. The pending recovery receipt and idempotent state classification make the tested interruption retryable, but they do not turn the two replacements into one atomic filesystem operation. Keep the receipt-bound backup and recover through the verified rollback path before relaunching Discord.
 
 ## First-run setup transaction
 
 The V2 first-run draft selects Solcord Default and the 21 behavior mappings implemented by the Native Suite. Those mappings include the three established interaction controls and grouped composer, call, audio, voice-note, translation, people/space, glance, notification, and motion tools. A mapping is not a blanket live claim: its adapter must report ready before a matching community provider may be archived. Message Timeline, Stream Audience Guard, and every Power Lab experiment remain off. The other catalog entries are optional and carry an individual reason/status; unavailable choices never block **Apply**. **Finish later** changes no addon file, enabled state, theme, Timeline setting, credential, or provider archive; only the resumable onboarding marker is recorded.
 
-After the owner presses **Apply and verify**, Solcord stages only accepted requested candidates and their complete dependency closure, verifies immutable hashes, and refuses a differing local file. It enables accepted choices one at a time and activates one of eleven Solcord themes. Requested-but-held and unrequested owner addons remain untouched and owner-managed; setup does not replace, stop, or certify them. When an active community plugin overlaps a selected built-in, the community provider remains active until the owner chooses Solcord and that exact replacement reports ready. The wizard then seals the feature name, community filename/hash, enabled state, dependency state, archive destination, and provider choice. Apply rechecks the source bytes and readiness before moving only the provider `.plugin.js` into `solcord-provider-archive-v2`, outside the scanned plugin folder. BDFDB is archived last and only when no retained consumer remains. Configuration and private databases are not moved, read, or deleted. Any drift aborts or rolls back the transaction. A start failure is reported and quarantined; it is not counted as working. Reduced-motion conflicts suppress optional animation/effect behavior. This transaction is not installation evidence until the disposable-profile tests pass.
+After **Apply**, Solcord verifies requested choices, applies the selected theme and preferences, and records a rollback snapshot. Existing community plugins stay in place. Initial setup does not authorize provider replacement or retirement of shared plugin libraries. A selected built-in still needs its own compatible Discord adapter; an unavailable adapter is not counted as working. Reduced-motion settings continue to suppress optional motion.
+
+Plugin replacement is a separate action under **Extensions → Replace duplicate plugins**. The preview binds each feature to its community filename/hash, enabled state, dependency state, archive destination, and provider choice. Apply rechecks the source bytes and replacement readiness before moving only the provider `.plugin.js` into `solcord-provider-archive-v2`, outside the scanned plugin folder. BDFDB is considered last; both enabled and disabled retained consumers keep the library in place. Configuration and private databases are not moved, read, or deleted. Any mismatch aborts or rolls back the transaction. These source safeguards require matching isolated and live evidence before being attributed to a new release.
 
 The setup rollback action restores the recorded prior plugin/theme enabled states and pre-setup Solcord snapshot, removes only unchanged files the setup transaction proved it added, and invokes provider rollback for its recorded archive transaction. Provider rollback restores only a hash-matching archived source to an absent plugin destination. It never overwrites a replacement file or touches private data. Identical pre-existing files are reused and never removed; user changes are preserved for manual review.
 
 ## Owner Activity acceptance
 
-The owner reported Activities working for the accepted live build. RC32 does not broaden Activity Bridge or its same-package preload policy. Re-run the authenticated matrix after a future change to either mechanism. No automated test starts an Activity on the owner’s behalf.
+A previous owner session reported Activities working. That historical result does not certify every future build. Activity Bridge retains its same-package preload restriction; rerun the authenticated matrix after a change to either mechanism. No automated test starts an Activity on the owner's behalf.
 
-1. Open Solcord Suite → Activity Bridge and confirm the unrestricted override reads **Off by default**.
+1. Open Solcord Suite → **Voice & Activities** and inspect Activity Bridge. Keep the unrestricted override off.
 2. In a designated low-risk server/channel, start **Codenames** yourself. Wait for READY and complete one join/leave/rejoin cycle.
 3. Return to Activity Bridge. Confirm one verified late preload was accepted, no preload error appeared, and the ledger remains bounded.
 4. Start one second Discord Activity yourself. Repeat open/close/rejoin.
@@ -105,8 +115,8 @@ The owner reported Activities working for the accepted live build. RC32 does not
 
 There are two separate rollback scopes:
 
-1. **Setup/provider rollback:** while Solcord is running, use Solcord Suite → Setup → **Roll back latest setup**. This restores prior enabled states and the Solcord settings snapshot, removes only unchanged files the setup transaction added, and restores hash-matching provider source files only when their plugin destinations are absent.
-2. **Core rollback:** close Discord, verify it has exited, and atomically restore the manifest-recorded backup copy of `betterdiscord.asar` to `%APPDATA%\BetterDiscord\data\betterdiscord.asar`. Restore the injector only if the install manifest proves its hash changed. Launch Discord normally, or use the preserved vanilla launcher immediately.
+1. **Setup/provider rollback:** while Solcord is running, open **Recovery** for setup snapshots or **Extensions** for the latest provider migration. This restores recorded enabled states and the Solcord snapshot, removes only unchanged files the setup transaction added, and restores hash-matching archived source only when its plugin destination is absent.
+2. **Core rollback:** open the same verified installer and choose **Roll back**. It closes verified Discord processes, checks the recorded backup, and restores the injector/core using the recovery receipt. Choose **Open Solcord** only after recovery succeeds. Do not select a random backup folder or overwrite files by hand.
 
 The manifest-generated core restore uses resolved literal paths and a staged copy/hash/rename sequence. Before any recursive cleanup, it verifies the resolved target remains inside the manifest's timestamped backup or Solcord staging directory. No rollback command deletes the plugin directory, theme directory, stable settings directory, MessageLoggerV2 data, Timeline store, translation credential store, provider archive, or vanilla launcher.
 

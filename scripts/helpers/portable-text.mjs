@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-export function portableTextByteLength(text) {
+export function normalizePortableText(text) {
     if (typeof text !== "string") throw new TypeError("Text metrics require a string.");
-    return Buffer.byteLength(text.replace(/\r\n?/g, "\n"), "utf8");
+    return text.replace(/\r\n?/g, "\n");
+}
+
+export function portableTextByteLength(text) {
+    return Buffer.byteLength(normalizePortableText(text), "utf8");
 }

@@ -153,7 +153,8 @@ export class SolcordPeopleStateStorage {
                     if (!stat.isFile() || stat.isSymbolicLink()) return {cleared, persistent: false, complete: false};
                     fs.unlinkSync(file);
                 }
-                if (fs.readdirSync(directory).length === 0) fs.rmdirSync(directory);
+                if (fs.readdirSync(directory).length !== 0) return {cleared, persistent: false, complete: false};
+                fs.rmdirSync(directory);
                 return {cleared: true, persistent: this.#secureAvailable(), complete: true};
             }
             catch {return {cleared, persistent: false, complete: false};}
@@ -206,6 +207,10 @@ export class SolcordPeopleStateStorage {
         if (!root) return;
         const file = path.join(root, "identity.sc-key");
         if (!fs.existsSync(file)) {
+            // Without the identity, retained files cannot be assigned safely to
+            // this account. Preserve them instead of reporting an empty store
+            // or generating a new identity that would orphan the old state.
+            if (fs.readdirSync(root).length) throw new TypeError("People and Spaces identity is missing while storage artifacts remain.");
             if (!create) return;
             const identity = crypto.randomBytes(32);
             try {
