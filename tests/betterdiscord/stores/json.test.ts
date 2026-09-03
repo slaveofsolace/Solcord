@@ -1,5 +1,4 @@
 import {afterEach, beforeEach, describe, expect, spyOn, test} from "bun:test";
-import {spawnSync} from "node:child_process";
 import React, {act} from "react";
 import {createRoot, type Root} from "react-dom/client";
 
@@ -20,15 +19,16 @@ let previousReactEnvironment: boolean | undefined;
 // so exercise its real implementation in one explicitly isolated test process.
 if (process.env.SOLCORD_JSON_STORE_TEST !== "isolated") {
     test("shared JSON store passes the isolated persistence and live-subscription contracts", () => {
-        const result = spawnSync(process.execPath, ["test", import.meta.path], {
+        const result = Bun.spawnSync({
+            cmd: [process.execPath, "test", import.meta.path],
             cwd: process.cwd(),
-            windowsHide: true,
-            encoding: "utf8",
-            timeout: 20_000,
-            env: {...process.env, SOLCORD_JSON_STORE_TEST: "isolated"}
+            stdout: "pipe",
+            stderr: "pipe",
+            env: {...process.env, SOLCORD_JSON_STORE_TEST: "isolated"},
+            timeout: 20_000
         });
-        const output = result.stdout + result.stderr;
-        expect(result.status, output).toBe(0);
+        const output = result.stdout.toString() + result.stderr.toString();
+        expect(result.exitCode, output).toBe(0);
         expect(output).toContain("10 pass");
         expect(output).toContain("0 fail");
     });
