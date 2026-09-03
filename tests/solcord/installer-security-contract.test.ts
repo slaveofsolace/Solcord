@@ -228,6 +228,19 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("status-name-mismatch");
     });
 
+    test("keeps recovery bound to its recorded Discord version after an upstream update", () => {
+        const rollback = engine.slice(engine.indexOf("internal string RollBack("), engine.indexOf("internal string Uninstall("));
+        const uninstall = engine.slice(engine.indexOf("internal string Uninstall("), engine.indexOf("internal void Launch("));
+        for (const action of [rollback, uninstall]) {
+            expect(action.indexOf("RequireRecordedTarget(target, receipt)")).toBeLessThan(action.indexOf("RequireAllDiscordStopped()"));
+            expect(action.indexOf("RequireUnchangedReceipt(receiptFile, receiptHash)")).toBeGreaterThan(action.indexOf("RequireAllDiscordStopped()"));
+        }
+        expect(selfTest).toContain("rollback-recorded-version-after-discord-update");
+        expect(selfTest).toContain("uninstall touched the newer Discord installation");
+        expect(selfTest).toContain("receipt-bound-recovery-preflight-and-drift");
+        expect(selfTest).toContain("receipt-encoding-compatibility");
+    });
+
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
         expect(launcher).toContain("Start Menu\", \"Programs");
         expect(launcher).toContain("Solcord.lnk");
