@@ -82,6 +82,8 @@ internal static class InstallerSelfTest
         string stage = "prepare";
         try
         {
+            stage = "discord-target-selection-and-preflight";
+            ValidateTargetSelectionAndPreflight(embeddedBundleRoot, Path.Combine(root, "target-selection"));
             stage = "dpi-layout-matrix";
             InstallerForm.ValidateGeometryMatrix(embeddedBundleRoot);
             string local = Path.Combine(root, "local");
@@ -104,7 +106,7 @@ internal static class InstallerSelfTest
             var engine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0);
             ReleaseManifest manifest = engine.LoadManifest();
             string artifact = engine.VerifyBundle(manifest);
-            DiscordTarget target = engine.DetectTargets().Single() with {ProcessName = "SolcordInstallerSelfTestNoProcess"};
+            DiscordTarget target = engine.DetectTargets().Single();
             int stubbornStopAttempts = 0;
             var stubbornEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, name => name == "Discord" ? 1 : 0, null, names =>
             {
@@ -280,7 +282,68 @@ internal static class InstallerSelfTest
                 if (!File.Exists(Path.Combine(uninstallBackup, name))) return 39;
             return 0;
         }
-        catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}"); return 1;}
+        catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}:{error.Message}"); return 1;}
         finally {if (Directory.Exists(root)) Directory.Delete(root, recursive: true);}
+    }
+
+    private static void ValidateTargetSelectionAndPreflight(string bundle, string root)
+    {
+        string local = Path.Combine(root, "local");
+        string roaming = Path.Combine(root, "roaming");
+        DiscordTarget CreateTarget(string version, string? module, string content = "discord-fixture")
+        {
+            string directory = Path.Combine(local, "Discord", $"app-{version}");
+            string resources = Path.Combine(directory, "resources");
+            Directory.CreateDirectory(resources);
+            string executable = Path.Combine(directory, "Discord.exe");
+            File.WriteAllText(executable, "fixture");
+            if (module is not null) File.WriteAllText(Path.Combine(resources, module), content);
+            return new DiscordTarget("Stable", version, executable, "Discord");
+        }
+
+        CreateTarget("1.9.9", "app.asar");
+        DiscordTarget complete = CreateTarget("1.10.0", "betterdiscord.app.asar");
+        DiscordTarget staged = CreateTarget("1.11.0", null);
+        DiscordTarget empty = CreateTarget("1.12.0", "app.asar", "");
+        CreateTarget("unfinished", "app.asar");
+        var detector = new InstallerEngine(bundle, local, roaming, _ => 0);
+        if (detector.DetectTargets().Single() != complete)
+            throw new InvalidDataException("numeric-version-selection-skips-incomplete-updates");
+
+        string core = Path.Combine(roaming, "BetterDiscord", "data", "betterdiscord.asar");
+        Directory.CreateDirectory(Path.GetDirectoryName(core)!);
+        File.WriteAllText(core, "previous-core");
+        int stopAttempts = 0;
+        var preflight = new InstallerEngine(bundle, local, roaming, name => name == "Discord" ? 1 : 0,
+            discordProcessStopper: _ => stopAttempts++, delay: _ => {});
+        foreach (DiscordTarget invalid in new[] {staged, empty, complete with {Version = "1.10.1"}, complete with {Channel = "Canary"}, complete with {ProcessName = "Unknown"}})
+        {
+            bool rejected = false;
+            try {preflight.Install(invalid);}
+            catch (InvalidDataException) {rejected = true;}
+            if (!rejected || stopAttempts != 0)
+                throw new InvalidDataException("invalid-target-must-not-close-discord");
+            AssertUnchanged();
+        }
+
+        int running = 1;
+        var changedDuringClose = new InstallerEngine(bundle, local, roaming, name => name == "Discord" ? running : 0,
+            discordProcessStopper: _ => {
+                stopAttempts++;
+                running = 0;
+                File.Delete(Path.Combine(Path.GetDirectoryName(complete.ExecutablePath)!, "resources", "betterdiscord.app.asar"));
+            }, delay: _ => {});
+        bool changedTargetRejected = false;
+        try {changedDuringClose.Install(complete);}
+        catch (InvalidDataException) {changedTargetRejected = true;}
+        if (!changedTargetRejected || stopAttempts != 1 || running != 0)
+            throw new InvalidDataException("target-drift-after-close-must-abort-install");
+        AssertUnchanged();
+
+        void AssertUnchanged()
+        {
+            if (File.ReadAllText(core) != "previous-core" || Directory.Exists(Path.Combine(roaming, "BetterDiscord", "solcord-installer")))
+                throw new InvalidDataException("invalid-target-mutated-core-or-recovery-state");
+        }
     }
 }

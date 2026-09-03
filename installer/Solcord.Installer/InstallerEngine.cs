@@ -72,14 +72,49 @@ internal sealed class InstallerEngine
         {
             string root = Path.Combine(_localAppData, directoryName);
             if (!Directory.Exists(root)) continue;
-            foreach (string directory in Directory.EnumerateDirectories(root, "app-*", SearchOption.TopDirectoryOnly).OrderByDescending(Path.GetFileName))
+            var candidates = Directory.EnumerateDirectories(root, "app-*", SearchOption.TopDirectoryOnly)
+                .Select(directory => {
+                    string version = Path.GetFileName(directory)[4..];
+                    return (Directory: directory, Version: version, ParsedVersion: Version.TryParse(version, out Version? parsed) ? parsed : null);
+                })
+                .Where(candidate => candidate.ParsedVersion is not null)
+                .OrderByDescending(candidate => candidate.ParsedVersion);
+            foreach (var candidate in candidates)
             {
-                string version = Path.GetFileName(directory)[4..];
-                string executable = Path.Combine(directory, $"{processName}.exe");
-                if (File.Exists(executable)) {targets.Add(new DiscordTarget(channel, version, executable, processName)); break;}
+                var target = new DiscordTarget(channel, candidate.Version, Path.Combine(candidate.Directory, $"{processName}.exe"), processName);
+                try {RequireReadyTarget(target);}
+                catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException) {continue;}
+                targets.Add(target);
+                break;
             }
         }
         return targets;
+    }
+
+    private void RequireReadyTarget(DiscordTarget target)
+    {
+        string processName = target.Channel switch {"Stable" => "Discord", "PTB" => "DiscordPTB", "Canary" => "DiscordCanary", _ => ""};
+        if (processName.Length == 0 || target.ProcessName != processName || !Version.TryParse(target.Version, out _))
+            throw new InvalidDataException("The selected Discord version is not a supported installation.");
+        string expected = Path.Combine(_localAppData, processName, $"app-{target.Version}", $"{processName}.exe");
+        if (!Path.GetFullPath(target.ExecutablePath).Equals(expected, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The selected Discord version does not match its installation folder.");
+        RejectLinkedPath(_localAppData, target.ExecutablePath);
+        if (!File.Exists(target.ExecutablePath) || new FileInfo(target.ExecutablePath).Length == 0)
+            throw new InvalidDataException("The selected Discord installation is incomplete. Finish its update before trying again.");
+        RequireOriginalModule(Path.Combine(Path.GetDirectoryName(target.ExecutablePath)!, "resources"));
+    }
+
+    private static string RequireOriginalModule(string resources)
+    {
+        if (!Directory.Exists(resources)) throw new InvalidDataException("The selected Discord resources directory is missing.");
+        RejectReparsePoint(resources);
+        string module = File.Exists(Path.Combine(resources, "betterdiscord.app.asar")) ? "betterdiscord.app.asar" : "app.asar";
+        string file = Path.Combine(resources, module);
+        RejectLinkedPath(resources, file);
+        if (!File.Exists(file) || new FileInfo(file).Length == 0)
+            throw new InvalidDataException("The selected Discord installation is incomplete. Finish its update before trying again.");
+        return $"../{module}";
     }
 
     internal bool HasManagedInstall() => File.Exists(Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "current.json"));
@@ -147,9 +182,11 @@ internal sealed class InstallerEngine
         LastLauncherWarning = null;
         ReleaseManifest manifest = LoadManifest();
         string artifact = VerifyBundle(manifest);
+        RequireReadyTarget(target);
+        RequireNoPendingRecovery();
+        RejectDowngrade(manifest);
         RequireAllDiscordStopped();
-        if (!File.Exists(target.ExecutablePath)) throw new FileNotFoundException("The selected Discord target changed after preflight.");
-        RejectLinkedPath(_localAppData, target.ExecutablePath);
+        RequireReadyTarget(target);
         RequireNoPendingRecovery();
         RejectDowngrade(manifest);
 
@@ -454,9 +491,7 @@ internal sealed class InstallerEngine
     private static InjectorBackupState BackupInjector(DiscordTarget target, string backupDirectory, string installedCore)
     {
         string resources = Path.Combine(Path.GetDirectoryName(target.ExecutablePath)!, "resources");
-        if (!Directory.Exists(resources)) throw new InvalidDataException("The selected Discord resources directory is missing.");
-        RejectReparsePoint(resources);
-        string originalModule = File.Exists(Path.Combine(resources, "betterdiscord.app.asar")) ? "../betterdiscord.app.asar" : File.Exists(Path.Combine(resources, "app.asar")) ? "../app.asar" : throw new InvalidDataException("No supported Discord application ASAR was found.");
+        string originalModule = RequireOriginalModule(resources);
         string appDirectory = Path.Combine(resources, "app");
         bool hadAppDirectory = Directory.Exists(appDirectory);
         if (hadAppDirectory)

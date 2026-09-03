@@ -205,6 +205,29 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("File.Exists(firstSetupIntent) || !engine.VerifyInstalled()");
     });
 
+    test("checks a complete target before closing Discord and rechecks after shutdown", () => {
+        const install = engine.slice(engine.indexOf("internal InstallReceipt Install("), engine.indexOf("internal InstallReceipt InstallNew"));
+        const shutdown = install.indexOf("RequireAllDiscordStopped()");
+        const firstValidation = install.indexOf("RequireReadyTarget(target)");
+        const secondValidation = install.indexOf("RequireReadyTarget(target)", firstValidation + 1);
+        expect(firstValidation).toBeGreaterThan(0);
+        expect(firstValidation).toBeLessThan(shutdown);
+        expect(secondValidation).toBeGreaterThan(shutdown);
+        expect(secondValidation).toBeLessThan(install.indexOf("Directory.CreateDirectory"));
+        expect(selfTest).toContain("numeric-version-selection-skips-incomplete-updates");
+        expect(selfTest).toContain("invalid-target-must-not-close-discord");
+        expect(selfTest).toContain("target-drift-after-close-must-abort-install");
+        expect(selfTest).toContain("invalid-target-mutated-core-or-recovery-state");
+    });
+
+    test("keeps accessible action and status names in sync with the visible text", () => {
+        expect(installerForm).not.toContain("AccessibleName = \"Recommended action\"");
+        expect(installerForm).not.toContain("AccessibleName = \"Installation state details\"");
+        expect(installerForm).toContain("ValidateAccessibleState(form, context)");
+        expect(installerForm).toContain("action-name-mismatch");
+        expect(installerForm).toContain("status-name-mismatch");
+    });
+
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
         expect(launcher).toContain("Start Menu\", \"Programs");
         expect(launcher).toContain("Solcord.lnk");

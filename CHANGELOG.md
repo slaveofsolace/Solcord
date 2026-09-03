@@ -17,6 +17,9 @@
 - Extensions show installed or quarantined community files, not nonfunctional controls for missing files. Saved selections and rollback records remain preserved.
 - The repository audit accepts Git's Windows line endings while still rejecting changed or incomplete report content.
 - Test files run in isolated module environments. Plugin lifecycle fixtures can no longer contaminate Plugin Doctor or the real translation tests based on file order.
+- The installer ignores incomplete Discord update folders and compares version numbers numerically. It checks the selected application files before closing Discord and again before changing the installation.
+- Installer action and status labels now match their screen-reader names. Verification keeps keyboard focus on the control that started it.
+- Installer headings size to their text, and single-column layouts stay within the window when resized or scaled. Geometry checks cover visible controls without opening a test window.
 
 ### Documentation
 
