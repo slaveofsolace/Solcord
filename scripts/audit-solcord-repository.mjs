@@ -4,7 +4,7 @@ import {execFileSync} from "node:child_process";
 import {mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import path from "node:path";
 
-import {portableTextByteLength} from "./helpers/portable-text.mjs";
+import {normalizePortableText, portableTextByteLength} from "./helpers/portable-text.mjs";
 
 const OUTPUT = "docs/audit/FULL_REPOSITORY_AUDIT.md";
 const AUDIT_SCRIPT = "scripts/audit-solcord-repository.mjs";
@@ -196,7 +196,7 @@ ${wordingMatches.slice(0, 80).map(value => `- ${value}`).join("\n")}` : "No proh
 mkdirSync(path.dirname(OUTPUT), {recursive: true});
 if (process.argv.includes("--check")) {
     const current = readFileSync(OUTPUT, "utf8");
-    if (current !== report) {
+    if (normalizePortableText(current) !== report) {
         console.error(`${OUTPUT} is stale. Run bun run audit:repo.`);
         process.exitCode = 1;
     }

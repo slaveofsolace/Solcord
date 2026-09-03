@@ -15,6 +15,7 @@
 - Settings subscriptions follow the selected store and key after a view changes. Atomic JSON writes publish state only after persistence succeeds.
 - Clearing People and Spaces preserves unknown files and reports an incomplete cleanup instead of claiming every private-store artifact was removed. A missing store identity cannot silently hide retained data or generate a replacement key over it.
 - Extensions show installed or quarantined community files, not nonfunctional controls for missing files. Saved selections and rollback records remain preserved.
+- The repository audit accepts Git's Windows line endings while still rejecting changed or incomplete report content.
 
 ### Verification boundary
 
