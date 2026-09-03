@@ -76,6 +76,7 @@ internal sealed class InstallerForm : Form
     private Control BuildShell()
     {
         var shell = new TableLayoutPanel {Dock = DockStyle.Fill, BackColor = Canvas, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, Padding = Padding.Empty};
+        shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
         shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
@@ -114,10 +115,12 @@ internal sealed class InstallerForm : Form
         _brandMark.TabStop = false;
         _brandMarkHost.Controls.Add(_brandMark);
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        copy.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         copy.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var title = NewLabel("Solcord Setup", 19f, FontStyle.Bold, Ink);
         title.Dock = DockStyle.Fill;
+        title.AutoSize = true;
         title.TextAlign = ContentAlignment.BottomLeft;
         var subtitle = NewLabel("Install, repair, or restore Solcord.", 9.25f, FontStyle.Regular, Body);
         subtitle.Dock = DockStyle.Fill;
@@ -143,6 +146,7 @@ internal sealed class InstallerForm : Form
         _workspace.Dock = DockStyle.Top;
         _workspace.BackColor = Canvas;
         _workspace.ColumnCount = 1;
+        _workspace.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _workspace.RowCount = 6;
         _workspace.Padding = new Padding(36, 12, 36, 12);
         _workspace.Margin = Padding.Empty;
@@ -197,21 +201,26 @@ internal sealed class InstallerForm : Form
             args.Graphics.DrawLine(rule, 4, _statePanel.ClientSize.Height - 1, _statePanel.ClientSize.Width, _statePanel.ClientSize.Height - 1);
         };
         var copy = new TableLayoutPanel {Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 3, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 16));
-        copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+        copy.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _stateKind.Dock = DockStyle.Fill;
+        _stateKind.AutoSize = true;
+        _stateKind.Margin = new Padding(3, 0, 3, 0);
         _stateKind.Font = new Font("Segoe UI Variable Text", 9f, FontStyle.Bold);
         _stateKind.ForeColor = Teal;
         _stateTitle.Dock = DockStyle.Fill;
+        _stateTitle.AutoSize = true;
+        _stateTitle.Margin = new Padding(3, 0, 3, 0);
         _stateTitle.Font = new Font("Segoe UI Variable Text", 14f, FontStyle.Bold);
         _stateTitle.ForeColor = Ink;
         _stateBody.Dock = DockStyle.Fill;
+        _stateBody.Margin = new Padding(3, 0, 3, 0);
         _stateBody.Font = new Font("Segoe UI Variable Text", 9.25f, FontStyle.Regular);
         _stateBody.ForeColor = Body;
         _stateBody.AutoSize = true;
         _stateBody.AutoEllipsis = false;
-        _stateBody.AccessibleName = "Installation state details";
         _statePanel.SizeChanged += (_, _) => {
             int width = Math.Max(160, _statePanel.ClientSize.Width - _statePanel.Padding.Horizontal);
             if (_stateBody.MaximumSize.Width != width) _stateBody.MaximumSize = new Size(width, 0);
@@ -235,7 +244,6 @@ internal sealed class InstallerForm : Form
         _primaryAction.Size = new Size(224, 36);
         _primaryAction.Location = Point.Empty;
         _primaryAction.TabIndex = 1;
-        _primaryAction.AccessibleName = "Recommended action";
         _primaryAction.Click += (_, _) => {if (_recommendedKey is not null) RunOperation(_recommendedKey);};
         _primaryRow.Controls.Add(_primaryAction);
         return _primaryRow;
@@ -260,6 +268,7 @@ internal sealed class InstallerForm : Form
         _maintenanceList.AutoSize = true;
         _maintenanceList.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         _maintenanceList.ColumnCount = 1;
+        _maintenanceList.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         _maintenanceList.RowCount = 3;
         _maintenanceList.BackColor = Surface;
         _maintenanceList.Margin = Padding.Empty;
@@ -276,8 +285,9 @@ internal sealed class InstallerForm : Form
         var row = new Panel {Dock = DockStyle.Fill, AutoSize = false, Height = 48, MinimumSize = new Size(0, 44), BackColor = Surface, Margin = Padding.Empty, Padding = Padding.Empty, AccessibleName = title};
         row.Paint += (_, args) => {if (rowIndex < 2) {using var rule = new Pen(Line, 1); args.Graphics.DrawLine(rule, 18, row.ClientSize.Height - 1, row.ClientSize.Width - 14, row.ClientSize.Height - 1);}};
         var copy = new TableLayoutPanel {ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
+        copy.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         copy.RowStyles.Add(new RowStyle(SizeType.Absolute, 19));
-        copy.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        copy.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var name = NewLabel(title, 9.5f, FontStyle.Bold, Ink);
         name.Dock = DockStyle.Fill;
         var details = NewLabel(description, 8.5f, FontStyle.Regular, Body);
@@ -297,13 +307,19 @@ internal sealed class InstallerForm : Form
         button.Click += (_, _) => RunOperation(key);
         row.Controls.Add(copy);
         row.Controls.Add(button);
-        row.SizeChanged += (_, _) => {
-            int right = 14;
+        void ArrangeRow()
+        {
+            float scale = button.Width / 112F;
+            int right = (int)Math.Round(14 * scale);
+            int left = (int)Math.Round(16 * scale);
+            int top = (int)Math.Round(4 * scale);
             int buttonTop = Math.Max(0, (row.ClientSize.Height - button.Height) / 2);
-            button.Location = new Point(Math.Max(16, row.ClientSize.Width - right - button.Width), buttonTop);
-            int copyWidth = Math.Max(120, button.Left - 30);
-            copy.Bounds = new Rectangle(16, 4, copyWidth, Math.Max(1, row.ClientSize.Height - 8));
-        };
+            button.Location = new Point(Math.Max(left, row.ClientSize.Width - right - button.Width), buttonTop);
+            int copyWidth = Math.Max((int)Math.Round(120 * scale), button.Left - left - right);
+            copy.Bounds = new Rectangle(left, top, copyWidth, Math.Max(1, row.ClientSize.Height - top * 2));
+        }
+        row.SizeChanged += (_, _) => ArrangeRow();
+        button.SizeChanged += (_, _) => ArrangeRow();
         _actions[key] = new ActionVisual(title, description, row, button, tone, rowIndex);
         return row;
     }
@@ -479,6 +495,7 @@ internal sealed class InstallerForm : Form
 
     private void RunAction(string actionName, Func<string> action, string? retryKey = null)
     {
+        Control? previousFocus = ActiveControl;
         UseWaitCursor = true;
         foreach (ActionVisual visual in _actions.Values) visual.Button.Enabled = false;
         _primaryAction.Enabled = false;
@@ -493,7 +510,11 @@ internal sealed class InstallerForm : Form
             string? next = pending ? "rollback" : retryKey;
             SetState("Action needed", $"{actionName} couldn't finish", FriendlyError(error), StateTone.Danger, next, pending ? "Restore backup" : next is null ? null : "Try again");
         }
-        finally {UseWaitCursor = false;}
+        finally
+        {
+            UseWaitCursor = false;
+            if (previousFocus is {IsDisposed: false, CanFocus: true}) previousFocus.Focus();
+        }
     }
 
     private static string FriendlyError(Exception error)
@@ -528,7 +549,7 @@ internal sealed class InstallerForm : Form
         button.FlatAppearance.MouseDownBackColor = tone switch {ButtonTone.Primary => Color.FromArgb(7, 70, 65), ButtonTone.Danger => Color.FromArgb(249, 222, 218), _ => Color.FromArgb(221, 228, 224)};
     }
 
-    private static Label NewLabel(string text, float size, FontStyle style, Color color) => new() {Text = text, Font = new Font("Segoe UI Variable Text", size, style), ForeColor = color, BackColor = Color.Transparent, UseMnemonic = false};
+    private static Label NewLabel(string text, float size, FontStyle style, Color color) => new() {Text = text, Font = new Font("Segoe UI Variable Text", size, style), ForeColor = color, BackColor = Color.Transparent, Margin = new Padding(3, 0, 3, 0), UseMnemonic = false};
 
     private static Image? LoadBrandMark()
     {
@@ -562,12 +583,32 @@ internal sealed class InstallerForm : Form
                     (int)Math.Ceiling(logicalClient.Height * scale)
                 );
                 form.CreateControl();
-                PerformLayoutTree(form);
+                // An unshown Form makes every child's Visible getter false. Use a
+                // visible layout host without opening a window or running Load.
+                using var layoutHost = new Panel {Size = form.ClientSize, Font = form.Font};
+                Control shell = form.Controls[0];
+                form.Controls.Remove(shell);
+                layoutHost.Controls.Add(shell);
+                PerformLayoutTree(layoutHost);
                 string context = $"{dpi}dpi/{logicalClient.Width}x{logicalClient.Height}";
-                ValidateControlTree(form, context);
+                ValidateControlTree(layoutHost, context);
                 ValidateStableChrome(form, context, scale);
+                ValidateAccessibleState(form, context);
             }
         }
+    }
+
+    private static void ValidateAccessibleState(InstallerForm form, string context)
+    {
+        foreach (string action in new[] {"install", "update", "repair", "rollback", "launch"})
+        {
+            form.SetState("Ready", "Solcord", "The selected version is ready.", StateTone.Protected, action);
+            if (form._primaryAction.AccessibilityObject.Name != form._primaryAction.Text)
+                throw new InvalidDataException($"installer-accessibility:{context}:{action}:action-name-mismatch");
+        }
+        form._stateBody.Text = "Verification finished. No files were changed.";
+        if (form._stateBody.AccessibilityObject.Name != form._stateBody.Text)
+            throw new InvalidDataException($"installer-accessibility:{context}:status-name-mismatch");
     }
 
     private static void ValidateStableChrome(InstallerForm form, string context, float scale)
@@ -601,12 +642,16 @@ internal sealed class InstallerForm : Form
             int expectedButtonHeight = (int)Math.Round(36 * scale);
             if (visual.Row.Height < minimumRow || visual.Row.Height > maximumRow || Math.Abs(visual.Button.Width - expectedButtonWidth) > tolerance || Math.Abs(visual.Button.Height - expectedButtonHeight) > tolerance)
                 throw new InvalidDataException($"installer-layout:{context}:{visual.Title}:maintenance-action-geometry");
+            int expectedInset = (int)Math.Round(14 * scale);
+            Control copy = visual.Row.Controls.OfType<TableLayoutPanel>().Single();
+            if (Math.Abs(visual.Row.ClientSize.Width - visual.Button.Right - expectedInset) > tolerance || copy.Right > visual.Button.Left - expectedInset + tolerance)
+                throw new InvalidDataException($"installer-layout:{context}:{visual.Title}:maintenance-action-alignment");
         }
 
         Rectangle headerBefore = form._header.Bounds;
         Rectangle footerBefore = form._footer.Bounds;
         form._workspaceScroll.AutoScrollPosition = new Point(0, Math.Min(72, Math.Max(0, form._workspace.Height - form._workspaceScroll.ClientSize.Height)));
-        PerformLayoutTree(form);
+        PerformLayoutTree(form._workspaceScroll.Parent!);
         if (form._header.Bounds != headerBefore || form._footer.Bounds != footerBefore)
             throw new InvalidDataException($"installer-layout:{context}:workspace-scroll-moved-fixed-chrome");
     }
@@ -627,7 +672,7 @@ internal sealed class InstallerForm : Form
             if (!child.Visible) continue;
             if (child.Width <= 0 || child.Height <= 0) throw new InvalidDataException($"installer-layout:{context}:{child.Name}:{child.GetType().Name}:empty");
             if (child.Left < -tolerance || child.Top < -tolerance || child.Right > parent.ClientSize.Width + tolerance || !allowsVerticalOverflow && child.Bottom > parent.ClientSize.Height + tolerance)
-                throw new InvalidDataException($"installer-layout:{context}:{child.Name}:{child.GetType().Name}:outside-parent");
+                throw new InvalidDataException($"installer-layout:{context}:{parent.Name}:{parent.AccessibleName}:{parent.GetType().Name}->{child.Name}:{child.GetType().Name}:outside-parent ({child.Bounds} in {parent.ClientSize})");
 
             if (child is Button button && !string.IsNullOrWhiteSpace(button.Text))
             {
@@ -640,7 +685,7 @@ internal sealed class InstallerForm : Form
                 Size proposal = new(Math.Max(1, label.ClientSize.Width), int.MaxValue);
                 Size text = TextRenderer.MeasureText(label.Text, label.Font, proposal, TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
                 if (text.Height > label.ClientSize.Height + tolerance)
-                    throw new InvalidDataException($"installer-layout:{context}:{label.Text}:label-text-clipped");
+                    throw new InvalidDataException($"installer-layout:{context}:{label.Text}:label-text-clipped ({text.Width}x{text.Height} in {label.ClientSize.Width}x{label.ClientSize.Height}, {label.DeviceDpi}dpi)");
             }
 
             ValidateControlTree(child, context);

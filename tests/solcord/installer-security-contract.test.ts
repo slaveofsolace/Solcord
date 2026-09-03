@@ -205,6 +205,42 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("File.Exists(firstSetupIntent) || !engine.VerifyInstalled()");
     });
 
+    test("checks a complete target before closing Discord and rechecks after shutdown", () => {
+        const install = engine.slice(engine.indexOf("internal InstallReceipt Install("), engine.indexOf("internal InstallReceipt InstallNew"));
+        const shutdown = install.indexOf("RequireAllDiscordStopped()");
+        const firstValidation = install.indexOf("RequireReadyTarget(target)");
+        const secondValidation = install.indexOf("RequireReadyTarget(target)", firstValidation + 1);
+        expect(firstValidation).toBeGreaterThan(0);
+        expect(firstValidation).toBeLessThan(shutdown);
+        expect(secondValidation).toBeGreaterThan(shutdown);
+        expect(secondValidation).toBeLessThan(install.indexOf("Directory.CreateDirectory"));
+        expect(selfTest).toContain("numeric-version-selection-skips-incomplete-updates");
+        expect(selfTest).toContain("invalid-target-must-not-close-discord");
+        expect(selfTest).toContain("target-drift-after-close-must-abort-install");
+        expect(selfTest).toContain("invalid-target-mutated-core-or-recovery-state");
+    });
+
+    test("keeps accessible action and status names in sync with the visible text", () => {
+        expect(installerForm).not.toContain("AccessibleName = \"Recommended action\"");
+        expect(installerForm).not.toContain("AccessibleName = \"Installation state details\"");
+        expect(installerForm).toContain("ValidateAccessibleState(form, context)");
+        expect(installerForm).toContain("action-name-mismatch");
+        expect(installerForm).toContain("status-name-mismatch");
+    });
+
+    test("keeps recovery bound to its recorded Discord version after an upstream update", () => {
+        const rollback = engine.slice(engine.indexOf("internal string RollBack("), engine.indexOf("internal string Uninstall("));
+        const uninstall = engine.slice(engine.indexOf("internal string Uninstall("), engine.indexOf("internal void Launch("));
+        for (const action of [rollback, uninstall]) {
+            expect(action.indexOf("RequireRecordedTarget(target, receipt)")).toBeLessThan(action.indexOf("RequireAllDiscordStopped()"));
+            expect(action.indexOf("RequireUnchangedReceipt(receiptFile, receiptHash)")).toBeGreaterThan(action.indexOf("RequireAllDiscordStopped()"));
+        }
+        expect(selfTest).toContain("rollback-recorded-version-after-discord-update");
+        expect(selfTest).toContain("uninstall touched the newer Discord installation");
+        expect(selfTest).toContain("receipt-bound-recovery-preflight-and-drift");
+        expect(selfTest).toContain("receipt-encoding-compatibility");
+    });
+
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
         expect(launcher).toContain("Start Menu\", \"Programs");
         expect(launcher).toContain("Solcord.lnk");

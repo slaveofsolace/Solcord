@@ -82,6 +82,8 @@ internal static class InstallerSelfTest
         string stage = "prepare";
         try
         {
+            stage = "discord-target-selection-and-preflight";
+            ValidateTargetSelectionAndPreflight(embeddedBundleRoot, Path.Combine(root, "target-selection"));
             stage = "dpi-layout-matrix";
             InstallerForm.ValidateGeometryMatrix(embeddedBundleRoot);
             string local = Path.Combine(root, "local");
@@ -104,7 +106,7 @@ internal static class InstallerSelfTest
             var engine = new InstallerEngine(embeddedBundleRoot, local, roaming, _ => 0);
             ReleaseManifest manifest = engine.LoadManifest();
             string artifact = engine.VerifyBundle(manifest);
-            DiscordTarget target = engine.DetectTargets().Single() with {ProcessName = "SolcordInstallerSelfTestNoProcess"};
+            DiscordTarget target = engine.DetectTargets().Single();
             int stubbornStopAttempts = 0;
             var stubbornEngine = new InstallerEngine(embeddedBundleRoot, local, roaming, name => name == "Discord" ? 1 : 0, null, names =>
             {
@@ -133,6 +135,22 @@ internal static class InstallerSelfTest
             string currentReceiptText = File.ReadAllText(currentReceipt);
             InstallReceipt installedReceipt = JsonSerializer.Deserialize<InstallReceipt>(currentReceiptText) ?? throw new InvalidDataException("fixture receipt");
             if (installedReceipt.CandidateLabel != manifest.CandidateLabel) return 18;
+            string newerDiscord = Path.Combine(local, "Discord", "app-1.2.4");
+            Directory.CreateDirectory(Path.Combine(newerDiscord, "resources"));
+            File.WriteAllText(Path.Combine(newerDiscord, "Discord.exe"), "newer-fixture");
+            string newerPayload = Path.Combine(newerDiscord, "resources", "app.asar");
+            File.WriteAllText(newerPayload, "newer-discord-fixture");
+            DiscordTarget newerTarget = engine.DetectTargets().Single();
+            if (newerTarget.Version != "1.2.4") throw new InvalidDataException("fixture newer Discord target");
+            stage = "receipt-bound-recovery-preflight-and-drift";
+            ValidateRecoveryGuards(embeddedBundleRoot, local, roaming, newerTarget, currentReceipt, currentReceiptText);
+            stage = "receipt-encoding-compatibility";
+            foreach (System.Text.Encoding encoding in new System.Text.Encoding[] {new System.Text.UTF8Encoding(true), System.Text.Encoding.Unicode})
+            {
+                File.WriteAllText(currentReceipt, currentReceiptText, encoding);
+                if (!engine.IsCurrentPackageRecorded()) throw new InvalidDataException("receipt encoding compatibility");
+            }
+            File.WriteAllText(currentReceipt, currentReceiptText);
             string backupStateFile = Path.Combine(receipt.BackupDirectory ?? throw new InvalidDataException("fixture backup"), "backup-state.json");
             BackupState installedBackup = JsonSerializer.Deserialize<BackupState>(File.ReadAllText(backupStateFile)) ?? throw new InvalidDataException("fixture backup state");
             if (installedBackup.CandidateLabel != manifest.CandidateLabel) return 19;
@@ -235,11 +253,13 @@ internal static class InstallerSelfTest
             if (!InstallerEngine.HashFile(installedCore).Equals(manifest.ArtifactSha256, StringComparison.OrdinalIgnoreCase)
                 || File.ReadAllText(Path.Combine(priorApp, "index.js")) != priorIndex
                 || File.ReadAllText(Path.Combine(priorApp, "package.json")) != priorPackage) return 32;
-            stage = "rollback";
-            engine.RollBack(target);
+            stage = "rollback-recorded-version-after-discord-update";
+            engine.RollBack(newerTarget);
             if (File.ReadAllText(Path.Combine(data, "betterdiscord.asar")) != "previous-core") return 3;
             if (File.ReadAllText(Path.Combine(priorApp, "index.js")) != priorIndex || File.ReadAllText(Path.Combine(priorApp, "package.json")) != priorPackage) return 5;
             if (File.Exists(currentReceipt)) return 10;
+            if (File.ReadAllText(newerPayload) != "newer-discord-fixture" || Directory.Exists(Path.Combine(newerDiscord, "resources", "app")))
+                throw new InvalidDataException("rollback touched the newer Discord installation");
 
             stage = "separate-install-update-repair-actions";
             try {engine.Update(target); return 33;}
@@ -273,14 +293,115 @@ internal static class InstallerSelfTest
             Directory.CreateDirectory(plugins);
             string ownerPlugin = Path.Combine(plugins, "owner.plugin.js");
             File.WriteAllText(ownerPlugin, "owner-data");
-            string uninstallBackup = engine.Uninstall(target);
+            string uninstallBackup = engine.Uninstall(newerTarget);
             if (File.Exists(installedCore) || Directory.Exists(priorApp) || File.Exists(currentReceipt)) return 37;
             if (File.ReadAllText(ownerPlugin) != "owner-data") return 38;
+            if (File.ReadAllText(newerPayload) != "newer-discord-fixture" || Directory.Exists(Path.Combine(newerDiscord, "resources", "app")))
+                throw new InvalidDataException("uninstall touched the newer Discord installation");
             foreach (string name in new[] {"betterdiscord.asar", "index.js", "package.json", "current.json", "uninstall-state.json"})
                 if (!File.Exists(Path.Combine(uninstallBackup, name))) return 39;
             return 0;
         }
-        catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}"); return 1;}
+        catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}:{error.Message}"); return 1;}
         finally {if (Directory.Exists(root)) Directory.Delete(root, recursive: true);}
+    }
+
+    private static void ValidateTargetSelectionAndPreflight(string bundle, string root)
+    {
+        string local = Path.Combine(root, "local");
+        string roaming = Path.Combine(root, "roaming");
+        DiscordTarget CreateTarget(string version, string? module, string content = "discord-fixture")
+        {
+            string directory = Path.Combine(local, "Discord", $"app-{version}");
+            string resources = Path.Combine(directory, "resources");
+            Directory.CreateDirectory(resources);
+            string executable = Path.Combine(directory, "Discord.exe");
+            File.WriteAllText(executable, "fixture");
+            if (module is not null) File.WriteAllText(Path.Combine(resources, module), content);
+            return new DiscordTarget("Stable", version, executable, "Discord");
+        }
+
+        CreateTarget("1.9.9", "app.asar");
+        DiscordTarget complete = CreateTarget("1.10.0", "betterdiscord.app.asar");
+        DiscordTarget staged = CreateTarget("1.11.0", null);
+        DiscordTarget empty = CreateTarget("1.12.0", "app.asar", "");
+        CreateTarget("unfinished", "app.asar");
+        var detector = new InstallerEngine(bundle, local, roaming, _ => 0);
+        if (detector.DetectTargets().Single() != complete)
+            throw new InvalidDataException("numeric-version-selection-skips-incomplete-updates");
+
+        string core = Path.Combine(roaming, "BetterDiscord", "data", "betterdiscord.asar");
+        Directory.CreateDirectory(Path.GetDirectoryName(core)!);
+        File.WriteAllText(core, "previous-core");
+        int stopAttempts = 0;
+        var preflight = new InstallerEngine(bundle, local, roaming, name => name == "Discord" ? 1 : 0,
+            discordProcessStopper: _ => stopAttempts++, delay: _ => {});
+        foreach (DiscordTarget invalid in new[] {staged, empty, complete with {Version = "1.10.1"}, complete with {Channel = "Canary"}, complete with {ProcessName = "Unknown"}})
+        {
+            bool rejected = false;
+            try {preflight.Install(invalid);}
+            catch (InvalidDataException) {rejected = true;}
+            if (!rejected || stopAttempts != 0)
+                throw new InvalidDataException("invalid-target-must-not-close-discord");
+            AssertUnchanged();
+        }
+
+        int running = 1;
+        var changedDuringClose = new InstallerEngine(bundle, local, roaming, name => name == "Discord" ? running : 0,
+            discordProcessStopper: _ => {
+                stopAttempts++;
+                running = 0;
+                File.Delete(Path.Combine(Path.GetDirectoryName(complete.ExecutablePath)!, "resources", "betterdiscord.app.asar"));
+            }, delay: _ => {});
+        bool changedTargetRejected = false;
+        try {changedDuringClose.Install(complete);}
+        catch (InvalidDataException) {changedTargetRejected = true;}
+        if (!changedTargetRejected || stopAttempts != 1 || running != 0)
+            throw new InvalidDataException("target-drift-after-close-must-abort-install");
+        AssertUnchanged();
+
+        void AssertUnchanged()
+        {
+            if (File.ReadAllText(core) != "previous-core" || Directory.Exists(Path.Combine(roaming, "BetterDiscord", "solcord-installer")))
+                throw new InvalidDataException("invalid-target-mutated-core-or-recovery-state");
+        }
+    }
+
+    private static void ValidateRecoveryGuards(string bundle, string local, string roaming, DiscordTarget newest, string receiptFile, string originalReceipt)
+    {
+        string core = Path.Combine(roaming, "BetterDiscord", "data", "betterdiscord.asar");
+        string coreHash = InstallerEngine.HashFile(core);
+        InstallReceipt receipt = JsonSerializer.Deserialize<InstallReceipt>(originalReceipt) ?? throw new InvalidDataException("fixture recovery receipt");
+        string injector = Path.Combine(local, "Discord", $"app-{receipt.DiscordVersion}", "resources", "app", "index.js");
+        string originalInjector = File.ReadAllText(injector);
+        foreach (bool rollback in new[] {true, false})
+        foreach (string mode in rollback ? new[] {"channel", "receipt"} : new[] {"channel", "receipt", "injector"})
+        {
+            int stopAttempts = 0;
+            int running = 1;
+            var engine = new InstallerEngine(bundle, local, roaming, name => name == "Discord" ? running : 0,
+                discordProcessStopper: _ => {
+                    stopAttempts++;
+                    running = 0;
+                    if (mode == "receipt") File.AppendAllText(receiptFile, " ");
+                    if (mode == "injector") File.AppendAllText(injector, "// owner fixture edit\n");
+                }, delay: _ => {});
+            DiscordTarget selected = mode == "channel" ? newest with {Channel = "Canary"} : newest;
+            bool rejected = false;
+            try
+            {
+                if (rollback) engine.RollBack(selected);
+                else engine.Uninstall(selected);
+            }
+            catch (InvalidDataException) {rejected = true;}
+            if (!rejected || stopAttempts != (mode == "channel" ? 0 : 1))
+                throw new InvalidDataException("recovery must reject channel mismatch before shutdown and receipt drift before mutation");
+            if (InstallerEngine.HashFile(core) != coreHash
+                || File.ReadAllText(receiptFile) != originalReceipt + (mode == "receipt" ? " " : "")
+                || File.ReadAllText(injector) != originalInjector + (mode == "injector" ? "// owner fixture edit\n" : ""))
+                throw new InvalidDataException("recovery changed protected files after a failed preflight");
+            File.WriteAllText(receiptFile, originalReceipt);
+            File.WriteAllText(injector, originalInjector);
+        }
     }
 }

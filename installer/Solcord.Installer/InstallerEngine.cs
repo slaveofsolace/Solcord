@@ -72,14 +72,60 @@ internal sealed class InstallerEngine
         {
             string root = Path.Combine(_localAppData, directoryName);
             if (!Directory.Exists(root)) continue;
-            foreach (string directory in Directory.EnumerateDirectories(root, "app-*", SearchOption.TopDirectoryOnly).OrderByDescending(Path.GetFileName))
+            var candidates = Directory.EnumerateDirectories(root, "app-*", SearchOption.TopDirectoryOnly)
+                .Select(directory => {
+                    string version = Path.GetFileName(directory)[4..];
+                    return (Directory: directory, Version: version, ParsedVersion: Version.TryParse(version, out Version? parsed) ? parsed : null);
+                })
+                .Where(candidate => candidate.ParsedVersion is not null)
+                .OrderByDescending(candidate => candidate.ParsedVersion);
+            foreach (var candidate in candidates)
             {
-                string version = Path.GetFileName(directory)[4..];
-                string executable = Path.Combine(directory, $"{processName}.exe");
-                if (File.Exists(executable)) {targets.Add(new DiscordTarget(channel, version, executable, processName)); break;}
+                var target = new DiscordTarget(channel, candidate.Version, Path.Combine(candidate.Directory, $"{processName}.exe"), processName);
+                try {RequireReadyTarget(target);}
+                catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException) {continue;}
+                targets.Add(target);
+                break;
             }
         }
         return targets;
+    }
+
+    private void RequireReadyTarget(DiscordTarget target)
+    {
+        string processName = target.Channel switch {"Stable" => "Discord", "PTB" => "DiscordPTB", "Canary" => "DiscordCanary", _ => ""};
+        if (processName.Length == 0 || target.ProcessName != processName || !Version.TryParse(target.Version, out _))
+            throw new InvalidDataException("The selected Discord version is not a supported installation.");
+        string expected = Path.Combine(_localAppData, processName, $"app-{target.Version}", $"{processName}.exe");
+        if (!Path.GetFullPath(target.ExecutablePath).Equals(expected, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The selected Discord version does not match its installation folder.");
+        RejectLinkedPath(_localAppData, target.ExecutablePath);
+        if (!File.Exists(target.ExecutablePath) || new FileInfo(target.ExecutablePath).Length == 0)
+            throw new InvalidDataException("The selected Discord installation is incomplete. Finish its update before trying again.");
+        RequireOriginalModule(Path.Combine(Path.GetDirectoryName(target.ExecutablePath)!, "resources"));
+    }
+
+    private static string RequireOriginalModule(string resources)
+    {
+        if (!Directory.Exists(resources)) throw new InvalidDataException("The selected Discord resources directory is missing.");
+        RejectReparsePoint(resources);
+        string module = File.Exists(Path.Combine(resources, "betterdiscord.app.asar")) ? "betterdiscord.app.asar" : "app.asar";
+        string file = Path.Combine(resources, module);
+        RejectLinkedPath(resources, file);
+        if (!File.Exists(file) || new FileInfo(file).Length == 0)
+            throw new InvalidDataException("The selected Discord installation is incomplete. Finish its update before trying again.");
+        return $"../{module}";
+    }
+
+    private DiscordTarget RequireRecordedTarget(DiscordTarget selected, InstallReceipt receipt)
+    {
+        if (selected.Channel != receipt.Channel || !Version.TryParse(receipt.DiscordVersion, out _))
+            throw new InvalidDataException("Select the Discord channel recorded by this Solcord installation to manage it.");
+        string processName = receipt.Channel switch {"Stable" => "Discord", "PTB" => "DiscordPTB", "Canary" => "DiscordCanary", _ => ""};
+        var target = new DiscordTarget(receipt.Channel, receipt.DiscordVersion,
+            Path.Combine(_localAppData, processName, $"app-{receipt.DiscordVersion}", $"{processName}.exe"), processName);
+        RequireReadyTarget(target);
+        return target;
     }
 
     internal bool HasManagedInstall() => File.Exists(Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "current.json"));
@@ -147,9 +193,11 @@ internal sealed class InstallerEngine
         LastLauncherWarning = null;
         ReleaseManifest manifest = LoadManifest();
         string artifact = VerifyBundle(manifest);
+        RequireReadyTarget(target);
+        RequireNoPendingRecovery();
+        RejectDowngrade(manifest);
         RequireAllDiscordStopped();
-        if (!File.Exists(target.ExecutablePath)) throw new FileNotFoundException("The selected Discord target changed after preflight.");
-        RejectLinkedPath(_localAppData, target.ExecutablePath);
+        RequireReadyTarget(target);
         RequireNoPendingRecovery();
         RejectDowngrade(manifest);
 
@@ -257,14 +305,13 @@ internal sealed class InstallerEngine
     internal string RollBack(DiscordTarget target)
     {
         LastLauncherWarning = null;
-        RequireAllDiscordStopped();
-        RejectLinkedPath(_localAppData, target.ExecutablePath);
         string backupRoot = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "backups");
         if (!Directory.Exists(backupRoot)) throw new InvalidOperationException("No Solcord installer backup is available.");
         RejectLinkedPath(_roamingAppData, backupRoot);
         RejectReparsePoint(backupRoot);
-        (InstallReceipt receipt, string receiptFile) = LoadRecoveryReceipt();
-        if (receipt.Channel != target.Channel || receipt.DiscordVersion != target.Version || receipt.BackupDirectory is null) throw new InvalidDataException("The current install receipt does not match the selected Discord target.");
+        (InstallReceipt receipt, string receiptFile, string receiptHash) = LoadRecoveryReceipt();
+        target = RequireRecordedTarget(target, receipt);
+        if (receipt.BackupDirectory is null) throw new InvalidDataException("The current install receipt does not identify a rollback backup.");
         string backupDirectory = Path.GetFullPath(receipt.BackupDirectory);
         RejectLinkedPath(backupRoot, backupDirectory);
         if (!string.Equals(Path.GetDirectoryName(backupDirectory), Path.GetFullPath(backupRoot).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The receipt backup path is not a direct installer backup.");
@@ -274,6 +321,9 @@ internal sealed class InstallerEngine
         if (state is null || state.Injector.Channel != target.Channel || state.Injector.DiscordVersion != target.Version || !Sha256Pattern.IsMatch(state.InstalledArtifactSha256) || state.InstalledArtifactSha256 != receipt.ArtifactSha256 || state.CandidateVersion != receipt.Version || state.CandidateSourceCommit != receipt.SourceCommit || state.CandidateLabel != receipt.CandidateLabel || state.CandidateLabel is not null && !IsCandidateLabelForVersion(state.CandidateLabel, state.CandidateVersion)) throw new InvalidDataException("The rollback state does not match the receipt-bound Discord target.");
         if (state.HadCore != (state.ExistingCoreSha256 is not null) || state.ExistingCoreSha256 is not null && !Sha256Pattern.IsMatch(state.ExistingCoreSha256)) throw new InvalidDataException("The rollback core metadata is invalid.");
         if (state.Injector.HadAppDirectory != (state.Injector.IndexSha256 is not null && state.Injector.PackageSha256 is not null) || state.Injector.IndexSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.IndexSha256) || state.Injector.PackageSha256 is not null && !Sha256Pattern.IsMatch(state.Injector.PackageSha256)) throw new InvalidDataException("The rollback injector metadata is invalid.");
+        RequireAllDiscordStopped();
+        RequireReadyTarget(target);
+        RequireUnchangedReceipt(receiptFile, receiptHash);
         RestoreBackup(target, backupDirectory, state, true, true);
         File.Delete(receiptFile);
         try {SolcordLauncher.Remove(_roamingAppData);}
@@ -286,14 +336,13 @@ internal sealed class InstallerEngine
         LastLauncherWarning = null;
         ReleaseManifest manifest = LoadManifest();
         VerifyBundle(manifest);
-        RequireAllDiscordStopped();
-        if (!File.Exists(target.ExecutablePath)) throw new FileNotFoundException("The selected Discord target changed after preflight.");
-        RejectLinkedPath(_localAppData, target.ExecutablePath);
         RequireNoPendingRecovery();
 
         string receiptFile = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "current.json");
-        InstallReceipt receipt = ReadCurrentReceipt() ?? throw new InvalidOperationException("No managed Solcord installation is available to uninstall.");
-        if (receipt.Channel != target.Channel || receipt.DiscordVersion != target.Version || receipt.CandidateLabel is null) throw new InvalidDataException("The current Solcord receipt does not match the selected Discord target.");
+        if (!File.Exists(receiptFile)) throw new InvalidOperationException("No managed Solcord installation is available to uninstall.");
+        InstallReceipt receipt = ReadReceipt(receiptFile, out string receiptHash);
+        target = RequireRecordedTarget(target, receipt);
+        if (receipt.CandidateLabel is null) throw new InvalidDataException("The current Solcord receipt does not identify its release candidate.");
 
         string dataDirectory = Path.Combine(_roamingAppData, "BetterDiscord", "data");
         string installedCore = Path.Combine(dataDirectory, "betterdiscord.asar");
@@ -311,9 +360,17 @@ internal sealed class InstallerEngine
         string packageFile = Path.Combine(appDirectory, "package.json");
         RejectLinkedPath(_localAppData, indexFile);
         RejectLinkedPath(_localAppData, packageFile);
-        string index = File.ReadAllText(indexFile);
-        string package = File.ReadAllText(packageFile);
+        string index = ReadHashedText(indexFile, out string indexHash);
+        string package = ReadHashedText(packageFile, out string packageHash);
         if (!RecognizedInjector(index, package, installedCore) || !IsSolcordInjectorIndex(index, installedCore)) throw new InvalidDataException("The active injector is not owned by this Solcord installation; uninstall was held before mutation.");
+
+        RequireAllDiscordStopped();
+        RequireReadyTarget(target);
+        RequireUnchangedReceipt(receiptFile, receiptHash);
+        foreach (string file in new[] {installedCore, indexFile, packageFile})
+            RejectLinkedPath(file == installedCore ? _roamingAppData : _localAppData, file);
+        if (HashFile(installedCore) != receipt.ArtifactSha256 || HashFile(indexFile) != indexHash || HashFile(packageFile) != packageHash)
+            throw new InvalidDataException("The installed files changed while Discord was closing; nothing was removed.");
 
         string root = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer", "uninstall-backups");
         RejectLinkedPath(_roamingAppData, root);
@@ -454,9 +511,7 @@ internal sealed class InstallerEngine
     private static InjectorBackupState BackupInjector(DiscordTarget target, string backupDirectory, string installedCore)
     {
         string resources = Path.Combine(Path.GetDirectoryName(target.ExecutablePath)!, "resources");
-        if (!Directory.Exists(resources)) throw new InvalidDataException("The selected Discord resources directory is missing.");
-        RejectReparsePoint(resources);
-        string originalModule = File.Exists(Path.Combine(resources, "betterdiscord.app.asar")) ? "../betterdiscord.app.asar" : File.Exists(Path.Combine(resources, "app.asar")) ? "../app.asar" : throw new InvalidDataException("No supported Discord application ASAR was found.");
+        string originalModule = RequireOriginalModule(resources);
         string appDirectory = Path.Combine(resources, "app");
         bool hadAppDirectory = Directory.Exists(appDirectory);
         if (hadAppDirectory)
@@ -628,7 +683,7 @@ internal sealed class InstallerEngine
         return solcord || betterDiscord;
     }
 
-    private (InstallReceipt Receipt, string File) LoadRecoveryReceipt()
+    private (InstallReceipt Receipt, string File, string Sha256) LoadRecoveryReceipt()
     {
         string root = Path.Combine(_roamingAppData, "BetterDiscord", "solcord-installer");
         string pending = Path.Combine(root, "pending.json");
@@ -643,7 +698,8 @@ internal sealed class InstallerEngine
             file = current;
         }
         else file = File.Exists(pending) ? pending : current;
-        return (ReadReceipt(file), file);
+        InstallReceipt receipt = ReadReceipt(file, out string sha256);
+        return (receipt, file, sha256);
     }
 
     private InstallReceipt? ReadCurrentReceipt()
@@ -652,16 +708,40 @@ internal sealed class InstallerEngine
         return File.Exists(file) ? ReadReceipt(file) : null;
     }
 
-    private InstallReceipt ReadReceipt(string file)
+    private InstallReceipt ReadReceipt(string file) => ReadReceipt(file, out _);
+
+    private InstallReceipt ReadReceipt(string file, out string sha256)
     {
         if (!File.Exists(file) || new FileInfo(file).Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The current Solcord install receipt is unavailable.");
         RejectLinkedPath(_roamingAppData, file);
         if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("The current Solcord install receipt is unsafe.");
+        byte[] contents = File.ReadAllBytes(file);
+        if (contents.Length is <= 0 or > 64 * 1024) throw new InvalidDataException("The current Solcord install receipt is unavailable.");
+        sha256 = Convert.ToHexString(SHA256.HashData(contents)).ToLowerInvariant();
         InstallReceipt? receipt;
-        try {receipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(file));}
+        try
+        {
+            using var reader = new StreamReader(new MemoryStream(contents));
+            receipt = JsonSerializer.Deserialize<InstallReceipt>(reader.ReadToEnd());
+        }
         catch {throw new InvalidDataException("The current Solcord install receipt is malformed.");}
         if (receipt is null || !Sha256Pattern.IsMatch(receipt.ArtifactSha256) || !Regex.IsMatch(receipt.SourceCommit, "^[0-9a-f]{40}$") || !Version.TryParse(receipt.Version, out _) || receipt.CandidateLabel is not null && !IsCandidateLabelForVersion(receipt.CandidateLabel, receipt.Version)) throw new InvalidDataException("The current Solcord install receipt failed validation.");
         return receipt;
+    }
+
+    private void RequireUnchangedReceipt(string file, string expectedHash)
+    {
+        ReadReceipt(file, out string actualHash);
+        if (actualHash != expectedHash)
+            throw new InvalidDataException("The Solcord installation record changed while Discord was closing; nothing was changed.");
+    }
+
+    private static string ReadHashedText(string file, out string sha256)
+    {
+        byte[] contents = File.ReadAllBytes(file);
+        sha256 = Convert.ToHexString(SHA256.HashData(contents)).ToLowerInvariant();
+        using var reader = new StreamReader(new MemoryStream(contents));
+        return reader.ReadToEnd();
     }
 
     private bool MatchingSafeReceiptFiles(string left, string right)
