@@ -33,6 +33,8 @@ const scenarios = [
     {name: "setup-dark-680x520-compact", width: 680, height: 520, query: "workspace=overview&state=wizard&mode=solcord-dark&fixtureWidth=640&scale=125"},
     {name: "privacy-light-compact-short-320x568", width: 500, height: 568, query: "workspace=privacy&state=degraded&mode=solcord-light&fixtureWidth=320&scale=200"},
     {name: "performance-dark-1024x768", width: 1024, height: 768, query: "workspace=performance&state=healthy&mode=solcord-dark&scale=100"},
+    {name: "performance-light-1850x1240", width: 1850, height: 1240, query: "workspace=performance&state=healthy&mode=solcord-light&scale=100"},
+    {name: "performance-light-long-320-container", width: 500, height: 900, query: "workspace=performance&state=healthy&mode=solcord-light&long=1&fixtureWidth=320&scale=100"},
     {name: "chat-dark-1366x768", width: 1366, height: 768, query: "workspace=chat&state=healthy&mode=solcord-dark&scale=100"},
     {name: "friends-dark-1024x768", width: 1024, height: 768, query: "workspace=friends&state=healthy&mode=solcord-dark&scale=100"},
     {name: "overview-dark-effective-125", width: 1093, height: 614, query: "workspace=overview&state=degraded&mode=solcord-dark&scale=125"},

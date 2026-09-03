@@ -2,6 +2,7 @@
 
 import {mkdir, writeFile} from "node:fs/promises";
 import {isAbsolute, join} from "node:path";
+import {PropertySymbol} from "happy-dom";
 
 import {
     SolcordAudioConsoleController,
@@ -63,6 +64,7 @@ export interface SolcordBackendSoakReport {
     adapterExecutions: 0;
     maximumVoiceHealthSamples: number;
     maximumOwnedResources: number;
+    fixtureQueryCacheResets: number;
     baselineHeapUsedBytes: number;
     finalHeapUsedBytes: number;
     finalHeapGrowthBytes: number;
@@ -343,6 +345,15 @@ function assertSettledTeardown(): void {
     if ([...document.documentElement.classList].some(name => name.startsWith("solcord-"))) throw new Error("A deferred callback restored a Solcord document class after teardown.");
 }
 
+function clearDisposedFixtureQueryCache(): void {
+    // Happy DOM 20.8.9 accumulates document-level selector dependencies even
+    // after body/head mutations dispose every fixture node. Clear only that
+    // test-runtime cache, after teardown assertions; never product resources.
+    const clear = (document as unknown as Record<symbol, unknown>)[PropertySymbol.clearCache];
+    if (typeof clear !== "function") throw new Error("The isolated DOM does not expose its verified query-cache maintenance hook.");
+    clear.call(document);
+}
+
 function delay(milliseconds: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
@@ -362,6 +373,7 @@ export async function runSolcordBackendSoak(options: SolcordBackendSoakOptions =
     let cycles = 0;
     let maximumVoiceHealthSamples = 0;
     let maximumOwnedResources = 0;
+    let fixtureQueryCacheResets = 0;
 
     forceGarbageCollection();
     samples.push(memorySample(startedAt));
@@ -385,7 +397,11 @@ export async function runSolcordBackendSoak(options: SolcordBackendSoakOptions =
             nextSampleAt = now + sampleIntervalMs;
         }
         await delay(cycleDelayMs);
-        try {assertSettledTeardown();}
+        try {
+            assertSettledTeardown();
+            clearDisposedFixtureQueryCache();
+            fixtureQueryCacheResets++;
+        }
         catch (error) {
             failures.push(error instanceof Error ? error.message : String(error));
             break;
@@ -414,6 +430,7 @@ export async function runSolcordBackendSoak(options: SolcordBackendSoakOptions =
         adapterExecutions: 0,
         maximumVoiceHealthSamples,
         maximumOwnedResources,
+        fixtureQueryCacheResets,
         baselineHeapUsedBytes,
         finalHeapUsedBytes,
         finalHeapGrowthBytes,
@@ -426,6 +443,7 @@ export async function runSolcordBackendSoak(options: SolcordBackendSoakOptions =
         nonclaims: [
             "This does not launch or inspect Discord.",
             "This does not establish live renderer, owner-profile, Activity, installer, or human visual acceptance.",
+            "Happy DOM document query caches are cleared after each asserted teardown; this is disclosed test-harness maintenance, not product cleanup.",
             "Intent objects are validated but never executed against an adapter."
         ]
     };

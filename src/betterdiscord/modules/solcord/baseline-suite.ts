@@ -131,13 +131,29 @@ function createBoundedAnimationScheduler(scope: SolcordDisposalScope, callback: 
 
 export class SolcordBaselineSuite {
     #scope?: SolcordDisposalScope;
+    #preferences?: string;
     #status: SolcordBaselineSuiteStatus = {active: false, resources: {}, enabled: [], unavailable: []};
     #runtimeIssues = new Map<string, string>();
     #statusReconcilers = new Set<() => void>();
 
     constructor(private readonly adapter: SolcordBaselineSuiteAdapter) {}
 
+    matchesPreferences(preferences: SolcordBaselinePreferences): boolean {
+        return this.#preferences === this.#configuration(preferences);
+    }
+
+    #configuration(preferences: SolcordBaselinePreferences): string {
+        return JSON.stringify({
+            layoutCollapse: preferences.layoutCollapse,
+            collapsedRegions: preferences.layoutCollapse ? [...preferences.collapsedRegions].sort() : [],
+            embedControls: preferences.embedControls,
+            crossPlatformAutoscroll: preferences.crossPlatformAutoscroll,
+            messageLinkPreview: preferences.messageLinkPreview
+        });
+    }
+
     start(preferences: SolcordBaselinePreferences): SolcordBaselineSuiteStatus {
+        if (this.matchesPreferences(preferences)) return this.status();
         this.stop();
         this.#runtimeIssues.clear();
         const scope = new SolcordDisposalScope();
@@ -174,6 +190,7 @@ export class SolcordBaselineSuite {
             this.#scope = undefined;
         }
         this.#status = {active: enabled.length > 0, resources: this.#scope?.counts() ?? {}, enabled, unavailable};
+        this.#preferences = this.#configuration(preferences);
         return this.status();
     }
 
@@ -184,13 +201,16 @@ export class SolcordBaselineSuite {
 
     stop(): void {
         const scope = this.#scope;
-        this.#scope = undefined;
+        this.#preferences = undefined;
         try {scope?.dispose();}
-        finally {
-            this.#statusReconcilers.clear();
-            this.#runtimeIssues.clear();
-            this.#status = {active: false, resources: {}, enabled: [], unavailable: []};
+        catch (error) {
+            this.#status = {active: false, resources: scope?.counts() ?? {}, enabled: [], unavailable: ["Previous cleanup is incomplete; retry before enabling another baseline adapter."]};
+            throw error;
         }
+        this.#scope = undefined;
+        this.#statusReconcilers.clear();
+        this.#runtimeIssues.clear();
+        this.#status = {active: false, resources: {}, enabled: [], unavailable: []};
     }
 
     #setRuntimeIssue(key: string, detail?: string): void {
@@ -202,6 +222,20 @@ export class SolcordBaselineSuite {
         const root = document.documentElement;
         const targets = new Map<SolcordLayoutRegion, HTMLElement>();
         let suspended = false;
+        const restore = document.createElement("button");
+        const placeRestore = () => {
+            let clearance = 12;
+            // Discord's account panel grows when a call is active. Keep the
+            // recovery control above its measured bounds, including at zoom.
+            for (const panel of document.querySelectorAll<HTMLElement>("#app-mount [class*=\"panels_\"]")) {
+                if (!panel.querySelector("button")) continue;
+                const bounds = panel.getBoundingClientRect();
+                if (bounds.width <= 0 || bounds.height <= 0 || bounds.left > 240 || bounds.right <= 12 || bounds.bottom < window.innerHeight - 72 || bounds.top <= 0) continue;
+                clearance = Math.max(clearance, window.innerHeight - bounds.top + 12);
+            }
+            const bottom = `${Math.ceil(clearance)}px`;
+            if (restore.style.bottom !== bottom) restore.style.bottom = bottom;
+        };
         const clearTargets = () => {
             for (const target of targets.values()) target.classList.remove(LAYOUT_TARGET_CLASS);
             targets.clear();
@@ -223,14 +257,14 @@ export class SolcordBaselineSuite {
                 targets.set(region, next);
                 this.#setRuntimeIssue(`layout:${region}`);
             }
+            placeRestore();
         };
         const schedule = createBoundedAnimationScheduler(scope, scan);
         scope.style("solcord-layout-collapse-runtime", `
             .${LAYOUT_TARGET_CLASS} { display: none !important; }
-            .solcord-layout-restore { position: fixed; z-index: 2147483000; left: 12px; bottom: 12px; min-height: 32px; padding: 6px 10px; color: var(--text-normal); background: var(--background-floating); border: 1px solid var(--border-subtle); border-radius: 6px; box-shadow: var(--elevation-high); font: inherit; cursor: pointer; }
+            .solcord-layout-restore { position: fixed; z-index: 2147483000; left: 12px; bottom: 12px; max-width: calc(100vw - 24px); min-height: 32px; padding: 6px 10px; color: var(--text-normal); background: var(--background-floating); border: 1px solid var(--border-subtle); border-radius: 6px; box-shadow: var(--elevation-high); font: inherit; cursor: pointer; }
             .solcord-layout-restore:focus-visible { outline: 2px solid var(--focus-primary, var(--brand-500)); outline-offset: 2px; }
         `);
-        const restore = document.createElement("button");
         restore.type = "button";
         restore.className = "solcord-layout-restore";
         restore.textContent = "Show hidden panels";
@@ -245,6 +279,7 @@ export class SolcordBaselineSuite {
         };
         scope.element(restore);
         scope.listen(restore, "click", reveal);
+        scope.listen(window, "resize", schedule);
         scope.listen(document, "keydown", event => {
             const key = event as KeyboardEvent;
             if (!key.ctrlKey || !key.shiftKey || key.altKey || key.code !== "KeyL") return;

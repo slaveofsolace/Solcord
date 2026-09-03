@@ -74,6 +74,13 @@ describe("Solcord baseline exact-client DOM adapters", () => {
         expect(restore.hidden).toBe(true);
         expect(suite.status().unavailable.join(" ")).toContain("shown temporarily");
 
+        const resources = suite.status().resources;
+        suite.start({...baseline, mediaShelf: [{id: "fixture", label: "Saved emoji", kind: "emoji", url: "https://cdn.discordapp.com/emojis/111.png"}], collapsedRegions: ["channels", "guilds"]});
+        expect(document.querySelector(".solcord-layout-restore")).toBe(restore);
+        expect(document.querySelector(".solcord-layout-region-hidden")).toBeNull();
+        expect(suite.status().resources).toEqual(resources);
+        expect(suite.status().unavailable.join(" ")).toContain("shown temporarily");
+
         suite.stop();
         expect(document.querySelector(".solcord-layout-restore")).toBeNull();
         expect(document.getElementById("solcord-layout-collapse-runtime")).toBeNull();
@@ -89,6 +96,31 @@ describe("Solcord baseline exact-client DOM adapters", () => {
         document.dispatchEvent(new KeyboardEvent("keydown", {bubbles: true, code: "KeyL", ctrlKey: true, shiftKey: true}));
         expect(document.getElementById("channels")?.classList.contains("solcord-layout-region-hidden")).toBe(false);
         suite.stop();
+    });
+
+    test("positions recovery above the measured account/call controls and reconciles resize without duplication", async () => {
+        document.body.innerHTML = `<div id="app-mount"><aside aria-label="Members"><div data-list-id="members-fixture"></div></aside><section class="panels_fixture"><button>Settings</button></section></div>`;
+        const panel = document.querySelector<HTMLElement>(".panels_fixture")!;
+        let height = 74;
+        panel.getBoundingClientRect = () => ({x: 0, y: window.innerHeight - height, left: 0, top: window.innerHeight - height, right: 310, bottom: window.innerHeight, width: 310, height, toJSON() {return {};}});
+        const suite = new SolcordBaselineSuite({});
+        suite.start({...defaultSolcordProductPreferences().baseline, layoutCollapse: true, collapsedRegions: ["members"]});
+        try {
+            const restore = document.querySelector<HTMLButtonElement>(".solcord-layout-restore")!;
+            expect(restore.style.bottom).toBe("86px");
+            const resources = suite.status().resources;
+            height = 260;
+            window.dispatchEvent(new Event("resize"));
+            await waitForMutationResult(() => restore.style.bottom === "272px", () => restore.style.bottom);
+            expect(document.querySelectorAll(".solcord-layout-restore")).toHaveLength(1);
+            expect(suite.status().resources).toEqual(resources);
+            restore.click();
+            expect(restore.hidden).toBe(true);
+            expect(document.querySelector(".solcord-layout-region-hidden")).toBeNull();
+        }
+        finally {suite.stop();}
+        expect(document.querySelector(".solcord-layout-restore")).toBeNull();
+        expect(suite.status().resources).toEqual({});
     });
 
     test("discovers current rich-embed roots instead of relying on embedWrapper", () => {

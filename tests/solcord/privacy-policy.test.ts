@@ -21,7 +21,7 @@ import {onSolcordUpdatePolicyChange, setSolcordAutomaticUpdatesAllowed, solcordA
 
 const ROOT = path.resolve(import.meta.dir, "../..");
 
-function harness() {
+function harness(options: {failReceipt?: boolean; failPatch?: string;} = {}) {
     const calls: string[] = [];
     const releases: string[] = [];
     const module = {
@@ -31,6 +31,7 @@ function harness() {
     };
     const patcher: PrivacyPolicyPatcher = {
         instead(_caller, target, key, callback) {
+            if (options.failPatch === key) throw new Error("Fixture patch failed");
             const original = target[key] as (...args: unknown[]) => unknown;
             const patched = function (this: unknown, ...args: unknown[]) {return callback(this, args, original);};
             target[key] = patched;
@@ -48,7 +49,7 @@ function harness() {
         scope,
         patcher,
         preferences: () => preferences,
-        receipt: receipt => receipts.push(receipt),
+        receipt: receipt => {if (options.failReceipt) throw new Error("Fixture receipt storage failed"); receipts.push(receipt);},
         now: () => 7_234_567,
         specs: [
             {id: "analytics", dataClass: "telemetry", key: "track", lookup: () => module, validate: target => target.module === module, blockedValue: () => undefined},
@@ -105,6 +106,41 @@ describe("Solcord privacy policy", () => {
         state.scope.dispose();
         expect(state.releases.sort()).toEqual(["captureException", "getProcesses", "track"]);
         expect(state.module.track("restored")).toBe("sent");
+    });
+
+    test("a repeated start installs each patch once and leaves a complete teardown", () => {
+        const state = harness();
+        const first = state.adapter.start();
+        expect(state.adapter.start()).toEqual(first);
+        expect(state.scope.counts()).toEqual({patch: 3});
+        expect(state.receipts).toHaveLength(3);
+        state.scope.dispose();
+        expect(state.releases).toHaveLength(3);
+        expect(state.module.track("restored")).toBe("sent");
+    });
+
+    test("diagnostics storage failures do not prevent the remaining privacy protections", async () => {
+        const state = harness({failReceipt: true});
+        expect(state.adapter.start().every(record => record.state === "Protected")).toBeTrue();
+        expect(state.adapter.diagnosticsComplete).toBeFalse();
+        expect(state.module.track("private")).toBeUndefined();
+        expect(state.module.captureException("private")).toBeUndefined();
+        expect(await state.module.getProcesses()).toEqual([]);
+        expect(state.calls).toEqual([]);
+        state.scope.dispose();
+        expect(state.scope.counts()).toEqual({});
+    });
+
+    test("a failed optional patch is reported independently without skipping other categories", async () => {
+        const state = harness({failPatch: "captureException"});
+        expect(state.adapter.start().map(record => [record.dataClass, record.state])).toEqual([
+            ["telemetry", "Protected"], ["crash-reporting", "Unsupported"], ["activity-discovery", "Protected"]
+        ]);
+        expect(state.module.track("private")).toBeUndefined();
+        expect(await state.module.getProcesses()).toEqual([]);
+        expect(state.calls).toEqual([]);
+        expect(state.scope.counts()).toEqual({patch: 2});
+        state.scope.dispose();
     });
 
     test("sanitizes only the structurally validated running-game action and restores normal dispatch", () => {

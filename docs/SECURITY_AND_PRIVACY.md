@@ -4,7 +4,9 @@
 
 Solcord executes inside Discord’s desktop Electron process and retains BetterDiscord’s plugin/theme compatibility. Third-party plugins therefore remain executable local code. Solcord can detect repeated failures and quarantine an addon, but it cannot make unreviewed addon code safe.
 
-V2 adds no remote Solcord service and no hidden telemetry. Retained network surfaces are Discord itself, user-initiated external navigation, the explicitly attributed upstream BetterDiscord addon catalog, setup downloads from immutable `raw.githubusercontent.com` URLs after every selected gate passes, and Translation Desk after a user reviews the exact provider request. The reviewed community Translator remains rejected: its ordinary-settings credentials, embedded credentials, bearer-auth/arbitrary-endpoint behavior, and composer-send transform are not reused. Solcord's independent Translation Desk supports DeepL and a credential-free HTTPS LibreTranslate endpoint, has no active provider by default, and never sends translated text automatically. The Solcord core updater remains disabled.
+V2 adds no remote Solcord service and no hidden telemetry. Retained network surfaces are Discord itself, user-initiated external navigation, the explicitly attributed upstream BetterDiscord addon catalog, setup downloads from immutable `raw.githubusercontent.com` URLs after every selected gate passes, and Translation Desk after a user reviews the exact provider request. The reviewed community Translator remains rejected: its ordinary-settings credentials, embedded credentials, bearer-auth/arbitrary-endpoint behavior, and composer-send transform are not reused. Solcord's independent Translation Desk defaults to an on-device capability check; it reports unavailable when Discord exposes no validated local translator. DeepL and a configurable HTTPS LibreTranslate endpoint are optional, explicit provider choices. Their credentials use private storage, not ordinary settings, and translated text is never sent as a message automatically. The Solcord core updater remains disabled.
+
+Translation settings keep unfinished language and endpoint edits local until Enter or blur. A request cannot begin with uncommitted fields. Changing input, provider, endpoint, or account invalidates the displayed result and pending credential feedback. External jobs remain bounded by concurrency, response-size, and timeout limits; those limits do not make an external provider private.
 
 ## Core Discord transport
 
@@ -18,7 +20,7 @@ Transport encryption also does not make an untrusted local plugin safe. Discord 
 
 | Data | Location | Retention | Export behavior |
 | --- | --- | --- | --- |
-| Module settings and profiles | Atomic stable-channel `solcord.json` under the BetterDiscord root derived beside Electron `userData` | Until user changes/removes it | Versioned settings export; unknown fields are stripped and no secret field exists in V1 |
+| Module settings and profiles | Atomic `solcord.json` under the resolved BetterDiscord data root | Until user changes/removes it | Versioned settings export; unknown fields and private identifiers are stripped |
 | Settings snapshots/update ledger | Same atomic Solcord JSON | Last 20 snapshots / 100 entries | Included without paths, tokens, or account data |
 | Onboarding selection and setup state | Same atomic Solcord JSON | Current selection plus bounded transaction records | Settings export excludes renewed-consent acknowledgements and Timeline content |
 | Addon failure/quarantine history | Existing stable-channel compatibility JSON | Failure window plus bounded records | Addon ID, time, phase, error class only |
@@ -26,7 +28,8 @@ Transport encryption also does not make an untrusted local plugin safe. Discord 
 | Performance samples | Renderer memory | Last 120 samples | Last 12 in diagnostics |
 | Domain Memory | Existing BetterDiscord compatibility JSON | At most 512 scheme-and-exact-host decisions, each expiring within 30 days | Not included in diagnostics or normal settings export |
 | Return Later | Account-isolated renderer memory | At most 200 exact internal Discord routes; cleared on account switch or restart | Never written to settings, snapshots, profiles, exports, logs, or diagnostics |
-| People and Spaces / Focus Channels | Account-isolated renderer memory | Current account session only | Discord IDs and aliases are scrubbed from settings normalization and never enter snapshots, profiles, exports, logs, or diagnostics |
+| People and Spaces | Account-isolated session state and an encrypted `solcord-people-state-v1` store when Electron `safeStorage` is available | Until explicitly changed or cleared; session-only on secure-storage failure | Private IDs and aliases never enter normal settings exports, snapshots, profiles, logs, or diagnostics |
+| Focus Channels | Account-isolated renderer memory | Current account session only | Discord IDs are scrubbed from settings normalization and never enter snapshots, profiles, exports, logs, or diagnostics |
 | Friend Watch renderer journal | Renderer memory, synchronously scoped to the validated current account | Current session and selected 7/30/90-day window | Optional display-name snapshots come only from the already-loaded UserStore and default on; explicit JSON/CSV export omits those labels |
 | Persistent Friend Watch history | HMAC-obscured account store under the BetterDiscord data boundary | Selected 7/30/90-day window, 10,000 events, 25 MiB plaintext bound | Explicit exports are plaintext; subject IDs become deterministic account-scoped hashes that are pseudonymous and linkable across that account's exports, not anonymous |
 | Link inspection | Renderer memory | Current interaction only | Not persisted |
@@ -87,11 +90,11 @@ Native-fetch redirect handling follows HTTP method semantics, resolves relative 
 
 Plugin Doctor stores only an addon identifier, failure timestamp, phase, and error class. Three failures in ten minutes set the addon state off, persist it, attempt cleanup once, and require a manual retry. It never silently re-enables quarantined code.
 
-An interrupted-renderer crash guard enters recovery after three interrupted starts within ten minutes. Recovery loads only Plugin Doctor; other Solcord adapters stay stopped until the user chooses “Try normal startup.”
+An interrupted-renderer crash guard enters recovery after three interrupted starts within ten minutes. Recovery loads only Plugin Doctor; other Solcord adapters stay stopped until the user chooses **Resume Solcord**. The Control Center and recovery controls remain available.
 
 ## Private Message Timeline
 
-Message Timeline is disabled in stored defaults and becomes selected in the first-run draft only; skipping setup leaves the Timeline policy and data unchanged (the resumable onboarding step marker is separate metadata). Its default completed policy is DMs and group DMs, seven days, text only. Server channels require explicit selection.
+Message Timeline is disabled in stored defaults and in a fresh first-run draft. Enabling it requires a separate explicit choice; deferring setup leaves its policy and data unchanged. Its initial scope is DMs and group DMs, seven days, text only. Server channels require explicit selection.
 
 The renderer subscribes only to create, update, delete, and bulk-delete events already delivered to the running client. It performs no API backfill, hidden-channel access, deleted-message fetch, offline recovery, or import from MessageLoggerV2. Account changes synchronously invalidate an account-generation guard, clear the renderer journal, reset persistent status, and emit a fresh UI snapshot before any asynchronous release, bind, or read for the next isolated account store. Manual clear/export captures that generation and revalidates it before binding, before IPC, after IPC, and before any renderer clear or download effect.
 
@@ -105,7 +108,7 @@ The clean-room model, encrypted-storage source, and deterministic account-switch
 
 ## Friend Watch
 
-Friend Watch is experimental, separately enabled, and default-off. It reconciles the already-loaded relationship store and may snapshot display names already present in the loaded UserStore when the default-on label option remains selected. It performs no REST, manual Gateway request, polling, profile fetch, or cause inference. A relationship disappearance without a recent bounded owner action remains labelled `cause unavailable`.
+Friend Watch is experimental, separately enabled, and default-off. It reconciles the already-loaded relationship store and may snapshot display names already present in the loaded UserStore when the default-on label option remains selected. It performs no REST, manual Gateway request, network polling, profile fetch, or cause inference. A relationship disappearance without a recent bounded owner action remains labelled `cause unavailable`.
 
 The live adapter reconciles on relationship-store changes, login/account changes, renderer resume/visibility, restored connectivity, and a bounded 60-second interval. A narrow structural patch records only the subject ID and time of the owner's own remove/block/unblock invocation for five seconds; it never invokes the action or changes its arguments. Persistent writes replace raw subject IDs with account-scoped HMAC keys. Daily and per-event modes create bounded local toasts only for new live transitions—never hydrated history—and notification text contains no subject identifier or display name.
 

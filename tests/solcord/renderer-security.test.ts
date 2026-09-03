@@ -121,7 +121,22 @@ describe("Solcord renderer security contracts", () => {
         expect(product).toContain("pinnedDmIds: []");
         expect(product).toContain("focusChannelIds: []");
         expect(panel).toContain("accountGeneration: SolcordRuntime.privateAccountGeneration()");
-        for (const reset of ["setTranslationCredential(\"\")", "setTranslationText(\"\")", "setTranslationResult(\"\")", "setIdentityNotes([])", "setComposerDraft(\"\")", "setGlance(presentSolcordChannelGlance([]))", "setVoicePreview(undefined)"]) expect(panel).toContain(reset);
+        expect(panel).toContain("<NativeSuiteAccountPanel key={state.accountGeneration}");
+        expect(panel).toContain("<StreamAudienceGuardAccountControls key={state.accountGeneration}");
+        expect(panel).toContain("SolcordRuntime.privateAccountIsCurrent(state.accountGeneration)");
+        const accountChange = runtime.slice(runtime.indexOf("const onPrivateAccountChange ="), runtime.indexOf("privateUserStore.addChangeListener(onPrivateAccountChange)"));
+        expect(accountChange.indexOf("this.emitChange()")).toBeLessThan(accountChange.indexOf("this.#loadPeopleState()"));
+        expect(accountChange.indexOf("this.#curatedScope.dispose()")).toBeLessThan(accountChange.indexOf("this.emitChange()"));
+        expect(accountChange).toContain("this.privateAccountGeneration() !== generation");
+        for (const method of ["readTranslationCredential", "writeTranslationCredential", "clearTranslationCredential", "setAudienceGuardEntries", "clearAudienceGuardEntries"]) {
+            const start = runtime.indexOf(`async ${method}(`);
+            const end = runtime.indexOf("\n    }", start);
+            expect(runtime.slice(start, end)).toContain("if (!this.privateAccountIsCurrent(accountGeneration))");
+        }
+        const guardArm = runtime.slice(runtime.indexOf("    armAudienceGuard("), runtime.indexOf("    disarmAudienceGuard("));
+        expect(guardArm).toContain("if (!this.privateAccountIsCurrent(accountGeneration))");
+        const privatePolicy = runtime.slice(runtime.indexOf("    audienceGuardPrivatePolicy("), runtime.indexOf("    async setAudienceGuardEntries("));
+        expect(privatePolicy).toContain("policy: current ? structuredClone(this.#audiencePolicy) : {version: 1, entries: []}");
     });
 
     test("revalidates every queued account-scoped main-process storage result before returning it", () => {
@@ -262,7 +277,7 @@ describe("Solcord renderer security contracts", () => {
 
     test("holds genuine Solcord built-in quarantines while recovering only the classified legacy capability miss", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
-        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
+        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride"), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride")));
         expect(synchronize).toContain("!PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))");
         for (const name of ["SplitLargeMessages", "DoNotTrack", "InvisibleTyping", "DoubleClickToReply"]) {
             expect(synchronize).toContain(`PluginDoctor.isQuarantined(solcordBuiltInDoctorId("${name}"))`);
@@ -274,7 +289,7 @@ describe("Solcord renderer security contracts", () => {
 
     test("treats unavailable Discord capabilities as readiness misses rather than crash-loop failures", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
-        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters("), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(")));
+        const synchronize = runtime.slice(runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride"), runtime.indexOf("#scheduleCuratedAdapterRetry", runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride")));
         expect(synchronize).toContain("PluginDoctor.recordCapabilityMiss");
         expect(synchronize).not.toContain("PluginDoctor.recordFailure");
         expect(synchronize).not.toContain("NativeSuiteAdapterUnavailable");
@@ -365,8 +380,8 @@ describe("Solcord renderer security contracts", () => {
     test("keeps native-suite resynchronization and module teardown failure-atomic", () => {
         const runtime = source("src/betterdiscord/modules/solcord/runtime.ts");
         const preferences = runtime.slice(runtime.indexOf("async setProductPreferences"), runtime.indexOf("privacyCapabilities()"));
-        expect(preferences).toContain("if (this.#curatedSynchronizationError)");
-        expect(preferences).toContain("SolcordSettings.setProductPreferences(previous)");
+        expect(preferences).toContain("if ((effects.nativeSuite || effects.motion) && this.#curatedSynchronizationError)");
+        expect(preferences).toContain("SolcordSettings.rollback(rollbackSnapshot.id)");
         expect(preferences).toContain("Previous settings were restored");
 
         const curatedStart = runtime.indexOf("#synchronizeCuratedAdapters(curatedOverride");

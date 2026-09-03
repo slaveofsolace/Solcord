@@ -43,6 +43,7 @@ import {SolcordBaselineSuite, type SolcordBaselineSuiteStatus} from "./baseline-
 import {describeSolcordStreamShieldResolution, normalizeSolcordStreamShieldSettings, SolcordStreamShieldDom, type SolcordStreamShieldResolution} from "./stream-shield";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST, solcordV2ArchiveReceiptMatchesPreview, solcordV2QuarantineIdsForArchivedFiles} from "@common/solcord/v2-replacement-manifest";
 import {resolveSolcordPerformancePolicy} from "@common/solcord/product";
+import {planSolcordPreferenceEffects} from "@common/solcord/preference-effects";
 import {applyPrivacyProfile, boundPrivacyReceipts, createPrivacyDecisionReceipt} from "@common/solcord/privacy";
 import {resolvePrivacyMethodTarget, SolcordPrivacyPolicyAdapter, type PrivacyMethodSpec} from "./privacy-policy";
 import {setSolcordAutomaticUpdatesAllowed} from "./privacy-runtime-state";
@@ -379,6 +380,7 @@ class SolcordRuntimeStore extends Store {
     #privacyScope = new SolcordDisposalScope();
     #privacyCapabilities: PrivacyCapabilityRecord[] = [];
     #privacyReceipts: PrivacyDecisionReceipt[] = [];
+    #privacyReceiptStorage: "unverified" | "persistent" | "session-only" = "unverified";
     #privacySequence = 0;
     #strictCommunityPolicyBusy = false;
     #firstSetupIntentId?: string;
@@ -532,7 +534,8 @@ class SolcordRuntimeStore extends Store {
             const onReducedMotionChange = () => {
                 if (!this.#started || this.#recoveryMode) return;
                 this.#applyProductPresentation();
-                this.#synchronizeCuratedAdapters();
+                try {this.#synchronizeMotion();}
+                catch (error) {Logger.warn("Solcord", `Motion policy update failed closed (${errorName(error)}).`);}
             };
             if (typeof reducedMotionQuery.addEventListener === "function" && typeof reducedMotionQuery.removeEventListener === "function") {
                 reducedMotionQuery.addEventListener("change", onReducedMotionChange);
@@ -546,7 +549,18 @@ class SolcordRuntimeStore extends Store {
         if (typeof privateUserStore?.addChangeListener === "function" && typeof privateUserStore.removeChangeListener === "function") {
             const onPrivateAccountChange = () => {
                 if (!this.#observePrivateUiAccount()) return;
+                // Retire account-bound controllers and notify views before any
+                // queued disk read. A slow People store must not retain A's UI in B.
+                const generation = this.privateAccountGeneration();
+                this.#curatedAdapterRetryGeneration++;
+                this.#curatedAdapterRetryScheduled = false;
+                try {this.#curatedScope.dispose();}
+                catch (error) {Logger.warn("Solcord", `Account-change cleanup needs review (${errorName(error)}).`);}
+                this.#nativeSuite = undefined;
+                this.#audienceGuard?.disarm("Audience Guard disarmed because the Discord account changed.");
+                this.emitChange();
                 void this.#loadPeopleState().finally(() => {
+                    if (!this.#started || this.privateAccountGeneration() !== generation) return;
                     this.#synchronizeCuratedAdapters();
                     this.emitChange();
                 });
@@ -828,7 +842,7 @@ class SolcordRuntimeStore extends Store {
     async setTimelinePolicy(value: Partial<import("./contracts").SolcordTimelinePolicy>): Promise<void> {
         const current = SolcordSettings.snapshot().timelinePolicy;
         SolcordSettings.setTimelinePolicy({...current, ...value});
-        await this.#synchronizeFeatures();
+        if (this.#started && JSON.stringify(current) !== JSON.stringify(SolcordSettings.snapshot().timelinePolicy)) await this.#synchronizeFeatures(["message-timeline"]);
     }
 
     friendWatchEvents(): SolcordRelationshipEvent[] {
@@ -843,41 +857,49 @@ class SolcordRuntimeStore extends Store {
 
     async setProductPreferences(value: unknown): Promise<void> {
         const previous = SolcordSettings.snapshot().productPreferences;
-        SolcordSettings.setProductPreferences(value);
+        const rollbackSnapshot = SolcordSettings.setProductPreferences(value);
         const next = SolcordSettings.snapshot().productPreferences;
-        this.#applyProductPresentation();
-        this.#synchronizeBaselineSuite();
-        // Preference controls are renderer UI, so publish the persisted state
-        // before any volatile Discord adapter is reconciled.  A slow module
-        // lookup must never make a click look ignored.  If reconciliation
-        // fails, the rollback below publishes the restored state separately.
+        const effects = planSolcordPreferenceEffects(previous, next);
+        if (!effects.changed) return;
+        if (effects.presentation) this.#applyProductPresentation();
         this.emitChange();
-        const motionRuntimeChanged = previous.performanceProfile !== next.performanceProfile
-            || previous.appearance.motion !== next.appearance.motion;
-        if (JSON.stringify(previous.nativeSuite) !== JSON.stringify(next.nativeSuite) || motionRuntimeChanged) {
-            this.#synchronizeCuratedAdapters();
-            if (this.#curatedSynchronizationError) {
-                const reason = this.#curatedSynchronizationError;
-                SolcordSettings.setProductPreferences(previous);
-                this.#applyProductPresentation();
-                this.#synchronizeBaselineSuite();
-                this.#synchronizeCuratedAdapters();
-                Toasts.error(`The native-suite change was not applied. Previous settings were restored. ${reason}`, {timeout: 8_000});
-                this.emitChange();
-                return;
+        if (!this.#started) return;
+        try {
+            if (effects.baseline) this.#synchronizeBaselineSuite();
+            if (!this.#recoveryMode) {
+                if (effects.nativeSuite) this.#synchronizeCuratedAdapters();
+                else if (effects.motion) this.#synchronizeMotion();
+                if ((effects.nativeSuite || effects.motion) && this.#curatedSynchronizationError) throw new Error(this.#curatedSynchronizationError);
             }
         }
-        if (JSON.stringify(previous.privacy) !== JSON.stringify(next.privacy)) this.#synchronizePrivacyPolicy();
-        const affected = new Set<SolcordModuleId>();
-        if (previous.performanceProfile !== next.performanceProfile) affected.add("performance-hud");
-        if (JSON.stringify(previous.friendWatch) !== JSON.stringify(next.friendWatch)) affected.add("friend-watch");
-        if (previous.safety.linkLens !== next.safety.linkLens) affected.add("link-lens");
-        if (affected.size) await this.#synchronizeFeatures([...affected]);
+        catch (error) {
+            try {
+                if (!rollbackSnapshot || !SolcordSettings.rollback(rollbackSnapshot.id)) throw new Error("The change's rollback snapshot is unavailable.");
+                this.#applyProductPresentation();
+                if (effects.baseline) this.#synchronizeBaselineSuite();
+                if (!this.#recoveryMode) {
+                    if (effects.nativeSuite) this.#synchronizeCuratedAdapters();
+                    else if (effects.motion) this.#synchronizeMotion();
+                }
+            }
+            catch (rollbackError) {
+                throw new AggregateError([error, rollbackError], "Settings could not be applied or fully restored. Open Recovery before retrying.");
+            }
+            this.emitChange();
+            throw new Error("The change was not applied. Previous settings were restored.", {cause: error});
+        }
+        if (effects.privacy) this.#synchronizePrivacyPolicy();
+        if (effects.features.length) await this.#synchronizeFeatures(effects.features);
         this.emitChange();
     }
 
     privateAccountGeneration(): number {
         return this.#privateUiAccountIdentity?.generation ?? 0;
+    }
+
+    privateAccountIsCurrent(generation: number): boolean {
+        const identity = this.#privateUiAccountIdentity;
+        return Boolean(identity?.accountId && identity.generation === generation && this.#privateUiIdentityIsCurrent(identity));
     }
 
     #observePrivateUiAccount(): boolean {
@@ -888,6 +910,10 @@ class SolcordRuntimeStore extends Store {
         this.#peopleStateLoadGeneration++;
         this.#sessionPeopleState = {pinnedDmIds: [], hiddenGuildIds: [], guildAliases: {}, favoriteFriendIds: [], hiddenFriendIds: [], ignoredVoiceChannelIds: [], ignoredVoiceGuildIds: []};
         this.#peopleStatePersistent = false;
+        this.#audienceLoadGeneration++;
+        this.#audiencePolicy = {version: 1, entries: []};
+        this.#audiencePolicyAccountId = undefined;
+        this.#audiencePersistent = false;
         this.#sessionFocusChannelIds = [];
         this.#returnLater = new SolcordReturnLaterJournal();
         this.#returnRouteMemory.clear();
@@ -928,12 +954,13 @@ class SolcordRuntimeStore extends Store {
             if (!identityIsCurrent()) return;
             this.#sessionPeopleState = normalizePrivatePeopleState(result.state);
             this.#peopleStatePersistent = result.persistent === true && result.complete === true;
-            this.#synchronizeCuratedAdapters();
+            this.#nativeSuite?.updatePeoplePersistence(this.#peopleStatePersistent);
             this.emitChange();
         }
         catch {
             if (!identityIsCurrent()) return;
             this.#peopleStatePersistent = false;
+            this.#nativeSuite?.updatePeoplePersistence(false);
             this.emitChange();
         }
     }
@@ -944,6 +971,10 @@ class SolcordRuntimeStore extends Store {
 
     privacyDecisionReceipts(): PrivacyDecisionReceipt[] {
         return structuredClone(this.#privacyReceipts);
+    }
+
+    privacyReceiptStorage(): "unverified" | "persistent" | "session-only" {
+        return this.#privacyReceiptStorage;
     }
 
     canActivateCommunityAddon(addon: {filename: string; fileContent?: string; sourceSha256?: string;}): boolean {
@@ -1013,11 +1044,11 @@ class SolcordRuntimeStore extends Store {
         const blockedAddons = addonPolicy.decisions.filter(item => item.action === "disable");
         const blockedThemes = themePolicy.decisions.filter(item => item.action === "disable");
         if (!blockedAddons.length && !blockedThemes.length) return;
-        this.#strictCommunityPolicyBusy = true;
         const snapshot = SolcordSettings.capture("Before enforcing Strict Privacy for community addons", {
             plugins: this.#enabledAddonFiles(PluginManager),
             themes: this.#enabledAddonFiles(ThemeManager)
         });
+        this.#strictCommunityPolicyBusy = true;
         const changed: StrictPrivacyAddonChange[] = [];
         try {
             for (const decision of blockedAddons) {
@@ -1177,21 +1208,24 @@ class SolcordRuntimeStore extends Store {
         return this.#baselineSuite?.status() ?? {active: false, resources: {}, enabled: [], unavailable: []};
     }
 
-    async readTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string): Promise<{credential: string; persistent: boolean; complete: boolean;}> {
+    async readTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string, accountGeneration: number): Promise<{credential: string; persistent: boolean; complete: boolean;}> {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return {credential: "", persistent: false, complete: false};
         const identity = this.#captureTimelineIdentity();
         if (!identity.accountId) return {credential: "", persistent: false, complete: false};
         try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.readTranslationCredential(capability, {provider, endpoint}), () => this.#timelineIdentityIsCurrent(identity)) as {credential: string; persistent: boolean; complete: boolean;};}
         catch {return {credential: "", persistent: false, complete: false};}
     }
 
-    async writeTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string, credential: string): Promise<{persistent: boolean; complete: boolean;}> {
+    async writeTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string, credential: string, accountGeneration: number): Promise<{persistent: boolean; complete: boolean;}> {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return {persistent: false, complete: false};
         const identity = this.#captureTimelineIdentity();
         if (!identity.accountId) return {persistent: false, complete: false};
         try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.writeTranslationCredential(capability, {provider, endpoint, credential}), () => this.#timelineIdentityIsCurrent(identity)) as {persistent: boolean; complete: boolean;};}
         catch {return {persistent: false, complete: false};}
     }
 
-    async clearTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string): Promise<{persistent: boolean; complete: boolean;}> {
+    async clearTranslationCredential(provider: "deepl" | "libretranslate", endpoint: string, accountGeneration: number): Promise<{persistent: boolean; complete: boolean;}> {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return {persistent: false, complete: false};
         const identity = this.#captureTimelineIdentity();
         if (!identity.accountId) return {persistent: false, complete: false};
         try {return await this.#withTimelineAccount(identity.accountId, capability => TIMELINE_IPC.clearTranslationCredential(capability, {provider, endpoint}), () => this.#timelineIdentityIsCurrent(identity)) as {persistent: boolean; complete: boolean;};}
@@ -1235,15 +1269,17 @@ class SolcordRuntimeStore extends Store {
     }
 
     audienceGuardPrivatePolicy(): {policy: SolcordAudienceGuardPrivatePolicy; persistent: boolean; loaded: boolean; storage: SolcordPrivateStorageStatus;} {
+        const current = Boolean(this.#audiencePolicyAccountId && this.#audiencePolicyAccountId === this.#currentTimelineAccountId());
         return {
-            policy: structuredClone(this.#audiencePolicy),
-            persistent: this.#audiencePersistent,
-            loaded: Boolean(this.#audiencePolicyAccountId),
+            policy: current ? structuredClone(this.#audiencePolicy) : {version: 1, entries: []},
+            persistent: current && this.#audiencePersistent,
+            loaded: current,
             storage: structuredClone(this.#audienceStorageStatus)
         };
     }
 
-    async setAudienceGuardEntries(value: unknown): Promise<boolean> {
+    async setAudienceGuardEntries(value: unknown, accountGeneration: number): Promise<boolean> {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return false;
         const accountId = this.#currentTimelineAccountId();
         if (!accountId) return false;
         const policy: SolcordAudienceGuardPrivatePolicy = {version: 1, entries: normalizeAudienceGuardEntries(value)};
@@ -1262,7 +1298,7 @@ class SolcordRuntimeStore extends Store {
             return result.complete === true;
         }
         catch {
-            if (generation === this.#audienceLoadGeneration) {
+            if (generation === this.#audienceLoadGeneration && this.privateAccountIsCurrent(accountGeneration) && accountId === this.#currentTimelineAccountId()) {
                 this.#audiencePolicy = policy;
                 this.#audiencePolicyAccountId = accountId;
                 this.#audiencePersistent = false;
@@ -1273,7 +1309,8 @@ class SolcordRuntimeStore extends Store {
         }
     }
 
-    async clearAudienceGuardEntries(): Promise<boolean> {
+    async clearAudienceGuardEntries(accountGeneration: number): Promise<boolean> {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return false;
         const accountId = this.#currentTimelineAccountId();
         if (!accountId) return false;
         this.#audienceGuard?.disarm("Audience Guard disarmed because its private denylist was cleared.");
@@ -1293,7 +1330,8 @@ class SolcordRuntimeStore extends Store {
         catch {return false;}
     }
 
-    armAudienceGuard(): boolean {
+    armAudienceGuard(accountGeneration: number): boolean {
+        if (!this.privateAccountIsCurrent(accountGeneration)) return false;
         const settings = SolcordSettings.module("stream-audience-guard");
         if (!settings.enabled || this.#audiencePolicyAccountId !== this.#currentTimelineAccountId()) return false;
         return this.#audienceGuard?.arm(this.#audiencePolicy.entries, {
@@ -1363,11 +1401,19 @@ class SolcordRuntimeStore extends Store {
         root.dataset.solcordMessageShape = appearance.messageShape;
         root.dataset.solcordPerformance = preferences.performanceProfile;
         const reducedByOs = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-        root.dataset.solcordEffectiveMotion = resolveSolcordPerformancePolicy(preferences.performanceProfile, appearance.motion, reducedByOs).effectiveMotion;
+        const policy = resolveSolcordPerformancePolicy(preferences.performanceProfile, appearance.motion, reducedByOs);
+        root.dataset.solcordEffectiveMotion = policy.effectiveMotion;
+        root.dataset.solcordAmbientMotion = String(policy.ambientEffects);
     }
 
     #synchronizeBaselineSuite(): void {
         const preferences = SolcordSettings.snapshot().productPreferences.baseline;
+        if (!this.#started || this.#recoveryMode) {
+            this.#baselineSuite?.stop();
+            this.#baselineSuite = undefined;
+            return;
+        }
+        if (this.#baselineSuite?.matchesPreferences(preferences)) return;
         const enabled = preferences.layoutCollapse
             || preferences.embedControls
             || preferences.crossPlatformAutoscroll
@@ -1382,6 +1428,36 @@ class SolcordRuntimeStore extends Store {
             : {};
         this.#baselineSuite = new SolcordBaselineSuite(adapter);
         this.#baselineSuite.start(preferences);
+    }
+
+    #synchronizeMotion(): void {
+        if (!this.#started || this.#recoveryMode) return;
+        if (!this.#nativeSuite) {
+            this.#synchronizeCuratedAdapters();
+            return;
+        }
+        const {productPreferences: preferences, curatedAddons: curated} = SolcordSettings.snapshot();
+        const motionRequested = preferences.nativeSuite.motion.effect !== "off";
+        const canRun = (name: "BetterAnimations" | "DiscordEffects") => !PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
+            && !this.#communityAddonEnabled(name)
+            && ((name === "DiscordEffects" && motionRequested) || (curated[name]?.enabled === true && isSolcordBuiltInAddon(name, curated[name]?.mode)));
+        const providers = {BetterAnimations: canRun("BetterAnimations"), DiscordEffects: canRun("DiscordEffects")};
+        const policy = resolveSolcordPerformancePolicy(preferences.performanceProfile, preferences.appearance.motion, globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
+        this.#curatedSynchronizationError = undefined;
+        this.#nativeSuite.configureMotion(preferences.nativeSuite.motion, {effectiveMotion: policy.effectiveMotion, ambientEffects: policy.ambientEffects}, providers);
+        const detail = this.#nativeSuite.statuses().find(status => status.id === "motion-studio")?.detail;
+        for (const name of ["BetterAnimations", "DiscordEffects"] as const) {
+            if (this.#communityAddonEnabled(name)) continue;
+            const enabled = providers[name] && this.#nativeSuite.providerReady(name);
+            this.#curatedAdapterResults[name] = {
+                enabled,
+                provider: enabled ? "solcord" : "off",
+                reason: PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
+                    ? "Plugin Doctor is holding this feature until an explicit retry succeeds."
+                    : detail
+            };
+        }
+        this.emitChange();
     }
 
     async clearFriendWatch(): Promise<boolean> {
@@ -1631,12 +1707,11 @@ class SolcordRuntimeStore extends Store {
             const replacementReadyFiles = providerMigrations
                 .filter(migration => replacementFiles.has(migration.fileName) && solcordProviderReplacementIsReady(migration, adapterResults[migration.name], draft.timelinePolicy.enabled, timelineReplacementReady))
                 .map(migration => migration.fileName);
-            if (resolveCommunityAddon(PluginManager, "BDFDB", "0BDFDB.plugin.js")) replacementReadyFiles.push("0BDFDB.plugin.js");
+            if (migrateProviders && resolveCommunityAddon(PluginManager, "BDFDB", "0BDFDB.plugin.js")) replacementReadyFiles.push("0BDFDB.plugin.js");
             if (replacementReadyFiles.length) {
                 const retainedBdfdbConsumers = PluginManager.addonList
-                    .filter(addon => PluginManager.isEnabled(addon.filename) && !replacementFiles.has(addon.filename))
-                    .map(addon => addon.filename)
-                    .filter(fileName => fileName.length <= 120)
+                    .filter(addon => !replacementFiles.has(addon.filename))
+                    .map(addon => addon.filename.length <= 120 ? addon.filename : "Unreviewed external plugin")
                     .slice(0, 128);
                 const preview = await this.#withPrivateCapability(capability => TIMELINE_IPC.previewProviderArchive(capability, {replacementReadyFiles, retainedBdfdbConsumers})) as {previewId?: unknown; records?: unknown[];};
                 if (typeof preview.previewId !== "string" || !Array.isArray(preview.records)) throw new Error("ProviderArchivePreviewInvalid");
@@ -1699,7 +1774,6 @@ class SolcordRuntimeStore extends Store {
         if (!SolcordSettings.abortSetupCompletion(transaction.id)) return {...outcome, status: "failed"};
         this.#refreshReviewedExecutionOwnership();
         await this.#synchronizeFeatures();
-        this.#synchronizeCuratedAdapters();
         return outcome;
     }
 
@@ -1727,7 +1801,10 @@ class SolcordRuntimeStore extends Store {
         if (guardedBuiltIn) {
             SolcordSettings.setCuratedAddonEnabled(name, enabled);
             this.#refreshReviewedExecutionOwnership();
-            const result = this.#synchronizeCuratedAdapters()[name];
+            this.#applyProductPresentation();
+            if (name === "BetterAnimations" || name === "DiscordEffects") this.#synchronizeMotion();
+            else this.#synchronizeCuratedAdapters();
+            const result = this.#curatedAdapterResults[name];
             if (!enabled || result?.enabled) return true;
             const reason = result?.reason ?? "The Solcord adapter failed its runtime validation and stayed off.";
             PluginDoctor.recordCapabilityMiss(doctorId);
@@ -1782,15 +1859,19 @@ class SolcordRuntimeStore extends Store {
     }
 
     async setEnabled(id: SolcordModuleId, enabled: boolean): Promise<void> {
+        if (SolcordSettings.module(id).enabled === enabled) return;
         SolcordSettings.setEnabled(id, enabled);
-        if (!this.#started) return;
+        if (SolcordSettings.module(id).enabled !== enabled) return;
+        if (!this.#started || (this.#recoveryMode && id !== "plugin-doctor")) return;
         if (enabled) await this.#startFeature(id);
         else this.#stopFeature(id);
     }
 
     async setValue(id: SolcordModuleId, key: string, value: unknown): Promise<void> {
+        const previous = SolcordSettings.module(id);
         SolcordSettings.setValue(id, key, value);
-        if (!this.#started || !SolcordSettings.module(id).enabled) return;
+        const next = SolcordSettings.module(id);
+        if (!this.#started || !next.enabled || (this.#recoveryMode && id !== "plugin-doctor") || JSON.stringify(previous) === JSON.stringify(next)) return;
         this.#stopFeature(id);
         await this.#startFeature(id);
     }
@@ -1905,8 +1986,8 @@ class SolcordRuntimeStore extends Store {
 
     async leaveRecoveryMode(): Promise<void> {
         if (!this.#recoveryMode) return;
-        this.#recoveryMode = false;
         JsonStore.set("misc", "solcordCrashGuard", {attempts: [], state: "stable", at: Date.now()} satisfies CrashGuardDocument);
+        this.#recoveryMode = false;
         await this.#synchronizeFeatures();
     }
 
@@ -2022,16 +2103,20 @@ class SolcordRuntimeStore extends Store {
     }
 
     rememberDomain(input: string, decision: SolcordDomainDecision, ttlMs = 7 * 24 * 60 * 60 * 1_000): boolean {
-        const record = this.#domainMemory.remember(input, decision, ttlMs);
+        const next = new SolcordDomainMemory(this.#domainMemory.snapshot());
+        const record = next.remember(input, decision, ttlMs);
         if (!record) return false;
-        JsonStore.set("misc", "solcordDomainMemory", this.#domainMemory.snapshot());
+        JsonStore.set("misc", "solcordDomainMemory", next.snapshot());
+        this.#domainMemory = next;
         this.emitChange();
         return true;
     }
 
     forgetDomain(host: string): boolean {
-        if (!this.#domainMemory.forget(host)) return false;
-        JsonStore.set("misc", "solcordDomainMemory", this.#domainMemory.snapshot());
+        const next = new SolcordDomainMemory(this.#domainMemory.snapshot());
+        if (!next.forget(host)) return false;
+        JsonStore.set("misc", "solcordDomainMemory", next.snapshot());
+        this.#domainMemory = next;
         this.emitChange();
         return true;
     }
@@ -2403,6 +2488,15 @@ class SolcordRuntimeStore extends Store {
         catch (error) {return failClosed(`Native-suite cleanup is incomplete (${errorName(error)}); replacement adapters stayed off to prevent duplicate patches or listeners.`);}
         this.#curatedScope = new SolcordDisposalScope();
         const scope = this.#curatedScope;
+        if (!this.#started || this.#recoveryMode) {
+            for (const name of Object.keys(curated)) {
+                results[name] = this.#communityAddonEnabled(name)
+                    ? communityResult(name)
+                    : {enabled: false, provider: "off", reason: this.#recoveryMode ? "Held off by startup recovery mode." : "Waiting for Solcord startup."};
+            }
+            this.#curatedAdapterResults = structuredClone(results);
+            return results;
+        }
         this.#curatedCommunitySignature = this.#communityAddonSignature();
         const separatelyOwnedProviders = new Set(["DoNotTrack", "InvisibleTyping", "DoubleClickToReply", "SplitLargeMessages"]);
         for (const [name, state] of Object.entries(curated)) {
@@ -2642,6 +2736,7 @@ class SolcordRuntimeStore extends Store {
     }
 
     #nativeSuiteAdapter(nativeEnabled: Readonly<Record<string, boolean>>, scope: SolcordDisposalScope): SolcordNativeSuiteAdapter {
+        const privateIdentity = this.#privateUiAccountIdentity;
         type FluxStore = {addChangeListener?(listener: () => void): void; removeChangeListener?(listener: () => void): void;};
         type Message = {id?: string; timestamp?: {valueOf?(): number;} | number; content?: string; author?: {username?: string; globalName?: string;};};
         type Channel = {id?: string; guild_id?: string; type?: number; recipientId?: string; getRecipientId?(): string | undefined; recipients?: Array<string | {id?: string;}>; rawRecipients?: Array<string | {id?: string;}>;};
@@ -2982,6 +3077,7 @@ class SolcordRuntimeStore extends Store {
             peopleState: this.#sessionPeopleState,
             peopleStatePersistence: this.#peopleStatePersistent ? "encrypted" : "session",
             savePeopleState: state => {
+                if (!privateIdentity || !this.#privateUiIdentityIsCurrent(privateIdentity)) throw new Error("Discord account changed. Reopen People and Spaces before editing.");
                 const next = normalizePrivatePeopleState(state);
                 this.#sessionPeopleState = next;
                 this.#peopleStatePersistent = false;
@@ -3184,9 +3280,13 @@ class SolcordRuntimeStore extends Store {
     }
 
     async #synchronizeFeatures(ids: readonly SolcordModuleId[] = FEATURE_IDS): Promise<void> {
-        this.#applyProductPresentation();
-        this.#synchronizeBaselineSuite();
-        this.#synchronizePrivacyPolicy();
+        const fullSynchronization = ids === FEATURE_IDS;
+        if (fullSynchronization) this.#applyProductPresentation();
+        if (!this.#started) return;
+        if (fullSynchronization) {
+            this.#synchronizeBaselineSuite();
+            this.#synchronizePrivacyPolicy();
+        }
         // Settings import, setup completion, profile apply, and rollback all converge here.
         // Reapply presentation so those atomic paths do not leave the saved controls inert
         // until a restart or a later direct Appearance edit.
@@ -3201,7 +3301,10 @@ class SolcordRuntimeStore extends Store {
                 this.#stopFeature(id);
             }
         }
-        await this.#synchronizePowerLab();
+        if (fullSynchronization) {
+            this.#synchronizeCuratedAdapters();
+            await this.#synchronizePowerLab();
+        }
     }
 
     async #synchronizePowerLab(): Promise<void> {
@@ -3271,10 +3374,18 @@ class SolcordRuntimeStore extends Store {
         const next = {...receipt, sequence: ++this.#privacySequence};
         this.#privacyReceipts.push(next);
         this.#privacyReceipts.splice(0, Math.max(0, this.#privacyReceipts.length - 100));
-        JsonStore.set("misc", "solcordPrivacyReceipts", this.#privacyReceipts);
+        try {
+            JsonStore.set("misc", "solcordPrivacyReceipts", structuredClone(this.#privacyReceipts));
+            this.#privacyReceiptStorage = "persistent";
+        }
+        catch {
+            if (this.#privacyReceiptStorage !== "session-only") Logger.warn("Solcord", "Privacy diagnostics are session-only because local storage is unavailable. Privacy enforcement remains active.");
+            this.#privacyReceiptStorage = "session-only";
+        }
     }
 
     #synchronizePrivacyPolicy(): void {
+        if (SolcordSettings.snapshot().productPreferences.privacy.externalProviders !== "approved-only") this.#nativeSuite?.cancelExternalTranslations();
         try {this.#privacyScope.dispose();}
         catch (error) {
             const detail = `Privacy adapter cleanup is incomplete (${errorName(error)}). Solcord retained ownership and will not install a second policy; restart Discord before relying on optional-data protection.`;

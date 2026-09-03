@@ -150,10 +150,10 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("Optional files not installed");
         const catalogSource = readFileSync(resolve(REPOSITORY_ROOT, "src/betterdiscord/ui/solcord/addon-catalog.tsx"), "utf8");
         expect(catalogSource).toContain("optional file(s) absent");
-        expect(catalogSource).toContain("addons: group.addons.filter(presentation => !state.addons.find(item => item.name === presentation.name)?.builtIn)");
+        expect(catalogSource).toContain("visibleSolcordCommunityGroups(SOLCORD_ADDON_GROUPS, state.addons)");
         expect(catalogSource).toContain("<summary>Technical details</summary>");
         expect(catalogSource).not.toContain("clean-room built-in");
-        expect(catalogSource).toMatch(/label=\{`\$\{addon\.enabled \? "Disable" : "Enable"\} \$\{presentation\.label\}`\}/);
+        expect(catalogSource).toContain("label={presentation.label} checked={addon.enabled}");
         expect(catalogSource).not.toContain("\"not staged\"");
         expect(WIZARD_SOURCE).toContain("Keep display snapshots");
         expect(WIZARD_SOURCE).toContain("Friend Watch notification mode");
@@ -194,6 +194,14 @@ describe("Solcord beginner-first setup UI", () => {
         expect(RUNTIME_SOURCE).toContain("solcordV2QuarantineIdsForArchivedFiles(providerArchiveFiles)");
     });
 
+    test("keeps dependency retirement opt-in and counts disabled external consumers", () => {
+        expect(RUNTIME_SOURCE).toContain("if (migrateProviders && resolveCommunityAddon(PluginManager, \"BDFDB\", \"0BDFDB.plugin.js\"))");
+        const consumerScan = RUNTIME_SOURCE.slice(RUNTIME_SOURCE.indexOf("const retainedBdfdbConsumers ="), RUNTIME_SOURCE.indexOf("const preview = await this.#withPrivateCapability", RUNTIME_SOURCE.indexOf("const retainedBdfdbConsumers =")));
+        expect(consumerScan).toContain("!replacementFiles.has(addon.filename)");
+        expect(consumerScan).not.toContain("isEnabled(");
+        expect(consumerScan).toContain("\"Unreviewed external plugin\"");
+    });
+
     test("describes the clean-room interaction tools without claiming unavailable choices or automatic sends", () => {
         expect(CATALOG_SOURCE).toContain("Suppresses one validated outgoing typing-start path while the built-in is enabled.");
         expect(CATALOG_SOURCE).not.toContain("Stops typing indicators unless you choose otherwise.");
@@ -212,7 +220,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
         expect(PANEL_SOURCE).toContain("Disarm and resync");
-        expect(PANEL_SOURCE).toContain("account risk · manual");
+        expect(PANEL_SOURCE).toContain("Experimental · account risk");
+        expect(PANEL_SOURCE).toContain("Manual, call-bound, and off by default.");
         expect(PANEL_SOURCE).toContain("community plugin active");
         expect(PANEL_SOURCE).toContain("Solcord leaves it untouched");
         expect(RUNTIME_SOURCE).toContain("fakeDeafenProvider()");
@@ -287,6 +296,7 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("const current = SolcordSettings.snapshot().productPreferences;");
         expect(PANEL_SOURCE).toContain("baseline: {...current.baseline, ...patch}");
         expect(PANEL_SOURCE).not.toContain("update({...baseline, embedControls:");
-        expect(RUNTIME_SOURCE).toMatch(/if \(affected\.size\) await this\.#synchronizeFeatures\(\[\.\.\.affected\]\);\s*this\.emitChange\(\);/);
+        expect(RUNTIME_SOURCE).toContain("if (effects.baseline) this.#synchronizeBaselineSuite();");
+        expect(RUNTIME_SOURCE).toContain("if (effects.features.length) await this.#synchronizeFeatures(effects.features);");
     });
 });

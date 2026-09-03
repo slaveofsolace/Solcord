@@ -7,6 +7,7 @@ import path from "path";
 import {isSolcordBuiltInAddon} from "@common/solcord/builtin-addons";
 import {recommendedSolcordSetupAddons, resolveSolcordSetupPlan, SOLCORD_RECOMMENDED_SETUP_ADDONS} from "@common/solcord/setup-catalog";
 import {normalizeSolcordProductPreferences} from "@common/solcord/product";
+import {SOLCORD_PRODUCT_IDENTITY} from "@common/solcord/product-identity";
 import {legacyPrivacyPreferences} from "@common/solcord/privacy";
 
 import type {
@@ -740,7 +741,7 @@ class SolcordStore extends Store {
         }
         this.#document = normalizeSolcordDocument(raw);
         if (isRecord(raw) && Object.keys(raw).length > 0 && raw.schemaVersion !== SOLCORD_SCHEMA_VERSION) {
-            this.#appendLedger("schema", "Migrated Solcord settings atomically to schema 7.");
+            this.#appendLedger("schema", `Migrated Solcord settings atomically to schema ${SOLCORD_SCHEMA_VERSION}.`);
         }
         this.#save();
     }
@@ -756,59 +757,48 @@ class SolcordStore extends Store {
     setEnabled(id: SolcordModuleId, enabled: boolean): void {
         if (id === "plugin-doctor" && !enabled) return;
         if (this.#document.modules[id].enabled === enabled) return;
-        this.capture(`Before ${enabled ? "enabling" : "disabling"} ${id}`);
-        const beforeMutation = clone(this.#document);
-        this.#document.modules[id].enabled = enabled;
-        if (id === "link-lens" || id === "friend-watch") applyModulePreferenceBindings(this.#document);
-        this.#appendLedger("setting", `${id} ${enabled ? "enabled" : "disabled"}.`);
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            this.#capture(`Before ${enabled ? "enabling" : "disabling"} ${id}`);
+            this.#document.modules[id].enabled = enabled;
+            if (id === "link-lens" || id === "friend-watch") applyModulePreferenceBindings(this.#document);
+            this.#appendLedger("setting", `${id} ${enabled ? "enabled" : "disabled"}.`);
+        });
     }
 
     setValue(id: SolcordModuleId, key: string, value: unknown): void {
         if (!/^[a-z][A-Za-z0-9]{0,63}$/.test(key)) throw new TypeError("Invalid Solcord setting key.");
         if (!Object.hasOwn(MODULE_DEFAULTS[id].values, key)) throw new TypeError("Unknown Solcord setting key.");
-        this.capture(`Before changing ${id}.${key}`);
-        const beforeMutation = clone(this.#document);
-        this.#document.modules[id].values[key] = value;
-        this.#document.modules[id] = normalizeModule(id, this.#document.modules[id]);
-        if (id === "friend-watch") applyModulePreferenceBindings(this.#document);
-        this.#appendLedger("setting", `${id}.${key} changed.`);
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        const current = this.#document.modules[id];
+        const next = normalizeModule(id, {...current, values: {...current.values, [key]: value}});
+        if (JSON.stringify(next) === JSON.stringify(current)) return;
+        this.#commit(() => {
+            this.#capture(`Before changing ${id}.${key}`);
+            this.#document.modules[id] = next;
+            if (id === "friend-watch") applyModulePreferenceBindings(this.#document);
+            this.#appendLedger("setting", `${id}.${key} changed.`);
+        });
     }
 
-    setProductPreferences(rawPreferences: unknown): void {
+    setProductPreferences(rawPreferences: unknown): SolcordSnapshot | undefined {
         const preferences = normalizeSolcordProductPreferences(rawPreferences);
         if (JSON.stringify(preferences) === JSON.stringify(this.#document.productPreferences)) return;
-        this.capture("Before changing Control Center preferences");
-        const beforeMutation = clone(this.#document);
-        applyProductPreferenceBindings(this.#document, preferences);
-        this.#appendLedger("setting", "Control Center appearance, safety, or People preferences changed.");
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        return this.#commit(() => {
+            const snapshot = this.#capture("Before changing Control Center preferences");
+            if (isSolcordBuiltInAddon("DiscordEffects", this.#document.curatedAddons.DiscordEffects.mode)
+                && preferences.nativeSuite.motion.effect !== this.#document.productPreferences.nativeSuite.motion.effect) {
+                this.#document.curatedAddons.DiscordEffects.enabled = preferences.nativeSuite.motion.effect !== "off";
+            }
+            applyProductPreferenceBindings(this.#document, preferences);
+            this.#appendLedger("setting", "Control Center appearance, safety, or People preferences changed.");
+            return snapshot;
+        });
     }
 
     setSetupDraft(rawDraft: unknown): void {
         if (this.#document.onboarding.status !== "pending") return;
         const draft = normalizeSetupDraft(rawDraft);
         if (JSON.stringify(draft) === JSON.stringify(this.#document.onboarding.draft)) return;
-        const beforeMutation = clone(this.#document);
-        this.#document.onboarding.draft = draft;
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {this.#document.onboarding.draft = draft;});
     }
 
     setPowerExperiment(id: SolcordPowerExperimentId, enabled: boolean, acknowledged: boolean): void {
@@ -818,31 +808,25 @@ class SolcordStore extends Store {
             ? {enabled: true, acknowledgementVersion: SOLCORD_CONSENT_VERSION, acknowledgedAt: Date.now()}
             : {enabled: false, acknowledgementVersion: 0};
         if (JSON.stringify(next) === JSON.stringify(this.#document.powerLab[id])) return;
-        this.capture(`Before ${enabled ? "enabling" : "disabling"} Power Lab ${id}`);
-        const beforeMutation = clone(this.#document);
-        this.#document.powerLab[id] = next;
-        this.#appendLedger("setting", `Power Lab ${id} ${enabled ? "enabled with consent" : "disabled and acknowledgement cleared"}.`);
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            this.#capture(`Before ${enabled ? "enabling" : "disabling"} Power Lab ${id}`);
+            this.#document.powerLab[id] = next;
+            this.#appendLedger("setting", `Power Lab ${id} ${enabled ? "enabled with consent" : "disabled and acknowledgement cleared"}.`);
+        });
     }
 
     setOnboardingStep(rawStep: number): void {
         if (this.#document.onboarding.status !== "pending") return;
-        const lastStep = boundedNumber(rawStep, this.#document.onboarding.lastStep, 0, 7);
+        const lastStep = boundedNumber(rawStep, this.#document.onboarding.lastStep, 0, 4);
         if (lastStep === this.#document.onboarding.lastStep) return;
-        const beforeMutation = clone(this.#document);
-        this.#document.onboarding.lastStep = lastStep;
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {this.#document.onboarding.lastStep = lastStep;});
     }
 
     capture(reason: string, activeAddons?: {plugins?: string[]; themes?: string[]}): SolcordSnapshot {
+        return this.#commit(() => this.#capture(reason, activeAddons));
+    }
+
+    #capture(reason: string, activeAddons?: {plugins?: string[]; themes?: string[]}): SolcordSnapshot {
         const snapshot: SolcordSnapshot = {
             id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
             reason: reason.slice(0, 120),
@@ -860,7 +844,6 @@ class SolcordStore extends Store {
         };
         this.#document.snapshots.push(snapshot);
         this.#document.snapshots.splice(0, Math.max(0, this.#document.snapshots.length - MAX_SNAPSHOTS));
-        this.#save();
         return clone(snapshot);
     }
 
@@ -885,30 +868,27 @@ class SolcordStore extends Store {
             selectedThemes: normalizedThemes,
             includesThirdPartyAddons: normalizedPlugins.length > 0 || normalizedThemes.length > 0
         };
-        this.#document.profiles.push(profile);
-        this.#appendLedger("profile", `Saved ${cleanName}.`);
-        this.#save();
+        this.#commit(() => {
+            this.#document.profiles.push(profile);
+            this.#appendLedger("profile", `Saved ${cleanName}.`);
+        });
         return clone(profile);
     }
 
     rollback(snapshotId: string): boolean {
         const restored = restoreSnapshotState(this.#document, snapshotId);
         if (!restored) return false;
-        this.capture(`Before rollback to ${snapshotId}`);
-        const beforeMutation = clone(this.#document);
-        this.#document.modules = restored.modules;
-        this.#document.profiles = restored.profiles;
-        this.#document.selectedTheme = restored.selectedTheme;
-        this.#document.curatedAddons = restored.curatedAddons;
-        this.#document.timelinePolicy = restored.timelinePolicy;
-        this.#document.productPreferences = restored.productPreferences;
-        applyModulePreferenceBindings(this.#document);
-        this.#appendLedger("rollback", `Rolled back to snapshot ${snapshotId}.`);
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            this.#capture(`Before rollback to ${snapshotId}`);
+            this.#document.modules = restored.modules;
+            this.#document.profiles = restored.profiles;
+            this.#document.selectedTheme = restored.selectedTheme;
+            this.#document.curatedAddons = restored.curatedAddons;
+            this.#document.timelinePolicy = restored.timelinePolicy;
+            this.#document.productPreferences = restored.productPreferences;
+            applyModulePreferenceBindings(this.#document);
+            this.#appendLedger("rollback", `Rolled back to snapshot ${snapshotId}.`);
+        });
         return true;
     }
 
@@ -930,17 +910,13 @@ class SolcordStore extends Store {
     applyProfile(profileId: string, captureSnapshot = true): boolean {
         const profile = this.#document.profiles.find(item => item.id === profileId);
         if (!profile) return false;
-        if (captureSnapshot) this.capture(`Before applying ${profile.name}`);
-        const beforeMutation = clone(this.#document);
-        this.#document.modules = clone(profile.modules);
-        this.#document.modules["plugin-doctor"].enabled = true;
-        applyModulePreferenceBindings(this.#document);
-        this.#appendLedger("profile", `Applied ${profile.name}.`);
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            if (captureSnapshot) this.#capture(`Before applying ${profile.name}`);
+            this.#document.modules = clone(profile.modules);
+            this.#document.modules["plugin-doctor"].enabled = true;
+            applyModulePreferenceBindings(this.#document);
+            this.#appendLedger("profile", `Applied ${profile.name}.`);
+        });
         return true;
     }
 
@@ -957,22 +933,18 @@ class SolcordStore extends Store {
     importDocument(text: string, expectedFingerprint: string): boolean {
         const candidate = verifySolcordImportAtApply(this.#document, text, expectedFingerprint);
         if (!candidate) return false;
-        this.capture("Before importing settings");
-        const beforeMutation = clone(this.#document);
-        this.#document.modules = candidate.modules;
-        this.#document.profiles = candidate.profiles;
-        this.#document.selectedTheme = candidate.selectedTheme;
-        this.#document.curatedAddons = candidate.curatedAddons;
-        this.#document.timelinePolicy = candidate.timelinePolicy;
-        this.#document.productPreferences = candidate.productPreferences;
-        applyModulePreferenceBindings(this.#document);
-        this.#document.powerLab = defaultPowerLab();
-        this.#appendLedger("schema", "Imported and validated Solcord settings format 2; Power Lab acknowledgements were not imported.");
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            this.#capture("Before importing settings");
+            this.#document.modules = candidate.modules;
+            this.#document.profiles = candidate.profiles;
+            this.#document.selectedTheme = candidate.selectedTheme;
+            this.#document.curatedAddons = candidate.curatedAddons;
+            this.#document.timelinePolicy = candidate.timelinePolicy;
+            this.#document.productPreferences = candidate.productPreferences;
+            applyModulePreferenceBindings(this.#document);
+            this.#document.powerLab = defaultPowerLab();
+            this.#appendLedger("schema", "Imported and validated Solcord settings format 2; Power Lab acknowledgements were not imported.");
+        });
         return true;
     }
 
@@ -982,35 +954,31 @@ class SolcordStore extends Store {
 
     completeSetup(rawDraft: unknown, installResults: Record<string, {enabled: boolean; reviewedSha256?: string; quarantineReason?: string;}>, transaction: {id: string; priorAddonStates: Record<string, boolean>; priorThemeStates: Record<string, boolean>; providerArchiveTransactionId?: string;}): SolcordSetupTransactionRecord {
         const draft = normalizeSetupDraft(rawDraft);
-        const snapshot = this.capture("Before completing Solcord setup");
-        const beforeCompletion = clone(this.#document);
-        this.#document.selectedTheme = draft.selectedTheme;
-        this.#document.timelinePolicy = draft.timelinePolicy;
-        applyProductPreferenceBindings(this.#document, draft.productPreferences);
-        this.#document.modules["message-timeline"].enabled = draft.timelinePolicy.enabled;
-        for (const name of SOLCORD_PRESET_ADDONS) {
-            const selected = draft.selectedAddons.includes(name);
-            const result = installResults[name];
-            this.#document.curatedAddons[name] = {
-                selected,
-                enabled: selected ? result?.enabled === true : false,
-                mode: draft.addonModes[name],
-                provider: draft.addonProviders[name],
-                ...(typeof result?.reviewedSha256 === "string" ? {reviewedSha256: result.reviewedSha256} : {}),
-                ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
-            };
-        }
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "complete", lastStep: 4, completedAt: Date.now()};
-        const record: SolcordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: transaction.priorAddonStates, priorThemeStates: transaction.priorThemeStates, ...(transaction.providerArchiveTransactionId ? {providerArchiveTransactionId: transaction.providerArchiveTransactionId} : {})};
-        this.#document.setupTransactions.push(record);
-        this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
-        this.#appendLedger("schema", "Completed Solcord setup transaction version 1.");
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeCompletion;
-            throw error;
-        }
-        return clone(record);
+        return this.#commit(() => {
+            const snapshot = this.#capture("Before completing Solcord setup");
+            this.#document.selectedTheme = draft.selectedTheme;
+            this.#document.timelinePolicy = draft.timelinePolicy;
+            applyProductPreferenceBindings(this.#document, draft.productPreferences);
+            this.#document.modules["message-timeline"].enabled = draft.timelinePolicy.enabled;
+            for (const name of SOLCORD_PRESET_ADDONS) {
+                const selected = draft.selectedAddons.includes(name);
+                const result = installResults[name];
+                this.#document.curatedAddons[name] = {
+                    selected,
+                    enabled: selected ? result?.enabled === true : false,
+                    mode: draft.addonModes[name],
+                    provider: draft.addonProviders[name],
+                    ...(typeof result?.reviewedSha256 === "string" ? {reviewedSha256: result.reviewedSha256} : {}),
+                    ...(typeof result?.quarantineReason === "string" ? {quarantineReason: result.quarantineReason.slice(0, 160)} : {})
+                };
+            }
+            this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "complete", lastStep: 4, completedAt: Date.now()};
+            const record: SolcordSetupTransactionRecord = {id: transaction.id, at: Date.now(), snapshotId: snapshot.id, priorAddonStates: clone(transaction.priorAddonStates), priorThemeStates: clone(transaction.priorThemeStates), ...(transaction.providerArchiveTransactionId ? {providerArchiveTransactionId: transaction.providerArchiveTransactionId} : {})};
+            this.#document.setupTransactions.push(record);
+            this.#document.setupTransactions.splice(0, Math.max(0, this.#document.setupTransactions.length - MAX_SETUP_TRANSACTIONS));
+            this.#appendLedger("schema", "Completed Solcord setup transaction version 1.");
+            return clone(record);
+        });
     }
 
     abortSetupCompletion(transactionId: string): boolean {
@@ -1018,61 +986,67 @@ class SolcordStore extends Store {
         if (!transaction || transaction.id !== transactionId) return false;
         const restored = restoreSnapshotState(this.#document, transaction.snapshotId);
         if (!restored) return false;
-        const beforeMutation = clone(this.#document);
-        this.#document.modules = restored.modules;
-        this.#document.profiles = restored.profiles;
-        this.#document.selectedTheme = restored.selectedTheme;
-        this.#document.curatedAddons = restored.curatedAddons;
-        this.#document.timelinePolicy = restored.timelinePolicy;
-        this.#document.productPreferences = restored.productPreferences;
-        applyModulePreferenceBindings(this.#document);
-        this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 4};
-        this.#document.setupTransactions.pop();
-        this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
-        this.#appendLedger("rollback", "Aborted an unacknowledged Solcord setup transaction.");
-        try {this.#save();}
-        catch (error) {
-            this.#document = beforeMutation;
-            throw error;
-        }
+        this.#commit(() => {
+            this.#document.modules = restored.modules;
+            this.#document.profiles = restored.profiles;
+            this.#document.selectedTheme = restored.selectedTheme;
+            this.#document.curatedAddons = restored.curatedAddons;
+            this.#document.timelinePolicy = restored.timelinePolicy;
+            this.#document.productPreferences = restored.productPreferences;
+            applyModulePreferenceBindings(this.#document);
+            this.#document.onboarding = {version: SOLCORD_ONBOARDING_VERSION, status: "pending", lastStep: 4};
+            this.#document.setupTransactions.pop();
+            this.#document.snapshots = this.#document.snapshots.filter(snapshot => snapshot.id !== transaction.snapshotId);
+            this.#appendLedger("rollback", "Aborted an unacknowledged Solcord setup transaction.");
+        });
         return true;
     }
 
     skipOnboarding(): void {
         if (this.#document.onboarding.status !== "pending") return;
-        this.#document.onboarding = deferOnboardingState(this.#document.onboarding);
-        this.#appendLedger("schema", "Skipped Solcord setup; addon and theme state was not changed.");
-        this.#save();
+        this.#commit(() => {
+            this.#document.onboarding = deferOnboardingState(this.#document.onboarding);
+            this.#appendLedger("schema", "Skipped Solcord setup; addon and theme state was not changed.");
+        });
     }
 
     reopenOnboarding(): void {
-        this.#document.onboarding = reopenOnboardingState(this.#document.onboarding);
-        this.#appendLedger("schema", "Reopened Solcord setup.");
-        this.#save();
+        this.#commit(() => {
+            this.#document.onboarding = reopenOnboardingState(this.#document.onboarding);
+            this.#appendLedger("schema", "Reopened Solcord setup.");
+        });
     }
 
     setCuratedAddonEnabled(name: string, enabled: boolean, quarantineReason?: string): void {
         if (!SOLCORD_PRESET_ADDONS.includes(name as typeof SOLCORD_PRESET_ADDONS[number])) throw new TypeError("Unknown curated addon.");
         const current = this.#document.curatedAddons[name];
-        if (current.enabled === enabled && current.quarantineReason === quarantineReason) return;
-        this.capture(`Before ${enabled ? "enabling" : "disabling"} curated addon ${name}`);
-        this.#document.curatedAddons[name] = {
-            ...current,
-            enabled,
-            ...(quarantineReason ? {quarantineReason: quarantineReason.slice(0, 160)} : {quarantineReason: undefined})
-        };
-        this.#appendLedger("setting", `${name} ${enabled ? "enabled" : "disabled"}.`);
-        this.#save();
+        const changesBackground = name === "DiscordEffects" && isSolcordBuiltInAddon(name, current.mode)
+            && (this.#document.productPreferences.nativeSuite.motion.effect !== "off") !== enabled;
+        if (current.enabled === enabled && current.quarantineReason === quarantineReason && !changesBackground) return;
+        this.#commit(() => {
+            this.#capture(`Before ${enabled ? "enabling" : "disabling"} curated addon ${name}`);
+            this.#document.curatedAddons[name] = {
+                ...current,
+                enabled,
+                ...(quarantineReason ? {quarantineReason: quarantineReason.slice(0, 160)} : {quarantineReason: undefined})
+            };
+            if (changesBackground) {
+                this.#document.productPreferences.nativeSuite.motion.effect = enabled ? "field" : "off";
+                if (enabled && this.#document.productPreferences.appearance.motion !== "reduced") this.#document.productPreferences.appearance.motion = "full";
+            }
+            this.#appendLedger("setting", `${name} ${enabled ? "enabled" : "disabled"}.`);
+        });
     }
 
     setTimelinePolicy(rawPolicy: unknown): void {
         const policy = normalizeTimelinePolicy(rawPolicy);
         if (JSON.stringify(policy) === JSON.stringify(this.#document.timelinePolicy)) return;
-        this.capture("Before changing Message Timeline policy");
-        this.#document.timelinePolicy = policy;
-        this.#document.modules["message-timeline"].enabled = policy.enabled;
-        this.#appendLedger("setting", `Message Timeline policy changed (${policy.enabled ? `${policy.scope}, ${policy.retention}, ${policy.content}` : "off"}).`);
-        this.#save();
+        this.#commit(() => {
+            this.#capture("Before changing Message Timeline policy");
+            this.#document.timelinePolicy = policy;
+            this.#document.modules["message-timeline"].enabled = policy.enabled;
+            this.#appendLedger("setting", `Message Timeline policy changed (${policy.enabled ? `${policy.scope}, ${policy.retention}, ${policy.content}` : "off"}).`);
+        });
     }
 
     latestSetupTransaction(): SolcordSetupTransactionRecord | undefined {
@@ -1081,8 +1055,21 @@ class SolcordStore extends Store {
     }
 
     #appendLedger(kind: SolcordSettingsDocument["updateLedger"][number]["kind"], detail: string): void {
-        this.#document.updateLedger.push({at: Date.now(), kind, detail, version: "1.0.0"});
+        this.#document.updateLedger.push({at: Date.now(), kind, detail, version: SOLCORD_PRODUCT_IDENTITY.numericVersion});
         this.#document.updateLedger.splice(0, Math.max(0, this.#document.updateLedger.length - MAX_LEDGER_ENTRIES));
+    }
+
+    #commit<T>(mutate: () => T): T {
+        const before = clone(this.#document);
+        try {
+            const result = mutate();
+            this.#save();
+            return result;
+        }
+        catch (error) {
+            this.#document = before;
+            throw error;
+        }
     }
 
     #save(): void {

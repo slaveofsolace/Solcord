@@ -359,6 +359,7 @@ export class SolcordVoiceNoteStudioController implements SolcordV2Disposable {
 }
 
 export type SolcordTranslationProvider = "deepl" | "libretranslate";
+export const SOLCORD_TRANSLATION_MAX_PREVIEWS = 4;
 
 export interface SolcordTranslationPreview {
     id: string;
@@ -394,7 +395,7 @@ export class SolcordTranslationDeskController implements SolcordV2Disposable {
         }
         else if (provider !== "deepl") {throw new Error("Translation provider is unsupported.");}
         const preview = Object.freeze({id: `translation:${++this.#sequence}`, provider, providerHost, sourceLanguage: source, targetLanguage: target, text, disclosure: `The reviewed text will be sent to ${providerHost}. It will not be inserted or sent to Discord automatically.`});
-        if (this.#previews.size === 4) this.#previews.delete(this.#previews.keys().next().value!);
+        if (this.#previews.size >= SOLCORD_TRANSLATION_MAX_PREVIEWS) this.#previews.delete(this.#previews.keys().next().value!);
         this.#previews.set(preview.id, preview);
         return preview;
     }

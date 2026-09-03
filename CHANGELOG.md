@@ -1,5 +1,27 @@
 # Solcord Changelog
 
+## 2.0.0-rc.34 - Control Center repairs (unreleased)
+
+### Fixed
+
+- Shared switches, sliders, and action buttons keep their state, focus, and failure feedback consistent. Repeated clicks cannot start duplicate pending actions.
+- Setting changes commit once with a rollback snapshot. Failed writes restore the previous state, and unchanged values do not restart modules or write another snapshot.
+- Standalone switches, shortcut hints, button rows, and help text have a shared spacing rhythm. Empty collections and healthy recovery details no longer compete with the controls.
+- Light and dark appearance modes now define native color tokens at their inheritance root, including aliases used by Discord panels and controls. A leftover native light class no longer darkens an explicitly dark animated background.
+- Translation language and endpoint fields preserve incomplete typing until Enter or blur. Responses cannot reappear after a provider, account, or input change.
+- Account switches retire private controllers, disarm Audience Guard, and clear private forms before queued storage finishes. Stale Audience Guard and translation actions cannot carry one account's choices into the next.
+- Appearance-only changes update their owning effect instead of rebuilding unrelated modules. Motion teardown owns its child resources, and disabled features remain inactive.
+- Layout Collapse places its restore action above the measured voice/account panel. Call badges, server details, and timestamps no longer stack or overwrite unrelated presentation.
+- Settings subscriptions follow the selected store and key after a view changes. Atomic JSON writes publish state only after persistence succeeds.
+- Clearing People and Spaces preserves unknown files and reports an incomplete cleanup instead of claiming every private-store artifact was removed. A missing store identity cannot silently hide retained data or generate a replacement key over it.
+- Extensions show installed or quarantined community files, not nonfunctional controls for missing files. Saved selections and rollback records remain preserved.
+
+### Verification boundary
+
+- RC33 and its published artifacts remain unchanged. This entry describes source fixes, not an installed or accepted RC34 release.
+- Exact-candidate Discord, installer, accessibility, and restart acceptance remain separate from the automated source checks.
+- Solcord remains an unsigned BetterDiscord fork. Private modules stay opt-in, and volatile Discord adapters do not claim support without validation.
+
 ## 2.0.0-rc.33 - Reliable Windows artifact publication
 
 ### Fixed

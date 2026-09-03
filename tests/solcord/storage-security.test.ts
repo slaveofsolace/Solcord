@@ -312,6 +312,56 @@ describe("Solcord People and Spaces private state", () => {
         const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
         expect(fs.readdirSync(root, {recursive: true, encoding: "utf8"}).map(String).some(name => /\.(?:old|tmp)$/.test(name))).toBeFalse();
     });
+
+    test("clears the recognized account store and survives restart with empty state", async () => {
+        const storage = new SolcordPeopleStateStorage();
+        await storage.write("777888999", {state: {pinnedDmIds: ["111222333"]}});
+        expect(await storage.clear("777888999", {})).toEqual({cleared: true, persistent: true, complete: true});
+        expect((await new SolcordPeopleStateStorage().read("777888999", {})).state.pinnedDmIds).toEqual([]);
+    });
+
+    test("preserves unknown private-store residue and does not claim a complete clear", async () => {
+        const storage = new SolcordPeopleStateStorage();
+        await storage.write("777888999", {state: {pinnedDmIds: ["111222333"]}});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
+        const directory = fs.readdirSync(root).map(name => path.join(root, name)).find(file => fs.lstatSync(file).isDirectory());
+        expect(directory).toBeDefined();
+        const residue = path.join(directory!, "owner-note.txt");
+        fs.writeFileSync(residue, "preserve this file");
+
+        expect(await storage.clear("777888999", {})).toEqual({cleared: true, persistent: false, complete: false});
+        expect(fs.readFileSync(residue, "utf8")).toBe("preserve this file");
+        expect(fs.existsSync(path.join(directory!, "state.scdb"))).toBeFalse();
+        expect((await new SolcordPeopleStateStorage().read("777888999", {})).state.pinnedDmIds).toEqual([]);
+    });
+
+    test("preserves opaque data and rejects read, clear, and key regeneration when the identity is lost", async () => {
+        const storage = new SolcordPeopleStateStorage();
+        await storage.write("777888999", {state: {pinnedDmIds: ["111222333"]}});
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
+        const directory = fs.readdirSync(root).map(name => path.join(root, name)).find(file => fs.lstatSync(file).isDirectory())!;
+        const stored = path.join(directory, "state.scdb");
+        const original = fs.readFileSync(stored);
+        const identity = path.join(root, "identity.sc-key");
+        fs.unlinkSync(identity);
+
+        expect(await new SolcordPeopleStateStorage().clear("777888999", {})).toEqual({cleared: false, persistent: false, complete: false});
+        expect(await new SolcordPeopleStateStorage().read("777888999", {})).toMatchObject({persistent: false, complete: false});
+        expect(await new SolcordPeopleStateStorage().write("777888999", {state: {pinnedDmIds: ["444555666"]}})).toMatchObject({persistent: false, complete: false});
+        expect(fs.readFileSync(stored)).toEqual(original);
+        expect(fs.existsSync(identity)).toBeFalse();
+        expect(fs.readdirSync(root)).toEqual([path.basename(directory)]);
+    });
+
+    test("accepts an empty first-use storage root without inventing a recovery failure", async () => {
+        const root = path.join(appDataPath, "BetterDiscord", "solcord-people-state-v1");
+        fs.mkdirSync(root, {recursive: true});
+        const storage = new SolcordPeopleStateStorage();
+        expect(await storage.clear("777888999", {})).toEqual({cleared: false, persistent: true, complete: true});
+        expect(await storage.read("777888999", {})).toMatchObject({persistent: true, complete: true});
+        expect(await storage.write("777888999", {state: {pinnedDmIds: ["111222333"]}})).toMatchObject({persistent: true, complete: true});
+        expect((await new SolcordPeopleStateStorage().read("777888999", {})).state.pinnedDmIds).toEqual(["111222333"]);
+    });
 });
 
 describe("Solcord translation credential security", () => {

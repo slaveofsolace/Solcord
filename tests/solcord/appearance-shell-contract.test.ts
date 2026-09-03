@@ -47,6 +47,17 @@ function contrast(a: string, b: string): number {
 }
 
 describe("Solcord full-shell appearance contract", () => {
+    test("defines forced-mode tokens at the root so inherited native aliases resolve in the chosen mode", () => {
+        const forced = "html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode]";
+        const source = block(`${forced},\n${forced} :is(body, #app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light)`);
+        for (const token of ["--background-base-lowest", "--background-base-lower", "--background-surface-high", "--text-default", "--text-muted", "--icon-primary", "--interactive-normal"]) {
+            expect(property(source, token)).toMatch(/^var\(--sc-app-/);
+        }
+        expect(source).not.toContain("color-scheme: inherit");
+        expect(block("html[data-solcord-mode=\"solcord-light\"]")).toContain("color-scheme: light");
+        expect(block("html[data-solcord-mode=\"solcord-dark\"]")).toContain("color-scheme: dark");
+    });
+
     test("applies every saved presentation dimension at startup and after live changes", () => {
         for (const assignment of [
             "root.dataset.solcordMode = appearance.mode",
@@ -55,11 +66,12 @@ describe("Solcord full-shell appearance contract", () => {
             "root.dataset.solcordMotion = appearance.motion",
             "root.dataset.solcordMessageShape = appearance.messageShape",
             "root.dataset.solcordPerformance = preferences.performanceProfile",
-            "root.dataset.solcordEffectiveMotion = resolveSolcordPerformancePolicy"
+            "root.dataset.solcordEffectiveMotion = policy.effectiveMotion",
+            "root.dataset.solcordAmbientMotion = String(policy.ambientEffects)"
         ]) expect(RUNTIME).toContain(assignment);
         expect(RUNTIME).toMatch(/setProductPreferences[\s\S]*?this\.#applyProductPresentation\(\)/);
         expect(RUNTIME).toMatch(/#completeStartupPhases[\s\S]*?this\.#applyProductPresentation\(\)/);
-        for (const attribute of ["mode", "accent", "density", "motion", "message-shape", "performance", "effective-motion"]) expect(SETUP).toContain(`data-solcord-${attribute}`);
+        for (const attribute of ["mode", "accent", "density", "motion", "message-shape", "performance", "effective-motion", "ambient-motion"]) expect(SETUP).toContain(`data-solcord-${attribute}`);
     });
 
     test("makes each non-system accent visible in focus, controls, and selected shell rows", () => {
@@ -109,7 +121,8 @@ describe("Solcord full-shell appearance contract", () => {
         expect(block("html[data-solcord-effective-motion=\"reduced\"]")).toContain("--sc-motion-duration: 0.01ms");
         expect(CSS).toContain("html[data-solcord-effective-motion=\"reduced\"] #app-mount *::before");
         expect(CSS).toContain("html[data-solcord-effective-motion=\"reduced\"] #app-mount *::after");
-        expect(CSS).toContain("html:not([data-solcord-performance=\"visual\"]) [data-solcord-ambient-effect]");
+        expect(CSS).toContain("html[data-solcord-ambient-motion=\"false\"] [data-solcord-ambient-effect]");
+        expect(CSS).not.toContain("html:not([data-solcord-performance=\"visual\"]) [data-solcord-ambient-effect]");
         expect(CSS).toContain("html[data-solcord-effective-motion=\"reduced\"] [data-solcord-ambient-effect]");
         expect(CSS).toContain("display: none !important");
         expect(CSS).toContain("@media (prefers-reduced-motion: reduce)");

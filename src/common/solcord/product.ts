@@ -244,6 +244,20 @@ function normalizeVisualMode(value: unknown): SolcordVisualMode {
     return choice(value, ["follow-discord", "solcord-dark", "solcord-light", "oled"] as const, "follow-discord");
 }
 
+export function normalizeSolcordTranslationEndpoint(value: unknown): string {
+    if (typeof value !== "string" || value.length > 500) return "";
+    try {
+        const url = new URL(value);
+        if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash) return url.toString();
+    }
+    catch {/* invalid endpoint stays empty */}
+    return "";
+}
+
+export function isSolcordTranslationLanguage(value: unknown, allowAuto = false): value is string {
+    return typeof value === "string" && ((allowAuto && value === "auto") || /^[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(value));
+}
+
 export function normalizeSolcordProductPreferences(value: unknown): SolcordProductPreferences {
     const source = record(value);
     const appearance = record(source.appearance);
@@ -262,14 +276,6 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
     const motionSurfaces = record(motion.surfaces);
     const composer = record(nativeSuite.composer);
     const baseline = record(source.baseline);
-    let endpoint = "";
-    if (typeof translation.endpoint === "string" && translation.endpoint.length <= 500) {
-        try {
-            const url = new URL(translation.endpoint);
-            if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash) endpoint = url.toString();
-        }
-        catch {/* invalid endpoint stays empty */}
-    }
     return {
         performanceProfile: choice(source.performanceProfile, ["lean", "balanced", "visual"] as const, "balanced"),
         appearance: {
@@ -294,8 +300,8 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
         },
         returnLaterRetentionDays: choice(source.returnLaterRetentionDays, [7, 30, 90] as const, 30),
         nativeSuite: {
-            // Account-derived Discord IDs stay in runtime-only, account-isolated
-            // state. Normal settings, snapshots, profiles, and exports scrub them.
+            // Account-derived Discord IDs belong to private account stores or
+            // session state, never normal settings, snapshots, or profiles.
             pinnedDmIds: [],
             hiddenGuildIds: [],
             guildAliases: {},
@@ -303,9 +309,9 @@ export function normalizeSolcordProductPreferences(value: unknown): SolcordProdu
             voiceHealthEnabled: nativeSuite.voiceHealthEnabled === true,
             translation: {
                 provider: choice(translation.provider, ["off", "local", "deepl", "libretranslate"] as const, "local"),
-                endpoint,
-                sourceLanguage: typeof translation.sourceLanguage === "string" && /^(?:auto|[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?)$/.test(translation.sourceLanguage) ? translation.sourceLanguage : "auto",
-                targetLanguage: typeof translation.targetLanguage === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(translation.targetLanguage) ? translation.targetLanguage : "EN"
+                endpoint: normalizeSolcordTranslationEndpoint(translation.endpoint),
+                sourceLanguage: isSolcordTranslationLanguage(translation.sourceLanguage, true) ? translation.sourceLanguage : "auto",
+                targetLanguage: isSolcordTranslationLanguage(translation.targetLanguage) ? translation.targetLanguage : "EN"
             },
             people: {
                 showRelationshipDates: people.showRelationshipDates !== false,

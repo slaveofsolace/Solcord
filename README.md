@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/branding/solcord-social-preview.svg" width="100%" alt="Solcord — a safer, faster BetterDiscord fork">
+  <img src="assets/branding/solcord-social-preview.svg" width="100%" alt="Solcord — a BetterDiscord fork for Windows">
 </p>
 
 <h1 align="center">Solcord</h1>
 
-<p align="center"><strong>A Windows-focused BetterDiscord fork built around bounded compatibility, useful local tools, consistent UI, and recovery that can be inspected.</strong></p>
+<p align="center"><strong>Make Discord your own, with local tools, full-shell themes, and a way back if something breaks.</strong></p>
 
 <p align="center">
   <a href="https://github.com/slaveofsolace/Solcord/actions/workflows/solcord-ci.yml"><img alt="Solcord checks" src="https://img.shields.io/github/actions/workflow/status/slaveofsolace/Solcord/solcord-ci.yml?branch=development&style=for-the-badge&label=Checks"></a>
@@ -16,73 +16,81 @@
 
 ---
 
-## Current state
+## Install in about a minute
 
-Solcord V2 is an unsigned release candidate with a self-contained Windows installer, one task-oriented Control Center, a resumable first run, local full-shell themes, recovery tooling, and a bounded compatibility layer for Discord Activities. Lean, Balanced, and Visual profiles control real sampling and motion policy. Optional tools start only after their current Discord adapter validates.
+**[Download the Windows installer](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.33)** · [Step-by-step guide](docs/QUICK_START.md) · [Recovery](docs/INSTALL_AND_ROLLBACK.md)
 
-**New user?** Start with the [quick Windows guide](docs/QUICK_START.md). It covers download verification, installation, first setup, and rollback without requiring Git or a development toolchain.
+You need Windows x64 and the official Discord desktop app. Stable, PTB, and Canary are detected separately. You do **not** need Git, Bun, .NET, or a separate BetterDiscord installation to use the installer.
 
-> [!IMPORTANT]
-> The release page preserves every published candidate. Use the newest Solcord-named prerelease and verify it against `SHA256SUMS.txt` before installation. Older candidates remain immutable for provenance and rollback.
+1. Download **SolcordInstaller.exe** and **SHA256SUMS.txt** from the same release. Compare the download's hash using the [quick guide](docs/QUICK_START.md#check-the-download).
+2. Save unfinished drafts and leave calls. The installer closes verified Discord desktop processes when replacing the shared core.
+3. Open the installer, choose your Discord entry in **Version**, then select **Install Solcord** or **Update Solcord**.
+4. Select **Open Solcord**. A fresh installation opens **Solcord Suite → Welcome**. Choose your preferences or use **Finish later** to return when ready.
 
-## Why Solcord exists
+About one minute **after download** is a typical-PC target, not a guarantee. Updates and repairs keep completed setup and existing settings.
 
-BetterDiscord supplies the ecosystem and compatibility foundation. Solcord narrows the distribution around four priorities:
+> [!WARNING]
+> This is an **unsigned release candidate**, not a signed stable build. Windows may show an unknown-publisher warning. Use only this repository's release assets; do not disable Windows security to install it. Unreleased audit changes in the source checkout are not included in the RC33 download.
 
-| Priority | What it means |
+## What you get
+
+Solcord is a fork of [BetterDiscord](https://github.com/BetterDiscord/BetterDiscord). It keeps the addon ecosystem and public `BdApi`, then adds one Control Center for the first-party suite.
+
+| Workspace | Useful tools |
 | --- | --- |
-| **Performance first** | Optional features are default-off or lazy, shared lookups are cached, and disabled features should own no patches, observers, timers, or listeners. |
-| **Bounded compatibility** | Activity Bridge permits only a verified Discord-owned late preload from the same package root; the unrestricted global override stays off. |
-| **Useful local tools** | Privacy, composer, call, audio, people, channel, theme, and recovery tools share one settings and lifecycle system. |
-| **Honest recovery** | Plugin Doctor, Addon Quarantine, Patch Canary, Settings Time Machine, and receipt-bound rollback expose failure instead of hiding it. |
+| Appearance & Accessibility | Eleven local shell themes, adjustable density and accents, animated backgrounds, reduced motion, and reading aids |
+| Chat & Composer | Character count, timestamps, reply shortcuts, reviewed message splitting, Translation Desk, loaded-message previews, and Media Shelf |
+| Voice & Activities | Call context, volume controls, Voice Note Studio, connection diagnostics, and the restricted Activity Bridge |
+| Friends & Spaces | DM pins, local server aliases and hiding, Focus Channels, and optional private notes |
+| Privacy & Safety | Strict Privacy, Link Lens, attachment metadata review, Stream Shield, and optional Audience Guard |
+| Recovery | Plugin Doctor, quarantine, settings snapshots, profiles, and setup rollback |
 
-## Built-in suite
+Tools that depend on Discord internals check their adapter before starting. **Off** means disabled; **Unavailable** means the current client did not expose a safely supported path. A catalog listing is not proof that a community plugin is installed or compatible.
 
-| Area | Included tools |
+### Start small
+
+Open **User Settings → Solcord Suite**. Use the workspace search to find a feature. Enable one tool at a time and check its status; optional community-plugin migration lives in **Extensions**, not First Setup.
+
+Lean, Balanced, and Visual change sampling and motion policy. Animated backgrounds need motion to be allowed; Lean, Subtle, or Windows reduced-motion preferences can suppress them. The settings page explains the effective policy.
+
+### Private by choice
+
+Friend Watch, Message Timeline, Audience Guard, and account-risk experiments start off. Private stores stay account-scoped, and the interface distinguishes encrypted persistence from session-only storage when Windows encryption is unavailable. Portable exports exclude private identifiers and history.
+
+On-device translation uses a compatible engine exposed by Discord when available; unsupported builds or language pairs stay unavailable. External providers are not silently selected: DeepL or LibreTranslate requires your explicit choice, credential where required, and review of the text being sent. Voice Note Studio requires Record, preview, and a separate send or file-save action.
+
+Audience Guard can prevent or stop a stream when a denied person is detected. It cannot promise per-person stream blocking or zero-frame exposure. [Audience Guard limits](docs/STREAM_AUDIENCE_GUARD.md) · [Security and privacy](docs/SECURITY_AND_PRIVACY.md)
+
+## Update, repair, or remove
+
+Open the installer for the release you intend to use. Each action is separate:
+
+| Action | What it does |
 | --- | --- |
-| Compatibility and safety | Activity Bridge, Module Drift Radar, Patch Canary, Plugin Doctor, Addon Quarantine |
-| Privacy | Privacy Controls, Link Lens, Invite Inspector, Stream Shield, Screenshot Scrubber, Attachment Guard |
-| Messages | Composer Toolkit, Double Click to Reply, guarded splitting, Translation Desk, Channel Glance |
-| Calls and audio | Call Context, Audio Console, Voice Note Studio, Voice Health, Shared Call Badge |
-| People and spaces | Session-only DM pins, server hiding/aliases, Focus Channels, and encrypted Local Identity Notes |
-| Local history and recovery | Message Timeline, Friend Watch, Workspace Profiles, Settings Time Machine, Update Ledger |
-| Power Lab | Separately consented, default-off experiments with explicit boundaries |
+| Update | Installs a newer core and keeps a verified rollback point |
+| Repair | Reinstalls the same package when its files are damaged or missing |
+| Roll back | Restores the backup captured immediately before the last core change |
+| Uninstall | Removes Solcord's core/injector while keeping plugins, themes, settings, and recovery files |
+| Verify files | Checks that installed files match this package |
+| Open recovery folder | Shows the local receipts and backups |
 
-Every Discord-facing built-in starts through a structural adapter. When an expected Discord module moves, the affected feature should report **Unavailable** without taking down the rest of Solcord.
+Uninstall is **not** a private-data wipe. Keep your backup until you have checked Discord after the change. [Detailed install and rollback behavior](docs/INSTALL_AND_ROLLBACK.md)
 
-## Performance baseline
+## If something is wrong
 
-Four clean-room runtime tools and one local reference shelf are off by default:
+- **Discord will not open:** run the installer and use **Roll back**. Do not delete the BetterDiscord data directory.
+- **A tool says Unavailable:** check **Recovery → Plugin Doctor**. Discord updates can change internal interfaces; do not stack the old community plugin over a failing built-in.
+- **A background is still:** check the effective motion policy, the selected effect, and Windows reduced motion.
+- **A save fails:** keep your draft, check the reported error, and use Recovery. A switch changing color is not proof that a setting was saved.
 
-- Layout Collapse
-- Embed Controls
-- Cross-platform Autoscroll
-- Media Shelf
-- Message Link Preview
-
-When the four runtime switches are off, they perform no Webpack lookup, patching, observation, timer, or network work. Layout Collapse hides only user-selected regions; Embed Controls changes presentation without changing message data; Autoscroll stops on middle-button release or Escape; Message Link Preview reads only an already-loaded message. Media Shelf stores a reference only after a user action and owns no Discord adapter or background task. See [the plugin baseline review](docs/audit/PLUGIN_BASELINE_REVIEW.md) and [capability roadmap](docs/roadmap/BASELINE_CAPABILITIES.md).
-
-## Interface system
-
-The Control Center is organized around Overview, Appearance, Performance, Privacy & Safety, Chat & Composer, Voice & Activities, Friends & Spaces, Extensions, and Recovery. Its search narrows those workspaces without hiding the active page. Module status uses explicit states such as off, ready, degraded, unavailable, and quarantined.
-
-Solcord uses one semantic token layer for surfaces, borders, text, status, focus, spacing, radius, density, and motion. The interface supports narrow containers, visible keyboard focus, reduced motion, and high Windows scaling without introducing a second component library.
-
-The repository includes local, dependency-free themes. No remote fonts, images, or CSS imports are required. Only one Solcord base theme is active at a time, and selector drift should fall back to ordinary Discord styling rather than leave a partially themed client.
-
-## Audience Guard boundary
-
-Audience Guard can prevent Go Live from starting or stop a stream when a denied person is detected in the current call. Detection after a stream begins cannot guarantee that no frame was briefly exposed.
-
-Discord does not expose individual viewer encryption for ordinary Go Live streams. Server-enforced channel permissions remain the authoritative access boundary. Read [the full boundary](docs/STREAM_AUDIENCE_GUARD.md).
+When reporting a bug, include the Solcord release, Discord version, workspace, and exact steps. Remove private names, messages, and account details from screenshots. Use [GitHub issues](https://github.com/slaveofsolace/Solcord/issues); report security problems through [SECURITY.md](SECURITY.md).
 
 ## Build and verify
 
-Solcord uses Bun `1.4.0`. The Windows installer candidate also requires the .NET 8 SDK.
+For contributors: install Git and Bun **1.4.0**. Building the Windows installer additionally requires the **.NET 8 SDK**. These are build tools, not user-install prerequisites.
 
 ```sh
 bun install --frozen-lockfile
-bun run audit:repo
 bun run verify
 bun run dist
 ```
@@ -99,7 +107,9 @@ bun run circulars
 bun run audit:repo:check
 ```
 
-The production build writes `dist/solcord.asar`. Installation still targets the preserved `betterdiscord.asar` location required by the existing injector contract.
+Run these from a clean checkout. Production packaging deliberately refuses dirty source. After changing tracked source, regenerate the line inventory with `bun run audit:repo` before verification. The production build writes `dist/solcord.asar`; installation retains the `betterdiscord.asar` filename required by the existing injector.
+
+For ordinary source work, `bun run build` permits a clearly labeled development build. It does not install or restart Discord. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [release evidence](docs/RELEASE_EVIDENCE_ASSEMBLY.md) for packaging.
 
 ## Repository map
 
@@ -116,7 +126,7 @@ The production build writes `dist/solcord.asar`. Installation still targets the 
 
 ## Honest limits
 
-Solcord does not extract tokens, backfill unseen messages, access hidden channels, automate user accounts, forge premium state, or silently record/upload media. Translation has no provider enabled by default. Message Timeline retains only explicitly enabled local observations. Experimental tools remain off until separately armed.
+Solcord does not provide end-to-end encryption for ordinary Discord messages, eliminate all Discord-side collection, backfill unseen messages, or grant access to hidden channels. It does not silently send messages, record audio, or upload files. Experimental tools require separate consent and any required per-call arming.
 
 A green source build does not prove every current Discord desktop interaction. Live Activities, injection, UI, accessibility, installer, and rollback acceptance must be rerun against the Discord version actually installed on the target machine.
 
