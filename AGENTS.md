@@ -5,7 +5,7 @@
 - Fork: `slaveofsolace/Solcord`
 - Upstream: `BetterDiscord/BetterDiscord`
 - Integration branch: `development`
-- Work branches: `audit/*`, `fix/*`, `feat/*`, `perf/*`, or `docs/*`
+- Work branches: `sol/<short-change-name>`
 - Package manager and runtime: Bun `1.4.0`
 
 Preserve upstream Git history, attribution, public `BdApi` behavior, BetterDiscord addon paths, and compatibility identifiers unless a migration is explicit, bounded, documented, and tested.
@@ -32,6 +32,7 @@ bun run lint-css:solcord
 bun run typecheck
 bun run generate-types
 bun run circulars
+bun run check:docs
 bun run audit:repo
 bun run audit:repo:check
 bun run verify
@@ -83,6 +84,8 @@ Every behavioral correction needs:
 - cleanup verification for patches, listeners, observers, timers, subscriptions, DOM, and cached references.
 
 Never claim a live Discord, Windows installer, rollback, accessibility, or visual result passed without captured evidence.
+
+Use `bun run test`, or include `--isolate` in focused `bun test` commands. Module mocks and singleton state must not leak between test files. Runner cleanup never replaces assertions about feature-owned resources.
 
 ## Upstream sync
 

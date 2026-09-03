@@ -1,5 +1,7 @@
 # RC5 Control Center source fixture
 
+> Source-fixture evidence, not current desktop acceptance. See [Release status](../STATUS.md).
+
 ## Historical 118250cc scope
 
 This evidence loads `src/betterdiscord/styles/solcord.css` from source checkpoint `118250cc463ca571181bda7a7baece21258d5e6a` in an isolated headless Chromium profile with representative Discord variables and Solcord DOM. It never attaches to, launches, closes, or restarts Discord and does not read the owner's profile.

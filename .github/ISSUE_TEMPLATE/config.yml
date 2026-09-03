@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Solcord security and privacy
-    url: https://github.com/slaveofsolace/Solcord/blob/development/SECURITY.md
-    about: Review the private-data boundary before sharing diagnostics.
-  - name: Upstream BetterDiscord troubleshooting
+  - name: Installation and troubleshooting
+    url: https://github.com/slaveofsolace/Solcord/blob/development/SUPPORT.md
+    about: Check download, update, recovery, and feature-state guidance.
+  - name: Security reports
+    url: https://github.com/slaveofsolace/Solcord/security/advisories/new
+    about: Do not post sensitive vulnerability details or private data in a public issue.
+  - name: BetterDiscord documentation
     url: https://docs.betterdiscord.app/users/getting-started/troubleshooting
     about: Upstream reference for shared plugin, theme, and injector behavior.

@@ -3,7 +3,7 @@
 Prepared: **2026-08-26**
 
 > [!NOTE]
-> This is a preserved historical engineering handoff. Current release state, module readiness, inherited-cycle classification, and the final owner-session boundary are maintained in [`docs/OWNER_READY_CLOSEOUT.md`](../OWNER_READY_CLOSEOUT.md).
+> This is a preserved historical engineering handoff. Current release state and acceptance limits are maintained in [Release status](../STATUS.md).
 
 ## Authorization
 
@@ -303,11 +303,11 @@ git diff --find-renames bec561cf10837bacfe587be9be4a08abf9891224...audit/solcord
 - `README.md`
 - `AGENTS.md`
 - `assets/branding/solcord-social-preview.png`
-- `docs/handoff/CODEX_HANDOFF.md`
+- `docs/archive/V2_ENGINEERING_HANDOFF.md`
 
 Intermediate one-time workflow commits exist because GitHub workflow permissions prevented a single atomic mass rename. The final tracked tree is authoritative.
 
-## Deeper work for Codex
+## Deferred engineering work
 
 ### P0 — Live Windows and Discord acceptance
 

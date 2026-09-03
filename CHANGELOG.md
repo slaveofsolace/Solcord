@@ -16,6 +16,12 @@
 - Clearing People and Spaces preserves unknown files and reports an incomplete cleanup instead of claiming every private-store artifact was removed. A missing store identity cannot silently hide retained data or generate a replacement key over it.
 - Extensions show installed or quarantined community files, not nonfunctional controls for missing files. Saved selections and rollback records remain preserved.
 - The repository audit accepts Git's Windows line endings while still rejecting changed or incomplete report content.
+- Test files run in isolated module environments. Plugin lifecycle fixtures can no longer contaminate Plugin Doctor or the real translation tests based on file order.
+
+### Documentation
+
+- Installation, daily use, troubleshooting, contribution guidelines, and release status have clear entry points. Older handoffs and version-specific evidence are separated into the documentation archive.
+- Bug reports ask for the installed candidate, source, Discord app version, and display scaling. Documentation links are checked alongside source validation.
 
 ### Verification boundary
 

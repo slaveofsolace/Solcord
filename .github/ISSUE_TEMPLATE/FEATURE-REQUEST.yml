@@ -1,25 +1,25 @@
-name: Solcord feature request
-description: Propose a focused addition or improvement with a clear user benefit.
-title: "[Feature]"
+name: Feature request
+description: Suggest a useful addition or improvement.
+title: "[Feature] "
 labels: [enhancement]
 body:
-- type: checkboxes
-  attributes:
-    label: Before Requesting
-    description: "I have double checked and agree with the following:"
-    options:
-    - label: I found no existing issue matching my feature request
+  - type: checkboxes
+    attributes:
+      label: Before posting
+      options:
+        - label: I checked existing requests for the same idea.
+          required: true
+  - type: textarea
+    attributes:
+      label: What problem would this solve?
+      description: Describe what you are trying to do and what gets in the way.
+    validations:
       required: true
-- type: textarea
-  attributes:
-    label: What problem should Solcord solve?
-    description: Describe the current friction, who experiences it, and the result you want.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Safety, privacy, or compatibility considerations
-    description: |
-      Explain any network access, account action, message/media handling, Discord-internal adapter, or third-party source involved. Include rights-clear references when useful.
-  validations:
-    required: false
+  - type: textarea
+    attributes:
+      label: How should it work?
+      description: A short example is enough. Links to related work are welcome.
+  - type: textarea
+    attributes:
+      label: Privacy or compatibility concerns
+      description: Mention any network access, private data, account action, or third-party dependency involved.

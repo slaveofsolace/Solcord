@@ -1,70 +1,69 @@
-name: Solcord bug report
-description: Report a reproducible Solcord, installer, theme, or compatibility problem.
-title: "[Bug]"
+name: Bug report
+description: Something in Solcord, a theme, or the installer is not working.
+title: "[Bug] "
 labels: [bug]
 body:
-- type: checkboxes
-  attributes:
-    label: Before Reporting
-    description: Check these before sharing diagnostics.
-    options:
-    - label: I found no existing issues matching my bug
+  - type: checkboxes
+    attributes:
+      label: Before posting
+      options:
+        - label: I checked existing issues for the same problem.
+          required: true
+        - label: My attachments contain no tokens, private messages, account IDs, server names, or personal file paths.
+          required: true
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Include the workspace, setting, or installer action.
+    validations:
       required: true
-    - label: I tested with unrelated third-party plugins and themes disabled, or explained why I could not
-      required: false
-    - label: I removed tokens, private messages, server names, account IDs, and local user paths from attachments
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open...
+        2. Choose...
+        3. The problem appears...
+    validations:
       required: true
-- type: textarea
-  attributes:
-    label: Describe the Bug
-    description: What happened? Include the exact Solcord surface or installer step.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Expected Behavior
-    description: What should have happened instead?
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Steps To Reproduce
-    description: Steps to reproduce the behavior.
-    placeholder: |
-      1. Open...
-      2. Choose...
-      3. Observe...
-  validations:
-    required: true
-- type: dropdown
-  attributes:
-    label: Operating System
-    options:
-      - Windows
-      - MacOS
-      - Linux
-  validations:
-    required: true
-- type: dropdown
-  attributes:
-    label: Discord Version
-    options:
-      - Stable
-      - Canary
-      - PTB
-  validations:
-    required: true
-- type: input
-  attributes:
-    label: Solcord Version
-    description: This is shown in `Settings > Updater` as the Solcord Core version.
-    placeholder: v2.0.0-rc.3
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Sanitized diagnostics or screenshots
-    description: |
-      Attach only Solcord's sanitized diagnostic export or privacy-clean screenshots. Never post a Discord token, private message/server content, account identifier, or absolute local path.
-  validations:
-    required: false
+  - type: textarea
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Solcord candidate and source
+      description: Open Solcord Suite, then Recovery, then About and technical information. Include Candidate and Source. For installer problems, include its title-bar version.
+      placeholder: v2.0.0-rc.33, source commit
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Discord installation
+      options:
+        - Stable
+        - PTB
+        - Canary
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Discord app version
+      placeholder: 1.0.9255, or not sure
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Windows version and display scaling
+      placeholder: Windows 11, 150%
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Plugins, themes, or other context
+      description: List relevant enabled addons and whether the issue persists with a conflicting addon disabled. Do not erase settings or private data to test.
+  - type: textarea
+    attributes:
+      label: Error or screenshot
+      description: Include the exact error and a cropped, privacy-clean screenshot if useful. Do not attach raw Discord logs or private databases.

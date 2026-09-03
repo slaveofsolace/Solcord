@@ -46,4 +46,4 @@ based on the shape of the API surface, not the BetterDiscord release version.
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[Apache-2.0](https://github.com/BetterDiscord/BetterDiscord/blob/development/LICENSE)

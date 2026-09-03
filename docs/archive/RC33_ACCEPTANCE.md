@@ -1,4 +1,6 @@
-# Solcord V2 owner-ready close-out
+# RC33 acceptance record
+
+> Historical record. The claims below refer to RC33 and its retained evidence, not a newer candidate. See [Release status](../STATUS.md) for current downloads and pending work.
 
 This page is the current product-status source for the unsigned Solcord V2 release candidate. Historical handoffs and release evidence remain preserved, but they do not override this page or the machine-readable manifest shipped with a candidate.
 

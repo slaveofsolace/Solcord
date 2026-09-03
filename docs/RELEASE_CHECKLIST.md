@@ -10,7 +10,7 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 - [ ] Current raw catalog hashes and generated registry hashes match `PROVENANCE_REGISTRY.md`.
 - [ ] VoiceMessages is identified as GPL-3.0, not AGPL; no GPL or unresolved-license implementation was copied into the Apache-2.0 core.
 - [ ] Every adapted source retains its controlling license, header, authorship, pinned revision, file list, and modification note.
-- [ ] Published historical candidates remain byte-for-byte immutable; the current source and release assets identify `v2.0.0-rc.33`.
+- [ ] Published historical candidates remain byte-for-byte immutable; the new source, candidate version, and release assets identify the same reviewed build.
 
 ## Build and security
 
@@ -39,7 +39,7 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 - [ ] The executable is labeled unsigned and Windows unknown-publisher behavior is stated without advising users to disable security.
 - [ ] Six privacy-clean screenshots come from this exact RC with the documented names: Download/hash, Quit Discord, Install/target review, Verified, First Setup, and Recovery.
 - [ ] The quick guide says “about one minute on a typical Windows PC after download,” not a guarantee.
-- [ ] Install, Verify, Repair/Update, Roll Back/Uninstall, and explicit Launch pass against a disposable target.
+- [ ] Install, Update, Repair, Verify, Roll back, Uninstall, and explicit Launch each pass against a disposable target.
 - [ ] Settings, About, Activity Bridge, Audience Guard, Friend Watch, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery receive Human Eye `ACCEPT`.
 - [ ] The owner performs any authenticated Activity, stream, voice-note, translation, notification-read, message, upload, or live-profile action requiring fresh confirmation.
 
