@@ -47,6 +47,23 @@ function contrast(a: string, b: string): number {
 }
 
 describe("Solcord full-shell appearance contract", () => {
+    test("opens only known workspace layers while preserving foreground surfaces", () => {
+        const start = CSS.indexOf("/* A field lives behind #app-mount.");
+        const end = CSS.indexOf("html[data-solcord-ambient-motion=\"false\"]", start);
+        const ambient = CSS.slice(start, end);
+        expect(start).toBeGreaterThan(0);
+        expect(ambient).toContain("body:has(> [data-solcord-ambient-effect])");
+        expect(ambient).toContain(":has([class*=\"peopleColumn_\"], [class*=\"chatContent_\"], [class*=\"sidebarList_\"])");
+        expect(ambient).toContain("[data-layer=\"base\"]");
+        expect(ambient).toContain("[class*=\"bg_\"]");
+        expect(ambient).not.toMatch(/(?:opacity|z-index|position|overflow)\s*:/);
+        expect(ambient).not.toContain("[role=\"dialog\"]");
+        expect(ambient).not.toContain("[class*=\"video\"]");
+        const fixture = readFileSync(resolve(ROOT, "tests/fixtures/solcord-ambient-shell.html"), "utf8");
+        expect(fixture).toContain("protectedFailures === 0");
+        expect(fixture).toContain("opened === openLayers.length");
+        expect(fixture).toContain("document.elementFromPoint");
+    });
     test("defines forced-mode tokens at the root so inherited native aliases resolve in the chosen mode", () => {
         const forced = "html:not([data-solcord-mode=\"follow-discord\"])[data-solcord-mode]";
         const source = block(`${forced},\n${forced} :is(body, #app-mount, .theme-dark, .theme-darker, .theme-midnight, .theme-light)`);

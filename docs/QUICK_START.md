@@ -37,7 +37,7 @@ Solcord's core is shared by Discord Stable, PTB, and Canary. When changing that 
 
 ## 3. Install
 
-Open **SolcordInstaller.exe**. In **Version**, choose the Discord installation you use, such as `Stable · 1.0.9255`.
+Open **SolcordInstaller.exe**. In **Version**, choose the Discord installation you use, such as `Stable · 1.0.9256`. The version is detected from your installed Discord, not fixed by this guide.
 
 Choose **Install Solcord** for a first installation or **Update Solcord** for a newer release. Wait for the verified success status. Do not move or delete recovery files while an action is running.
 
@@ -73,7 +73,7 @@ Download the new release's installer and checksum file, verify the download, and
 | Files are missing or damaged | Run the same package and choose **Repair**. |
 | The new core will not start | Use **Roll back** to restore the verified pre-change backup. |
 | A feature says Unavailable | Check Plugin Doctor; the current Discord build may not support that adapter. |
-| A background is not moving | Check the effect, the effective motion policy, and Windows reduced motion. |
+| A background is not moving | In Appearance, select a background rather than Signal or Off. Check the effective motion policy; Lean and reduced motion stop ambient animation. |
 
 **Open recovery folder** shows local backups and receipts. Do not delete `%APPDATA%\BetterDiscord`, plugins, themes, Custom CSS, or private databases to troubleshoot.
 

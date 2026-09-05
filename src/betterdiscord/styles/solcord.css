@@ -399,6 +399,46 @@ html[data-solcord-effective-motion] #app-mount [class*="panels_"] :is(button, [r
     z-index: 0 !important;
 }
 
+/* A field lives behind #app-mount. Only open the native workspace layers
+ * above it, never floating surfaces or individual media tiles. The leaf
+ * checks make changed Discord layouts fall back to their ordinary paint. */
+html[data-solcord-ambient-motion="true"]:not([data-solcord-effective-motion="reduced"]) body:has(> [data-solcord-ambient-effect]) #app-mount :is(
+[class*="appAsidePanelWrapper_"],
+[data-app-not-dev-tools],
+[class*="app_"],
+[class*="layers_"],
+[data-layer="base"],
+[class*="base_"],
+[class*="content_"],
+[class*="page_"],
+[class*="container_"],
+[class*="tabBody_"],
+[class*="sidebar_"]
+):has([class*="peopleColumn_"], [class*="chatContent_"], [class*="sidebarList_"]) {
+    background-color: transparent !important;
+}
+
+html[data-solcord-ambient-motion="true"]:not([data-solcord-effective-motion="reduced"]) body:has(> [data-solcord-ambient-effect]) #app-mount [class*="app_"]:has(> [class*="layers_"] [data-layer="base"]) > [class*="bg_"] {
+    background-color: transparent !important;
+}
+
+html[data-solcord-ambient-motion="true"]:not([data-solcord-effective-motion="reduced"]) body:has(> [data-solcord-ambient-effect]) #app-mount [data-layer="base"] :is(
+[class*="peopleColumn_"],
+[class*="peopleList_"],
+[class*="nowPlayingColumn_"],
+[class*="chatContent_"],
+[class*="sidebarList_"],
+[class*="privateChannels_"],
+[class*="guilds_"],
+[class*="membersWrap_"]
+) {
+    background-color: transparent !important;
+}
+
+html[data-solcord-ambient-motion="true"]:not([data-solcord-effective-motion="reduced"]) body:has(> [data-solcord-ambient-effect]) #app-mount [data-layer="base"] :is([class*="sidebarList_"], [class*="privateChannels_"], [class*="guilds_"], [class*="membersWrap_"]) > [class*="scroller_"] {
+    background-color: transparent !important;
+}
+
 html[data-solcord-ambient-motion="false"] [data-solcord-ambient-effect],
 html[data-solcord-effective-motion="reduced"] [data-solcord-ambient-effect] {
     display: none !important;

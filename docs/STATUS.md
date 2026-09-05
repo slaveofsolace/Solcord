@@ -5,20 +5,22 @@
 | Item | Status |
 | --- | --- |
 | Published Windows download | [v2.0.0-rc.33](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.33) |
-| Development work | RC34 Control Center, persistence, and test-isolation repairs |
+| Current source candidate | RC37: startup, persistence, background visibility and verification repairs |
 | Integration branch | `development` |
 | Distribution | Unsigned Windows x64 prerelease |
 | Stable release | Not published |
 
 The [changelog](../CHANGELOG.md) describes source changes. A merge is not an installation or a release. Use the version and hashes in the downloaded release's manifest to identify a package.
 
-## RC34
+## Current candidate
 
-RC34 corrects shared controls, spacing, native theme propagation, account-scoped private state, persistence failure handling, and duplicate lifecycle work. It also isolates test files so plugin mocks cannot affect the real translation or storage tests.
+RC37 includes the shared-control and spacing repairs, the corrected installer startup handoff, renderer-compatible atomic settings saves, and visible animated workspace backgrounds. Private stores and completed onboarding are preserved.
+
+On Discord Stable 1.0.9256, the RC36 update and first signed-in start were verified. The Control Center loaded, light/dark appearance changed immediately, Performance HUD enable/disable worked, and Layout Collapse's recovery action restored the server rail. These observations do not substitute for RC37's exact-package checks.
 
 The [hosted checks](https://github.com/slaveofsolace/Solcord/actions/workflows/solcord-ci.yml) report the result for each exact commit. Tests and packaging do not certify every desktop interaction.
 
-Before publishing RC34, the final package still needs exact-client visual, accessibility, restart, installer, and private-state acceptance. The completed release manifest must also identify the final security review and artifact hashes. Earlier candidate files must not be relabeled as packages of a later commit.
+The final RC37 package still needs its own desktop, restart and artifact verification before publication. Release evidence must distinguish completed checks from untested account-affecting actions. Earlier candidate files must not be relabeled as packages of a later commit.
 
 ## Compatibility limits
 

@@ -1,5 +1,12 @@
 # Solcord Changelog
 
+## 2.0.0-rc.37 - Visible backgrounds and bounded verification (unreleased)
+
+- Animated fields now show through the native workspace instead of being hidden behind Discord's opaque shell. Videos, dialogs, menus and controls keep their own surfaces. Turning the effect off or reducing motion restores ordinary backgrounds.
+- Added rendered checks for background visibility, disabled and reduced-motion states, changed selectors, protected foreground surfaces and click targeting.
+- The build-provenance integration tests run in a fresh, bounded process. A stalled test now fails promptly without skipping it or silently retrying.
+- Includes RC35's injector handoff and RC36's renderer-compatible atomic settings saves. Existing settings and recovery records remain intact.
+
 ## 2.0.0-rc.36 - Restore settings startup (unreleased)
 
 - Fixed a settings write that called a Node crypto method missing from Discord's renderer bridge. Atomic saves now use the bridge's secure random bytes, allowing startup to continue into the Control Center and enabled features.

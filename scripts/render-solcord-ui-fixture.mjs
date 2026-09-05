@@ -22,6 +22,8 @@ if (!browser) throw new Error("No supported headless Chromium browser was found.
 if (!existsSync(fixture)) throw new Error(`Fixture is missing: ${fixture}`);
 
 const scenarios = [
+    ...["on", "off", "reduced", "drift"].map(variant => ({name: `ambient-shell-${variant}`, width: 960, height: 900, query: `variant=${variant}`, fixture: "solcord-ambient-shell.html"})),
+    {name: "ambient-shell-light", width: 960, height: 900, query: "variant=on&mode=solcord-light", fixture: "solcord-ambient-shell.html"},
     {name: "overview-dark-1366x768", width: 1366, height: 768, query: "workspace=overview&state=healthy&mode=solcord-dark&scale=100"},
     {name: "diagnostic-overview-dark-320-container", width: 500, height: 720, query: "workspace=overview&state=healthy&mode=solcord-dark&diagnostic=1&fixtureWidth=320&scale=100"},
     {name: "setup-dark-1280x720", width: 1280, height: 720, query: "workspace=overview&state=wizard&mode=solcord-dark&scale=100"},
@@ -75,7 +77,7 @@ function invoke(url, scenario, extraArgs) {
             "--virtual-time-budget=1200",
             ...extraArgs,
             url
-        ], {encoding: "utf8", maxBuffer: 8 * 1024 * 1024, windowsHide: true});
+        ], {encoding: "utf8", maxBuffer: 8 * 1024 * 1024, timeout: 30_000, windowsHide: true});
     }
     finally {
         rmSync(profile, {recursive: true, force: true});
@@ -83,7 +85,8 @@ function invoke(url, scenario, extraArgs) {
 }
 
 for (const scenario of scenarios) {
-    const url = `${pathToFileURL(fixture).href}?${scenario.query}`;
+    const scenarioFixture = scenario.fixture ? resolve(root, "tests/fixtures", scenario.fixture) : fixture;
+    const url = `${pathToFileURL(scenarioFixture).href}?${scenario.query}`;
     const screenshot = resolve(output, `${scenario.name}.png`);
     invoke(url, scenario, [`--screenshot=${screenshot}`]);
     const dom = invoke(url, scenario, ["--dump-dom"]);
