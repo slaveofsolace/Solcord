@@ -348,7 +348,7 @@ describe("Solcord Control Center clarity", () => {
     test("reports each built-in from its actual adapter result and explains every family state", () => {
         expect(panel).toContain("adapters: SolcordRuntime.curatedAdapterStatus()");
         expect(panel).toContain("const adapter = state.adapters[name]");
-        expect(panel).toContain("const maturity = !enabled ? \"off\" : adapter?.enabled ? \"ready\" : \"unsupported\"");
+        expect(panel).toContain("solcordBuiltInCapability(enabled, adapter)");
         expect(panel).toContain("const adapter = SolcordRuntime.curatedAdapterStatus()[name]");
         expect(panel).toContain("is selected but unavailable");
         expect(panel).not.toContain("state.statuses.find(item => item.id === feature)");

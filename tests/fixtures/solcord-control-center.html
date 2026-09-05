@@ -288,6 +288,15 @@
             const focusTrack = focusSwitch.nextElementSibling;
             switchFocusVisible = focusTrack && parseFloat(getComputedStyle(focusTrack).outlineWidth) >= 2;
         }
+        const disclosureFocusFailures = [...panel.querySelectorAll("summary")].filter(visible).flatMap(summary => {
+            summary.focus({preventScroll: true});
+            const style = getComputedStyle(summary);
+            const color = rgba(style.outlineColor);
+            const focusContrast = contrast(color, effectiveBackground(summary.parentElement));
+            return document.activeElement !== summary || !summary.matches(":focus-visible") || style.outlineStyle === "none" || parseFloat(style.outlineWidth) < 2 || color[3] < 1 || focusContrast < 3
+                ? [{label: summary.textContent.trim(), outline: style.outline, contrast: Number(focusContrast.toFixed(2))}]
+                : [];
+        });
         const result = {
             scenario: {workspace, state, diagnostic, mode: document.documentElement.dataset.solcordMode, theme: document.documentElement.dataset.solcordFixtureTheme, motion: document.documentElement.dataset.solcordEffectiveMotion, scale: Number(document.documentElement.dataset.solcordFixtureScale), width: innerWidth, height: innerHeight, devicePixelRatio},
             horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -300,6 +309,7 @@
             actionHintSpacingFailures,
             switchStateFailures,
             switchFocusVisible,
+            disclosureFocusFailures,
             diagnosticIdentity: {requested: diagnostic, warningVisible: Boolean(diagnosticWarning && visible(diagnosticWarning))},
             navigationRelationship: {sideBySide, stacked, horizontalOverlap: Number(horizontalOverlap.toFixed(2)), verticalOverlap: Number(verticalOverlap.toFixed(2))},
             compactNavigationGeometry,
@@ -315,7 +325,7 @@
         const expectedHeadingCount = state === "wizard" ? 0 : 1;
         const contrastSamples = Object.values(result.contrast).filter(value => value !== null);
         const compactNavigationPass = !compactNavigationGeometry || Object.values(compactNavigationGeometry).every(Boolean);
-        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && !result.settingHintSpacingFailures.length && !result.actionHintSpacingFailures.length && !result.switchStateFailures.length && result.switchFocusVisible && result.workspaceHeadingCount === expectedHeadingCount && result.diagnosticIdentity.warningVisible === diagnostic && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
+        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && !result.settingHintSpacingFailures.length && !result.actionHintSpacingFailures.length && !result.switchStateFailures.length && result.switchFocusVisible && !result.disclosureFocusFailures.length && result.workspaceHeadingCount === expectedHeadingCount && result.diagnosticIdentity.warningVisible === diagnostic && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(result))));
         document.body.dataset.fixtureResult = encoded;
         document.querySelector("#fixture-result").textContent = JSON.stringify(result, null, 2);

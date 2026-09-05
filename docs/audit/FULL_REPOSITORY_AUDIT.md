@@ -13,8 +13,8 @@ This inventory is a text scan, not a semantic review or live Discord test. Curre
 | Persistent tracked files | 620 |
 | Text files scanned | 605 |
 | Binary files classified | 15 |
-| Text lines scanned | 130,032 |
-| Custom Solcord lines | 35,557 |
+| Text lines scanned | 130,182 |
+| Custom Solcord lines | 35,682 |
 | Previous product-identity matches | 0 |
 | Prohibited project-wording matches outside generated data | 0 |
 
@@ -27,7 +27,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | TODO / FIXME / HACK | 30 | 0 |
 | Timer calls | 52 | 8 |
 | Mutation observers | 20 | 4 |
-| DOM queries | 263 | 158 |
+| DOM queries | 273 | 167 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
 | Synchronous filesystem calls | 803 | 729 |
@@ -38,9 +38,9 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,615 | 279.7 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,630 | 280.6 KiB |
 | 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 2,093 | 130.0 KiB |
-| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,657 | 162.0 KiB |
+| 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,656 | 161.9 KiB |
 | 4 | `tests/solcord/storage-security.test.ts` | 1,579 | 92.8 KiB |
 | 5 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
 | 6 | `bun.lock` | 1,299 | 140.1 KiB |
@@ -63,7 +63,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,657 | 162.0 KiB |
+| 1 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,656 | 161.9 KiB |
 | 2 | `tests/solcord/storage-security.test.ts` | 1,579 | 92.8 KiB |
 | 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
 | 4 | `tests/solcord/native-suite-security.test.ts` | 1,296 | 67.8 KiB |
@@ -81,7 +81,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 16 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
 | 17 | `tests/solcord/release-evidence-assembler.test.ts` | 433 | 23.7 KiB |
 | 18 | `scripts/helpers/build-provenance.ts` | 421 | 17.7 KiB |
-| 19 | `tests/solcord/settings-panel.test.ts` | 413 | 28.8 KiB |
+| 19 | `tests/solcord/settings-panel.test.ts` | 413 | 28.7 KiB |
 | 20 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 411 | 36.6 KiB |
 
 ## Earlier repository corrections

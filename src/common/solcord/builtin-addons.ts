@@ -124,6 +124,13 @@ export interface SolcordProviderMigrationPlan {
 export interface SolcordProviderAdapterResult {
     enabled?: boolean;
     provider?: string;
+    ready?: boolean;
+}
+
+export function solcordBuiltInCapability(selected: boolean, adapter: SolcordProviderAdapterResult | undefined): {maturity: "off" | "available" | "ready" | "unsupported"; label: string;} {
+    if (!selected) return {maturity: "off", label: "Off"};
+    if (!adapter?.enabled) return {maturity: "unsupported", label: "Unavailable"};
+    return adapter.ready === true ? {maturity: "ready", label: "Ready"} : {maturity: "available", label: "Available"};
 }
 
 const MESSAGE_LOGGER_PROVIDER = Object.freeze({name: "MessageLoggerV2", fileName: "MessageLoggerV2.plugin.js"});
@@ -261,7 +268,7 @@ export function solcordProviderReplacementIsReady(
 ): boolean {
     if (migration.name === MESSAGE_LOGGER_PROVIDER.name) return !migration.enabled || timelineEnabled && timelineRuntimeReady;
     if (migration.name === FAKE_DEAFEN_PROVIDER.name) return !migration.enabled;
-    return solcordProviderSourceParityComplete(migration.name) && adapter?.enabled === true && adapter.provider === "solcord";
+    return solcordProviderSourceParityComplete(migration.name) && adapter?.enabled === true && adapter.ready === true && adapter.provider === "solcord";
 }
 
 export function solcordProviderMigrationPlansMatch(left: unknown, right: unknown): boolean {

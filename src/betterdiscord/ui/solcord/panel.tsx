@@ -19,7 +19,7 @@ import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOLCORD_ADDON_PRESENTATION, SOLCORD_POWER_LAB} from "./catalog";
 import {isSolcordTranslationLanguage, normalizeSolcordMediaShelfUrl, normalizeSolcordTranslationEndpoint, prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
-import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS, solcordNativeSuiteFeatureForAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS, solcordBuiltInCapability, solcordNativeSuiteFeatureForAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
 import {presentSolcordChannelGlance, type SolcordChannelGlancePresentation} from "@common/solcord/chat-output";
 import {privacyCapabilityStateLabel} from "@common/solcord/privacy";
@@ -445,8 +445,7 @@ function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
             {rows.map(({name, presentation}) => {
                 const enabled = name === "DiscordEffects" ? state.backgroundOn : state.addons[name]?.enabled === true;
                 const adapter = state.adapters[name];
-                const maturity = !enabled ? "off" : adapter?.enabled ? "ready" : "unsupported";
-                const status = maturity === "ready" ? "Ready" : maturity === "unsupported" ? "Unavailable" : "Off";
+                const {maturity, label: status} = solcordBuiltInCapability(enabled, adapter);
                 return <label key={name}>
                     <span><strong>{presentation.label}</strong><small>{presentation.summary}</small></span>
                     <span className="solcord-builtin-control">

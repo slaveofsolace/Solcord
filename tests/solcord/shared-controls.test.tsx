@@ -275,6 +275,81 @@ describe("rendered Solcord controls", () => {
         expect(changes).toBe(0);
     });
 
+    test("switches restore focus after a pending save without replacing the thumb", async () => {
+        let finish!: () => void;
+        const {host} = await render(<><SolcordSwitch label="Local feature" checked={false} onChange={() => new Promise<void>(resolve => {finish = resolve;})} /><button>Next setting</button></>);
+        const input = host.querySelector("input")!;
+        const thumb = host.querySelector(".solcord-switch-thumb");
+        input.focus();
+        await act(async () => input.click());
+        expect(input.disabled).toBeTrue();
+        // Happy DOM does not blur an already-disabled input as Chromium does.
+        const next = host.querySelector("button")!;
+        next.focus();
+        next.blur();
+        expect(document.activeElement).toBe(document.body);
+        await act(async () => finish());
+        expect(input.disabled).toBeFalse();
+        expect(document.activeElement).toBe(input);
+        expect(host.querySelector(".solcord-switch-thumb")).toBe(thumb);
+    });
+
+    test("completed saves never steal another control's focus or refocus a disabled or removed switch", async () => {
+        let finish!: () => void;
+        const change = () => new Promise<void>(resolve => {finish = resolve;});
+        const {host, root} = await render(<><SolcordSwitch label="Local feature" checked={false} onChange={change} /><button>Next setting</button></>);
+        const input = host.querySelector("input")!;
+        const next = host.querySelector("button")!;
+        input.focus();
+        await act(async () => input.click());
+        next.focus();
+        await act(async () => finish());
+        expect(document.activeElement).toBe(next);
+
+        input.focus();
+        await act(async () => input.click());
+        next.focus();
+        next.blur();
+        expect(document.activeElement).toBe(document.body);
+        await act(async () => root.render(<><SolcordSwitch label="Local feature" checked={false} disabled onChange={change} /><button>Next setting</button></>));
+        await act(async () => finish());
+        expect(document.activeElement).not.toBe(input);
+        expect(input.disabled).toBeTrue();
+
+        await act(async () => root.render(<SolcordSwitch label="Local feature" checked={false} onChange={change} />));
+        const replacement = host.querySelector("input")!;
+        replacement.focus();
+        await act(async () => replacement.click());
+        await act(async () => root.render(null));
+        await act(async () => finish());
+        expect(document.activeElement).not.toBe(replacement);
+        expect(host.childElementCount).toBe(0);
+    });
+
+    test("sliders and Enter-committed fields keep keyboard focus after failed saves", async () => {
+        let reject!: (error: Error) => void;
+        const change = () => new Promise<void>((_resolve, fail) => {reject = fail;});
+        const {host, root} = await render(<SolcordSlider label="Effect speed" min={25} max={300} value={100} onCommit={change} />);
+        const range = host.querySelector("input")!;
+        range.focus();
+        await act(async () => {setRange(range, 150); range.dispatchEvent(new KeyboardEvent("keyup", {key: "ArrowRight", bubbles: true}));});
+        expect(range.disabled).toBeTrue();
+        range.blur();
+        await act(async () => reject(new Error("Fixture write failure")));
+        expect(document.activeElement).toBe(range);
+        expect(range.value).toBe("100");
+
+        await act(async () => root.render(<SolcordTextField label="Local label" value="Original" normalize={value => value} onCommit={change} />));
+        const field = host.querySelector("input")!;
+        field.focus();
+        await act(async () => {typeValue(field, "Edited"); field.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", bubbles: true}));});
+        expect(field.disabled).toBeTrue();
+        field.blur();
+        await act(async () => reject(new Error("Fixture write failure")));
+        expect(document.activeElement).toBe(field);
+        expect(field.value).toBe("Edited");
+    });
+
     test("sliders commit the actual input value once, not a stale render or every pointer move", async () => {
         const commits: number[] = [];
         function Example() {
