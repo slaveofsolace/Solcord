@@ -18,7 +18,7 @@ You need **Windows x64** and the official **Discord desktop app**. You do not ne
 Installation takes about one minute on a typical PC **after download**. Your existing Discord login, plugins, themes, and settings stay in place.
 
 > [!IMPORTANT]
-> The published download is **v2.0.0-rc.33**, an unsigned release candidate. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. RC34 changes on the development branch are not part of this download.
+> The published download is **v2.0.0-rc.33**, an unsigned release candidate. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. The newer RC37 source is undergoing final desktop verification; it is not part of that download.
 
 ## What Solcord adds
 

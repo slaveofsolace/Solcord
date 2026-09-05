@@ -1,6 +1,6 @@
 import fs from "@polyfill/fs";
 import path from "path";
-import crypto from "crypto";
+import crypto from "@polyfill/crypto";
 import {deepEqual} from "fast-equals";
 import Store from "./base";
 import Config from "./config";
@@ -86,7 +86,7 @@ class JsonStore extends Store {
         // Serialize before touching disk, then publish the complete file once.
         // Cache mutation and notification happen only after this succeeds.
         const content = JSON.stringify(value, null, 4);
-        const temporary = `${target}.${crypto.randomUUID()}.tmp`;
+        const temporary = `${target}.${crypto.randomBytes(16).toString("hex")}.tmp`;
         try {
             fs.writeFileSync(temporary, content, {flag: "wx", originalFs: false});
             fs.renameSync(temporary, target);

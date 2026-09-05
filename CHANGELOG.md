@@ -1,5 +1,26 @@
 # Solcord Changelog
 
+## 2.0.0-rc.37 - Visible backgrounds and bounded verification (unreleased)
+
+- Animated fields now show through the native workspace instead of being hidden behind Discord's opaque shell. Videos, dialogs, menus and controls keep their own surfaces. Turning the effect off or reducing motion restores ordinary backgrounds.
+- Added rendered checks for background visibility, disabled and reduced-motion states, changed selectors, protected foreground surfaces and click targeting.
+- The build-provenance integration tests run in a fresh, bounded process. A stalled test now fails promptly without skipping it or silently retrying.
+- Includes RC35's injector handoff and RC36's renderer-compatible atomic settings saves. Existing settings and recovery records remain intact.
+
+## 2.0.0-rc.36 - Restore settings startup (unreleased)
+
+- Fixed a settings write that called a Node crypto method missing from Discord's renderer bridge. Atomic saves now use the bridge's secure random bytes, allowing startup to continue into the Control Center and enabled features.
+- Persistence tests exercise the renderer crypto bridge, including unique temporary files and a failure to obtain randomness.
+- Build provenance commands now have time limits. Git-heavy tests have enough time on shared runners, and CI stops stalled jobs before GitHub's six-hour limit.
+- RC35 installers and recovery records remain available. This candidate still requires installation and live acceptance before publication.
+
+## 2.0.0-rc.35 - Discord startup handoff (unreleased)
+
+- The installer preserves Discord's original startup archive under the BetterDiscord-compatible name so Electron actually loads Solcord first. This fixes installs that copied successfully but opened ordinary Discord.
+- Verify now checks the receipt, Discord version, original archive, and exact loader contents as well as the Solcord core. Open Solcord refuses an unverified target.
+- Rollback restores the previous archive location. Uninstall restores Discord's ordinary startup entry. Interrupted operations and unexpected archive changes preserve their recovery state.
+- RC34's candidate and installation evidence remain preserved. RC35 is not a published or live-accepted release yet.
+
 ## 2.0.0-rc.34 - Control Center repairs (unreleased)
 
 ### Fixed

@@ -13,6 +13,7 @@ jobs:
   verify:
     name: Verify source and production package
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -60,6 +61,7 @@ jobs:
   windows-policy:
     name: Windows policy, safety, and installer
     runs-on: windows-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

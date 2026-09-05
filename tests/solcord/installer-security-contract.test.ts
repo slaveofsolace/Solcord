@@ -241,6 +241,20 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("receipt-encoding-compatibility");
     });
 
+    test("verifies the reachable Electron loader and restores the original bootstrap transactionally", () => {
+        const verify = engine.slice(engine.indexOf("internal bool VerifyInstalled"), engine.indexOf("internal string RollBack"));
+        const launch = engine.slice(engine.indexOf("internal void Launch"), engine.indexOf("private void WriteFirstSetupIntent"));
+        expect(verify).toContain("RequireWorkingInjector");
+        expect(launch).toContain("!VerifyInstalled()");
+        expect(engine).toContain("PrepareBootstrapRollback");
+        expect(engine).toContain("OriginalModuleSha256");
+        expect(engine).toContain("competing startup archives");
+        expect(selfTest).toContain("electron-bootstrap-handoff-and-recovery");
+        expect(selfTest).toContain("RC34 shadowed layout still verified");
+        expect(selfTest).toContain("uninstall interruption did not restore the working loader");
+        expect(selfTest).toContain("rollback retry did not restore a clean Discord startup");
+    });
+
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {
         expect(launcher).toContain("Start Menu\", \"Programs");
         expect(launcher).toContain("Solcord.lnk");

@@ -30,7 +30,7 @@ interface Fixture {
 }
 
 function git(root: string, ...args: string[]): void {
-    execFileSync("git", args, {cwd: root, stdio: "ignore", windowsHide: true});
+    execFileSync("git", args, {cwd: root, stdio: "ignore", timeout: 10_000, windowsHide: true});
 }
 
 function fixture(): Fixture {
@@ -47,6 +47,7 @@ function fixture(): Fixture {
     git(root, "init", "--initial-branch=main");
     git(root, "config", "user.email", "solcord-test@example.invalid");
     git(root, "config", "user.name", "Solcord Test");
+    git(root, "config", "commit.gpgsign", "false");
     git(root, "add", ".");
     git(root, "commit", "-m", "fixture");
     return {root, bunExecutable};
@@ -127,13 +128,13 @@ describe("Solcord build provenance", () => {
         expect(first.source.digest).not.toBe(clean.source.digest);
         expect(first.buildLabel).toBe(`diagnostic-dirty.${first.source.digest.slice(0, 16)}`);
         expect(JSON.stringify(first)).not.toContain("solcord-provenance-test-");
-    });
+    }, 30_000);
 
     test("derives clean timestamps reproducibly and honors SOURCE_DATE_EPOCH", () => {
         const testFixture = fixture();
         const first = capture(testFixture, "production", {sourceDateEpoch: null});
         const second = capture(testFixture, "production", {sourceDateEpoch: null});
-        const commitEpoch = execFileSync("git", ["show", "-s", "--format=%ct", "HEAD"], {cwd: testFixture.root, encoding: "utf8", windowsHide: true}).trim();
+        const commitEpoch = execFileSync("git", ["show", "-s", "--format=%ct", "HEAD"], {cwd: testFixture.root, encoding: "utf8", timeout: 10_000, windowsHide: true}).trim();
 
         expect(first).toEqual(second);
         expect(first.buildTimestamp).toBe(new Date(Number(commitEpoch) * 1_000).toISOString());
@@ -142,7 +143,7 @@ describe("Solcord build provenance", () => {
         expect(epoch.buildTimestamp).toBe(TIMESTAMP);
         expect(() => capture(testFixture, "production", {sourceDateEpoch: "1787446800.5"})).toThrow("whole non-negative Unix seconds");
         expect(() => capture(testFixture, "production", {sourceDateEpoch: ""})).toThrow("whole non-negative Unix seconds");
-    }, 10_000);
+    }, 30_000);
 
     test("produces identical metadata, manifests, and ASAR bytes from identical clean inputs", async () => {
         const testFixture = fixture();
@@ -188,7 +189,7 @@ describe("Solcord build provenance", () => {
         expect(firstManifest.packagedAt).toBe(first.buildTimestamp);
         expect(firstManifest).toEqual(secondManifest);
         expect(fs.readFileSync(firstManifestFile)).toEqual(fs.readFileSync(secondManifestFile));
-    });
+    }, 30_000);
 
     test("rejects dirty production builds while permitting explicitly diagnostic packaging", () => {
         const testFixture = fixture();
@@ -203,7 +204,7 @@ describe("Solcord build provenance", () => {
 
         const mislabeled = {...diagnostic, mode: "development" as const, buildLabel: `development-dirty.${diagnostic.source.digest.slice(0, 16)}`};
         expect(() => assertSolcordPackagingAllowed(mislabeled, true)).toThrow("explicitly diagnostic");
-    });
+    }, 30_000);
 
     test("rejects source drift between build and packaging", () => {
         const testFixture = fixture();
@@ -211,7 +212,7 @@ describe("Solcord build provenance", () => {
         fs.writeFileSync(path.join(testFixture.root, "source.ts"), "export const value = 4;\n");
         const current = capture(testFixture);
         expect(() => assertSolcordBuildStillCurrent(built, current)).toThrow("changed after the build");
-    });
+    }, 30_000);
 
     test("writes validated embedded metadata and binds final artifacts without absolute paths", () => {
         const testFixture = fixture();
@@ -241,5 +242,5 @@ describe("Solcord build provenance", () => {
         expect(manifest.build.source.commit).toHaveLength(40);
         expect(manifest.build.candidateLabel).toBe("v1.0.0-test-rc.0");
         expect(JSON.stringify(manifest)).not.toContain("solcord-provenance-test-");
-    });
+    }, 30_000);
 });
