@@ -1,5 +1,12 @@
 # Solcord Changelog
 
+## 2.0.0-rc.36 - Restore settings startup (unreleased)
+
+- Fixed a settings write that called a Node crypto method missing from Discord's renderer bridge. Atomic saves now use the bridge's secure random bytes, allowing startup to continue into the Control Center and enabled features.
+- Persistence tests exercise the renderer crypto bridge, including unique temporary files and a failure to obtain randomness.
+- Build provenance commands now have time limits. Git-heavy tests have enough time on shared runners, and CI stops stalled jobs before GitHub's six-hour limit.
+- RC35 installers and recovery records remain available. This candidate still requires installation and live acceptance before publication.
+
 ## 2.0.0-rc.35 - Discord startup handoff (unreleased)
 
 - The installer preserves Discord's original startup archive under the BetterDiscord-compatible name so Electron actually loads Solcord first. This fixes installs that copied successfully but opened ordinary Discord.
