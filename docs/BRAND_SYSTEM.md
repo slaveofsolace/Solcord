@@ -2,9 +2,9 @@
 
 ## Character
 
-Solcord is a quiet technical tool: direct, inspectable, and owner-controlled. Copy names the mechanism, risk, and next action. It avoids promises such as “seamless,” “ultimate,” “revolutionary,” or “optimized” unless a measurement and baseline are shown.
+Solcord uses compact controls, readable text, and restrained motion. Explain what a tool does, any relevant risk, and what to do next.
 
-The visual system uses a graphite foundation with three functional accents rather than a single purple gradient:
+The visual system uses graphite surfaces and functional accents:
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ The runtime bundles Hanken Grotesk for interface text from the official Google F
 
 ## Mark
 
-The active mark is an original asymmetrical cord-cut `S`: two signal cords form the upper and lower strokes with a deliberate ember break at the center. It has no crystal, orbit, shield, controller, Discord shape, BetterDiscord monogram, gradient, or borrowed icon geometry. Active sources:
+The mark is a cord-cut `S`, with teal and bone strokes separated by a small ember break. Active sources:
 
 - `assets/branding/solcord-mark.svg`
 - `assets/branding/solcord-wordmark.svg`
@@ -31,9 +31,9 @@ At 16–24 pixels use the mark only; do not use the wordmark. Preserve its trans
 
 ## Asset provenance
 
-Six text-only concept studies were generated with OpenAI Image Generation on 2026-08-22 and 2026-08-23. No reference image was supplied. Their prompt records, hashes, and cold-eye decisions are retained in `docs/evidence/branding/README.md`. A, B, D, and F were rejected; C was marked `REVISE`; E is reference-only. The generated studies supplied direction and comparison evidence only.
+Concept studies are not bundled in Solcord. Their source, hashes, and review decisions are retained in the [branding records](evidence/branding/README.md).
 
-The production vector was redrawn from first principles as original SVG paths. Required PNG sizes are deterministically rendered from that SVG by `scripts/render-solcord-mark.cjs`; the generated raster concepts do not ship in the runtime. The vector also replaces the owner-rejected striped-square icon visible in the prior installed build. No icon pack, Discord asset, BetterDiscord asset, or user-submitted image is embedded. The one embedded runtime typeface is the separately documented OFL font above.
+Production PNG sizes are rendered from the SVG by `scripts/render-solcord-mark.cjs`. The runtime uses that vector and the separately licensed local font described above. See the [provenance registry](PROVENANCE_REGISTRY.md) for source and license details.
 
 Current production-source hashes:
 

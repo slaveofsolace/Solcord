@@ -1,10 +1,56 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {describe, expect, test} from "bun:test";
+import {spawnSync} from "node:child_process";
+import {mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import path from "node:path";
 
 import {normalizePortableText, portableTextByteLength} from "../../scripts/helpers/portable-text.mjs";
 
 describe("Solcord repository audit portability", () => {
+    test("counts all tracked files and detects a stale report", () => {
+        const tempRoot = realpathSync(tmpdir());
+        const fixture = mkdtempSync(path.join(tempRoot, "solcord-repository-audit-"));
+        const command = (program: string, args: string[]) => spawnSync(program, args, {
+            cwd: fixture, encoding: "utf8", timeout: 15_000, windowsHide: true
+        });
+        const removeFixture = () => {
+            const resolved = realpathSync(fixture);
+            if (path.dirname(resolved) !== tempRoot || !path.basename(resolved).startsWith("solcord-repository-audit-")) {
+                throw new Error("Refusing to remove a fixture outside its temporary parent.");
+            }
+            rmSync(resolved, {recursive: true});
+        };
+        const script = path.resolve(import.meta.dir, "../../scripts/audit-solcord-repository.mjs");
+        try {
+            expect(command("git", ["init", "--quiet"]).status).toBe(0);
+            const files = [
+                "scripts/finalize-solcord-audit.mjs",
+                ".github/workflows/solcord-quality-finalization.yml",
+                ".github/workflows/solcord-final-docs.yml"
+            ];
+            for (const file of files) {
+                mkdirSync(path.dirname(path.join(fixture, file)), {recursive: true});
+                writeFileSync(path.join(fixture, file), "fixture\n");
+            }
+            expect(command("git", ["add", "--", ...files]).status).toBe(0);
+            expect(command(process.execPath, [script]).status).toBe(0);
+            const report = readFileSync(path.join(fixture, "docs/audit/FULL_REPOSITORY_AUDIT.md"), "utf8");
+            expect(report).toContain("| Persistent tracked files | 3 |");
+            for (const file of files) expect(report).toContain(file);
+            expect(command(process.execPath, [script, "--check"]).status).toBe(0);
+
+            writeFileSync(path.join(fixture, files[0]), "changed\nextra line\n");
+            const stale = command(process.execPath, [script, "--check"]);
+            expect(stale.status).toBe(1);
+            expect(stale.stderr).toContain("is stale");
+        }
+        finally {
+            removeFixture();
+        }
+    });
+
     test("measures equivalent text identically across checkout line endings", () => {
         const lf = "alpha\nbeta\ngamma\n";
         const crlf = "alpha\r\nbeta\r\ngamma\r\n";

@@ -1,5 +1,11 @@
 # Solcord Changelog
 
+## Repository maintenance
+
+- Documented RC38 installation, live checks, owner acceptance, and package hashes without changing the installed core.
+- Made `main` the starting point for contributions and moved the maintainer guide to `MAINTAINING.md`.
+- Removed obsolete audit exclusions so every tracked file is counted, and dropped the unrelated authorship-word filter.
+
 ## 2.0.0-rc.38 - Control and lifecycle corrections (unreleased)
 
 - Keyboard focus survives asynchronous saves without jumping to another control. Compact disclosures have a visible focus outline.
@@ -152,7 +158,7 @@
 ### Verification boundary
 
 - The canonical source matrix passes 672 tests and 4,216 assertions plus lint, Solcord CSS, TypeScript, type generation, repository audit, and whitespace checks.
-- The complete Codex Security working-tree diff scan reports zero findings across all three changed executable surfaces and their supporting IPC, authority, and storage code.
+- The working-tree security review reported zero findings across the three changed executable surfaces and their supporting IPC, authority, and storage code.
 - Codenames, a second Discord Activity, signed-in First Setup apply, and passive Friend Watch owner review remain one final owner session on the exact installed candidate.
 - The Windows executable remains unsigned and may show an unknown-publisher warning.
 
@@ -199,7 +205,7 @@
 ### Not yet claimed
 
 - Live Codenames and second-Activity acceptance remain owner actions after installed launch.
-- Stream Shield Go Live detection and the accessibility surface remain preview until installed Discord validation and Human Eye review pass.
+- Stream Shield Go Live detection and the accessibility surface remain preview until installed Discord validation and visual review pass.
 
 The entries below are the preserved BetterDiscord upstream changelog and attribution history.
 

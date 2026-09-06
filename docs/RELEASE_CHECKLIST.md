@@ -40,7 +40,7 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 - [ ] Six privacy-clean screenshots come from this exact RC with the documented names: Download/hash, Quit Discord, Install/target review, Verified, First Setup, and Recovery.
 - [ ] The quick guide says “about one minute on a typical Windows PC after download,” not a guarantee.
 - [ ] Install, Update, Repair, Verify, Roll back, Uninstall, and explicit Launch each pass against a disposable target.
-- [ ] Settings, About, Activity Bridge, Audience Guard, Friend Watch, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery receive Human Eye `ACCEPT`.
+- [ ] Visually review settings, About, Activity Bridge, Audience Guard, Friend Watch, Plugin Doctor, setup/provider migration, themes, diagnostics, and recovery. Record each result.
 - [ ] The owner performs any authenticated Activity, stream, voice-note, translation, notification-read, message, upload, or live-profile action requiring fresh confirmation.
 
 ## Release decision
