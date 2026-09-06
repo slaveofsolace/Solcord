@@ -4,7 +4,8 @@
 
 - Fork: `slaveofsolace/Solcord`
 - Upstream: `BetterDiscord/BetterDiscord`
-- Integration branch: `development`
+- Release and contribution branch: `main`
+- Upstream integration branch: `development`; keep it synchronized after a release
 - Work branches: `sol/<short-change-name>`
 - Package manager and runtime: Bun `1.4.0`
 
@@ -71,7 +72,7 @@ Regenerate these through their scripts. Do not hand-edit catalog output or commi
 
 ## Wording and provenance
 
-Use direct project language. Do not add references to automated authorship systems or generated-looking filler. Preserve third-party notices, license boundaries, source links, and clean-room status.
+Write short, direct instructions. Describe the behavior, limits, and next action. Preserve third-party notices, licenses, source links, and implementation provenance.
 
 ## Reproduction and testing
 

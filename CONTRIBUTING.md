@@ -1,15 +1,14 @@
 # Contributing
 
-Start from `development`, Solcord's integration branch. Keep fixes focused and preserve BetterDiscord's public APIs, addon paths, upstream history, and notices.
+Start from `main`. Keep fixes focused and preserve BetterDiscord's public APIs, addon paths, upstream history, and notices. The `development` branch is retained for upstream integration and stays synchronized at release checkpoints.
 
 ## Set up
 
 Install Git and the pinned **Bun 1.4.0** runtime. The **.NET 8 SDK** is needed only to build the Windows installer.
 
 ```sh
-git clone https://github.com/slaveofsolace/Solcord.git
+git clone --branch main https://github.com/slaveofsolace/Solcord.git
 cd Solcord
-git switch development
 git switch -c sol/your-change
 bun install --frozen-lockfile
 bun run verify
@@ -33,7 +32,7 @@ Use `bun run build` for a local development build. It does not install anything 
 | `docs/` | User guides, architecture, and release procedures |
 | `docs/archive/` | Historical evidence; not current installation guidance |
 
-Check the relevant source before making a change. [AGENTS.md](AGENTS.md) contains the detailed maintainer rules.
+Check the relevant source before making a change. [Maintaining Solcord](MAINTAINING.md) covers architecture, compatibility, and release rules.
 
 ## Tests and checks
 

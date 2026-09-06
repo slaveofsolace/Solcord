@@ -19,7 +19,7 @@ New to Solcord? Start with [Installation](QUICK_START.md), then the [User guide]
 ## Developing Solcord
 
 - [Contributing and repository layout](../CONTRIBUTING.md)
-- [Maintainer rules](../AGENTS.md)
+- [Maintaining Solcord](../MAINTAINING.md)
 - [Activities compatibility](ACTIVITY_COMPATIBILITY.md)
 - [Theme system](V2_THEME_SYSTEM.md)
 - [Brand system](BRAND_SYSTEM.md) and [visual contract](PRODUCT_VISUAL_CONTRACT.md)
