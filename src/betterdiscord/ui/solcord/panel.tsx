@@ -26,6 +26,7 @@ import {privacyCapabilityStateLabel} from "@common/solcord/privacy";
 import {scrollSolcordSettingsTarget} from "./scroll-owner";
 import SolcordSwitch from "./switch";
 import PreferenceSlider from "./slider";
+import AccessibilityOptions from "./accessibility-options";
 import PreferenceTextField from "./text-field";
 import ActionButton from "./action-button";
 import {SolcordActionErrorContext, useSolcordAction, useSolcordResultScope, useSolcordWrite} from "./use-action";
@@ -953,15 +954,11 @@ function NativeSuiteAccountPanel({scope, state}: {scope: NativeSuiteScope; state
 }
 
 function AccessibilityControls() {
-    const accessibility = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["accessibility-toolkit"].values);
+    const accessibility = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["accessibility-toolkit"]);
     const setting = useSolcordWrite((key: string, value: unknown) => SolcordRuntime.setValue("accessibility-toolkit", key, value));
     return <Section title="Accessibility" summary="Reading, contrast, focus, and motion controls.">
-        <div className="solcord-control-grid">
-            <label><SolcordSwitch label="Reduced motion" checked={accessibility.reducedMotion === true} onChange={value => setting("reducedMotion", value)} /> Reduced motion</label>
-            <label><SolcordSwitch label="Role contrast aid" checked={accessibility.roleContrast === true} onChange={value => setting("roleContrast", value)} /> Role contrast aid</label>
-            <label><SolcordSwitch label="Reading ruler" checked={accessibility.readingRuler === true} onChange={value => setting("readingRuler", value)} /> Reading ruler</label>
-            <PreferenceSlider label="Reading width" min={0} max={1200} step={40} value={Number(accessibility.readingWidth) || 0} formatValue={value => value ? `${value} px` : "Discord default"} onCommit={value => setting("readingWidth", value)} />
-        </div>
+        <AccessibilityOptions enabled={accessibility.enabled} values={accessibility.values}
+            onEnabledChange={enabled => SolcordRuntime.setEnabled("accessibility-toolkit", enabled)} onValueChange={setting} />
     </Section>;
 }
 

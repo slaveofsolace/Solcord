@@ -160,6 +160,7 @@
 
     content.innerHTML = state === "wizard" ? setupScreen() : screens[workspace]();
     if (switchMatrix) content.insertAdjacentHTML("beforeend", section("Switch states", "Canonical off, on, disabled, hover, and keyboard-focus geometry.", `<div class="solcord-setting-list" data-switch-matrix>${toggle("Off state", "Gray track with a visible white thumb.")}${toggle("On state", "Teal track with the same visible white thumb.", true)}<div class="solcord-setting-row"><span><strong>Disabled state</strong><small>Still legible and visibly unavailable.</small></span>${switchControl("Disabled state", false, true)}</div></div>`));
+    if (switchMatrix || workspace === "appearance") content.insertAdjacentHTML("beforeend", section("Reading width", "One focus indicator and a full-width track below its label.", `<div class="solcord-control-grid" data-range-matrix><label class="solcord-range-field"><span>${longCopy ? "Width of the message reading area with a long translated label" : "Reading width"}<output>Discord default</output></span><input type="range" aria-label="Reading width" min="0" max="19" value="0" aria-valuetext="Discord default"></label></div>`));
     content.dataset.workspace = workspace;
     document.querySelectorAll("[data-workspace]").forEach(button => button.setAttribute("aria-current", button.dataset.workspace === workspace ? "page" : "false"));
     document.querySelector(".solcord-workspace-menu > summary").setAttribute("aria-label", `Change workspace. Current workspace: ${workspaceNames[workspace][0]}`);
@@ -297,6 +298,21 @@
                 ? [{label: summary.textContent.trim(), outline: style.outline, contrast: Number(focusContrast.toFixed(2))}]
                 : [];
         });
+        const rangeLayoutFailures = [...panel.querySelectorAll("[data-range-matrix] .solcord-range-field")].flatMap(field => {
+            const label = field.querySelector(":scope > span");
+            const input = field.querySelector("input");
+            input.focus({preventScroll: true});
+            const labelBox = label.getBoundingClientRect();
+            const trackBox = input.getBoundingClientRect();
+            const focus = getComputedStyle(input);
+            const failures = [];
+            if (getComputedStyle(field).display !== "grid" || trackBox.top - labelBox.bottom < 7) failures.push("slider-label-not-above-track");
+            if (Math.abs(labelBox.width - trackBox.width) > 1) failures.push("slider-track-not-full-width");
+            const parentFocus = getComputedStyle(field);
+            if (parentFocus.outlineStyle !== "none" && parseFloat(parentFocus.outlineWidth) > 0) failures.push(`duplicate-slider-focus-outline: ${parentFocus.outline}`);
+            if (focus.outlineStyle === "none" || parseFloat(focus.outlineWidth) < 2) failures.push("missing-slider-focus-outline");
+            return failures;
+        });
         const result = {
             scenario: {workspace, state, diagnostic, mode: document.documentElement.dataset.solcordMode, theme: document.documentElement.dataset.solcordFixtureTheme, motion: document.documentElement.dataset.solcordEffectiveMotion, scale: Number(document.documentElement.dataset.solcordFixtureScale), width: innerWidth, height: innerHeight, devicePixelRatio},
             horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -310,6 +326,7 @@
             switchStateFailures,
             switchFocusVisible,
             disclosureFocusFailures,
+            rangeLayoutFailures,
             diagnosticIdentity: {requested: diagnostic, warningVisible: Boolean(diagnosticWarning && visible(diagnosticWarning))},
             navigationRelationship: {sideBySide, stacked, horizontalOverlap: Number(horizontalOverlap.toFixed(2)), verticalOverlap: Number(verticalOverlap.toFixed(2))},
             compactNavigationGeometry,
@@ -325,7 +342,7 @@
         const expectedHeadingCount = state === "wizard" ? 0 : 1;
         const contrastSamples = Object.values(result.contrast).filter(value => value !== null);
         const compactNavigationPass = !compactNavigationGeometry || Object.values(compactNavigationGeometry).every(Boolean);
-        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && !result.settingHintSpacingFailures.length && !result.actionHintSpacingFailures.length && !result.switchStateFailures.length && result.switchFocusVisible && !result.disclosureFocusFailures.length && result.workspaceHeadingCount === expectedHeadingCount && result.diagnosticIdentity.warningVisible === diagnostic && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
+        result.pass = !result.horizontalOverflow && !overflow.length && !focusFailures.length && !result.nativeRowSpacingFailures.length && !result.settingHintSpacingFailures.length && !result.actionHintSpacingFailures.length && !result.switchStateFailures.length && result.switchFocusVisible && !result.disclosureFocusFailures.length && !rangeLayoutFailures.length && result.workspaceHeadingCount === expectedHeadingCount && result.diagnosticIdentity.warningVisible === diagnostic && contrastSamples.every(value => value >= 4.5) && (sideBySide || stacked) && compactNavigationPass;
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(result))));
         document.body.dataset.fixtureResult = encoded;
         document.querySelector("#fixture-result").textContent = JSON.stringify(result, null, 2);
