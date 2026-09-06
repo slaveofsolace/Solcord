@@ -96,9 +96,12 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
-        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
+        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><FakeDeafenControls /></div>");
         expect(panel).toContain("label=\"Fake Deafen\"");
-        expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
+        expect(panel).toContain("disabled={!canArm}");
+        expect(panel).toContain("state.status.phase === \"ready\"");
+        expect(panel).toContain("state.status.capturedVoiceState");
+        expect(panel).toContain("findSolcordWorkspaces(workspaceQuery)");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
     });

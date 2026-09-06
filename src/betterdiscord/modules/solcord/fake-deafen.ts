@@ -51,12 +51,14 @@ export interface SolcordFakeDeafenConsentTransition {
 export async function applySolcordFakeDeafenConsentTransition(
     transition: SolcordFakeDeafenConsentTransition
 ): Promise<boolean> {
-    try {transition.persist();}
+    try {
+        transition.persist();
+        await transition.synchronize();
+    }
     catch {
         transition.failClosed();
         return false;
     }
-    await transition.synchronize();
     return true;
 }
 
@@ -128,13 +130,22 @@ export class SolcordFakeDeafenController {
             this.#stop(false, "The Discord account changed; Fake Deafen disarmed and removed its scoped patch.");
             return false;
         }
-        if (this.dependencies.getSocket() === this.#socket) return true;
-        this.#stop(false, "Discord replaced the gateway connection; Fake Deafen disarmed and requires a manual restart.");
-        return false;
+        if (this.dependencies.getSocket() !== this.#socket) {
+            this.#stop(false, "Discord replaced the gateway connection; Fake Deafen disarmed and requires a manual restart.");
+            return false;
+        }
+        if (this.#armedChannelId && discordId(this.dependencies.getVoiceChannelId()) !== this.#armedChannelId) {
+            this.#lastPayload = undefined;
+            this.#armedChannelId = undefined;
+            this.#setStatus("attention", "The voice connection changed; Fake Deafen disarmed without sending a replacement state.");
+            return false;
+        }
+        return true;
     }
 
     arm(): boolean {
         if (!this.validateOwnership()) return false;
+        if (this.#armedChannelId) return true;
         const accountId = discordId(this.dependencies.getAccountId());
         const channelId = discordId(this.dependencies.getVoiceChannelId());
         if (!accountId || accountId !== this.#boundAccountId) {
@@ -200,16 +211,20 @@ export class SolcordFakeDeafenController {
         const restored = !restore || this.disarm();
         const restorationDetail = this.#status.detail;
         const unpatch = this.#unpatch;
-        this.#unpatch = undefined;
         this.#socket = undefined;
         this.#lastPayload = undefined;
         this.#boundAccountId = undefined;
         this.#armedChannelId = undefined;
         try {unpatch?.();}
-        finally {
-            if (restore && !restored) this.#setStatus("attention", restorationDetail);
-            else this.#setStatus(restore ? "off" : "attention", detail);
+        catch (error) {
+            // Keep the exact cleanup callback. A later stop may retry it, but
+            // start must not stack another patch over the one still owned here.
+            this.#setStatus("attention", "Cleanup is incomplete. Fake Deafen is disarmed and will not load another patch until cleanup succeeds.");
+            throw error;
         }
+        this.#unpatch = undefined;
+        if (restore && !restored) this.#setStatus("attention", restorationDetail);
+        else this.#setStatus(restore ? "off" : "attention", detail);
         return restored;
     }
 
@@ -217,10 +232,9 @@ export class SolcordFakeDeafenController {
         if (args[0] !== DISCORD_VOICE_STATE_UPDATE_OPCODE) return;
         const payload = normalizeVoiceStatePayload(args[1]);
         if (!payload) {
-            if (this.#armedChannelId) {
-                this.#armedChannelId = undefined;
-                this.#setStatus("attention", "Discord's voice-state shape changed; Fake Deafen failed closed and stopped rewriting state.");
-            }
+            this.#lastPayload = undefined;
+            this.#armedChannelId = undefined;
+            this.#setStatus("attention", "Discord's voice-state shape changed; Fake Deafen failed closed and needs a fresh validated update before arming.");
             return;
         }
         this.#lastPayload = structuredClone(payload);

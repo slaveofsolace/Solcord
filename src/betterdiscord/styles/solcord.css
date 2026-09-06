@@ -1082,7 +1082,7 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-setting-row > span:first-child { display: grid; gap: 8px; min-width: 0; }
 .solcord-setting-row small { color: var(--sc-muted); line-height: 1.35; }
 .solcord-setting-row select { box-sizing: border-box; width: 160px; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 9px; color: var(--sc-text); background: var(--input-background, var(--sc-surface-2)); border: 1px solid var(--sc-border-strong); border-radius: 4px; }
-.solcord-switch { position: relative; display: inline-flex !important; width: 38px; height: 22px; flex: 0 0 38px; align-items: center; vertical-align: middle; }
+.solcord-switch { position: relative; display: inline-flex !important; width: 38px; height: 22px; flex: 0 0 auto; align-items: center; vertical-align: middle; }
 .solcord-switch > input { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .solcord-switch-track { position: absolute; inset: 0; display: block !important; background: #60666B; border: 1px solid color-mix(in srgb, var(--sc-text) 25%, var(--sc-border)); border-radius: 999px; transition: background-color 120ms ease-out, border-color 120ms ease-out; pointer-events: none; }
 .solcord-switch-thumb { position: absolute; top: 3px; left: 3px; display: block !important; width: 14px; height: 14px; background: #FFFFFF; border: 1px solid rgb(0 0 0 / 18%); border-radius: 50%; box-shadow: 0 1px 2px rgb(0 0 0 / 28%); transition: transform 120ms ease-out; }

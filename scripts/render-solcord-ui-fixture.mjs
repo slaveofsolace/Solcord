@@ -29,6 +29,7 @@ const scenarios = [
     {name: "setup-dark-1280x720", width: 1280, height: 720, query: "workspace=overview&state=wizard&mode=solcord-dark&scale=100"},
     {name: "privacy-light-1920x1080", width: 1920, height: 1080, query: "workspace=privacy&state=degraded&mode=solcord-light&scale=100"},
     {name: "voice-oled-1280x720", width: 1280, height: 720, query: "workspace=voice&state=healthy&mode=oled&scale=100"},
+    {name: "voice-light-narrow-320-container", width: 500, height: 1200, query: "workspace=voice&state=healthy&mode=solcord-light&motion=reduced&fixtureWidth=320&scale=200"},
     {name: "recovery-dark-1280x720", width: 1280, height: 720, query: "workspace=recovery&state=degraded&mode=solcord-dark&scale=100"},
     {name: "appearance-light-long-320-container", width: 500, height: 900, query: "workspace=appearance&state=healthy&mode=solcord-light&motion=reduced&long=1&fixtureWidth=320&scale=100"},
     {name: "extensions-dark-640x720", width: 640, height: 720, query: "workspace=extensions&state=healthy&mode=solcord-dark&scale=100"},

@@ -1371,7 +1371,7 @@ class SolcordRuntimeStore extends Store {
             if (!accepted) {
                 this.#fakeDeafenStatus = {
                     phase: "attention",
-                    detail: "The Power Lab setting could not be saved. Fake Deafen was stopped for this session; the previous durable consent may load again after restart.",
+                    detail: "Fake Deafen could not finish applying the change and was stopped for this session. Check the saved selection before restarting.",
                     connected: false,
                     accountBound: false,
                     capturedVoiceState: false,

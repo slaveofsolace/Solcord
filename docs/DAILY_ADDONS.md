@@ -17,7 +17,9 @@ Solcord V2 has three distinct layers. Core reliability/privacy modules ship with
 | Notification Review | ReadAllNotificationsButton | Previews scope and count before one explicit mark-read action |
 | Motion Studio | BetterAnimations, DiscordEffects | Bounded local transitions; suppressed when reduced motion is active |
 
-Permission Lens and Voice Health are additional Solcord V2 tools. Local Identity Notes remains unavailable until its private storage adapter validates. Message Timeline is an independent opt-in private module and never imports MessageLoggerV2 data. Fake Deafen remains default-off Power Lab work rather than a daily default.
+Permission Lens and Voice Health are additional Solcord V2 tools. Local Identity Notes remains unavailable until its private storage adapter validates. Message Timeline is an independent opt-in private module and never imports MessageLoggerV2 data.
+
+Fake Deafen is included in **Voice & Activities → Experimental**. Search for `Fake Deafen` in the Control Center to find that workspace. No separate plugin or library is needed. It stays off until enabled, requires a separate arm action for each call, and carries an account-risk warning. If a standalone FakeDeafen plugin is active, Solcord leaves it untouched and will not run both implementations together. Live call behavior must be checked by the owner; automated acceptance never arms it.
 
 The setup draft maps 21 community-facing choices to these built-ins without staging the community files. Their source behavior contracts are complete, but readiness is still tracked per original provider rather than inherited from a broad group. A built-in can report `unavailable` when its Discord lookup or required browser API does not validate. A settings card is not evidence that the adapter is live. See [Original plugin parity](ORIGINAL_PLUGIN_PARITY.md) for the exact source and live-client gate for each card.
 
