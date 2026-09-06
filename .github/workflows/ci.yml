@@ -5,13 +5,14 @@ permissions:
 
 on:
   push:
-    branches: ["development"]
+    branches: ["main", "development"]
   pull_request:
-    branches: ["development"]
+    branches: ["main", "development"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout

@@ -95,8 +95,17 @@ describe("Solcord installer security contracts", () => {
         expect(gitignore).toContain("outputs/");
     });
 
-    test("runs the complete Solcord workflow on canonical development pushes", () => {
-        expect(fullCi).toContain("branches: [\"development\", \"fork/**\", \"v2/**\", \"audit/**\"]");
+    test("runs release checks for both main and development pushes and pull requests", () => {
+        const compatibilityCi = fs.readFileSync(path.join(root, ".github/workflows/ci.yml"), "utf8");
+        for (const workflow of [fullCi, compatibilityCi]) {
+            for (const event of ["push", "pull_request"]) {
+                const list = workflow.match(new RegExp(`  ${event}:\\r?\\n    branches: (\\[[^\\r\\n]+\\])`))?.[1];
+                expect(list).toBeDefined();
+                const branches = JSON.parse(list!);
+                expect(branches).toContain("main");
+                expect(branches).toContain("development");
+            }
+        }
     });
 
     test("verifies embedded bytes before private extraction and cleans only known files", () => {
@@ -239,6 +248,20 @@ describe("Solcord installer security contracts", () => {
         expect(selfTest).toContain("uninstall touched the newer Discord installation");
         expect(selfTest).toContain("receipt-bound-recovery-preflight-and-drift");
         expect(selfTest).toContain("receipt-encoding-compatibility");
+    });
+
+    test("verifies the reachable Electron loader and restores the original bootstrap transactionally", () => {
+        const verify = engine.slice(engine.indexOf("internal bool VerifyInstalled"), engine.indexOf("internal string RollBack"));
+        const launch = engine.slice(engine.indexOf("internal void Launch"), engine.indexOf("private void WriteFirstSetupIntent"));
+        expect(verify).toContain("RequireWorkingInjector");
+        expect(launch).toContain("!VerifyInstalled()");
+        expect(engine).toContain("PrepareBootstrapRollback");
+        expect(engine).toContain("OriginalModuleSha256");
+        expect(engine).toContain("competing startup archives");
+        expect(selfTest).toContain("electron-bootstrap-handoff-and-recovery");
+        expect(selfTest).toContain("RC34 shadowed layout still verified");
+        expect(selfTest).toContain("uninstall interruption did not restore the working loader");
+        expect(selfTest).toContain("rollback retry did not restore a clean Discord startup");
     });
 
     test("creates a branded, owner-scoped Windows Search entry without replacing Discord shortcuts", () => {

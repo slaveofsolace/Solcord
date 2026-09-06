@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-solcord-mode="solcord-dark" data-solcord-effective-motion="full" data-solcord-ambient-motion="true">
+<head>
+    <meta charset="utf-8">
+    <title>Solcord ambient shell regression</title>
+    <link rel="stylesheet" href="../../src/betterdiscord/styles/solcord.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #141414; color: #eee; font: 16px/1.5 sans-serif; }
+        .shell-paint { background-color: #202020; }
+        #app-mount, .appAsidePanelWrapper_fixture, .app_fixture, .layers_fixture, [data-layer="base"] { min-height: 100vh; }
+        .bg_fixture { position: fixed; inset: 0; }
+        [data-layer="base"] { position: relative; padding: 32px; }
+        .peopleColumn_fixture { min-height: 65vh; padding: 24px; }
+        .protected { background-color: #303030; padding: 16px; margin: 16px 0; }
+        .solcord-ambient-effect { position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(30deg, #163c36 0 1px, #102421 1px 32px); }
+    </style>
+</head>
+<body>
+    <div id="app-mount">
+        <div class="appAsidePanelWrapper_fixture shell-paint" data-open-layer>
+            <div class="app_fixture shell-paint" data-open-layer>
+                <div class="bg_fixture shell-paint" data-open-layer></div>
+                <div class="layers_fixture shell-paint" data-open-layer>
+                    <div data-layer="base" class="shell-paint" data-open-layer>
+                        <main class="container_fixture shell-paint" data-open-layer>
+                            <div class="tabBody_fixture shell-paint" data-open-layer>
+                                <div class="peopleColumn_fixture shell-paint" data-open-layer>
+                                    <h1>Background stays behind the workspace</h1>
+                                    <p>The field should be visible in the open space.</p>
+                                    <button class="protected">An ordinary clickable control</button>
+                                    <div class="videoTile_fixture protected">Video tile remains opaque</div>
+                                    <div class="container_other protected">Unrelated container remains opaque</div>
+                                </div>
+                            </div>
+                        </main>
+                        <div role="dialog" class="protected">Dialog remains opaque</div>
+                        <div role="menu" class="protected">Menu remains opaque</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="solcord-ambient-effect" data-solcord-ambient-effect="true" aria-hidden="true"></div>
+    <script>
+        const params = new URLSearchParams(location.search);
+        const variant = params.get("variant") || "on";
+        const root = document.documentElement;
+        if (params.get("mode") === "solcord-light") root.dataset.solcordMode = "solcord-light";
+        if (variant === "off") document.querySelector("[data-solcord-ambient-effect]").remove();
+        if (variant === "reduced") root.dataset.solcordEffectiveMotion = "reduced";
+        if (variant === "drift") document.querySelector(".peopleColumn_fixture").className = "changedColumn_fixture shell-paint";
+        addEventListener("load", () => {
+            const transparent = node => getComputedStyle(node).backgroundColor === "rgba(0, 0, 0, 0)";
+            const openLayers = [...document.querySelectorAll("[data-open-layer]")];
+            const opened = openLayers.filter(transparent).length;
+            const protectedFailures = [...document.querySelectorAll(".protected")].filter(transparent).length;
+            const button = document.querySelector("button");
+            const box = button.getBoundingClientRect();
+            const controlReachable = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2) === button;
+            const field = document.querySelector("[data-solcord-ambient-effect]");
+            const reducedHidden = variant !== "reduced" || getComputedStyle(field).display === "none";
+            // Drift can leave the known root backdrop open; the unknown page
+            // and its content must remain opaque, never guessed transparent.
+            const layersPass = variant === "on" ? opened === openLayers.length
+                : variant === "drift" ? !transparent(document.querySelector(".changedColumn_fixture")) && !transparent(document.querySelector("main"))
+                    : opened === 0;
+            const result = {variant, opened, layerCount: openLayers.length, protectedFailures, controlReachable, reducedHidden,
+                pass: layersPass && protectedFailures === 0 && controlReachable && reducedHidden};
+            document.body.dataset.fixtureResult = btoa(JSON.stringify(result));
+        });
+    </script>
+</body>
+</html>

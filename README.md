@@ -18,7 +18,7 @@ You need **Windows x64** and the official **Discord desktop app**. You do not ne
 Installation takes about one minute on a typical PC **after download**. Your existing Discord login, plugins, themes, and settings stay in place.
 
 > [!IMPORTANT]
-> The published download is **v2.0.0-rc.33**, an unsigned release candidate. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. RC34 changes on the development branch are not part of this download.
+> The published download is **v2.0.0-rc.33**, an unsigned release candidate. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. RC38 contains the newer source corrections; it is not part of that download. [Candidate status](docs/STATUS.md)
 
 ## What Solcord adds
 
@@ -61,7 +61,7 @@ Start with the [documentation index](docs/README.md). Installation, daily use, d
 Contributors need Git and **Bun 1.4.0**. Building the Windows installer also requires the **.NET 8 SDK**.
 
 ```sh
-git clone https://github.com/slaveofsolace/Solcord.git
+git clone --branch main https://github.com/slaveofsolace/Solcord.git
 cd Solcord
 bun install --frozen-lockfile
 bun run verify

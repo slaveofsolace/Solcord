@@ -4,7 +4,7 @@ This checklist governs the owner-ready unsigned candidate. Historical candidates
 
 ## Source and provenance
 
-- [ ] The final source commit is clean, reachable from `development`, pushed, and remote SHA verified.
+- [ ] The final source commit is clean, reachable from `main`, pushed, and remote SHA verified. Preserve `development` and upstream history.
 - [ ] The exact source/delivery ZIPs and their SHA-256 values are recorded outside the source archive.
 - [ ] Record the current plugin/theme catalog counts and API hashes, compare them with the last reviewed 209-plugin/114-theme snapshot, and explicitly disposition any drift rather than silently accepting it.
 - [ ] Current raw catalog hashes and generated registry hashes match `PROVENANCE_REGISTRY.md`.

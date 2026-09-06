@@ -97,6 +97,88 @@ describe("Solcord Fake Deafen", () => {
         expect(calls).toEqual(["persist", "synchronize"]);
     });
 
+    test("tears down a partially started adapter when synchronization rejects", async () => {
+        const calls: string[] = [];
+        expect(await applySolcordFakeDeafenConsentTransition({
+            persist: () => {calls.push("persist");},
+            synchronize: async () => {calls.push("synchronize"); throw new Error("adapter drift");},
+            failClosed: () => {calls.push("fail-closed");}
+        })).toBeFalse();
+        expect(calls).toEqual(["persist", "synchronize", "fail-closed"]);
+    });
+
+    test("invalidates captured state after malformed updates instead of reusing stale consent to arm", () => {
+        const state = harness();
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        controller.start();
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, {channel_id: CHANNEL_ID, self_mute: false, self_deaf: "drift"});
+        expect(controller.snapshot()).toMatchObject({phase: "attention", capturedVoiceState: false, armed: false});
+        expect(controller.arm()).toBeFalse();
+        expect(state.sent).toHaveLength(2);
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
+        expect(controller.arm()).toBeTrue();
+        controller.stop();
+    });
+
+    test("treats repeated arm as idempotent without changing local audio again", () => {
+        const state = harness();
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        controller.start();
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
+        expect(controller.arm()).toBeTrue();
+        const sent = state.sent.length;
+        expect(controller.arm()).toBeTrue();
+        expect(state.sent).toHaveLength(sent);
+        expect(controller.snapshot()).toMatchObject({phase: "armed", armed: true});
+        expect(state.locallyDeafened).toBeFalse();
+        controller.stop();
+    });
+
+    test("detects a channel change even before another outgoing voice update", () => {
+        const state = harness();
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        controller.start();
+        state.socket.send(DISCORD_VOICE_STATE_UPDATE_OPCODE, deafenedPayload());
+        controller.arm();
+        const sent = state.sent.length;
+        state.channelId = MOVED_CHANNEL_ID;
+        expect(controller.validateOwnership()).toBeFalse();
+        expect(controller.snapshot()).toMatchObject({phase: "attention", armed: false, capturedVoiceState: false});
+        expect(state.sent).toHaveLength(sent);
+        controller.stop();
+    });
+
+    test("retains a failed unpatch for retry and never stacks a replacement patch", () => {
+        const state = harness();
+        const originalPatch = state.dependencies.patchSend;
+        let patchCount = 0;
+        let cleanupCount = 0;
+        let failCleanup = true;
+        state.dependencies.patchSend = (socket, observe) => {
+            patchCount++;
+            const unpatch = originalPatch(socket, observe)!;
+            return () => {
+                cleanupCount++;
+                if (failCleanup) throw new Error("unpatch failed");
+                unpatch();
+            };
+        };
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        controller.start();
+        expect(() => controller.stop()).toThrow("unpatch failed");
+        expect(controller.snapshot()).toMatchObject({phase: "attention", armed: false, accountBound: false});
+        expect(() => controller.start()).toThrow("unpatch failed");
+        expect(patchCount).toBe(1);
+        failCleanup = false;
+        expect(controller.stop()).toBeTrue();
+        expect(cleanupCount).toBe(3);
+        expect(state.unpatched).toBeTrue();
+        expect(controller.start()).toBeTrue();
+        expect(patchCount).toBe(2);
+        controller.stop();
+    });
+
     test("accepts only bounded Discord voice-state payloads", () => {
         expect(normalizeVoiceStatePayload(deafenedPayload())).toEqual(deafenedPayload());
         expect(normalizeVoiceStatePayload({channel_id: "../bad", self_mute: false, self_deaf: true})).toBeUndefined();

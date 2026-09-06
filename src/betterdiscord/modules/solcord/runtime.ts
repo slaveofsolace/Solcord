@@ -139,9 +139,12 @@ interface TimelineReadOutcome extends TimelineExportOutcome {
 export interface CuratedAdapterResult {
     enabled: boolean;
     provider: "community" | "solcord" | "off";
+    ready?: boolean;
     conflict?: boolean;
     reason?: string;
 }
+
+const INDEPENDENT_BUILTIN_PROVIDERS = new Set(["DoNotTrack", "InvisibleTyping", "DoubleClickToReply", "SplitLargeMessages"]);
 
 export interface SetupRollbackOutcome {
     status: "complete" | "partial" | "unavailable" | "failed";
@@ -784,7 +787,19 @@ class SolcordRuntimeStore extends Store {
     }
 
     curatedAdapterStatus(): Record<string, CuratedAdapterResult> {
-        return structuredClone(this.#curatedAdapterResults);
+        const results = structuredClone(this.#curatedAdapterResults);
+        for (const [name, result] of Object.entries(results)) {
+            if (!result.enabled || result.provider !== "solcord" || INDEPENDENT_BUILTIN_PROVIDERS.has(name)) continue;
+            result.ready = this.#nativeSuite?.providerReady(name) === true;
+            result.enabled = result.ready || this.#nativeSuite?.providerAvailable(name) === true;
+            if (result.ready) {delete result.reason;}
+            else {
+                result.reason = result.enabled
+                    ? "Available — the first-party adapter is active, but Ready is withheld until a matching live interaction succeeds."
+                    : "This feature is unavailable on the current Discord build.";
+            }
+        }
+        return results;
     }
 
     timelineEntries(channelId?: string): TimelineMessageState[] {
@@ -1356,7 +1371,7 @@ class SolcordRuntimeStore extends Store {
             if (!accepted) {
                 this.#fakeDeafenStatus = {
                     phase: "attention",
-                    detail: "The Power Lab setting could not be saved. Fake Deafen was stopped for this session; the previous durable consent may load again after restart.",
+                    detail: "Fake Deafen could not finish applying the change and was stopped for this session. Check the saved selection before restarting.",
                     connected: false,
                     accountBound: false,
                     capturedVoiceState: false,
@@ -1451,6 +1466,7 @@ class SolcordRuntimeStore extends Store {
             const enabled = providers[name] && this.#nativeSuite.providerReady(name);
             this.#curatedAdapterResults[name] = {
                 enabled,
+                ready: enabled,
                 provider: enabled ? "solcord" : "off",
                 reason: PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
                     ? "Plugin Doctor is holding this feature until an explicit retry succeeds."
@@ -2467,8 +2483,8 @@ class SolcordRuntimeStore extends Store {
         const communityResult = (name: string): CuratedAdapterResult => {
             const preferred = curated[name]?.provider;
             return preferred === "prefer-solcord"
-                ? {enabled: true, provider: "community", conflict: true, reason: "The community addon was re-enabled; Solcord stood down its built-in and left the owner file unchanged."}
-                : {enabled: true, provider: "community"};
+                ? {enabled: true, ready: true, provider: "community", conflict: true, reason: "The community addon was re-enabled; Solcord stood down its built-in and left the owner file unchanged."}
+                : {enabled: true, ready: true, provider: "community"};
         };
         const failClosed = (reason: string): Record<string, CuratedAdapterResult> => {
             this.#curatedSynchronizationError = reason;
@@ -2498,7 +2514,6 @@ class SolcordRuntimeStore extends Store {
             return results;
         }
         this.#curatedCommunitySignature = this.#communityAddonSignature();
-        const separatelyOwnedProviders = new Set(["DoNotTrack", "InvisibleTyping", "DoubleClickToReply", "SplitLargeMessages"]);
         for (const [name, state] of Object.entries(curated)) {
             if (state.enabled === true
                 && isSolcordBuiltInAddon(name, state.mode)
@@ -2510,7 +2525,7 @@ class SolcordRuntimeStore extends Store {
         const nativeEnabled: Record<string, boolean> = Object.fromEntries(Object.entries(curated).map(([name, state]) => [name,
             state.enabled === true
             && isSolcordBuiltInAddon(name, state.mode)
-            && !separatelyOwnedProviders.has(name)
+            && !INDEPENDENT_BUILTIN_PROVIDERS.has(name)
             && !PluginDoctor.isQuarantined(solcordBuiltInDoctorId(name))
             && !this.#communityAddonEnabled(name)
         ]));
@@ -2559,7 +2574,7 @@ class SolcordRuntimeStore extends Store {
                 event.stopImmediatePropagation();
                 this.#showGuardedSplitReview(scope, content);
             }, true);
-            results.SplitLargeMessages = {enabled: true, provider: "solcord"};
+            results.SplitLargeMessages = {enabled: true, ready: true, provider: "solcord"};
         }
 
         if (!curated.DoNotTrack?.enabled) {
@@ -2569,7 +2584,7 @@ class SolcordRuntimeStore extends Store {
             results.DoNotTrack = {enabled: false, provider: "off", reason: "Plugin Doctor quarantine is holding the built-in until an explicit retry succeeds."};
         }
         else if (SolcordSettings.snapshot().productPreferences.privacy.telemetry === "block" && this.#privacyCapabilities.find(capability => capability.dataClass === "telemetry")?.state === "Protected") {
-            results.DoNotTrack = {enabled: true, provider: "solcord"};
+            results.DoNotTrack = {enabled: true, ready: true, provider: "solcord"};
             PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoNotTrack"));
         }
         else if (this.#communityAddonEnabled("DoNotTrack")) {
@@ -2588,7 +2603,7 @@ class SolcordRuntimeStore extends Store {
                 getSettings: () => ({enabled: true})
             });
             if (adapter.start()) {
-                results.DoNotTrack = {enabled: true, provider: "solcord"};
+                results.DoNotTrack = {enabled: true, ready: true, provider: "solcord"};
                 PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoNotTrack"));
             }
             else {
@@ -2617,7 +2632,7 @@ class SolcordRuntimeStore extends Store {
                 validateTypingStart: target => target.module === typingModule && typeof typingModule?.stopTyping === "function"
             });
             if (adapter.start()) {
-                results.InvisibleTyping = {enabled: true, provider: "solcord"};
+                results.InvisibleTyping = {enabled: true, ready: true, provider: "solcord"};
                 PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("InvisibleTyping"));
             }
             else {
@@ -2641,7 +2656,7 @@ class SolcordRuntimeStore extends Store {
             const feature = new DoubleClickReplyFeature(this.#doubleClickReplyAdapter(), modifier);
             if (feature.start()) {
                 scope.own(() => feature.stop(), "listener");
-                results.DoubleClickToReply = {enabled: true, provider: "solcord"};
+                results.DoubleClickToReply = {enabled: true, ready: true, provider: "solcord"};
                 PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId("DoubleClickToReply"));
             }
             else {
@@ -2660,7 +2675,7 @@ class SolcordRuntimeStore extends Store {
                     results[name] = communityResult(name);
                 }
                 else if (nativeSuite.providerReady(name)) {
-                    results[name] = {enabled: true, provider: "solcord", reason: "Active as the selected first-party Appearance background."};
+                    results[name] = {enabled: true, ready: true, provider: "solcord", reason: "Active as the selected first-party Appearance background."};
                     PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId(name));
                 }
                 else {
@@ -2683,12 +2698,12 @@ class SolcordRuntimeStore extends Store {
                 continue;
             }
             if (nativeSuite.providerReady(name)) {
-                results[name] = {enabled: true, provider: "solcord"};
+                results[name] = {enabled: true, ready: true, provider: "solcord"};
                 PluginDoctor.recordSuccessfulStart(solcordBuiltInDoctorId(name));
                 continue;
             }
             if (nativeSuite.providerAvailable(name)) {
-                results[name] = {enabled: true, provider: "solcord", reason: "Available — the first-party adapter is active, but Ready is withheld until a matching live interaction succeeds."};
+                results[name] = {enabled: true, ready: false, provider: "solcord", reason: "Available — the first-party adapter is active, but Ready is withheld until a matching live interaction succeeds."};
                 PluginDoctor.recordCapabilityMiss(solcordBuiltInDoctorId(name));
                 continue;
             }

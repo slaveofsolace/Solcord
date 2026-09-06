@@ -96,9 +96,12 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
-        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><PowerLabStatus /></div>");
+        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><FakeDeafenControls /></div>");
         expect(panel).toContain("label=\"Fake Deafen\"");
-        expect(panel).toContain("disabled={!state.status.connected || !state.status.accountBound}");
+        expect(panel).toContain("disabled={!canArm}");
+        expect(panel).toContain("state.status.phase === \"ready\"");
+        expect(panel).toContain("state.status.capturedVoiceState");
+        expect(panel).toContain("findSolcordWorkspaces(workspaceQuery)");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");
     });
@@ -348,7 +351,7 @@ describe("Solcord Control Center clarity", () => {
     test("reports each built-in from its actual adapter result and explains every family state", () => {
         expect(panel).toContain("adapters: SolcordRuntime.curatedAdapterStatus()");
         expect(panel).toContain("const adapter = state.adapters[name]");
-        expect(panel).toContain("const maturity = !enabled ? \"off\" : adapter?.enabled ? \"ready\" : \"unsupported\"");
+        expect(panel).toContain("solcordBuiltInCapability(enabled, adapter)");
         expect(panel).toContain("const adapter = SolcordRuntime.curatedAdapterStatus()[name]");
         expect(panel).toContain("is selected but unavailable");
         expect(panel).not.toContain("state.statuses.find(item => item.id === feature)");

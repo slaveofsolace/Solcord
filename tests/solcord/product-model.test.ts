@@ -4,6 +4,7 @@ import {describe, expect, test} from "bun:test";
 
 import {
     expandedSolcordPermissions,
+    findSolcordWorkspaces,
     inferSolcordPermissionCard,
     normalizeSolcordMediaShelfUrl,
     normalizeSolcordProductPreferences,
@@ -14,6 +15,15 @@ import {
 } from "../../src/common/solcord/product";
 
 describe("Solcord V2 product model", () => {
+    test("finds the built-in Fake Deafen controls by feature name without creating a duplicate workspace", () => {
+        for (const query of ["Fake Deafen", "fakedeafen", "  FAKE   DEAFEN  ", "Power Lab", "audio console"]) {
+            expect(findSolcordWorkspaces(query).map(workspace => workspace.id)).toEqual(["voice"]);
+        }
+        expect(findSolcordWorkspaces("appearance reading").map(workspace => workspace.id)).toEqual(["appearance"]);
+        expect(findSolcordWorkspaces("unknown feature")).toEqual([]);
+        expect(findSolcordWorkspaces(" ")).toEqual([...SOLCORD_WORKSPACES]);
+    });
+
     test("owns nine task-oriented Control Center workspaces and five resumable setup steps", () => {
         expect(SOLCORD_WORKSPACES.map(workspace => workspace.id)).toEqual([
             "overview",

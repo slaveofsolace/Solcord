@@ -9,6 +9,7 @@ import {spawnSync} from "node:child_process";
 
 import * as asar from "@electron/asar";
 import {assembleRelease, validateRelease} from "../../scripts/assemble-solcord-release-evidence.mjs";
+import {finishSolcordAsar} from "../../scripts/helpers/finish-asar";
 
 const roots: string[] = [];
 
@@ -54,7 +55,7 @@ async function fixture() {
     fs.mkdirSync(asarInput);
     fs.writeFileSync(path.join(asarInput, "build-provenance.json"), `${JSON.stringify(provenance)}\n`);
     const asarFile = path.join(bundle, "solcord.asar");
-    await asar.createPackage(asarInput, asarFile);
+    await finishSolcordAsar(asar.createPackage(asarInput, asarFile));
     const artifactSha256 = hashFile(asarFile);
     const buildManifest = {
         schemaVersion: 2,

@@ -171,6 +171,19 @@ export const SOLCORD_WORKSPACES = Object.freeze([
     {id: "recovery", label: "Recovery", summary: "Repair, rollback, snapshots, and technical details."}
 ] satisfies ReadonlyArray<{id: SolcordWorkspaceId; label: string; summary: string;}>);
 
+/** Feature aliases supplement route labels without expanding normal page copy. */
+const SOLCORD_WORKSPACE_SEARCH_TERMS: Partial<Record<SolcordWorkspaceId, string>> = {
+    voice: "fake deafen fakedeafen power lab audience guard voice note audio console"
+};
+
+export function findSolcordWorkspaces(query: string) {
+    const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return SOLCORD_WORKSPACES.filter(workspace => {
+        const text = `${workspace.label} ${workspace.summary} ${SOLCORD_WORKSPACE_SEARCH_TERMS[workspace.id] ?? ""}`.toLowerCase();
+        return terms.every(term => text.includes(term));
+    });
+}
+
 export const SOLCORD_SETUP_STEPS = Object.freeze([
     "Welcome",
     "Privacy",

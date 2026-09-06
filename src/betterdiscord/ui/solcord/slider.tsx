@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React, {useRef, useState} from "react";
-import {useSolcordAction} from "./use-action";
+import {useSolcordAction, useSolcordControlFocus} from "./use-action";
 
 export interface SolcordSliderProps {
     label: string;
@@ -34,6 +34,7 @@ export default function SolcordSlider({label, value, min, max, step = 1, suffix 
     const input = useRef<HTMLInputElement>(null);
     currentValue.current = value;
     const {pending, run} = useSolcordAction(onCommit, onError);
+    const preserveFocus = useSolcordControlFocus(input, pending, disabled);
     if (state.source !== source) {
         const next = normalize(value);
         committed.current = next;
@@ -48,6 +49,7 @@ export default function SolcordSlider({label, value, min, max, step = 1, suffix 
         setDraft(next);
         if (next === committed.current) return;
         committed.current = next;
+        preserveFocus();
         if (!await run(next) && input.current) {
             const restored = normalize(currentValue.current);
             committed.current = restored;

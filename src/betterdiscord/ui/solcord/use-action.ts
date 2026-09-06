@@ -1,8 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {createContext, useContext, useEffect, useRef, useState} from "react";
+import {createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type RefObject} from "react";
 
 export const SolcordActionErrorContext = createContext<((error: unknown) => void) | undefined>(undefined);
+
+/** A temporary disabled state must not strand keyboard users after a save. */
+export function useSolcordControlFocus(input: RefObject<HTMLInputElement | null>, pending: boolean, disabled: boolean) {
+    const restore = useRef(false);
+    useLayoutEffect(() => {
+        if (pending || !restore.current) return;
+        restore.current = false;
+        const target = input.current;
+        if (!target?.isConnected || disabled || target.disabled) return;
+        const document = target.ownerDocument;
+        // Do not take focus back if the user moved to another control.
+        if (!document.activeElement || document.activeElement === document.body) target.focus({preventScroll: true});
+    }, [input, pending, disabled]);
+    return () => {
+        const target = input.current;
+        restore.current = Boolean(target && target.ownerDocument.activeElement === target);
+    };
+}
 
 /** Results belong to the latest request in one account/provider/input context. */
 export function useSolcordResultScope(key: string, validate?: () => boolean) {

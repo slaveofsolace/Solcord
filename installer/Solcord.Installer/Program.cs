@@ -84,6 +84,8 @@ internal static class InstallerSelfTest
         {
             stage = "discord-target-selection-and-preflight";
             ValidateTargetSelectionAndPreflight(embeddedBundleRoot, Path.Combine(root, "target-selection"));
+            stage = "electron-bootstrap-handoff-and-recovery";
+            ValidateBootstrapHandoff(embeddedBundleRoot, Path.Combine(root, "bootstrap-handoff"));
             stage = "dpi-layout-matrix";
             InstallerForm.ValidateGeometryMatrix(embeddedBundleRoot);
             string local = Path.Combine(root, "local");
@@ -304,6 +306,95 @@ internal static class InstallerSelfTest
         }
         catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}:{error.Message}"); return 1;}
         finally {if (Directory.Exists(root)) Directory.Delete(root, recursive: true);}
+    }
+
+    private static void ValidateBootstrapHandoff(string bundle, string root)
+    {
+        string local = Path.Combine(root, "local");
+        string roaming = Path.Combine(root, "roaming");
+        string discord = Path.Combine(local, "Discord", "app-1.2.3");
+        string resources = Path.Combine(discord, "resources");
+        Directory.CreateDirectory(resources);
+        File.WriteAllText(Path.Combine(discord, "Discord.exe"), "fixture");
+        string vanilla = Path.Combine(resources, "app.asar");
+        string original = Path.Combine(resources, "betterdiscord.app.asar");
+        string app = Path.Combine(resources, "app");
+        string index = Path.Combine(app, "index.js");
+        string core = Path.Combine(roaming, "BetterDiscord", "data", "betterdiscord.asar");
+        string receipt = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");
+        File.WriteAllText(vanilla, "untouched-discord-bootstrap");
+        string originalHash = InstallerEngine.HashFile(vanilla);
+        var engine = new InstallerEngine(bundle, local, roaming, _ => 0);
+        DiscordTarget target = engine.DetectTargets().Single();
+        void Assert(bool condition, string message)
+        {
+            if (!condition) throw new InvalidDataException($"bootstrap-handoff: {message}");
+        }
+
+        // Electron's real search order is app.asar, app/, default_app.asar.
+        // A copied core must not count as an installed, reachable entry point.
+        Directory.CreateDirectory(Path.GetDirectoryName(core)!);
+        File.Copy(engine.VerifyBundle(engine.LoadManifest()), core);
+        Assert(!engine.VerifyInstalled(), "core-only installation was reported verified");
+        try {engine.Launch(target); throw new InvalidDataException("unverified installation was launched");}
+        catch (InvalidDataException error) when (error.Message.Contains("not verified", StringComparison.Ordinal)) {/* held before Process.Start */}
+        File.Delete(core);
+        var interrupted = new InstallerEngine(bundle, local, roaming, _ => 0, point => {
+            if (point == "install-after-bootstrap") throw new IOException("fixture bootstrap interruption");
+        });
+        try {interrupted.InstallNew(target); throw new InvalidDataException("interrupted installation unexpectedly succeeded");}
+        catch (IOException error) when (error.Message == "fixture bootstrap interruption") {/* restored before returning */}
+        Assert(File.Exists(vanilla) && InstallerEngine.HashFile(vanilla) == originalHash && !File.Exists(original)
+            && !Directory.Exists(app) && !File.Exists(core) && !File.Exists(receipt), "interrupted install did not restore the original startup layout");
+
+        InstallReceipt installed = engine.InstallNew(target);
+        Assert(!File.Exists(vanilla) && File.Exists(original) && InstallerEngine.HashFile(original) == originalHash, "original archive was not preserved outside Electron's first slot");
+        Assert(installed.DiscordArchiveSha256 == originalHash && engine.VerifyInstalled(), "working bootstrap did not verify");
+        string expectedIndex = File.ReadAllText(index);
+        Assert(expectedIndex.Contains("../betterdiscord.app.asar", StringComparison.Ordinal), "loader does not continue into the original archive");
+        File.AppendAllText(index, "\n// changed loader\n");
+        Assert(!engine.VerifyInstalled(), "changed loader still verified");
+        File.WriteAllText(index, expectedIndex);
+        File.Copy(original, vanilla);
+        Assert(!engine.VerifyInstalled(), "shadowed loader still verified");
+        string coreHash = InstallerEngine.HashFile(core);
+        try {engine.Repair(target); throw new InvalidDataException("competing archives were accepted");}
+        catch (InvalidDataException error) when (error.Message.Contains("competing startup archives", StringComparison.Ordinal)) {/* no mutation */}
+        Assert(InstallerEngine.HashFile(core) == coreHash && File.ReadAllText(index) == expectedIndex, "ambiguous archive repair changed files");
+        File.Delete(vanilla);
+
+        File.WriteAllText(original, "changed-discord-bootstrap");
+        Assert(!engine.VerifyInstalled(), "changed Discord archive still verified");
+        try {engine.RollBack(target); throw new InvalidDataException("changed archive was rolled back");}
+        catch (InvalidDataException error) when (error.Message.Contains("startup archive changed", StringComparison.Ordinal)) {/* preserve external change */}
+        Assert(InstallerEngine.HashFile(core) == coreHash && File.ReadAllText(index) == expectedIndex, "archive drift rollback changed files");
+        File.WriteAllText(original, "untouched-discord-bootstrap");
+
+        // Reproduce the RC34 layout: app.asar shadows a valid app/ injector.
+        File.Move(original, vanilla);
+        Assert(!engine.VerifyInstalled(), "RC34 shadowed layout still verified");
+        engine.Repair(target);
+        Assert(engine.VerifyInstalled() && !File.Exists(vanilla), "repair did not activate the shadowed loader");
+        var interruptedUninstall = new InstallerEngine(bundle, local, roaming, _ => 0, point => {
+            if (point == "uninstall-after-bootstrap") throw new IOException("fixture uninstall interruption");
+        });
+        try {interruptedUninstall.Uninstall(target); throw new InvalidDataException("interrupted uninstall unexpectedly succeeded");}
+        catch (IOException error) when (error.Message == "fixture uninstall interruption") {/* restored before returning */}
+        Assert(engine.VerifyInstalled() && !File.Exists(vanilla), "uninstall interruption did not restore the working loader");
+        engine.Uninstall(target);
+        Assert(File.Exists(vanilla) && InstallerEngine.HashFile(vanilla) == originalHash && !File.Exists(original)
+            && !Directory.Exists(app) && !File.Exists(core), "uninstall left Discord without its original entry point");
+
+        engine.InstallNew(target);
+        bool interruptedRollback = false;
+        var partialRollback = new InstallerEngine(bundle, local, roaming, _ => 0, point => {
+            if (!interruptedRollback && point == "rollback-after-injector") {interruptedRollback = true; throw new IOException("fixture rollback interruption");}
+        });
+        try {partialRollback.RollBack(target); throw new InvalidDataException("interrupted rollback unexpectedly succeeded");}
+        catch (IOException error) when (error.Message == "fixture rollback interruption") {/* retry from already-restored bootstrap */}
+        engine.RollBack(target);
+        Assert(File.Exists(vanilla) && InstallerEngine.HashFile(vanilla) == originalHash && !File.Exists(original)
+            && !Directory.Exists(app) && !File.Exists(core) && !File.Exists(receipt), "rollback retry did not restore a clean Discord startup");
     }
 
     private static void ValidateTargetSelectionAndPreflight(string bundle, string root)

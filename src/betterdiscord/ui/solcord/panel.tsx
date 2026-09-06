@@ -18,14 +18,15 @@ import SetupWizard from "./setup-wizard";
 import MessageTimelinePanel from "./timeline";
 import {CatalogBrowser, CuratedAddonSet} from "./addon-catalog";
 import {SOLCORD_ADDON_PRESENTATION, SOLCORD_POWER_LAB} from "./catalog";
-import {isSolcordTranslationLanguage, normalizeSolcordMediaShelfUrl, normalizeSolcordTranslationEndpoint, prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
-import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS, solcordNativeSuiteFeatureForAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
+import {findSolcordWorkspaces, isSolcordTranslationLanguage, normalizeSolcordMediaShelfUrl, normalizeSolcordTranslationEndpoint, prioritizeSolcordPulse, resolveSolcordPerformancePolicy, SOLCORD_PERFORMANCE_POLICIES, SOLCORD_WORKSPACES, type SolcordAppearancePreferences, type SolcordMediaKind, type SolcordPerformanceProfile, type SolcordProductPreferences, type SolcordWorkspaceId} from "@common/solcord/product";
+import {isSolcordBuiltInAddon, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS, solcordBuiltInCapability, solcordNativeSuiteFeatureForAddon, type SolcordProviderMigrationPlan} from "@common/solcord/builtin-addons";
 import {SOLCORD_V2_REPLACEMENT_MANIFEST} from "@common/solcord/v2-replacement-manifest";
 import {presentSolcordChannelGlance, type SolcordChannelGlancePresentation} from "@common/solcord/chat-output";
 import {privacyCapabilityStateLabel} from "@common/solcord/privacy";
 import {scrollSolcordSettingsTarget} from "./scroll-owner";
 import SolcordSwitch from "./switch";
 import PreferenceSlider from "./slider";
+import AccessibilityOptions from "./accessibility-options";
 import PreferenceTextField from "./text-field";
 import ActionButton from "./action-button";
 import {SolcordActionErrorContext, useSolcordAction, useSolcordResultScope, useSolcordWrite} from "./use-action";
@@ -445,8 +446,7 @@ function BuiltInFeatureSwitches({scope}: {scope: BuiltInWorkspaceScope;}) {
             {rows.map(({name, presentation}) => {
                 const enabled = name === "DiscordEffects" ? state.backgroundOn : state.addons[name]?.enabled === true;
                 const adapter = state.adapters[name];
-                const maturity = !enabled ? "off" : adapter?.enabled ? "ready" : "unsupported";
-                const status = maturity === "ready" ? "Ready" : maturity === "unsupported" ? "Unavailable" : "Off";
+                const {maturity, label: status} = solcordBuiltInCapability(enabled, adapter);
                 return <label key={name}>
                     <span><strong>{presentation.label}</strong><small>{presentation.summary}</small></span>
                     <span className="solcord-builtin-control">
@@ -954,15 +954,11 @@ function NativeSuiteAccountPanel({scope, state}: {scope: NativeSuiteScope; state
 }
 
 function AccessibilityControls() {
-    const accessibility = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["accessibility-toolkit"].values);
+    const accessibility = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["accessibility-toolkit"]);
     const setting = useSolcordWrite((key: string, value: unknown) => SolcordRuntime.setValue("accessibility-toolkit", key, value));
     return <Section title="Accessibility" summary="Reading, contrast, focus, and motion controls.">
-        <div className="solcord-control-grid">
-            <label><SolcordSwitch label="Reduced motion" checked={accessibility.reducedMotion === true} onChange={value => setting("reducedMotion", value)} /> Reduced motion</label>
-            <label><SolcordSwitch label="Role contrast aid" checked={accessibility.roleContrast === true} onChange={value => setting("roleContrast", value)} /> Role contrast aid</label>
-            <label><SolcordSwitch label="Reading ruler" checked={accessibility.readingRuler === true} onChange={value => setting("readingRuler", value)} /> Reading ruler</label>
-            <PreferenceSlider label="Reading width" min={0} max={1200} step={40} value={Number(accessibility.readingWidth) || 0} formatValue={value => value ? `${value} px` : "Discord default"} onCommit={value => setting("readingWidth", value)} />
-        </div>
+        <AccessibilityOptions enabled={accessibility.enabled} values={accessibility.values}
+            onEnabledChange={enabled => SolcordRuntime.setEnabled("accessibility-toolkit", enabled)} onValueChange={setting} />
     </Section>;
 }
 
@@ -1527,7 +1523,7 @@ function SetupManagement({openSetup}: {openSetup: () => void}) {
     </section>;
 }
 
-function PowerLabStatus() {
+function FakeDeafenControls() {
     const state = useStateFromStores([SolcordSettings, SolcordRuntime], () => ({
         consent: SolcordSettings.snapshot().powerLab["fake-deafen"],
         status: SolcordRuntime.fakeDeafenStatus(),
@@ -1556,9 +1552,11 @@ function PowerLabStatus() {
     const disarm = () => setActionStatus(SolcordRuntime.disarmFakeDeafen() ? "Fake Deafen disarmed and server-visible state was resynchronized." : SolcordRuntime.fakeDeafenStatus().detail);
     const experiment = SOLCORD_POWER_LAB.find(candidate => candidate.id === "fake-deafen")!;
     const communityProvider = state.provider === "community";
-    return <Section title="Fake Deafen" summary="Manual, call-bound, and off by default.">
+    const canArm = state.consent.enabled && !communityProvider && state.status.phase === "ready"
+        && state.status.connected && state.status.accountBound && state.status.capturedVoiceState;
+    return <Section title="Fake Deafen" summary="Built into Solcord. Enable it here, then arm it separately for each call.">
         <div className="solcord-power-control"><div><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span><p>{communityProvider ? "Solcord leaves it untouched and keeps the built-in off so the two providers never stack." : state.status.detail}</p></div><SolcordSwitch label="Fake Deafen" checked={state.consent.enabled} disabled={communityProvider} onChange={toggleFakeDeafen} /></div>
-        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton disabled={!state.status.connected || !state.status.accountBound} onClick={arm}>Arm for this call</ActionButton>}</div>}
+        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton disabled={!canArm} onClick={arm}>Arm for this call</ActionButton>}</div>}
         <details className="solcord-secondary-tools"><summary>Risk and automatic disarm rules</summary><p>{experiment.summary} Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
@@ -1574,7 +1572,7 @@ export default function SolcordPanel() {
     const [workspaceFocus, setWorkspaceFocus] = useState<"catalog" | "setup">();
     const workspaceRef = useRef<HTMLDivElement | null>(null);
     const selectedWorkspace = SOLCORD_WORKSPACES.find(item => item.id === workspace)!;
-    const visibleWorkspaces = SOLCORD_WORKSPACES.filter(item => `${item.label} ${item.summary}`.toLowerCase().includes(workspaceQuery.trim().toLowerCase()));
+    const visibleWorkspaces = findSolcordWorkspaces(workspaceQuery);
     const navigateFromSearch = (next: SolcordWorkspaceId) => {
         setWorkspace(next);
         setWorkspaceQuery("");
@@ -1639,7 +1637,7 @@ export default function SolcordPanel() {
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
                 {workspace === "privacy" && <><PrivacyProtectionPanel /><BuiltInFeatureSwitches scope="privacy" /><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
                 {workspace === "chat" && <><BaselineToolsPanel /><BuiltInFeatureSwitches scope="chat" /><NativeSuitePanel key="chat" scope="chat" /><ReturnLaterPanel /></>}
-                {workspace === "voice" && <><ActivityBridge /><BuiltInFeatureSwitches scope="voice" /><NativeSuitePanel key="voice" scope="voice" /><StreamAudienceGuardControls /><div className="solcord-experimental"><p className="solcord-eyebrow">Experimental · account risk</p><PowerLabStatus /></div></>}
+                {workspace === "voice" && <><ActivityBridge /><BuiltInFeatureSwitches scope="voice" /><div className="solcord-experimental"><p className="solcord-eyebrow">Experimental · account risk</p><FakeDeafenControls /></div><NativeSuitePanel key="voice" scope="voice" /><StreamAudienceGuardControls /></>}
                 {workspace === "friends" && <><FriendWatchPanel /><BuiltInFeatureSwitches scope="friends" /><NativeSuitePanel key="friends" scope="friends" /></>}
                 {workspace === "extensions" && <>
                     <ProviderMigrationStatus />

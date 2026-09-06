@@ -3,6 +3,7 @@ import React, {act} from "react";
 import {createRoot, type Root} from "react-dom/client";
 
 import fs from "../../../src/betterdiscord/polyfill/fs";
+import crypto from "../../../src/betterdiscord/polyfill/crypto";
 import JsonStore from "../../../src/betterdiscord/stores/json";
 import Logger from "../../../src/common/logger";
 
@@ -29,7 +30,7 @@ if (process.env.SOLCORD_JSON_STORE_TEST !== "isolated") {
         });
         const output = result.stdout.toString() + result.stderr.toString();
         expect(result.exitCode, output).toBe(0);
-        expect(output).toContain("10 pass");
+        expect(output).toContain("12 pass");
         expect(output).toContain("0 fail");
     });
 }
@@ -66,6 +67,35 @@ else {
     });
 
     describe("Shared JSON store persistence", () => {
+        test("uses the renderer crypto bridge for unique atomic-write names", () => {
+            const random = spyOn(crypto, "randomBytes");
+            const write = spyOn(fs, "writeFileSync");
+            spies.push(random, write);
+            const store = createStore();
+            store.set("misc", "visible", true);
+            store.set("misc", "visible", false);
+            const temporaryFiles = write.mock.calls.map(([file]) => String(file));
+            expect(random.mock.calls).toEqual([[16], [16]]);
+            expect(temporaryFiles).toHaveLength(2);
+            expect(temporaryFiles.every(file => /misc\.json\.[a-f0-9]{32}\.tmp$/.test(file))).toBeTrue();
+            expect(new Set(temporaryFiles).size).toBe(2);
+            expect([...files.keys()].some(file => file.endsWith(".tmp"))).toBeFalse();
+            expect(createStore().get("misc", "visible")).toBeFalse();
+        });
+
+        test("unavailable secure randomness leaves persisted data and notifications unchanged", () => {
+            const store = createStore();
+            store.set("misc", "visible", false);
+            const beforeFiles = new Map(files);
+            let events = 0;
+            store.addChangeListener(() => events++);
+            spies.push(spyOn(crypto, "randomBytes").mockImplementation(() => {throw new Error("Randomness unavailable");}));
+            expect(() => store.set("misc", "visible", true)).toThrow("Randomness unavailable");
+            expect(store.get("misc", "visible")).toBeFalse();
+            expect(files).toEqual(beforeFiles);
+            expect(events).toBe(0);
+        });
+
         test("successful writes keep the public file names, falsey values, and restart behavior", () => {
             const store = createStore();
             store.set("misc", "visible", false);

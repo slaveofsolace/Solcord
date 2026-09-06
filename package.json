@@ -20,7 +20,7 @@
         "lint": "bun run --bun eslint",
         "lint-css": "stylelint src/betterdiscord/styles/*.css && stylelint src/betterdiscord/styles/**/*.css",
         "lint-css:solcord": "stylelint src/betterdiscord/styles/index.css src/betterdiscord/styles/solcord.css",
-        "test": "bun test --isolate tests/",
+        "test": "bun scripts/run-tests.ts",
         "check:docs": "bun scripts/check-docs.ts",
         "audit:repo": "bun scripts/audit-solcord-repository.mjs",
         "audit:repo:check": "bun scripts/audit-solcord-repository.mjs --check",

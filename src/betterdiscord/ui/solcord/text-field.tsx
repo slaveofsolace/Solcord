@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React, {useCallback, useEffect, useId, useRef, useState} from "react";
-import {useSolcordAction} from "./use-action";
+import {useSolcordAction, useSolcordControlFocus} from "./use-action";
 
 interface SolcordTextFieldProps {
     label: string;
@@ -32,6 +32,7 @@ export default function SolcordTextField({label, value, placeholder, maxLength, 
         notifyDraft.current?.(dirty);
     }, []);
     const {pending, run} = useSolcordAction(onCommit, () => setError("Could not save. Your edit is kept; try again."));
+    const preserveFocus = useSolcordControlFocus(input, pending, disabled);
     if (state.source !== value && !saving.current) {setState({source: value, draft: value}); setError("");}
     const draft = state.source === value || saving.current ? state.draft : value;
     useEffect(() => {if (!saving.current) reportDraft(false);}, [value, reportDraft]);
@@ -49,6 +50,7 @@ export default function SolcordTextField({label, value, placeholder, maxLength, 
         if (next === current.current) {reset(); return;}
         saving.current = true;
         setError("");
+        preserveFocus();
         try {
             if (await run(next)) {
                 if (input.current) {

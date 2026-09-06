@@ -112,6 +112,8 @@ function git(repoRoot: string, args: string[]): Buffer {
         cwd: repoRoot,
         encoding: null,
         maxBuffer: 64 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 10_000,
         windowsHide: true
     });
     if (result.status !== 0 || !Buffer.isBuffer(result.stdout)) throw new Error("Solcord provenance could not read the Git worktree.");
@@ -126,9 +128,12 @@ function currentBranch(repoRoot: string): string {
     const result = spawnSync("git", ["symbolic-ref", "--quiet", "--short", "HEAD"], {
         cwd: repoRoot,
         encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 10_000,
         windowsHide: true
     });
-    if (result.status !== 0) return "detached";
+    if (!result.error && result.status === 1) return "detached";
+    if (result.status !== 0 || typeof result.stdout !== "string") throw new Error("Solcord provenance could not read the Git branch.");
     const branch = result.stdout.trim();
     if (!branch || branch.length > 256 || [...branch].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
         throw new Error("Solcord provenance found an invalid Git branch name.");

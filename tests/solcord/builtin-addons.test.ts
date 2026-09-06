@@ -2,7 +2,7 @@
 
 import {describe, expect, test} from "bun:test";
 
-import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordBuiltInDoctorId, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordProviderSourceParityComplete, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
+import {canonicalizeSolcordProviderMigrationPlan, captureExactAddonStates, communityAddonIsEnabled, createSolcordProviderMigrationPlan, isSolcordBuiltInAddon, planSolcordNativeSuiteLookups, resolveCommunityAddon, solcordBuiltInCapability, solcordBuiltInDoctorId, solcordProviderMigrationPlansMatch, solcordProviderReplacementIsReady, solcordProviderSourceParityComplete, solcordStandaloneProviderFileName, SOLCORD_CLEAN_ROOM_BUILTIN_ADDONS} from "../../src/common/solcord/builtin-addons";
 
 
 describe("Solcord clean-room curated built-ins", () => {
@@ -215,12 +215,12 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(solcordProviderReplacementIsReady(disabledLogger, undefined, false, false)).toBeTrue();
         expect(solcordProviderReplacementIsReady(activeLogger, undefined, true, false)).toBeFalse();
         expect(solcordProviderReplacementIsReady(activeLogger, undefined, true, true)).toBeTrue();
-        expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, provider: "solcord"}, false, false)).toBeTrue();
-        expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, provider: "community"}, false, false)).toBeFalse();
+        expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, ready: true, provider: "solcord"}, false, false)).toBeTrue();
+        expect(solcordProviderReplacementIsReady(ordinaryProvider, {enabled: true, ready: true, provider: "community"}, false, false)).toBeFalse();
     });
 
     test("requires both reviewed source parity and the exact provider adapter before retirement", () => {
-        const readyAdapter = {enabled: true, provider: "solcord"};
+        const readyAdapter = {enabled: true, ready: true, provider: "solcord"};
         const completed = {name: "Translator", fileName: "Translator.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
         const unknown = {name: "UnknownAddon", fileName: "UnknownAddon.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
         const complete = {name: "BetterVolume", fileName: "BetterVolume.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
@@ -231,6 +231,26 @@ describe("Solcord clean-room curated built-ins", () => {
         expect(solcordProviderReplacementIsReady(unknown, readyAdapter, false, false)).toBeFalse();
         expect(solcordProviderSourceParityComplete("BetterVolume")).toBeTrue();
         expect(solcordProviderReplacementIsReady(complete, readyAdapter, false, false)).toBeTrue();
+    });
+
+    test("does not retire an available or unknown-readiness provider before its own validation", () => {
+        const migration = {name: "BetterVolume", fileName: "BetterVolume.plugin.js", enabled: true, provider: "prefer-solcord"} as const;
+        const active = {enabled: true, provider: "solcord"};
+        expect(solcordProviderReplacementIsReady(migration, active, false, false)).toBeFalse();
+        expect(solcordProviderReplacementIsReady(migration, {...active, ready: false}, false, false)).toBeFalse();
+        expect(solcordProviderReplacementIsReady(migration, {...active, ready: true}, false, false)).toBeTrue();
+        expect(solcordProviderReplacementIsReady(migration, {...active, enabled: false, ready: true}, false, false)).toBeFalse();
+    });
+
+    test("keeps selection, activation, and verified readiness distinct in built-in labels", () => {
+        const active = {enabled: true, provider: "solcord"};
+        expect(solcordBuiltInCapability(false, {...active, ready: true})).toEqual({maturity: "off", label: "Off"});
+        expect(solcordBuiltInCapability(true, undefined)).toEqual({maturity: "unsupported", label: "Unavailable"});
+        expect(solcordBuiltInCapability(true, {...active, enabled: false, ready: true})).toEqual({maturity: "unsupported", label: "Unavailable"});
+        expect(solcordBuiltInCapability(true, active)).toEqual({maturity: "available", label: "Available"});
+        expect(solcordBuiltInCapability(true, {...active, ready: false})).toEqual({maturity: "available", label: "Available"});
+        expect(solcordBuiltInCapability(true, {...active, ready: true})).toEqual({maturity: "ready", label: "Ready"});
+        expect(solcordBuiltInCapability(true, {...active, ready: false})).toEqual({maturity: "available", label: "Available"});
     });
 
     test("canonicalizes a bounded exact plan and rejects path-shaped identities", () => {
