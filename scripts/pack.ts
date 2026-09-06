@@ -7,6 +7,7 @@ import asar from "@electron/asar";
 
 import doSanityChecks from "./helpers/validate";
 import buildPackage from "./helpers/package";
+import {finishSolcordAsar} from "./helpers/finish-asar";
 import {assertSolcordBuildStillCurrent, assertSolcordPackagingAllowed, captureSolcordBuildProvenance, createSolcordPostBuildManifest, readSolcordBuildProvenance, writeSolcordPostBuildManifest} from "./helpers/build-provenance";
 import pkg from "../package.json";
 import {assertSolcordPackageVersion, SOLCORD_PRODUCT_IDENTITY} from "../src/common/solcord/product-identity";
@@ -52,7 +53,7 @@ const makeHash = () => {
 const makeBundle = async function () {
     console.log("");
     console.log("Generating bundle");
-    await asar.createPackageFromFiles(dist, bundleFile, files);
+    await finishSolcordAsar(asar.createPackageFromFiles(dist, bundleFile, files));
     const bundleStats = fs.statSync(bundleFile);
     if (!bundleStats.isFile() || bundleStats.size === 0) throw new Error("The generated Solcord asar is empty.");
     console.log(`    ✅ Successfully created bundle ${bundleFile}`);

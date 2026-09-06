@@ -1,5 +1,15 @@
 # Solcord Changelog
 
+## 2.0.0-rc.38 - Control and lifecycle corrections (unreleased)
+
+- Keyboard focus survives asynchronous saves without jumping to another control. Compact disclosures have a visible focus outline.
+- Accessibility controls show whether the toolkit is active. Reading width offers effective sizes, and sliders use one clear track and focus indicator.
+- Built-ins distinguish availability from verified readiness; plugin replacement waits for the exact replacement to be ready.
+- Fake Deafen is searchable and included under Voice & Activities > Experimental. It remains manually enabled and armed. Stale call state, repeated arming, channel changes, and failed cleanup are handled without stacking patches.
+- Switch tracks keep their shape when narrow settings rows stack vertically.
+- Packaging waits for the ASAR output stream to finish before measuring and hashing the file. A late disk-write failure stops publication.
+- Release checks run for both main and development. Source delivery and package verification remain separate from uncompleted native mouse, drag, and account-affecting checks.
+
 ## 2.0.0-rc.37 - Visible backgrounds and bounded verification (unreleased)
 
 - Animated fields now show through the native workspace instead of being hidden behind Discord's opaque shell. Videos, dialogs, menus and controls keep their own surfaces. Turning the effect off or reducing motion restores ordinary backgrounds.

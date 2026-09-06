@@ -95,8 +95,17 @@ describe("Solcord installer security contracts", () => {
         expect(gitignore).toContain("outputs/");
     });
 
-    test("runs the complete Solcord workflow on canonical development pushes", () => {
-        expect(fullCi).toContain("branches: [\"development\", \"fork/**\", \"v2/**\", \"audit/**\"]");
+    test("runs release checks for both main and development pushes and pull requests", () => {
+        const compatibilityCi = fs.readFileSync(path.join(root, ".github/workflows/ci.yml"), "utf8");
+        for (const workflow of [fullCi, compatibilityCi]) {
+            for (const event of ["push", "pull_request"]) {
+                const list = workflow.match(new RegExp(`  ${event}:\\r?\\n    branches: (\\[[^\\r\\n]+\\])`))?.[1];
+                expect(list).toBeDefined();
+                const branches = JSON.parse(list!);
+                expect(branches).toContain("main");
+                expect(branches).toContain("development");
+            }
+        }
     });
 
     test("verifies embedded bytes before private extraction and cleans only known files", () => {

@@ -8,6 +8,7 @@ import path from "path";
 import {runInNewContext} from "vm";
 import asar from "@electron/asar";
 import {afterEach, beforeEach, describe, expect, test} from "bun:test";
+import {finishSolcordAsar} from "../../scripts/helpers/finish-asar";
 
 import {
     createDisposableAcceptanceManifest,
@@ -172,7 +173,7 @@ function writeSolcordSource(source: string, provenance: Record<string, unknown>)
 async function packageSolcord(fixtureValue: Fixture): Promise<void> {
     asar.uncache(fixtureValue.solcordAsar);
     fs.rmSync(fixtureValue.solcordAsar, {force: true});
-    await asar.createPackage(fixtureValue.solcordSource, fixtureValue.solcordAsar);
+    await finishSolcordAsar(asar.createPackage(fixtureValue.solcordSource, fixtureValue.solcordAsar));
     fixtureValue.expectedHash = hashBytes(fs.readFileSync(fixtureValue.solcordAsar));
 }
 
@@ -203,7 +204,7 @@ async function createFixture(): Promise<Fixture> {
             const coreSource = path.join(root, "discord-core-source");
             fs.mkdirSync(coreSource);
             fs.writeFileSync(path.join(coreSource, "index.js"), "module.exports = {};\n");
-            await asar.createPackage(coreSource, path.join(packageRoot, "core.asar"));
+            await finishSolcordAsar(asar.createPackage(coreSource, path.join(packageRoot, "core.asar")));
             fs.writeFileSync(
                 path.join(packageRoot, "index.js"),
                 `require("C:\\\\Users\\\\owner\\\\AppData\\\\Roaming\\\\BetterDiscord\\\\data\\\\betterdiscord.asar");\nmodule.exports = require("./core.asar");\n`
@@ -213,7 +214,7 @@ async function createFixture(): Promise<Fixture> {
     const betterDiscordSource = path.join(root, "betterdiscord-source");
     fs.mkdirSync(betterDiscordSource);
     fs.writeFileSync(path.join(betterDiscordSource, "index.js"), "module.exports = {};\n");
-    await asar.createPackage(betterDiscordSource, path.join(sourceApp, "resources", "betterdiscord.app.asar"));
+    await finishSolcordAsar(asar.createPackage(betterDiscordSource, path.join(sourceApp, "resources", "betterdiscord.app.asar")));
     fs.writeFileSync(path.join(sourceApp, "runtime-payload.bin"), Buffer.from([0, 1, 2, 3, 254, 255]));
     writeSolcordSource(solcordSource, validBuildProvenance(expectedSourceCommit));
 

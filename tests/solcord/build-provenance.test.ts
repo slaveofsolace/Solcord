@@ -7,6 +7,7 @@ import path from "node:path";
 import {execFileSync} from "node:child_process";
 import {afterEach, describe, expect, test} from "bun:test";
 import asar from "@electron/asar";
+import {finishSolcordAsar} from "../../scripts/helpers/finish-asar";
 
 import {
     assertSolcordBuildAllowed,
@@ -160,8 +161,8 @@ describe("Solcord build provenance", () => {
         const firstAsar = path.join(firstOutput, "solcord.asar");
         const secondAsar = path.join(secondOutput, "solcord.asar");
 
-        await asar.createPackageFromFiles(firstStage, firstAsar, firstFiles);
-        await asar.createPackageFromFiles(secondStage, secondAsar, secondFiles);
+        await finishSolcordAsar(asar.createPackageFromFiles(firstStage, firstAsar, firstFiles));
+        await finishSolcordAsar(asar.createPackageFromFiles(secondStage, secondAsar, secondFiles));
         expect(fs.readFileSync(firstAsar)).toEqual(fs.readFileSync(secondAsar));
 
         const firstChecksums = path.join(firstOutput, "checksums.txt");
