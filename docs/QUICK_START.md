@@ -1,6 +1,6 @@
 # Solcord quick start
 
-Use this guide for the published **v2.0.0-rc.33** Windows installer. Unreleased source changes are not part of that download.
+Use this guide for the **v2.0.0-rc.39** Windows installer.
 
 Allow about one minute on a typical PC **after download**. Windows prompts, Discord shutdown, or recovery can take longer.
 
@@ -18,8 +18,8 @@ Allow about one minute on a typical PC **after download**. Windows prompts, Disc
 
 Download both files into the same folder:
 
-- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.33/SolcordInstaller.exe)
-- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.33/SHA256SUMS.txt)
+- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.39/SolcordInstaller.exe)
+- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.39/SHA256SUMS.txt)
 
 ### Check the download
 
@@ -37,9 +37,9 @@ Solcord's core is shared by Discord Stable, PTB, and Canary. When changing that 
 
 ## 3. Install
 
-Open **SolcordInstaller.exe**. In **Version**, choose the Discord installation you use, such as `Stable · 1.0.9256`. The version is detected from your installed Discord, not fixed by this guide.
+Open **SolcordInstaller.exe**. In **Version**, choose the Discord installation you use. The version is detected from your PC, not fixed by this guide.
 
-Choose **Install Solcord** for a first installation or **Update Solcord** for a newer release. Wait for the verified success status. Do not move or delete recovery files while an action is running.
+Choose the large recommended action. It will say **Install Solcord**, **Update Solcord**, or **Repair Solcord** according to the files on your PC. Wait for the verified success status. Do not move or delete recovery files while an action is running.
 
 ## 4. Verify and launch
 
@@ -47,15 +47,15 @@ Select **Verify files**. When the installed files match the package, choose **Op
 
 ## 5. Complete First Setup
 
-A fresh installation opens **User Settings → Solcord Suite** at **Welcome** once Discord is ready. Follow Welcome, Privacy, Appearance, Features, and Review and Apply.
+A fresh installation opens **Solcord Suite** at **Welcome** once Discord is ready. Follow Welcome, Privacy, Appearance, Features, and Review and Apply.
 
-**Back** keeps the draft. **Finish later** saves your place without applying the proposed choices. Existing completed profiles do not reopen setup after an update or repair. You can reopen it manually in **Solcord Suite → Recovery**.
+**Back** keeps the draft. **Finish later** saves your place without applying the proposed choices. Existing completed profiles do not reopen setup after an update or repair. To reopen it manually, open **Solcord Suite**, choose **Recovery**, then choose **First Setup**.
 
 Recommended first check:
 
 1. Choose a theme and leave optional private/history features off until you need them.
 2. Try one built-in at a time in its matching workspace.
-3. Check **Recovery → Plugin Doctor** if a tool reports a problem.
+3. Open **Recovery**, then **Plugin Doctor**, if a tool reports a problem.
 4. Leave Experimental tools off. Audience Guard stays unarmed until you explicitly arm it for a call.
 
 Translation is optional. On-device translation requires a compatible engine in your Discord build and a supported language pair. DeepL and LibreTranslate need an explicit provider choice and may require a credential; no remote provider is silently selected.
@@ -71,6 +71,7 @@ Download the new release's installer and checksum file, verify the download, and
 | Discord does not appear in Version | Open the official desktop app once, quit it, then reopen the installer. |
 | Discord cannot close | Quit it from the Windows system tray, then retry. The installer will not guess at an unverified process. |
 | Files are missing or damaged | Run the same package and choose **Repair**. |
+| Discord updated and Solcord disappeared | Open the newest installer. Choose **Update Solcord**, or **Repair Solcord** if that exact release is already recorded. |
 | The new core will not start | Use **Roll back** to restore the verified pre-change backup. |
 | A feature says Unavailable | Check Plugin Doctor; the current Discord build may not support that adapter. |
 | A background is not moving | In Appearance, select a background rather than Signal or Off. Check the effective motion policy; Lean and reduced motion stop ambient animation. |

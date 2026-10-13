@@ -86,6 +86,8 @@ internal static class InstallerSelfTest
             ValidateTargetSelectionAndPreflight(embeddedBundleRoot, Path.Combine(root, "target-selection"));
             stage = "electron-bootstrap-handoff-and-recovery";
             ValidateBootstrapHandoff(embeddedBundleRoot, Path.Combine(root, "bootstrap-handoff"));
+            stage = "discord-update-reinstall";
+            ValidateDiscordUpdateReinstall(embeddedBundleRoot, Path.Combine(root, "discord-update-reinstall"));
             stage = "dpi-layout-matrix";
             InstallerForm.ValidateGeometryMatrix(embeddedBundleRoot);
             string local = Path.Combine(root, "local");
@@ -306,6 +308,56 @@ internal static class InstallerSelfTest
         }
         catch (Exception error) {Console.Error.WriteLine($"{stage}:{error.GetType().Name}:{error.Message}"); return 1;}
         finally {if (Directory.Exists(root)) Directory.Delete(root, recursive: true);}
+    }
+
+    private static void ValidateDiscordUpdateReinstall(string bundle, string root)
+    {
+        string local = Path.Combine(root, "local");
+        string roaming = Path.Combine(root, "roaming");
+        string oldDiscord = Path.Combine(local, "Discord", "app-1.0.0");
+        string oldResources = Path.Combine(oldDiscord, "resources");
+        Directory.CreateDirectory(oldResources);
+        File.WriteAllText(Path.Combine(oldDiscord, "Discord.exe"), "old-discord-fixture");
+        File.WriteAllText(Path.Combine(oldResources, "app.asar"), "old-discord-archive");
+
+        string plugins = Path.Combine(roaming, "BetterDiscord", "plugins");
+        string themes = Path.Combine(roaming, "BetterDiscord", "themes");
+        string settings = Path.Combine(roaming, "BetterDiscord", "data", "stable", "settings.json");
+        Directory.CreateDirectory(plugins);
+        Directory.CreateDirectory(themes);
+        Directory.CreateDirectory(Path.GetDirectoryName(settings)!);
+        string plugin = Path.Combine(plugins, "owner.plugin.js");
+        string theme = Path.Combine(themes, "owner.theme.css");
+        File.WriteAllText(plugin, "owner-plugin");
+        File.WriteAllText(theme, "owner-theme");
+        File.WriteAllText(settings, "owner-settings");
+
+        var engine = new InstallerEngine(bundle, local, roaming, _ => 0);
+        DiscordTarget oldTarget = engine.DetectTargets().Single();
+        engine.InstallNew(oldTarget);
+        ReleaseManifest manifest = engine.LoadManifest();
+        if (!InstallerEngine.TryGetReleaseCandidateOrdinal(manifest.CandidateLabel, manifest.Version, out ulong candidateOrdinal) || candidateOrdinal == 0)
+            throw new InvalidDataException("discord-update-reinstall: candidate ordinal");
+        string receiptFile = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");
+        InstallReceipt receipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(receiptFile)) ?? throw new InvalidDataException("discord-update-reinstall: receipt");
+        File.WriteAllText(receiptFile, JsonSerializer.Serialize(receipt with {CandidateLabel = $"v{manifest.Version}-rc.{candidateOrdinal - 1}"}));
+
+        string newDiscord = Path.Combine(local, "Discord", "app-1.0.1");
+        string newResources = Path.Combine(newDiscord, "resources");
+        Directory.CreateDirectory(newResources);
+        File.WriteAllText(Path.Combine(newDiscord, "Discord.exe"), "new-discord-fixture");
+        File.WriteAllText(Path.Combine(newResources, "app.asar"), "new-discord-archive");
+        DiscordTarget newTarget = engine.DetectTargets().Single();
+        if (newTarget.Version != "1.0.1") throw new InvalidDataException("discord-update-reinstall: current Discord target");
+
+        engine.Update(newTarget);
+        InstallReceipt updated = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(receiptFile)) ?? throw new InvalidDataException("discord-update-reinstall: updated receipt");
+        if (!engine.VerifyInstalled() || updated.DiscordVersion != newTarget.Version || updated.CandidateLabel != manifest.CandidateLabel)
+            throw new InvalidDataException("discord-update-reinstall: updated installation did not verify");
+        if (File.Exists(Path.Combine(newResources, "app.asar")) || !File.Exists(Path.Combine(newResources, "betterdiscord.app.asar")) || !Directory.Exists(Path.Combine(newResources, "app")))
+            throw new InvalidDataException("discord-update-reinstall: startup handoff was not restored");
+        if (File.ReadAllText(plugin) != "owner-plugin" || File.ReadAllText(theme) != "owner-theme" || File.ReadAllText(settings) != "owner-settings")
+            throw new InvalidDataException("discord-update-reinstall: owner data changed");
     }
 
     private static void ValidateBootstrapHandoff(string bundle, string root)

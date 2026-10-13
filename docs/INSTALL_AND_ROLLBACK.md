@@ -14,7 +14,7 @@ For a first installation, follow [Quick start](QUICK_START.md). Use the verified
 | Verify files | You want to check the installed package | Everything; this checks files without replacing them |
 | Open recovery folder | You need the receipts or backups | Everything |
 
-Repair does not download an update. Rollback uses the backup recorded by the installer; it does not install an arbitrary older release. A normal update refuses a downgrade.
+Repair also restores the startup handoff when a Discord desktop update replaces it. Repair does not download a newer Solcord release. Rollback uses the backup recorded by the installer; it does not install an arbitrary older release. A normal update refuses a downgrade.
 
 ## Before changing the core
 
@@ -64,7 +64,7 @@ Uninstall is not a private-data wipe. The installer does not erase addon configu
 
 ## Acceptance and limitations
 
-The published installer is [RC33](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.33). New source changes need their own package and acceptance evidence; see [Release status](STATUS.md).
+The current installer is [RC39](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.39). New source changes need their own package and acceptance evidence; see [Release status](STATUS.md).
 
 The core and injector are separate files. Their verified replacements are recoverable through receipts, not one atomic filesystem operation. Keep backups through a successful restart.
 

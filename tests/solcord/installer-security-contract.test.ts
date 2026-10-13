@@ -69,6 +69,9 @@ describe("Solcord installer security contracts", () => {
         expect(engine).toContain("TryGetReleaseCandidateOrdinal");
         expect(engine).toContain("Candidate labels are immutable");
         expect(selfTest).toContain("same-core-rc-upgrade");
+        expect(selfTest).toContain("discord-update-reinstall");
+        expect(selfTest).toContain("startup handoff was not restored");
+        expect(selfTest).toContain("owner data changed");
         expect(selfTest).toContain("same-core-rc-downgrade-refusal");
         expect(selfTest).toContain("candidate-label-reuse-refusal");
         expect(selfTest).toContain("malformed-candidate-label-refusal");
@@ -160,7 +163,8 @@ describe("Solcord installer security contracts", () => {
         expect(installerForm).toContain("new Size(112, 36)");
         expect(installerForm).toContain("primary-action-collapsed");
         expect(installerForm).toContain("maintenance-action-geometry");
-        expect(installerForm).toContain("Built with BetterDiscord, created by @Sleeve of Solace.");
+        expect(installerForm).toContain("Built with BetterDiscord, created by @slaveofsolace.");
+        expect(installerForm).not.toContain("@Sleeve of Solace");
         expect(installerForm).toContain("private static readonly Color BrandTile = Color.FromArgb(24, 37, 39);");
         expect(installerForm).toContain("_brandMarkHost.BackColor = BrandTile;");
         expect(installerForm).toContain("_brandMark.BackColor = BrandTile;");

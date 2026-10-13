@@ -1,5 +1,11 @@
 # Solcord Changelog
 
+## 2.0.0-rc.39 - Discord update recovery (2026-10-12)
+
+- Corrected the installer credit to `@slaveofsolace` while preserving the factual BetterDiscord fork attribution.
+- Restored the one-click repair path for installations whose injector handoff was replaced by a Discord desktop update. Plugins, themes, settings, private stores, and existing recovery material remain untouched.
+- Updated the public quick start around one installer action: install or update normally, and choose **Repair Solcord** if a Discord update removes the startup handoff.
+
 ## Repository maintenance
 
 - Documented RC38 installation, live checks, owner acceptance, and package hashes without changing the installed core.

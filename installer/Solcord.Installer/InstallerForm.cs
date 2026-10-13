@@ -360,7 +360,7 @@ internal sealed class InstallerForm : Form
         var layout = new TableLayoutPanel {Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Color.Transparent, Margin = Padding.Empty, Padding = Padding.Empty};
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
-        var note = NewLabel("Built with BetterDiscord, created by @Sleeve of Solace.", 8.75f, FontStyle.Regular, Muted);
+        var note = NewLabel("Built with BetterDiscord, created by @slaveofsolace.", 8.75f, FontStyle.Regular, Muted);
         note.Dock = DockStyle.Fill;
         note.TextAlign = ContentAlignment.MiddleLeft;
         var close = NewButton("Close", ButtonTone.Outline);

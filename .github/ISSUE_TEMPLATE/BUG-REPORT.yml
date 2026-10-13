@@ -35,7 +35,7 @@ body:
     attributes:
       label: Solcord candidate and source
       description: Open Solcord Suite, then Recovery, then About and technical information. Include Candidate and Source. For installer problems, include its title-bar version.
-      placeholder: v2.0.0-rc.33, source commit
+      placeholder: v2.0.0-rc.x and source commit
     validations:
       required: true
   - type: dropdown

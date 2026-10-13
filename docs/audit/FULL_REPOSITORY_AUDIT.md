@@ -13,8 +13,8 @@ This inventory is a text scan, not a semantic review or live Discord test. Curre
 | Persistent tracked files | 624 |
 | Text files scanned | 609 |
 | Binary files classified | 15 |
-| Text lines scanned | 130,606 |
-| Custom Solcord lines | 36,079 |
+| Text lines scanned | 130,662 |
+| Custom Solcord lines | 36,075 |
 | Previous product-identity matches | 0 |
 
 ## Runtime and maintenance signals
@@ -45,7 +45,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 6 | `bun.lock` | 1,299 | 140.1 KiB |
 | 7 | `tests/solcord/native-suite-security.test.ts` | 1,296 | 67.8 KiB |
 | 8 | `src/betterdiscord/styles/solcord.css` | 1,258 | 94.0 KiB |
-| 9 | `CHANGELOG.md` | 1,180 | 44.3 KiB |
+| 9 | `CHANGELOG.md` | 1,186 | 44.8 KiB |
 | 10 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 11 | `tests/solcord/disposable-acceptance.test.ts` | 1,161 | 56.2 KiB |
 | 12 | `src/betterdiscord/modules/solcord/store.ts` | 1,100 | 58.7 KiB |
