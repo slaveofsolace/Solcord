@@ -95,8 +95,9 @@ describe("Solcord Control Center clarity", () => {
         expect(panel).toContain("no Activity window has opened in this session");
     });
 
-    test("keeps Fake Deafen visibly discoverable in the Voice experimental area", () => {
-        expect(panel).toContain("<div className=\"solcord-experimental\"><p className=\"solcord-eyebrow\">Experimental · account risk</p><FakeDeafenControls /></div>");
+    test("keeps Fake Deafen visibly discoverable as a normal built-in Voice option", () => {
+        expect(panel).toContain("<FakeDeafenControls />");
+        expect(panel).not.toContain("Experimental · account risk</p><FakeDeafenControls");
         expect(panel).toContain("label=\"Fake Deafen\"");
         expect(panel).toContain("disabled={!canArm}");
         expect(panel).toContain("state.status.phase === \"ready\"");

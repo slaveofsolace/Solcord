@@ -107,6 +107,26 @@ export interface SolcordSpeakingStoreShape {
     getSpeakers?(): unknown;
 }
 
+const SOLCORD_AMBIENT_MAX_PIXELS = 2_073_600;
+
+/**
+ * Bounds the backing store independently from CSS size. A 4K Discord window
+ * should not allocate and repaint a 4K-or-larger transparent canvas merely
+ * because Windows display scaling reports a high devicePixelRatio.
+ */
+export function solcordAmbientPixelRatio(width: number, height: number, devicePixelRatio: number, maxPixels = SOLCORD_AMBIENT_MAX_PIXELS): number {
+    const safeWidth = Math.max(1, Number.isFinite(width) ? width : 1);
+    const safeHeight = Math.max(1, Number.isFinite(height) ? height : 1);
+    const safeRatio = Math.max(0.25, Math.min(1.25, Number.isFinite(devicePixelRatio) ? devicePixelRatio : 1));
+    const pixelBound = Math.sqrt(Math.max(1, maxPixels) / (safeWidth * safeHeight));
+    return Math.max(Number.EPSILON, Math.min(safeRatio, pixelBound));
+}
+
+export function solcordAmbientFrameInterval(effect: "field" | "work-field", pulse = false): number {
+    if (effect === "work-field") return pulse ? 34 : 84;
+    return 50;
+}
+
 export interface SolcordChangeStoreShape {
     addChangeListener(listener: () => void): void;
     removeChangeListener(listener: () => void): void;
@@ -400,6 +420,10 @@ export class SolcordNativeSuiteController {
     #glanceTooltip?: HTMLElement;
     #peopleSyncQueued = false;
     #statusNotificationQueued = false;
+    readonly #domSyncCallbacks = new Set<() => void>();
+    #domSyncObserver?: MutationObserver;
+    #domSyncFrame = 0;
+    #releaseDomSyncObserver?: () => void;
     #started = false;
     #disposed = false;
 
@@ -1057,10 +1081,9 @@ export class SolcordNativeSuiteController {
             }
         };
         if (providers.includes("CharCounter") || providers.includes("CompleteTimestamps")) {
-            const observer = new MutationObserver(sync);
             // Only native datetime attributes need observation. Input events cover
             // text edits without observing the counter's own text mutations.
-            this.#scope.observe(observer, document.body, {childList: true, subtree: true, ...(providers.includes("CompleteTimestamps") ? {attributes: true, attributeFilter: ["datetime"]} : {})});
+            this.#registerDomSync(sync);
             if (providers.includes("CharCounter")) this.#scope.listen(document, "input", sync);
             this.#scope.own(() => document.querySelectorAll("[data-solcord-composer-count],[data-solcord-input-count]").forEach(element => element.remove()), "element");
             this.#scope.own(() => this.#restoreTimestampTitles(), "element");
@@ -1150,8 +1173,7 @@ export class SolcordNativeSuiteController {
             if (unsubscribe) releaseSubscription = this.#scope.own(unsubscribe, "listener");
             if (providers.includes("CallTimeCounter")) this.#scope.interval(() => this.#renderCallBadge(Boolean(this.#call?.summary().connected)), 1_000);
             if (providers.includes("VoiceActivity") && this.#adapter.voiceActivityAvailable) {
-                const observer = new MutationObserver(() => this.#renderCallPresence(Boolean(this.#call?.summary().connected)));
-                this.#scope.observe(observer, document.body, {childList: true, subtree: true});
+                this.#registerDomSync(() => this.#renderCallPresence(Boolean(this.#call?.summary().connected)));
                 this.#scope.own(() => document.querySelectorAll("[data-solcord-voice-presence]").forEach(element => element.remove()), "element");
             }
             sync();
@@ -1361,8 +1383,7 @@ export class SolcordNativeSuiteController {
                 container.append(anchor);
             }
         };
-        const observer = new MutationObserver(sync);
-        this.#scope.observe(observer, document.body, {childList: true, subtree: true});
+        this.#registerDomSync(sync);
         this.#scope.style("solcord-voice-download", ".solcord-voice-download{display:inline-flex;align-items:center;min-height:24px;margin-inline-start:8px;padding:2px 7px;border-radius:4px;color:var(--interactive-normal);font-size:12px;font-weight:600;text-decoration:none}.solcord-voice-download:hover,.solcord-voice-download:focus-visible{background:var(--background-modifier-hover);color:var(--interactive-hover);text-decoration:none}.solcord-voice-download:focus-visible{outline:2px solid var(--focus-primary);outline-offset:2px}");
         this.#scope.own(() => document.querySelectorAll("[data-solcord-voice-download]").forEach(element => element.remove()), "element");
         sync();
@@ -1414,8 +1435,7 @@ export class SolcordNativeSuiteController {
         const domProviders = providers.some(provider => ["PinDMs", "ServerHider", "EditServers", "ServerDetails"].includes(provider));
         if (domProviders) {
             if (providers.includes("PinDMs")) this.#scope.style("solcord-pinned-dm", "[data-solcord-pinned-dm='true']{position:relative}[data-solcord-pinned-dm='true']::after{content:'Pinned';position:absolute;inset-inline-end:8px;top:4px;padding:1px 5px;border:1px solid color-mix(in srgb,var(--solcord-accent,var(--brand-500)) 55%,transparent);border-radius:3px;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.04em;pointer-events:none}[data-solcord-pinned-dm='true'][data-solcord-pin-icon='false']::after{display:none}[data-solcord-pinned-unread]::before{content:attr(data-solcord-pinned-unread);position:absolute;inset-inline-end:4px;bottom:4px;min-width:15px;padding:1px 4px;border-radius:8px;background:var(--status-danger);color:white;font-size:9px;font-weight:700;text-align:center;pointer-events:none}[data-solcord-pinned-category-first='true']{margin-block-start:26px}[data-solcord-pinned-category-first='true']::before{content:attr(data-solcord-pinned-category-label);position:absolute;inset-inline:8px auto;top:-22px;color:var(--channels-default,var(--text-muted));font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;pointer-events:none}");
-            const observer = new MutationObserver(() => this.#schedulePeopleDom());
-            this.#scope.observe(observer, document.body, {childList: true, subtree: true});
+            this.#registerDomSync(() => this.#schedulePeopleDom());
             this.#scope.own(() => this.#restorePeopleDom(), "element");
             this.#applyPeopleDom();
         }
@@ -1754,7 +1774,6 @@ export class SolcordNativeSuiteController {
         let width = 1;
         let height = 1;
         let exitRadius = 1;
-        let frame = 0;
         let previousTime = 0;
         let simulationTime = 0;
         const motionScale = Math.max(0.25, Math.min(3, speedPercent / 100));
@@ -1791,9 +1810,9 @@ export class SolcordNativeSuiteController {
             }
         };
         const resize = (): void => {
-            const ratio = Math.min(globalThis.devicePixelRatio || 1, 1.5);
             width = Math.max(1, globalThis.innerWidth);
             height = Math.max(1, globalThis.innerHeight);
+            const ratio = solcordAmbientPixelRatio(width, height, globalThis.devicePixelRatio || 1);
             exitRadius = Math.hypot(width, height) * 0.64;
             canvas.width = Math.round(width * ratio);
             canvas.height = Math.round(height * ratio);
@@ -1829,8 +1848,6 @@ export class SolcordNativeSuiteController {
         };
         const draw = (time: number): void => {
             if (stopped) return;
-            frame = requestAnimationFrame(draw);
-            if (document.hidden || time - previousTime < 32) return;
             const delta = Math.min(0.05, Math.max(0.001, (time - previousTime) / 1_000)) * motionScale;
             previousTime = time;
             simulationTime += delta * 1_000;
@@ -1853,8 +1870,8 @@ export class SolcordNativeSuiteController {
         };
         resize();
         scope.listen(globalThis, "resize", resize, {passive: true});
-        frame = requestAnimationFrame(draw);
-        scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        this.#runPacedCanvasLoop(scope, draw, () => solcordAmbientFrameInterval("field"));
+        scope.own(() => {stopped = true;}, "other");
         return true;
     }
 
@@ -1880,8 +1897,6 @@ export class SolcordNativeSuiteController {
         const motionScale = Math.max(0.25, Math.min(3, speedPercent / 100));
         let pulse: Pulse | undefined;
         let pixelRatio = 1;
-        let frame = 0;
-        let lastDraw = -Infinity;
         let stopped = false;
         const fract = (value: number): number => value - Math.floor(value);
         const seeded = (column: number, row: number): number => fract(Math.sin(column * 91.73 + row * 37.19 + 4.17) * 18_731.737);
@@ -1892,7 +1907,7 @@ export class SolcordNativeSuiteController {
         const rgb = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
         const baseColor = rgb ? [Number.parseInt(rgb[1]!, 16), Number.parseInt(rgb[2]!, 16), Number.parseInt(rgb[3]!, 16)] : [159, 184, 255];
         const resize = (): void => {
-            pixelRatio = Math.min(globalThis.devicePixelRatio || 1, 1.5);
+            pixelRatio = solcordAmbientPixelRatio(globalThis.innerWidth, globalThis.innerHeight, globalThis.devicePixelRatio || 1);
             const width = Math.max(1, Math.round(globalThis.innerWidth * pixelRatio));
             const height = Math.max(1, Math.round(globalThis.innerHeight * pixelRatio));
             if (canvas.width === width && canvas.height === height) return;
@@ -1916,7 +1931,9 @@ export class SolcordNativeSuiteController {
             const height = canvas.height;
             const aspect = width / height;
             const drift = timestamp * 0.000045 * motionScale;
-            const spacing = Math.max(10, 20 - Math.min(24, density) * 0.38);
+            // Keep the field expressive without evaluating thousands of glyphs
+            // every frame. Density still changes the scene, inside a safe band.
+            const spacing = Math.max(18, 30 - Math.min(24, density) * 0.4);
             const cellX = spacing * pixelRatio;
             const cellY = (spacing + 4) * pixelRatio;
             const columns = Math.ceil(width / cellX);
@@ -1953,23 +1970,58 @@ export class SolcordNativeSuiteController {
                 }
             }
         };
-        const render = (timestamp: number): void => {
-            if (stopped) return;
-            const interval = pulse ? 16 : 48;
-            if (!document.hidden && timestamp - lastDraw >= interval) {
-                draw(timestamp);
-                lastDraw = timestamp;
-            }
-            frame = requestAnimationFrame(render);
-        };
         resize();
-        draw(performance.now());
+        if (!document.hidden && (typeof document.hasFocus !== "function" || document.hasFocus())) draw(performance.now());
         scope.listen(globalThis, "resize", resize, {passive: true});
         scope.listen(globalThis, "pointermove", updatePointer, {passive: true});
         scope.listen(globalThis, "pointerdown", startPulse, {passive: true});
-        frame = requestAnimationFrame(render);
-        scope.own(() => {stopped = true; cancelAnimationFrame(frame);}, "timer");
+        this.#runPacedCanvasLoop(scope, timestamp => {if (!stopped) draw(timestamp);}, () => solcordAmbientFrameInterval("work-field", Boolean(pulse)));
+        scope.own(() => {stopped = true;}, "other");
         return true;
+    }
+
+    #runPacedCanvasLoop(scope: SolcordDisposalScope, render: (timestamp: number) => void, requestedInterval: () => number): void {
+        let stopped = false;
+        let timer = 0;
+        let frame = 0;
+        let costPenalty = 1;
+        const active = () => !document.hidden && document.visibilityState !== "hidden" && (typeof document.hasFocus !== "function" || document.hasFocus());
+        const cancelPending = () => {
+            if (timer) globalThis.clearTimeout(timer);
+            if (frame) cancelAnimationFrame(frame);
+            timer = 0;
+            frame = 0;
+        };
+        const schedule = () => {
+            if (stopped || timer || frame || !active()) return;
+            const delay = Math.max(34, Math.round(requestedInterval() * costPenalty));
+            timer = globalThis.setTimeout(() => {
+                timer = 0;
+                if (stopped || !active()) return;
+                frame = requestAnimationFrame(timestamp => {
+                    frame = 0;
+                    if (stopped || !active()) return;
+                    const started = performance.now();
+                    render(timestamp);
+                    const cost = performance.now() - started;
+                    // Repeated expensive frames back off quickly and recover
+                    // gradually. This protects the rest of the desktop without
+                    // abruptly removing the selected visual treatment.
+                    costPenalty = cost > 14 ? Math.min(4, costPenalty * 1.35) : Math.max(1, costPenalty * 0.94);
+                    schedule();
+                });
+            }, delay) as unknown as number;
+        };
+        const pause = () => cancelPending();
+        const resume = () => schedule();
+        scope.listen(document, "visibilitychange", () => active() ? resume() : pause());
+        scope.listen(globalThis, "focus", resume);
+        scope.listen(globalThis, "blur", pause);
+        scope.own(() => {
+            stopped = true;
+            cancelPending();
+        }, "timer");
+        schedule();
     }
 
     #startVoiceHealth(): void {
@@ -2012,13 +2064,12 @@ export class SolcordNativeSuiteController {
             return;
         }
         if (!this.#releaseFocusObserver) {
-            const observer = new MutationObserver(() => this.#applyFocusChannels(this.#focusIds));
-            observer.observe(document.body, {childList: true, subtree: true});
-            this.#releaseFocusObserver = this.#scope.own(() => {
-                observer.disconnect();
+            const release = this.#registerDomSync(() => this.#applyFocusChannels(this.#focusIds));
+            this.#releaseFocusObserver = () => {
+                release();
                 this.#releaseFocusObserver = undefined;
                 this.#clearFocusChannels();
-            }, "observer");
+            };
         }
         this.#applyFocusChannels(this.#focusIds);
     }
@@ -2047,6 +2098,37 @@ export class SolcordNativeSuiteController {
             else element.title = decoration.originalTitle;
         }
         if (decoration.originalNodes && element.textContent === decoration.renderedText) element.replaceChildren(...decoration.originalNodes);
+    }
+
+    #registerDomSync(callback: () => void): () => void {
+        this.#domSyncCallbacks.add(callback);
+        if (!this.#domSyncObserver) {
+            const schedule = () => {
+                if (this.#domSyncFrame || this.#disposed) return;
+                this.#domSyncFrame = requestAnimationFrame(() => {
+                    this.#domSyncFrame = 0;
+                    if (this.#disposed) return;
+                    for (const synchronize of [...this.#domSyncCallbacks]) synchronize();
+                });
+            };
+            const observer = this.#domSyncObserver = new MutationObserver(schedule);
+            observer.observe(document.body, {childList: true, subtree: true, attributes: true, attributeFilter: ["datetime"]});
+            this.#releaseDomSyncObserver = this.#scope.own(() => {
+                observer.disconnect();
+                if (this.#domSyncFrame) cancelAnimationFrame(this.#domSyncFrame);
+                this.#domSyncFrame = 0;
+                this.#domSyncObserver = undefined;
+                this.#releaseDomSyncObserver = undefined;
+                this.#domSyncCallbacks.clear();
+            }, "observer");
+        }
+        let released = false;
+        return () => {
+            if (released) return;
+            released = true;
+            this.#domSyncCallbacks.delete(callback);
+            if (!this.#domSyncCallbacks.size) this.#releaseDomSyncObserver?.();
+        };
     }
 
     #restoreTimestampTitles(): void {

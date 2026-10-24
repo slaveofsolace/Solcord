@@ -856,6 +856,7 @@ describe("Solcord native-suite security boundaries", () => {
         });
         controller.start();
         controllers.push({controller, scope});
+        expect(scope.counts().observer).toBe(1);
         expect(member.querySelector("[data-solcord-voice-presence]")).toBeNull();
         member.remove();
     });
@@ -900,6 +901,7 @@ describe("Solcord native-suite security boundaries", () => {
         });
         controller.start();
         controllers.push({controller, scope});
+        expect(scope.counts().observer).toBe(1);
         expect(member.querySelector("[data-solcord-voice-presence]")).toBeNull();
         controller.includeVoiceChannel("777");
         expect(member.querySelector("[data-solcord-voice-presence='speaking']")).not.toBeNull();
@@ -962,13 +964,17 @@ describe("Solcord native-suite security boundaries", () => {
         expect(document.querySelector("[data-solcord-ambient-effect]")).toBeNull();
     });
 
-    test("mounts the owner-approved SOL flow canvas and cancels its frame on teardown", () => {
+    test("mounts the owner-approved SOL flow canvas and cancels paced work on teardown", () => {
         const originalContext = HTMLCanvasElement.prototype.getContext;
         const originalFrame = globalThis.requestAnimationFrame;
         const originalCancel = globalThis.cancelAnimationFrame;
+        const originalTimeout = globalThis.setTimeout;
+        const originalClearTimeout = globalThis.clearTimeout;
         let nextFrame: FrameRequestCallback | undefined;
+        let nextTimer: (() => void) | undefined;
         let strokes = 0;
         let cancelled = 0;
+        let cleared = 0;
         const context = {
             globalAlpha: 1,
             globalCompositeOperation: "source-over",
@@ -987,6 +993,8 @@ describe("Solcord native-suite security boundaries", () => {
         HTMLCanvasElement.prototype.getContext = (() => context) as unknown as typeof HTMLCanvasElement.prototype.getContext;
         globalThis.requestAnimationFrame = callback => {nextFrame = callback; return 17;};
         globalThis.cancelAnimationFrame = handle => {if (handle === 17) cancelled++;};
+        globalThis.setTimeout = ((callback: TimerHandler) => {nextTimer = callback as () => void; return 23;}) as typeof globalThis.setTimeout;
+        globalThis.clearTimeout = ((handle: number) => {if (handle === 23) cleared++;}) as typeof globalThis.clearTimeout;
         try {
             const scope = new SolcordDisposalScope();
             const controller = new SolcordNativeSuiteController(scope, {DiscordEffects: true}, {motionPreferences: {effect: "field", particleCount: 10, color: "#abcdef", opacityPercent: 38, speedPercent: 100, starAngleDegrees: 0, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}}});
@@ -995,27 +1003,34 @@ describe("Solcord native-suite security boundaries", () => {
             const canvas = document.querySelector<HTMLCanvasElement>("canvas[data-solcord-ambient-effect][data-effect='field']");
             expect(canvas).not.toBeNull();
             expect(canvas?.style.zIndex).toBe("0");
+            nextTimer?.();
             nextFrame?.(48);
             expect(strokes).toBeGreaterThan(0);
             controller.dispose();
             scope.dispose();
             expect(canvas?.isConnected).toBeFalse();
-            expect(cancelled).toBeGreaterThan(0);
+            expect(cancelled + cleared).toBeGreaterThan(0);
         }
         finally {
             HTMLCanvasElement.prototype.getContext = originalContext;
             globalThis.requestAnimationFrame = originalFrame;
             globalThis.cancelAnimationFrame = originalCancel;
+            globalThis.setTimeout = originalTimeout;
+            globalThis.clearTimeout = originalClearTimeout;
         }
     });
 
-    test("mounts the owner-site Work Field with one owned frame and complete teardown", () => {
+    test("mounts the owner-site Work Field with paced work and complete teardown", () => {
         const originalContext = HTMLCanvasElement.prototype.getContext;
         const originalFrame = globalThis.requestAnimationFrame;
         const originalCancel = globalThis.cancelAnimationFrame;
+        const originalTimeout = globalThis.setTimeout;
+        const originalClearTimeout = globalThis.clearTimeout;
         let nextFrame: FrameRequestCallback | undefined;
+        let nextTimer: (() => void) | undefined;
         let glyphs = 0;
         let cancelled = 0;
+        let cleared = 0;
         const context = {
             font: "",
             textAlign: "start",
@@ -1027,6 +1042,8 @@ describe("Solcord native-suite security boundaries", () => {
         HTMLCanvasElement.prototype.getContext = (() => context) as unknown as typeof HTMLCanvasElement.prototype.getContext;
         globalThis.requestAnimationFrame = callback => {nextFrame = callback; return 19;};
         globalThis.cancelAnimationFrame = handle => {if (handle === 19) cancelled++;};
+        globalThis.setTimeout = ((callback: TimerHandler) => {nextTimer = callback as () => void; return 29;}) as typeof globalThis.setTimeout;
+        globalThis.clearTimeout = ((handle: number) => {if (handle === 29) cleared++;}) as typeof globalThis.clearTimeout;
         try {
             const scope = new SolcordDisposalScope();
             const controller = new SolcordNativeSuiteController(scope, {DiscordEffects: true}, {motionPreferences: {effect: "work-field", particleCount: 10, color: "#abcdef", opacityPercent: 38, speedPercent: 100, starAngleDegrees: 0, surfaces: {messages: true, channels: true, servers: true, members: true, modals: true, popouts: true, settings: true, tooltips: true, threads: true}}});
@@ -1036,16 +1053,19 @@ describe("Solcord native-suite security boundaries", () => {
             expect(canvas).not.toBeNull();
             expect(canvas?.style.zIndex).toBe("0");
             expect(glyphs).toBeGreaterThan(0);
+            nextTimer?.();
             nextFrame?.(96);
             controller.dispose();
             scope.dispose();
             expect(canvas?.isConnected).toBeFalse();
-            expect(cancelled).toBeGreaterThan(0);
+            expect(cancelled + cleared).toBeGreaterThan(0);
         }
         finally {
             HTMLCanvasElement.prototype.getContext = originalContext;
             globalThis.requestAnimationFrame = originalFrame;
             globalThis.cancelAnimationFrame = originalCancel;
+            globalThis.setTimeout = originalTimeout;
+            globalThis.clearTimeout = originalClearTimeout;
         }
     });
 
