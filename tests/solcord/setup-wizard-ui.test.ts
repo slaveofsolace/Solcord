@@ -220,8 +220,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
         expect(PANEL_SOURCE).toContain("Disarm and resync");
-        expect(PANEL_SOURCE).toContain("Experimental · account risk");
-        expect(PANEL_SOURCE).toContain("Built into Solcord. Enable it here, then arm it separately for each call.");
+        expect(PANEL_SOURCE).toContain("A built-in voice option. Turn it on once, then arm it separately for each call.");
+        expect(PANEL_SOURCE).not.toContain("Experimental · account risk</p><FakeDeafenControls");
         expect(PANEL_SOURCE).toContain("community plugin active");
         expect(PANEL_SOURCE).toContain("Solcord leaves it untouched");
         expect(RUNTIME_SOURCE).toContain("fakeDeafenProvider()");

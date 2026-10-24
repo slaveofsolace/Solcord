@@ -3793,12 +3793,16 @@ class SolcordRuntimeStore extends Store {
         const configuredSeconds = Number(settings.values.sampleSeconds) || 5;
         const policy = resolveSolcordPerformancePolicy(preferences.performanceProfile, preferences.appearance.motion, globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
         const seconds = Math.max(configuredSeconds, policy.sampleSeconds);
-        this.#sampler.begin();
         let overlay: HTMLElement | undefined;
         if (settings.values.showOverlay === true) {
             overlay = scope.element(textElement("output", "Solcord: measuring…", "solcord-performance-overlay"));
             overlay.setAttribute("aria-live", "off");
         }
+        if (!overlay) {
+            this.#setHealth("performance-hud", {detail: "Overlay hidden; recurring performance sampling is suspended. Open the overlay when you want a bounded live reading."});
+            return;
+        }
+        this.#sampler.begin();
         const sample = () => {
             this.#lastPerformanceSample = this.#sampler.sample(seconds * 1_000, countResources(this.#scopes));
             if (overlay) overlay.textContent = `Solcord · lag ${this.#lastPerformanceSample.eventLoopLagMs} ms · ${this.#lastPerformanceSample.ownedResources} owned resources`;
