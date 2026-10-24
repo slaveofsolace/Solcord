@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
 import {SolcordDisposalScope} from "../../src/betterdiscord/modules/solcord/disposal";
-import {solcordFlowPairCount, solcordFlowPalette, SolcordNativeSuiteController} from "../../src/betterdiscord/modules/solcord/native-suite";
+import {solcordAmbientFrameInterval, solcordAmbientPixelRatio, solcordFlowPairCount, solcordFlowPalette, SolcordNativeSuiteController} from "../../src/betterdiscord/modules/solcord/native-suite";
 import {planSolcordNativeSuiteLookups} from "../../src/common/solcord/builtin-addons";
 import {resolveSolcordPerformancePolicy} from "../../src/common/solcord/product";
 
@@ -53,6 +53,15 @@ afterEach(() => {
 });
 
 describe("Solcord native motion performance policy", () => {
+    test("caps ambient backing stores and paced frame budgets", () => {
+        expect(solcordAmbientPixelRatio(1920, 1080, 2)).toBe(1);
+        expect(solcordAmbientPixelRatio(3840, 2160, 2)).toBeCloseTo(0.5, 5);
+        expect(3840 * 2160 * solcordAmbientPixelRatio(3840, 2160, 2) ** 2).toBeLessThanOrEqual(2_073_600.01);
+        expect(solcordAmbientFrameInterval("field")).toBe(50);
+        expect(solcordAmbientFrameInterval("work-field")).toBe(84);
+        expect(solcordAmbientFrameInterval("work-field", true)).toBe(34);
+    });
+
     test("background blending respects explicit appearance under native light ancestry", () => {
         const previousMode = document.documentElement.dataset.solcordMode;
         const rootClass = document.documentElement.className;

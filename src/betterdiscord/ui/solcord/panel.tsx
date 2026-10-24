@@ -1022,9 +1022,9 @@ function BaselineToolsPanel() {
 
 function PerformanceControls() {
     const values = useStateFromStores(SolcordSettings, () => SolcordSettings.snapshot().modules["performance-hud"].values);
-    return <Section title="Performance HUD" summary="Bounded local samples report observed Solcord startup, memory, event-loop, and owned-resource measurements without claiming to optimize Discord.">
+    return <Section title="Performance HUD" summary="Bounded local samples report event-loop and owned-resource measurements only while the overlay is visible.">
         <label><SolcordSwitch label="Show the local performance overlay" checked={values.showOverlay === true} onChange={value => SolcordRuntime.setValue("performance-hud", "showOverlay", value)} /> Show the local performance overlay</label>
-        <p className="solcord-key-hint"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> opens Command Deck.</p>
+        <p className="solcord-key-hint">When hidden, the sampler owns no recurring timer. <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>K</kbd> opens Command Deck.</p>
     </Section>;
 }
 
@@ -1554,10 +1554,10 @@ function FakeDeafenControls() {
     const communityProvider = state.provider === "community";
     const canArm = state.consent.enabled && !communityProvider && state.status.phase === "ready"
         && state.status.connected && state.status.accountBound && state.status.capturedVoiceState;
-    return <Section title="Fake Deafen" summary="Built into Solcord. Enable it here, then arm it separately for each call.">
+    return <Section title="Fake Deafen" summary="A built-in voice option. Turn it on once, then arm it separately for each call.">
         <div className="solcord-power-control"><div><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span><p>{communityProvider ? "Solcord leaves it untouched and keeps the built-in off so the two providers never stack." : state.status.detail}</p></div><SolcordSwitch label="Fake Deafen" checked={state.consent.enabled} disabled={communityProvider} onChange={toggleFakeDeafen} /></div>
         {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton disabled={!canArm} onClick={arm}>Arm for this call</ActionButton>}</div>}
-        <details className="solcord-secondary-tools"><summary>Risk and automatic disarm rules</summary><p>{experiment.summary} Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
+        <details className="solcord-secondary-tools"><summary>How it works and when it disarms</summary><p>{experiment.summary} This changes only the voice-state information your client sends; it does not grant permissions or affect other accounts. Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
@@ -1637,7 +1637,7 @@ export default function SolcordPanel() {
                 {workspace === "performance" && <><PerformanceProfileControls /><PerformanceControls /></>}
                 {workspace === "privacy" && <><PrivacyProtectionPanel /><BuiltInFeatureSwitches scope="privacy" /><StreamShieldControls /><LinkWorkbench />{productPreferences.safety.attachmentGuard && <AttachmentGuardWorkbench />}<ScreenshotScrubber /><MessageTimelinePanel /></>}
                 {workspace === "chat" && <><BaselineToolsPanel /><BuiltInFeatureSwitches scope="chat" /><NativeSuitePanel key="chat" scope="chat" /><ReturnLaterPanel /></>}
-                {workspace === "voice" && <><ActivityBridge /><BuiltInFeatureSwitches scope="voice" /><div className="solcord-experimental"><p className="solcord-eyebrow">Experimental · account risk</p><FakeDeafenControls /></div><NativeSuitePanel key="voice" scope="voice" /><StreamAudienceGuardControls /></>}
+                {workspace === "voice" && <><ActivityBridge /><BuiltInFeatureSwitches scope="voice" /><FakeDeafenControls /><NativeSuitePanel key="voice" scope="voice" /><StreamAudienceGuardControls /></>}
                 {workspace === "friends" && <><FriendWatchPanel /><BuiltInFeatureSwitches scope="friends" /><NativeSuitePanel key="friends" scope="friends" /></>}
                 {workspace === "extensions" && <>
                     <ProviderMigrationStatus />
