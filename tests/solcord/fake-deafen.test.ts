@@ -4,6 +4,7 @@ import {
     applySolcordFakeDeafenConsentTransition,
     DISCORD_VOICE_STATE_UPDATE_OPCODE,
     normalizeVoiceStatePayload,
+    SolcordFakeDeafenButton,
     SolcordFakeDeafenController,
     type SolcordFakeDeafenDependencies,
     type SolcordGatewaySocket,
@@ -69,6 +70,47 @@ function harness() {
 const deafenedPayload = (): SolcordVoiceStatePayload => ({guild_id: GUILD_ID, channel_id: CHANNEL_ID, self_mute: false, self_deaf: true});
 
 describe("Solcord Fake Deafen", () => {
+    test("places one owned control immediately after native Deafen and tears it down cleanly", async () => {
+        document.body.innerHTML = `<div id="app-mount"><section aria-label="User area"><button id="mute" aria-label="Mute"><span>M</span></button><button id="deafen" aria-label="Deafen"><span id="native-icon">D</span></button><button id="settings" aria-label="User Settings">S</button></section></div>`;
+        let active = false;
+        let toggles = 0;
+        const status = (): ReturnType<SolcordFakeDeafenController["snapshot"]> => ({
+            phase: active ? "armed" : "off",
+            detail: active ? "on" : "off",
+            connected: true,
+            accountBound: true,
+            capturedVoiceState: active,
+            armed: active
+        });
+        const control = new SolcordFakeDeafenButton({
+            document,
+            getStatus: status,
+            toggle: () => {toggles++; active = !active; return true;}
+        });
+
+        expect(control.start()).toBeTrue();
+        const native = document.getElementById("deafen")!;
+        const button = document.querySelector<HTMLButtonElement>("button[data-solcord-fake-deafen]")!;
+        expect(native.nextElementSibling).toBe(button);
+        expect(button.getAttribute("id")).toBeNull();
+        expect(button.querySelector("[id]")).toBeNull();
+        expect(button.getAttribute("aria-label")).toBe("Fake Deafen. Click to toggle.");
+        expect(button.getAttribute("aria-pressed")).toBe("false");
+
+        button.click();
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(toggles).toBe(1);
+        expect(button.getAttribute("aria-pressed")).toBe("true");
+        expect(document.querySelectorAll("button[data-solcord-fake-deafen]")).toHaveLength(1);
+
+        control.reconcile();
+        expect(document.querySelectorAll("button[data-solcord-fake-deafen]")).toHaveLength(1);
+        control.stop();
+        expect(document.querySelector("button[data-solcord-fake-deafen]")).toBeNull();
+        expect(document.getElementById("deafen")).not.toBeNull();
+    });
+
     test("tears down the live adapter when consent persistence fails", async () => {
         let failedClosed = 0;
         let synchronized = 0;
@@ -203,6 +245,34 @@ describe("Solcord Fake Deafen", () => {
         controller.stop();
         expect(state.unpatched).toBeTrue();
         expect(controller.snapshot().phase).toBe("off");
+    });
+
+    test("toggles from the adjacent control without a separate arm confirmation", () => {
+        const state = harness();
+        state.locallyDeafened = false;
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        expect(controller.start()).toBeTrue();
+
+        expect(controller.toggleDirect()).toBeTrue();
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "armed", armed: true, connected: true}));
+        expect(state.locallyDeafened).toBeFalse();
+        expect((state.sent.at(-1)?.payload as SolcordVoiceStatePayload).self_deaf).toBeTrue();
+
+        expect(controller.toggleDirect()).toBeTrue();
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "ready", armed: false}));
+        expect((state.sent.at(-1)?.payload as SolcordVoiceStatePayload).self_deaf).toBeFalse();
+        controller.stop();
+    });
+
+    test("self-primes when normal Deafen was already active before the direct control loaded", () => {
+        const state = harness();
+        const controller = new SolcordFakeDeafenController(state.dependencies);
+        expect(controller.start()).toBeTrue();
+        expect(controller.toggleDirect()).toBeTrue();
+        expect(controller.snapshot()).toEqual(expect.objectContaining({phase: "armed", armed: true}));
+        expect(state.locallyDeafened).toBeFalse();
+        expect(state.sent.map(entry => (entry.payload as SolcordVoiceStatePayload).self_deaf)).toEqual([false, true, true]);
+        controller.stop();
     });
 
     test("refuses to invent a payload or arm while locally audible", () => {

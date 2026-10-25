@@ -28,7 +28,7 @@ import {resolveSolcordSetupPlan} from "@common/solcord/setup-catalog";
 import {InvisibleTypingAdapter} from "./invisible-typing";
 import {DoubleClickReplyFeature, type DoubleClickReplyAdapter, type DoubleClickReplyContext, type DoubleClickReplyTarget} from "./double-click-reply";
 import {DoNotTrackAdapter, resolveDiscordAnalyticsTrack, validateDiscordAnalyticsTrack} from "./do-not-track";
-import {applySolcordFakeDeafenConsentTransition, SolcordFakeDeafenController, type SolcordFakeDeafenStatus, type SolcordGatewaySocket} from "./fake-deafen";
+import {applySolcordFakeDeafenConsentTransition, SolcordFakeDeafenButton, SolcordFakeDeafenController, type SolcordFakeDeafenStatus, type SolcordGatewaySocket} from "./fake-deafen";
 import {normalizeDiscordRelationships, planSolcordFriendWatchNotices, reconcileSolcordRelationships, SolcordFriendWatchAccountBarrier, SolcordFriendWatchJournal, type SolcordFriendWatchNoticeState, type SolcordOwnerRelationshipAction, type SolcordRelationshipEvent, type SolcordRelationshipSnapshot} from "@common/solcord/friend-watch";
 import {inspectSolcordDomain, SolcordDomainMemory, type SolcordDomainDecision, type SolcordDomainMemoryRecord, type SolcordDomainRisk} from "@common/solcord/domain-memory";
 import {inspectSolcordAttachment, inspectSolcordLocalAttachment, type SolcordAttachmentInspection} from "@common/solcord/attachment-guard";
@@ -370,9 +370,10 @@ class SolcordRuntimeStore extends Store {
         summary: summarizeIntegrity(unavailableIntegrityRecords())
     };
     #fakeDeafen?: SolcordFakeDeafenController;
+    #fakeDeafenButton?: SolcordFakeDeafenButton;
     #fakeDeafenScope = new SolcordDisposalScope();
     #fakeDeafenGeneration = 0;
-    #fakeDeafenStatus: SolcordFakeDeafenStatus = {phase: "off", detail: "Power Lab experiment is off.", connected: false, accountBound: false, capturedVoiceState: false, armed: false};
+    #fakeDeafenStatus: SolcordFakeDeafenStatus = {phase: "off", detail: "Built-in adapter is idle. Use the Fake Deafen button beside Discord's normal Deafen control.", connected: false, accountBound: false, capturedVoiceState: false, armed: false};
     #audienceGuard?: SolcordStreamAudienceGuard;
     #audienceGuardStatus: SolcordAudienceGuardStatus = {phase: "off", detail: "Audience Guard is off.", available: false, armed: false, accountBound: false, channelBound: false, denylistCount: 0, detectedCount: 0, activeModes: {preventStart: false, stopOnJoin: false, stopOnWatch: false}};
     #audiencePolicy: SolcordAudienceGuardPrivatePolicy = {version: 1, entries: []};
@@ -514,6 +515,7 @@ class SolcordRuntimeStore extends Store {
         await this.#startupPhases!.run("patch-observer", async () => {
             await this.#installRuntimeObservers();
             this.#synchronizeCuratedAdapters();
+            this.#ensureFakeDeafenButton();
             await this.#synchronizePowerLab();
         });
     }
@@ -1403,6 +1405,33 @@ class SolcordRuntimeStore extends Store {
         this.#fakeDeafenStatus = this.#fakeDeafen?.snapshot() ?? this.#fakeDeafenStatus;
         this.emitChange();
         return disarmed;
+    }
+
+    async toggleFakeDeafenDirect(): Promise<boolean> {
+        if (this.#recoveryMode) {
+            Toasts.error("Fake Deafen is unavailable during Safe Start. Resume Solcord first.", {forceShow: true});
+            return false;
+        }
+        const communityAddon = PluginManager.resolveAddon("FakeDeafen") ?? PluginManager.resolveAddon("FakeDeafen.plugin.js");
+        if (communityAddon && PluginManager.isEnabled(communityAddon.filename)) {
+            Toasts.error("Disable the separate FakeDeafen plugin before using Solcord's built-in control.", {forceShow: true});
+            return false;
+        }
+        if (!SolcordSettings.snapshot().powerLab["fake-deafen"].enabled) {
+            if (!await this.setPowerExperiment("fake-deafen", true, true)) {
+                Toasts.error(this.#fakeDeafenStatus.detail, {forceShow: true});
+                return false;
+            }
+        }
+        if (!this.#fakeDeafen) await this.#synchronizePowerLab();
+        const toggled = this.#fakeDeafen?.toggleDirect() === true;
+        this.#fakeDeafenStatus = this.#fakeDeafen?.snapshot() ?? this.#fakeDeafenStatus;
+        this.#fakeDeafenButton?.update(this.#fakeDeafenStatus);
+        this.emitChange();
+        if (this.#fakeDeafenStatus.armed) Toasts.success("Fake Deafen is on. Click the adjacent control again to restore normal deafen state.", {timeout: 4_000});
+        else if (toggled) Toasts.info("Fake Deafen is off and Discord's normal voice state is restored.", {timeout: 4_000});
+        else Toasts.error(this.#fakeDeafenStatus.detail, {forceShow: true});
+        return toggled;
     }
 
     #applyProductPresentation(): void {
@@ -3366,6 +3395,7 @@ class SolcordRuntimeStore extends Store {
             onStatus: status => {
                 if (generation !== this.#fakeDeafenGeneration || scope.disposed || this.#fakeDeafenScope !== scope) return;
                 this.#fakeDeafenStatus = status;
+                this.#fakeDeafenButton?.update(status);
                 this.emitChange();
             }
         });
@@ -3377,7 +3407,28 @@ class SolcordRuntimeStore extends Store {
         scope.own(() => controller.stop(), "patch");
         scope.interval(() => controller.validateOwnership(), 5_000);
         this.#fakeDeafenStatus = controller.snapshot();
+        this.#fakeDeafenButton?.update(this.#fakeDeafenStatus);
         this.emitChange();
+    }
+
+    #ensureFakeDeafenButton(): void {
+        if (this.#fakeDeafenButton) {
+            this.#fakeDeafenButton.update(this.#fakeDeafenStatus);
+            this.#fakeDeafenButton.reconcile();
+            return;
+        }
+        const directVoiceControl = new SolcordFakeDeafenButton({
+            document,
+            getStatus: () => this.fakeDeafenStatus(),
+            toggle: () => this.toggleFakeDeafenDirect(),
+            onError: detail => Toasts.error(detail, {forceShow: true})
+        });
+        if (!directVoiceControl.start()) return;
+        this.#fakeDeafenButton = directVoiceControl;
+        this.#rootScope.own(() => {
+            directVoiceControl.stop();
+            if (this.#fakeDeafenButton === directVoiceControl) this.#fakeDeafenButton = undefined;
+        }, "element");
     }
 
     #recordPrivacyDecision(receipt: PrivacyDecisionReceipt): void {
@@ -3584,7 +3635,8 @@ class SolcordRuntimeStore extends Store {
         this.#fakeDeafen = undefined;
         this.#fakeDeafenStatus = stoppedStatus?.phase === "attention"
             ? {...stoppedStatus, armed: false}
-            : {phase: "off", detail: "Power Lab experiment is off.", connected: false, accountBound: false, capturedVoiceState: false, armed: false};
+            : {phase: "off", detail: "Built-in adapter is idle. Use the Fake Deafen button beside Discord's normal Deafen control.", connected: false, accountBound: false, capturedVoiceState: false, armed: false};
+        this.#fakeDeafenButton?.update(this.#fakeDeafenStatus);
         this.emitChange();
     }
 

@@ -43,6 +43,134 @@ export interface SolcordFakeDeafenConsentTransition {
     failClosed(): void;
 }
 
+export interface SolcordFakeDeafenButtonDependencies {
+    document: Document;
+    getStatus(): SolcordFakeDeafenStatus;
+    toggle(): boolean | Promise<boolean>;
+    onError?(detail: string): void;
+}
+
+/**
+ * Keeps one owned control immediately beside Discord's native Deafen button.
+ * The native control is cloned only for Discord's current dimensions and icon;
+ * no React handlers or private state survive cloneNode. Solcord owns the new
+ * event listener, accessible state, badge, observer, and teardown.
+ */
+export class SolcordFakeDeafenButton {
+    #button?: HTMLButtonElement;
+    #observer?: MutationObserver;
+    #scheduled = false;
+    #busy = false;
+    #status: SolcordFakeDeafenStatus;
+
+    constructor(private readonly dependencies: SolcordFakeDeafenButtonDependencies) {
+        this.#status = dependencies.getStatus();
+    }
+
+    start(): boolean {
+        if (this.#observer) {
+            this.reconcile();
+            return true;
+        }
+        const body = this.dependencies.document.body;
+        const Observer = this.dependencies.document.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+        if (!body || typeof Observer !== "function") return false;
+        this.#observer = new Observer(() => {
+            // Discord mutates chat constantly. Once the owned control is in
+            // place, those unrelated mutations must cost no query or queued
+            // reconciliation work.
+            if (this.#button?.isConnected) return;
+            this.#schedule();
+        });
+        this.#observer.observe(body, {childList: true, subtree: true});
+        this.reconcile();
+        return true;
+    }
+
+    update(status: SolcordFakeDeafenStatus): void {
+        this.#status = structuredClone(status);
+        this.#render();
+    }
+
+    reconcile(): boolean {
+        this.#scheduled = false;
+        if (this.#button?.isConnected) {
+            this.#render();
+            return true;
+        }
+        this.#button = undefined;
+        const root = this.dependencies.document.querySelector("#app-mount") ?? this.dependencies.document.body;
+        const owned = [...root.querySelectorAll<HTMLButtonElement>("button[data-solcord-fake-deafen]")];
+        if (owned.length) {
+            this.#button = owned.shift();
+            for (const duplicate of owned) duplicate.remove();
+            this.#button?.addEventListener("click", this.#onClick);
+            this.#render();
+            return true;
+        }
+        const native = root.querySelector<HTMLButtonElement>([
+            "button[aria-label=\"Deafen\"]",
+            "button[aria-label^=\"Deafen \" i]",
+            "button[data-list-item-id*=\"deafen\" i]"
+        ].join(","));
+        if (!native || native.dataset.solcordFakeDeafen !== undefined) return false;
+        const button = native.cloneNode(true) as HTMLButtonElement;
+        button.removeAttribute("id");
+        button.removeAttribute("aria-describedby");
+        button.removeAttribute("data-list-item-id");
+        for (const child of button.querySelectorAll("[id]")) child.removeAttribute("id");
+        button.type = "button";
+        button.dataset.solcordFakeDeafen = "true";
+        button.classList.add("solcord-fake-deafen-button");
+        button.addEventListener("click", this.#onClick);
+        native.insertAdjacentElement("afterend", button);
+        this.#button = button;
+        this.#render();
+        return true;
+    }
+
+    stop(): void {
+        this.#observer?.disconnect();
+        this.#observer = undefined;
+        this.#scheduled = false;
+        this.#button?.removeEventListener("click", this.#onClick);
+        this.#button?.remove();
+        this.#button = undefined;
+        for (const duplicate of this.dependencies.document.querySelectorAll("button[data-solcord-fake-deafen]")) duplicate.remove();
+    }
+
+    #schedule(): void {
+        if (this.#scheduled) return;
+        this.#scheduled = true;
+        queueMicrotask(() => this.reconcile());
+    }
+
+    #render(): void {
+        const button = this.#button;
+        if (!button) return;
+        const active = this.#status.armed;
+        button.dataset.solcordFakeDeafenState = active ? "active" : this.#status.phase;
+        button.setAttribute("aria-pressed", String(active));
+        button.setAttribute("aria-label", active ? "Fake Deafen on. Click to restore normal deafen state." : "Fake Deafen. Click to toggle.");
+        button.title = active ? "Fake Deafen is on — click to restore" : "Toggle Fake Deafen";
+        button.disabled = this.#busy;
+    }
+
+    #onClick = (event: Event): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.#busy) return;
+        this.#busy = true;
+        this.#render();
+        void Promise.resolve(this.dependencies.toggle()).catch(() => {
+            this.dependencies.onError?.("Fake Deafen could not toggle on this Discord build.");
+        }).finally(() => {
+            this.#busy = false;
+            this.update(this.dependencies.getStatus());
+        });
+    };
+}
+
 /**
  * Persistence is part of the safety boundary: a failed settings write must not
  * prevent an already-live account-risk patch from being torn down. Returning
@@ -82,6 +210,7 @@ export class SolcordFakeDeafenController {
     #lastPayload?: SolcordVoiceStatePayload;
     #boundAccountId?: string;
     #armedChannelId?: string;
+    #directArmPending = false;
     #status: SolcordFakeDeafenStatus = {
         phase: "off",
         detail: "Adapter is off.",
@@ -119,8 +248,8 @@ export class SolcordFakeDeafenController {
         this.#socket = socket;
         this.#unpatch = unpatch;
         this.#setStatus("ready", channelId
-            ? "Ready. Deafen normally once so Solcord can validate the current voice-state shape, then arm explicitly."
-            : "Ready. Join a voice channel, deafen normally once, then arm explicitly.");
+            ? "Ready. Use the Fake Deafen button beside Discord's normal Deafen control."
+            : "Ready. Join a voice channel, then use the Fake Deafen button beside Discord's normal Deafen control.");
         return true;
     }
 
@@ -137,6 +266,7 @@ export class SolcordFakeDeafenController {
         if (this.#armedChannelId && discordId(this.dependencies.getVoiceChannelId()) !== this.#armedChannelId) {
             this.#lastPayload = undefined;
             this.#armedChannelId = undefined;
+            this.#directArmPending = false;
             this.#setStatus("attention", "The voice connection changed; Fake Deafen disarmed without sending a replacement state.");
             return false;
         }
@@ -176,6 +306,39 @@ export class SolcordFakeDeafenController {
         return true;
     }
 
+    /** One-click path used by the adjacent voice control. */
+    toggleDirect(): boolean {
+        if (!this.validateOwnership()) return false;
+        if (this.#armedChannelId) return this.disarm();
+        const channelId = discordId(this.dependencies.getVoiceChannelId());
+        if (!channelId) {
+            this.#setStatus("attention", "Join a voice channel before using Fake Deafen.");
+            return false;
+        }
+        if (this.dependencies.isLocallyDeafened() && this.#lastPayload?.channel_id === channelId && this.#lastPayload.self_deaf) return this.arm();
+
+        this.#directArmPending = true;
+        this.#setStatus("ready", "Activating Fake Deafen from the adjacent voice control.");
+        try {
+            // If normal Deafen was already active before Solcord observed the
+            // connection, cycle it once to obtain a current Discord-owned
+            // payload instead of fabricating a gateway shape.
+            if (this.dependencies.isLocallyDeafened()) this.dependencies.toggleLocalDeafen();
+            this.dependencies.toggleLocalDeafen();
+        }
+        catch {
+            this.#directArmPending = false;
+            this.#setStatus("attention", "Discord's native Deafen action failed; Fake Deafen stayed off.");
+            return false;
+        }
+        if (!this.#directArmPending) return this.#status.armed;
+        if (this.#lastPayload?.channel_id === channelId && this.#lastPayload.self_deaf && this.dependencies.isLocallyDeafened()) {
+            this.#directArmPending = false;
+            return this.arm();
+        }
+        return true;
+    }
+
     disarm(): boolean {
         if (!this.#armedChannelId) return true;
         if (!this.validateOwnership()) return false;
@@ -184,6 +347,7 @@ export class SolcordFakeDeafenController {
         const socket = this.#socket;
         const payload = this.#lastPayload;
         this.#armedChannelId = undefined;
+        this.#directArmPending = false;
         if (!accountId || accountId !== this.#boundAccountId) {
             this.#setStatus("attention", "Disarmed after an account change. No voice-state payload was sent to the new account.");
             return false;
@@ -215,6 +379,7 @@ export class SolcordFakeDeafenController {
         this.#lastPayload = undefined;
         this.#boundAccountId = undefined;
         this.#armedChannelId = undefined;
+        this.#directArmPending = false;
         try {unpatch?.();}
         catch (error) {
             // Keep the exact cleanup callback. A later stop may retry it, but
@@ -248,13 +413,21 @@ export class SolcordFakeDeafenController {
         const currentChannelId = discordId(this.dependencies.getVoiceChannelId());
         if (payload.channel_id === null || !currentChannelId) {
             this.#armedChannelId = undefined;
+            this.#directArmPending = false;
             this.#setStatus("ready", "Voice disconnected; Fake Deafen disarmed automatically.");
             return;
         }
+        if (this.#directArmPending && payload.self_deaf) {
+            queueMicrotask(() => {
+                if (!this.#directArmPending || this.#armedChannelId) return;
+                this.#directArmPending = false;
+                this.arm();
+            });
+        }
         if (!this.#armedChannelId) {
             this.#setStatus("ready", payload.self_deaf
-                ? "Deafened voice state validated. Fake Deafen is ready for an explicit arm action."
-                : "Voice state validated. Deafen normally before arming Fake Deafen.");
+                ? "Deafened voice state validated. Use the adjacent Fake Deafen button to toggle it."
+                : "Voice state validated. Use the adjacent Fake Deafen button to toggle it.");
             return;
         }
         if (payload.channel_id !== this.#armedChannelId || currentChannelId !== this.#armedChannelId) {

@@ -19,7 +19,7 @@ The source status below is current for the RC5 branch. Exact-client validation i
 | DoNotTrack | Strict Privacy | Structurally validated optional telemetry protection | None | Frozen-network audit on exact client |
 | DoubleClickToReply | Composer Toolkit | Opens Discord's reply composer without sending; optional Ctrl, Shift, or Alt requirement is supported and Alt conflict suppression is owned and reversible | None | DM, guild, text selection, action-button, and modifier matrix |
 | EditServers | People and Spaces | Deliberately safer local alias applied to loaded server navigation and tooltip text with encrypted account-bound restart persistence or visible session fallback | None | Virtual-list and recovery acceptance |
-| FakeDeafen | Power Lab | Scoped, per-call, default-off adapter with explicit arming | None | Owner-controlled call test; never automated |
+| FakeDeafen | Voice & Activities | Direct adjacent control, one-click activation/restoration, scoped socket patch, connection binding, and teardown | None | Fixture-tested; owner-controlled live call test remains manual |
 | InvisibleTyping | Privacy Controls | Suppresses validated typing-start action | None | DM, guild, thread, and drift checks |
 | MessageLoggerV2 | Message Timeline | Independent create/edit/delete/bulk-delete pipeline, bounded journal, and encrypted-store bridge | No XenoLib or ZeresPluginLibrary | Exact-client deleted/edited rendering and restart persistence |
 | MessagePeek | Channel Glance | Keyboard/hover preview of up to five already-loaded messages | None | Virtualized channel lists and all themes |

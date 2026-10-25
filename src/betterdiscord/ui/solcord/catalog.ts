@@ -99,7 +99,7 @@ export const SOLCORD_POWER_LAB = [
     {id: "voice-anchor", name: "Voice Anchor / Anti-AFK", summary: "Calibration and pulse research. Unavailable in the V2 release candidate."},
     {id: "expression-relay", name: "Expression Relay", summary: "URL fallback research. Unavailable in the V2 release candidate."},
     {id: "decor", name: "Decor service", summary: "External OAuth and decoration service. Unavailable in the V2 release candidate."},
-    {id: "fake-deafen", name: "Fake Deafen", summary: "Scoped account-risk experiment with explicit arm, connection binding, drift shutdown, and state restoration. Off by default."},
+    {id: "fake-deafen", name: "Fake Deafen", summary: "Direct adjacent voice control with connection binding, drift shutdown, and state restoration."},
     {id: "fake-mute", name: "Fake Mute", summary: "Account-risk local experiment. Unavailable in the V2 release candidate."},
     {id: "stream-rtc", name: "Stream / RTC overrides", summary: "Volatile RTC experiment. Unavailable in the V2 release candidate."}
 ] as const;

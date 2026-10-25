@@ -777,6 +777,33 @@ html[data-solcord-mode="solcord-light"] .solcord-local-overlay select option { c
 .solcord-power-control:is(:hover, :focus-within) { background: var(--sc-surface-1); }
 .solcord-power-control > div { min-width: 0; }
 .solcord-power-control p { margin: 4px 0 0; color: var(--sc-muted); line-height: 1.4; }
+
+/* Voice-panel control: cloned dimensions stay native to the active Discord
+ * build while Solcord owns the badge, state, event handler, and cleanup. */
+button.solcord-fake-deafen-button { position: relative; isolation: isolate; }
+button.solcord-fake-deafen-button::after {
+    content: "F";
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 13px;
+    height: 13px;
+    color: #0D1515;
+    background: #70D7C7;
+    border: 2px solid var(--background-secondary-alt, var(--background-secondary));
+    border-radius: 50%;
+    font: 800 8px/1 var(--font-primary);
+}
+button.solcord-fake-deafen-button[aria-pressed="true"] {
+    color: var(--status-danger, #DA373C) !important;
+    background: color-mix(in srgb, var(--status-danger, #DA373C) 16%, transparent) !important;
+}
+button.solcord-fake-deafen-button[aria-pressed="true"]::after { color: #FFFFFF; background: var(--status-danger, #DA373C); }
+button.solcord-fake-deafen-button:focus-visible { outline: 2px solid #70D7C7; outline-offset: 2px; }
+button.solcord-fake-deafen-button:disabled { cursor: wait; opacity: 0.58; }
 .solcord-provider-summary { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)) auto; gap: 6px 16px; align-items: center; border: 0; }
 .solcord-provider-summary > div { display: grid; gap: 2px; min-height: 58px; padding: 10px 14px 10px 0; }
 .solcord-provider-summary > div + div { padding-left: 0; border: 0; }
