@@ -468,6 +468,11 @@ class SolcordRuntimeStore extends Store {
                 return true;
             });
             this.#started = privacyReady === true;
+            // The adjacent voice control is a primary user-facing control, so
+            // it must not depend on the lower-priority deferred module pass.
+            // Starting here installs only one dormant DOM observer until the
+            // native Deafen button exists; the later call is idempotent.
+            if (this.#started) this.#ensureFakeDeafenButton();
             return this.#started;
         })().catch(error => {
             this.#started = false;
