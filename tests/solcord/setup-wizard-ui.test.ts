@@ -220,6 +220,8 @@ describe("Solcord beginner-first setup UI", () => {
         expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
         expect(RUNTIME_SOURCE).toContain("toggleFakeDeafenDirect()");
+        const runtimeStart = RUNTIME_SOURCE.slice(RUNTIME_SOURCE.indexOf("async start(): Promise<boolean>"), RUNTIME_SOURCE.indexOf("async completeStartup(): Promise<void>"));
+        expect(runtimeStart).toContain("this.#ensureFakeDeafenButton()");
         expect(fakeDeafenPanel).toContain("F</strong>-badged button immediately beside normal Deafen");
         expect(fakeDeafenPanel).toContain("A direct built-in control beside Discord's normal Deafen button.");
         expect(fakeDeafenPanel).not.toContain("Arm for this call");

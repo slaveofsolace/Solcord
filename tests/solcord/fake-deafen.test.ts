@@ -111,6 +111,25 @@ describe("Solcord Fake Deafen", () => {
         expect(document.getElementById("deafen")).not.toBeNull();
     });
 
+    test("starts before Discord mounts the native voice controls and reconciles the button later", async () => {
+        document.body.innerHTML = `<div id="app-mount"></div>`;
+        const control = new SolcordFakeDeafenButton({
+            document,
+            getStatus: () => ({phase: "off", detail: "off", connected: false, accountBound: false, capturedVoiceState: false, armed: false}),
+            toggle: () => true
+        });
+
+        expect(control.start()).toBeTrue();
+        expect(document.querySelector("button[data-solcord-fake-deafen]")).toBeNull();
+        document.getElementById("app-mount")!.innerHTML = `<section aria-label="User area"><button aria-label="Deafen"><span>D</span></button></section>`;
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const native = document.querySelector<HTMLButtonElement>("button[aria-label='Deafen']")!;
+        expect(native.nextElementSibling?.getAttribute("data-solcord-fake-deafen")).toBe("true");
+        control.stop();
+    });
+
     test("tears down the live adapter when consent persistence fails", async () => {
         let failedClosed = 0;
         let synchronized = 0;

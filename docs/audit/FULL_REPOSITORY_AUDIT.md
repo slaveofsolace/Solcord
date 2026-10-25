@@ -13,8 +13,8 @@ This inventory is a text scan, not a semantic review or live Discord test. Curre
 | Persistent tracked files | 624 |
 | Text files scanned | 609 |
 | Binary files classified | 15 |
-| Text lines scanned | 131,092 |
-| Custom Solcord lines | 36,194 |
+| Text lines scanned | 131,118 |
+| Custom Solcord lines | 36,215 |
 | Previous product-identity matches | 0 |
 
 ## Runtime and maintenance signals
@@ -26,7 +26,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | TODO / FIXME / HACK | 30 | 0 |
 | Timer calls | 53 | 8 |
 | Mutation observers | 20 | 4 |
-| DOM queries | 289 | 177 |
+| DOM queries | 291 | 179 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
 | Synchronous filesystem calls | 808 | 734 |
@@ -37,7 +37,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
-| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,686 | 283.6 KiB |
+| 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,691 | 284.0 KiB |
 | 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 2,175 | 133.8 KiB |
 | 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,643 | 160.2 KiB |
 | 4 | `tests/solcord/storage-security.test.ts` | 1,579 | 92.8 KiB |
