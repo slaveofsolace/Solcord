@@ -216,14 +216,16 @@ describe("Solcord beginner-first setup UI", () => {
     });
 
     test("keeps Fake Deafen visible and preserves an active community provider", () => {
+        const fakeDeafenPanel = PANEL_SOURCE.slice(PANEL_SOURCE.indexOf("function FakeDeafenControls"), PANEL_SOURCE.indexOf("export default function SolcordPanel"));
         expect(PANEL_SOURCE).toContain("Optional files not installed");
         expect(PANEL_SOURCE).not.toContain("<dt>Not staged</dt>");
-        expect(PANEL_SOURCE).toContain("SolcordRuntime.armFakeDeafen()");
-        expect(PANEL_SOURCE).toContain("Disarm and resync");
-        expect(PANEL_SOURCE).toContain("A built-in voice option. Turn it on once, then arm it separately for each call.");
+        expect(RUNTIME_SOURCE).toContain("toggleFakeDeafenDirect()");
+        expect(fakeDeafenPanel).toContain("F</strong>-badged button immediately beside normal Deafen");
+        expect(fakeDeafenPanel).toContain("A direct built-in control beside Discord's normal Deafen button.");
+        expect(fakeDeafenPanel).not.toContain("Arm for this call");
         expect(PANEL_SOURCE).not.toContain("Experimental · account risk</p><FakeDeafenControls");
         expect(PANEL_SOURCE).toContain("community plugin active");
-        expect(PANEL_SOURCE).toContain("Solcord leaves it untouched");
+        expect(PANEL_SOURCE).toContain("does not stack a second gateway patch");
         expect(RUNTIME_SOURCE).toContain("fakeDeafenProvider()");
         expect(CATALOG_SOURCE).toContain("Voice Anchor / Anti-AFK");
         expect(CATALOG_SOURCE).toContain("Unavailable in the V2 release candidate.");

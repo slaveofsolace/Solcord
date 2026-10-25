@@ -96,12 +96,14 @@ describe("Solcord Control Center clarity", () => {
     });
 
     test("keeps Fake Deafen visibly discoverable as a normal built-in Voice option", () => {
+        const fakeDeafen = panel.slice(panel.indexOf("function FakeDeafenControls"), panel.indexOf("export default function SolcordPanel"));
         expect(panel).toContain("<FakeDeafenControls />");
         expect(panel).not.toContain("Experimental · account risk</p><FakeDeafenControls");
-        expect(panel).toContain("label=\"Fake Deafen\"");
-        expect(panel).toContain("disabled={!canArm}");
-        expect(panel).toContain("state.status.phase === \"ready\"");
-        expect(panel).toContain("state.status.capturedVoiceState");
+        expect(fakeDeafen).toContain("label=\"Keep Fake Deafen adapter ready\"");
+        expect(fakeDeafen).toContain("direct built-in control beside Discord's normal Deafen button");
+        expect(fakeDeafen).toContain("There is no per-call confirmation");
+        expect(fakeDeafen).not.toContain("Arm for this call");
+        expect(fakeDeafen).not.toContain("window.confirm(\"Arm Fake Deafen");
         expect(panel).toContain("findSolcordWorkspaces(workspaceQuery)");
         expect(panel).not.toMatch(/aria-label=\{`Enable \$\{health\.name\}`\}/);
         expect(panel).not.toContain("workspace === \"power\"");

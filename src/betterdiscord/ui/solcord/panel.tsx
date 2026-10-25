@@ -1531,33 +1531,21 @@ function FakeDeafenControls() {
     }));
     const [actionStatus, setActionStatus] = useState("");
     const toggleFakeDeafen = (enabled: boolean) => {
-        if (enabled && !window.confirm("Enable the Fake Deafen experiment? It intentionally makes your server-visible voice state differ from your local audio state. Discord can change this behavior at any time. The adapter stays unarmed until you separately arm it in a voice channel.")) return;
         return SolcordRuntime.setPowerExperiment("fake-deafen", enabled, enabled).then(succeeded => {
             const status = SolcordRuntime.fakeDeafenStatus();
             setActionStatus(status.phase === "attention"
                 ? status.detail
                 : succeeded
-                    ? (enabled ? "Adapter enabled but not armed." : "Adapter disabled and its scoped patch removed.")
+                    ? (enabled ? "Direct voice control is ready." : "Adapter is idle. The adjacent button will load it again when clicked.")
                     : "The adapter failed closed.");
         });
     };
-    const arm = () => {
-        if (!state.status.connected || !state.status.accountBound) {
-            setActionStatus("Join a voice call before arming Fake Deafen.");
-            return;
-        }
-        if (!window.confirm("Arm Fake Deafen for the current voice connection? First use Discord's normal Deafen control once. Arming restores local audio while keeping server-visible self-deafen on until you disarm, change channels, disconnect, or the adapter detects drift.")) return;
-        setActionStatus(SolcordRuntime.armFakeDeafen() ? "Fake Deafen is armed for this voice connection." : SolcordRuntime.fakeDeafenStatus().detail);
-    };
-    const disarm = () => setActionStatus(SolcordRuntime.disarmFakeDeafen() ? "Fake Deafen disarmed and server-visible state was resynchronized." : SolcordRuntime.fakeDeafenStatus().detail);
     const experiment = SOLCORD_POWER_LAB.find(candidate => candidate.id === "fake-deafen")!;
     const communityProvider = state.provider === "community";
-    const canArm = state.consent.enabled && !communityProvider && state.status.phase === "ready"
-        && state.status.connected && state.status.accountBound && state.status.capturedVoiceState;
-    return <Section title="Fake Deafen" summary="A built-in voice option. Turn it on once, then arm it separately for each call.">
-        <div className="solcord-power-control"><div><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span><p>{communityProvider ? "Solcord leaves it untouched and keeps the built-in off so the two providers never stack." : state.status.detail}</p></div><SolcordSwitch label="Fake Deafen" checked={state.consent.enabled} disabled={communityProvider} onChange={toggleFakeDeafen} /></div>
-        {state.consent.enabled && !communityProvider && <div className="solcord-actions">{state.status.armed ? <ActionButton tone="danger" onClick={disarm}>Disarm and resync</ActionButton> : <ActionButton disabled={!canArm} onClick={arm}>Arm for this call</ActionButton>}</div>}
-        <details className="solcord-secondary-tools"><summary>How it works and when it disarms</summary><p>{experiment.summary} This changes only the voice-state information your client sends; it does not grant permissions or affect other accounts. Solcord disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
+    return <Section title="Fake Deafen" summary="A direct built-in control beside Discord's normal Deafen button.">
+        <div className="solcord-power-control"><div><span className={`solcord-status solcord-status-${communityProvider || state.status.phase === "armed" ? "active" : state.status.phase === "attention" ? "failed" : "starting"}`}>{communityProvider ? "community plugin active" : state.status.phase}</span><p>{communityProvider ? "Solcord leaves the separate plugin untouched and does not stack a second gateway patch." : state.status.detail}</p></div><SolcordSwitch label="Keep Fake Deafen adapter ready" checked={state.consent.enabled} disabled={communityProvider} onChange={toggleFakeDeafen} /></div>
+        <p className="solcord-key-hint">In a voice call, use the <strong>F</strong>-badged button immediately beside normal Deafen. One click turns Fake Deafen on; the next click restores normal voice state. There is no per-call confirmation.</p>
+        <details className="solcord-secondary-tools"><summary>Behavior and automatic cleanup</summary><p>{experiment.summary} This changes only the voice-state information your client sends; it does not grant permissions or affect other accounts. Solcord restores or disarms on disconnect, channel change, account change, adapter drift, recovery mode, or module disable.</p></details>
         {actionStatus && <p role="status" className="solcord-import-status">{actionStatus}</p>}
     </Section>;
 }
