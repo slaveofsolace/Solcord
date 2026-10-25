@@ -59,7 +59,7 @@ internal sealed class InstallerEngine
         ReleaseManifest? manifest;
         try {manifest = JsonSerializer.Deserialize<ReleaseManifest>(json, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});}
         catch {throw new InvalidDataException("The installer manifest failed validation.");}
-        if (manifest is null || !Sha256Pattern.IsMatch(manifest.ArtifactSha256) || !Sha256Pattern.IsMatch(manifest.BuildManifestSha256) || manifest.SchemaVersion != 7 || !Regex.IsMatch(manifest.Version, "^\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?$") || !Version.TryParse(manifest.Version, out _) || string.IsNullOrEmpty(manifest.CandidateLabel) || !Regex.IsMatch(manifest.CandidateLabel, $"^v{Regex.Escape(manifest.Version)}-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$") || !Regex.IsMatch(manifest.SourceCommit, "^[0-9a-f]{40}$")) throw new InvalidDataException("The installer manifest failed validation.");
+        if (manifest is null || !Sha256Pattern.IsMatch(manifest.ArtifactSha256) || !Sha256Pattern.IsMatch(manifest.BuildManifestSha256) || manifest.SchemaVersion != 7 || !Regex.IsMatch(manifest.Version, "^\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?$") || !Version.TryParse(manifest.Version, out _) || string.IsNullOrEmpty(manifest.CandidateLabel) || !IsCandidateLabelForVersion(manifest.CandidateLabel, manifest.Version) || !Regex.IsMatch(manifest.SourceCommit, "^[0-9a-f]{40}$")) throw new InvalidDataException("The installer manifest failed validation.");
         if (Path.GetFileName(manifest.ArtifactFile) != manifest.ArtifactFile || !manifest.ArtifactFile.EndsWith(".asar", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The manifest artifact name is unsafe.");
         return manifest;
     }
@@ -530,11 +530,16 @@ internal sealed class InstallerEngine
     {
         ordinal = 0;
         if (!IsCandidateLabelForVersion(candidateLabel, version)) return false;
+        if (candidateLabel.Equals($"v{version}", StringComparison.OrdinalIgnoreCase))
+        {
+            ordinal = ulong.MaxValue;
+            return true;
+        }
         Match match = Regex.Match(candidateLabel, $"^v{Regex.Escape(version)}-rc\\.(0|[1-9][0-9]*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-        return match.Success && ulong.TryParse(match.Groups[1].Value, out ordinal);
+        return match.Success && ulong.TryParse(match.Groups[1].Value, out ordinal) && ordinal < ulong.MaxValue;
     }
 
-    private static bool IsCandidateLabelForVersion(string candidateLabel, string version) => Regex.IsMatch(candidateLabel, $"^v{Regex.Escape(version)}-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$", RegexOptions.CultureInvariant);
+    private static bool IsCandidateLabelForVersion(string candidateLabel, string version) => Regex.IsMatch(candidateLabel, $"^v{Regex.Escape(version)}(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private void RequireNoPendingRecovery()
     {

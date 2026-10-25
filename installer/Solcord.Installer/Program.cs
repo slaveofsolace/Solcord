@@ -162,8 +162,8 @@ internal static class InstallerSelfTest
             stage = "upgrade-repair";
             engine.Install(target, repair: true);
             if (!engine.VerifyInstalled()) return 14;
-            if (!InstallerEngine.TryGetReleaseCandidateOrdinal(manifest.CandidateLabel, manifest.Version, out ulong candidateOrdinal) || candidateOrdinal == 0 || candidateOrdinal == ulong.MaxValue) return 21;
-            string previousCandidate = $"v{manifest.Version}-rc.{candidateOrdinal - 1}";
+            if (!InstallerEngine.TryGetReleaseCandidateOrdinal(manifest.CandidateLabel, manifest.Version, out ulong candidateOrdinal) || candidateOrdinal == 0) return 21;
+            string previousCandidate = $"v{manifest.Version}-rc.{(candidateOrdinal == ulong.MaxValue ? ulong.MaxValue - 1 : candidateOrdinal - 1)}";
             File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), SourceCommit = new string('b', 40), CandidateLabel = previousCandidate}));
             stage = "same-core-rc-upgrade";
             engine.Install(target, repair: true);
@@ -184,13 +184,17 @@ internal static class InstallerSelfTest
             stage = "malformed-candidate-label-refusal";
             try {engine.Install(target, repair: true); return 25;}
             catch (InvalidDataException error) when (error.Message.Contains("version provenance is malformed", StringComparison.Ordinal)) {/* expected */}
-            if (!InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}-rc.{ulong.MaxValue}", manifest.Version, out ulong maximumOrdinal) || maximumOrdinal != ulong.MaxValue) return 26;
+            if (!InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}", manifest.Version, out ulong maximumOrdinal) || maximumOrdinal != ulong.MaxValue) return 26;
+            if (InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}-rc.{ulong.MaxValue}", manifest.Version, out _)) return 29;
             if (InstallerEngine.TryGetReleaseCandidateOrdinal($"v{manifest.Version}-rc.18446744073709551616", manifest.Version, out _)) return 27;
-            string newerCandidate = $"v{manifest.Version}-rc.{candidateOrdinal + 1}";
-            File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), CandidateLabel = newerCandidate}));
-            stage = "same-core-rc-downgrade-refusal";
-            try {engine.Install(target, repair: true); return 22;}
-            catch (InvalidOperationException error) when (error.Message.Contains("older than the recorded Solcord release candidate", StringComparison.Ordinal)) {/* expected */}
+            if (candidateOrdinal != ulong.MaxValue)
+            {
+                string newerCandidate = $"v{manifest.Version}-rc.{candidateOrdinal + 1}";
+                File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('b', 64), CandidateLabel = newerCandidate}));
+                stage = "same-core-rc-downgrade-refusal";
+                try {engine.Install(target, repair: true); return 22;}
+                catch (InvalidOperationException error) when (error.Message.Contains("older than the recorded Solcord release candidate", StringComparison.Ordinal)) {/* expected */}
+            }
             File.WriteAllText(currentReceipt, JsonSerializer.Serialize(installedReceipt with {ArtifactSha256 = new string('a', 64)}));
             stage = "candidate-label-reuse-refusal";
             try {engine.Install(target, repair: true); return 23;}
@@ -340,7 +344,7 @@ internal static class InstallerSelfTest
             throw new InvalidDataException("discord-update-reinstall: candidate ordinal");
         string receiptFile = Path.Combine(roaming, "BetterDiscord", "solcord-installer", "current.json");
         InstallReceipt receipt = JsonSerializer.Deserialize<InstallReceipt>(File.ReadAllText(receiptFile)) ?? throw new InvalidDataException("discord-update-reinstall: receipt");
-        File.WriteAllText(receiptFile, JsonSerializer.Serialize(receipt with {CandidateLabel = $"v{manifest.Version}-rc.{candidateOrdinal - 1}"}));
+        File.WriteAllText(receiptFile, JsonSerializer.Serialize(receipt with {CandidateLabel = $"v{manifest.Version}-rc.{(candidateOrdinal == ulong.MaxValue ? ulong.MaxValue - 1 : candidateOrdinal - 1)}"}));
 
         string newDiscord = Path.Combine(local, "Discord", "app-1.0.1");
         string newResources = Path.Combine(newDiscord, "resources");

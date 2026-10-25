@@ -35,14 +35,14 @@ afterEach(() => {
 
 describe("Solcord BetterDiscord data-root isolation", () => {
     test("derives the BetterDiscord root beside Windows Discord user data", () => {
-        expect(resolveSolcordBetterDiscordRoot("C:\\Users\\owner\\AppData\\Roaming\\Discord"))
-            .toBe("C:\\Users\\owner\\AppData\\Roaming\\BetterDiscord");
+        expect(resolveSolcordBetterDiscordRoot("C:\\Profiles\\fixture\\AppData\\Roaming\\Discord"))
+            .toBe("C:\\Profiles\\fixture\\AppData\\Roaming\\BetterDiscord");
         expect(resolveSolcordBetterDiscordRoot("c:/isolated/Discord-Acceptance/"))
             .toBe("c:\\isolated\\BetterDiscord");
     });
 
     test("keeps owner and disposable roots disjoint", () => {
-        const owner = resolveSolcordBetterDiscordRoot("C:\\Users\\owner\\AppData\\Roaming\\Discord");
+        const owner = resolveSolcordBetterDiscordRoot("C:\\Profiles\\fixture\\AppData\\Roaming\\Discord");
         const disposable = resolveSolcordBetterDiscordRoot("C:\\Solcord-Acceptance\\Roaming\\Discord");
 
         expect(disposable).not.toBe(owner);
@@ -51,8 +51,8 @@ describe("Solcord BetterDiscord data-root isolation", () => {
     });
 
     test("supports POSIX installations without weakening path validation", () => {
-        expect(resolveSolcordBetterDiscordRoot("/home/owner/.config/discord"))
-            .toBe("/home/owner/.config/BetterDiscord");
+        expect(resolveSolcordBetterDiscordRoot("/srv/solcord-fixture/.config/discord"))
+            .toBe("/srv/solcord-fixture/.config/BetterDiscord");
     });
 
     test("rejects blank, relative, root, and NUL-containing paths", () => {

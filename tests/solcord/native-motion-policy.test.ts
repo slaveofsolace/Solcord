@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
 import {SolcordDisposalScope} from "../../src/betterdiscord/modules/solcord/disposal";
-import {solcordAmbientFrameInterval, solcordAmbientPixelRatio, solcordFlowPairCount, solcordFlowPalette, SolcordNativeSuiteController} from "../../src/betterdiscord/modules/solcord/native-suite";
+import {solcordAmbientFrameInterval, solcordAmbientPixelRatio, solcordDomMutationsNeedSync, solcordFlowPairCount, solcordFlowPalette, SolcordNativeSuiteController} from "../../src/betterdiscord/modules/solcord/native-suite";
 import {planSolcordNativeSuiteLookups} from "../../src/common/solcord/builtin-addons";
 import {resolveSolcordPerformancePolicy} from "../../src/common/solcord/product";
 
@@ -54,12 +54,38 @@ afterEach(() => {
 
 describe("Solcord native motion performance policy", () => {
     test("caps ambient backing stores and paced frame budgets", () => {
-        expect(solcordAmbientPixelRatio(1920, 1080, 2)).toBe(1);
-        expect(solcordAmbientPixelRatio(3840, 2160, 2)).toBeCloseTo(0.5, 5);
-        expect(3840 * 2160 * solcordAmbientPixelRatio(3840, 2160, 2) ** 2).toBeLessThanOrEqual(2_073_600.01);
-        expect(solcordAmbientFrameInterval("field")).toBe(50);
-        expect(solcordAmbientFrameInterval("work-field")).toBe(84);
-        expect(solcordAmbientFrameInterval("work-field", true)).toBe(34);
+        expect(solcordAmbientPixelRatio(1920, 1080, 2)).toBeCloseTo(Math.sqrt(0.75), 5);
+        expect(solcordAmbientPixelRatio(3840, 2160, 2)).toBeCloseTo(Math.sqrt(0.1875), 5);
+        expect(3840 * 2160 * solcordAmbientPixelRatio(3840, 2160, 2) ** 2).toBeLessThanOrEqual(1_555_200.01);
+        expect(solcordAmbientFrameInterval("field")).toBe(60);
+        expect(solcordAmbientFrameInterval("work-field")).toBe(100);
+        expect(solcordAmbientFrameInterval("work-field", true)).toBe(40);
+    });
+
+    test("ignores DOM feedback created only by Solcord-owned surfaces", async () => {
+        const host = document.createElement("div");
+        const ownedNode = document.createElement("span");
+        ownedNode.dataset.solcordComposerCount = "true";
+        host.append(ownedNode);
+        document.body.append(host);
+        const records: MutationRecord[] = [];
+        const observer = new MutationObserver(batch => records.push(...batch));
+        observer.observe(host, {childList: true, subtree: true, attributes: true});
+        ownedNode.textContent = "12";
+        await Promise.resolve();
+        observer.disconnect();
+        expect(records.length).toBeGreaterThan(0);
+        expect(solcordDomMutationsNeedSync(records)).toBe(false);
+
+        records.length = 0;
+        const external = document.createElement("button");
+        const externalObserver = new MutationObserver(batch => records.push(...batch));
+        externalObserver.observe(host, {childList: true});
+        host.append(external);
+        await Promise.resolve();
+        externalObserver.disconnect();
+        expect(solcordDomMutationsNeedSync(records)).toBe(true);
+        host.remove();
     });
 
     test("background blending respects explicit appearance under native light ancestry", () => {

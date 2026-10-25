@@ -1,6 +1,6 @@
 # Solcord quick start
 
-Use this guide for the **v2.0.0-rc.39** Windows installer.
+Use this guide for the **Solcord 2.0 — Signal** Windows installer.
 
 Allow about one minute on a typical PC **after download**. Windows prompts, Discord shutdown, or recovery can take longer.
 
@@ -18,8 +18,8 @@ Allow about one minute on a typical PC **after download**. Windows prompts, Disc
 
 Download both files into the same folder:
 
-- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.39/SolcordInstaller.exe)
-- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0-rc.39/SHA256SUMS.txt)
+- [SolcordInstaller.exe](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0/SolcordInstaller.exe)
+- [SHA256SUMS.txt](https://github.com/slaveofsolace/Solcord/releases/download/v2.0.0/SHA256SUMS.txt)
 
 ### Check the download
 

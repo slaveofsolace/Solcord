@@ -242,11 +242,14 @@ function validateEmbeddedBuildProvenance(value: Record<string, unknown>, expecte
         throw new Error("Solcord ASAR source commit does not match the caller-provided expected source commit.");
     }
     const candidateVersion = typeof value.version === "string" ? value.version : "";
-    const candidatePrefix = `v${candidateVersion}-`;
+    const stableLabel = `v${candidateVersion}`;
+    const candidatePrefix = `${stableLabel}-`;
+    const validReleaseLabel = value.candidateLabel === stableLabel
+        || typeof value.candidateLabel === "string" && value.candidateLabel.startsWith(candidatePrefix)
+            && CANDIDATE_SUFFIX_PATTERN.test(value.candidateLabel.slice(candidatePrefix.length));
     if (typeof value.version !== "string" || !value.version || value.version.length > 128
         || [...value.version].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
-        || typeof value.candidateLabel !== "string" || !value.candidateLabel.startsWith(candidatePrefix)
-        || !CANDIDATE_SUFFIX_PATTERN.test(value.candidateLabel.slice(candidatePrefix.length)) || value.candidateLabel.length > 128
+        || typeof value.candidateLabel !== "string" || !validReleaseLabel || value.candidateLabel.length > 128
         || typeof source.branch !== "string" || !source.branch || source.branch.length > 256
         || [...source.branch].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
         || !isCanonicalTimestamp(value.buildTimestamp)

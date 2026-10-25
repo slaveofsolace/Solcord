@@ -4,25 +4,25 @@
 
 | Item | Status |
 | --- | --- |
-| Published Windows download | [v2.0.0-rc.39](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.39) |
-| Current candidate | RC39 |
+| Published Windows download | [Solcord 2.0 — Signal](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0) |
+| Current release | `v2.0.0` |
 | Source delivery branch | `main` |
 | Upstream integration branch | `development` |
-| Distribution | Unsigned Windows x64 prerelease |
-| Stable release | Not published |
+| Distribution | Unsigned Windows x64 stable release |
+| Code signing | Not available; Windows may show an unknown-publisher warning |
 
 The [changelog](../CHANGELOG.md) describes source changes. A merge is not an installation or a release. Use the version and hashes in the downloaded release's manifest to identify a package.
 
-## Current candidate
+## Current release
 
-RC39 combines the accepted RC38 product with a tested recovery path for Discord desktop updates. When Discord replaces its startup files, the Solcord core and user data remain intact but Discord can open without Solcord. The RC39 installer detects that condition and restores the startup handoff through **Update Solcord** or **Repair Solcord**.
+Solcord 2.0 — Signal promotes the reviewed V2 line without relabeling any release candidate. It keeps the tested Discord-update recovery path and adds a lower-cost ambient renderer: fewer backing pixels, paced background frames, cached field geometry, and no self-triggered DOM synchronization pass. When Discord replaces its startup files, **Update Solcord** or **Repair Solcord** restores the startup handoff without replacing plugins, themes, settings, or private stores.
 
-The exact source commit, core hash, installer hash, and Windows build results are recorded in the release manifest and `SHA256SUMS.txt` attached to RC39. Older candidates keep their own immutable receipts and are not relabeled.
+The exact source commit, core hash, installer hash, and Windows build results are recorded in the release manifest and `SHA256SUMS.txt` attached to `v2.0.0`. Older candidates keep their own immutable receipts and are not relabeled.
 
 | Check | Recorded result |
 | --- | --- |
-| Source matrix | 1,081 tests and 7,491 assertions passed before packaging; lint, Solcord CSS, TypeScript, types, documentation links, circular inventory, and repository audit are separate gates |
-| Discord-update fixture | A newer Discord version replaces the startup archive; RC39 updates the receipt, restores injection, verifies the result, and preserves owner plugin, theme, and settings bytes |
+| Source matrix | 1,081 tests and 7,499 assertions passed before packaging; lint, Solcord CSS, TypeScript, unused-code analysis, types, documentation links, circular inventory, and repository audit are separate gates |
+| Discord-update fixture | A newer Discord version replaces the startup archive; the installer updates the receipt, restores injection, verifies the result, and preserves plugin, theme, and settings bytes |
 | Installer | Embedded-resource self-test covers install, update, repair, rollback, interrupted recovery, downgrade refusal, and uninstall in isolated targets |
 | Installed client | The exact release receipt identifies the Discord version and current rollback backup; source tests alone are not presented as live acceptance |
 | Private and experimental tools | Stay opt-in. Fake Deafen stays off until explicitly enabled and armed for a call |
@@ -43,6 +43,6 @@ The [hosted checks](https://github.com/slaveofsolace/Solcord/actions/workflows/s
 
 ## Historical results
 
-[RC33 acceptance notes](archive/RC33_ACCEPTANCE.md), RC38 receipts, and older records are preserved. They describe the exact versions and conditions named there. They do not certify a new candidate.
+[RC33 acceptance notes](archive/RC33_ACCEPTANCE.md), RC38 receipts, and older records are preserved. They describe the exact versions and conditions named there. They do not certify the stable package.
 
 For current installation instructions, use [Quick start](QUICK_START.md). For live testing, use the [desktop checklist](development/DESKTOP_TESTING.md).
