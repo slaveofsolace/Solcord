@@ -13,8 +13,8 @@ This inventory is a text scan, not a semantic review or live Discord test. Curre
 | Persistent tracked files | 624 |
 | Text files scanned | 609 |
 | Binary files classified | 15 |
-| Text lines scanned | 131,118 |
-| Custom Solcord lines | 36,215 |
+| Text lines scanned | 131,212 |
+| Custom Solcord lines | 36,247 |
 | Previous product-identity matches | 0 |
 
 ## Runtime and maintenance signals
@@ -25,8 +25,8 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | --- | ---: | ---: |
 | TODO / FIXME / HACK | 30 | 0 |
 | Timer calls | 53 | 8 |
-| Mutation observers | 20 | 4 |
-| DOM queries | 291 | 179 |
+| Mutation observers | 22 | 6 |
+| DOM queries | 290 | 179 |
 | Webpack discovery calls | 78 | 0 |
 | Patch calls | 30 | 3 |
 | Synchronous filesystem calls | 808 | 734 |
@@ -38,19 +38,19 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | Rank | Path | Lines | Size |
 | ---: | --- | ---: | ---: |
 | 1 | `src/betterdiscord/modules/solcord/runtime.ts` | 4,691 | 284.0 KiB |
-| 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 2,175 | 133.8 KiB |
+| 2 | `src/betterdiscord/modules/solcord/native-suite.ts` | 2,221 | 135.7 KiB |
 | 3 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,643 | 160.2 KiB |
 | 4 | `tests/solcord/storage-security.test.ts` | 1,579 | 92.8 KiB |
-| 5 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
+| 5 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,490 | 67.0 KiB |
 | 6 | `tests/solcord/native-suite-security.test.ts` | 1,316 | 69.1 KiB |
 | 7 | `bun.lock` | 1,299 | 140.1 KiB |
 | 8 | `src/betterdiscord/styles/solcord.css` | 1,285 | 95.1 KiB |
-| 9 | `CHANGELOG.md` | 1,186 | 44.8 KiB |
+| 9 | `CHANGELOG.md` | 1,193 | 45.4 KiB |
 | 10 | `tests/common/i18n.test.ts` | 1,170 | 46.4 KiB |
 | 11 | `tests/solcord/disposable-acceptance.test.ts` | 1,161 | 56.2 KiB |
 | 12 | `src/betterdiscord/modules/solcord/store.ts` | 1,100 | 58.7 KiB |
-| 13 | `installer/Solcord.Installer/InstallerEngine.cs` | 936 | 63.7 KiB |
-| 14 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
+| 13 | `installer/Solcord.Installer/InstallerEngine.cs` | 941 | 63.9 KiB |
+| 14 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.9 KiB |
 | 15 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 16 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 17 | `src/betterdiscord/modules/addonstore.ts` | 732 | 23.1 KiB |
@@ -64,11 +64,11 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | ---: | --- | ---: | ---: |
 | 1 | `src/betterdiscord/ui/solcord/panel.tsx` | 1,643 | 160.2 KiB |
 | 2 | `tests/solcord/storage-security.test.ts` | 1,579 | 92.8 KiB |
-| 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,487 | 66.8 KiB |
+| 3 | `scripts/prepare-solcord-disposable-acceptance.ts` | 1,490 | 67.0 KiB |
 | 4 | `tests/solcord/native-suite-security.test.ts` | 1,316 | 69.1 KiB |
 | 5 | `src/betterdiscord/styles/solcord.css` | 1,285 | 95.1 KiB |
 | 6 | `tests/solcord/disposable-acceptance.test.ts` | 1,161 | 56.2 KiB |
-| 7 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.8 KiB |
+| 7 | `scripts/assemble-solcord-release-evidence.mjs` | 923 | 52.9 KiB |
 | 8 | `src/electron/main/modules/solcord-setup.ts` | 908 | 52.4 KiB |
 | 9 | `src/electron/main/modules/solcord-timeline.ts` | 831 | 36.6 KiB |
 | 10 | `src/common/solcord/v2-feature-models.ts` | 661 | 36.1 KiB |
@@ -79,7 +79,7 @@ These counts are inventory signals, not findings by themselves. Each use still r
 | 15 | `src/common/solcord/product.ts` | 485 | 24.6 KiB |
 | 16 | `src/electron/main/modules/solcord-friend-watch.ts` | 469 | 23.2 KiB |
 | 17 | `tests/solcord/release-evidence-assembler.test.ts` | 434 | 23.8 KiB |
-| 18 | `scripts/helpers/build-provenance.ts` | 421 | 17.7 KiB |
+| 18 | `scripts/helpers/build-provenance.ts` | 424 | 17.8 KiB |
 | 19 | `tests/solcord/settings-panel.test.ts` | 419 | 29.2 KiB |
 | 20 | `src/betterdiscord/ui/solcord/setup-wizard.tsx` | 411 | 36.6 KiB |
 

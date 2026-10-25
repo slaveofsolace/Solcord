@@ -21,20 +21,20 @@ describe("Solcord product identity migration", () => {
     });
 });
 
-describe("Solcord release-candidate identity", () => {
-    test("keeps the compatibility version and candidate label exact and distinct", () => {
+describe("Solcord release identity", () => {
+    test("keeps the compatibility version and v-prefixed release label exact and distinct", () => {
         expect(packageMetadata.version).toBe("2.0.0");
         expect(SOLCORD_PRODUCT_IDENTITY).toEqual({
             product: "Solcord",
             numericVersion: "2.0.0",
-            candidateLabel: "v2.0.0-rc.39"
+            candidateLabel: "v2.0.0"
         });
         expect(SOLCORD_PRODUCT_IDENTITY.candidateLabel).not.toBe(SOLCORD_PRODUCT_IDENTITY.numericVersion);
         expect(() => assertSolcordPackageVersion(packageMetadata.version)).not.toThrow();
         expect(() => assertSolcordPackageVersion("2.0.1")).toThrow("typed product identity");
     });
 
-    test("plumbs the candidate and source identity into build and installed UI surfaces", () => {
+    test("plumbs the release and source identity into build and installed UI surfaces", () => {
         const build = fs.readFileSync(path.join(root, "scripts/build.ts"), "utf8");
         const config = fs.readFileSync(path.join(root, "src/betterdiscord/stores/config.ts"), "utf8");
         const panel = fs.readFileSync(path.join(root, "src/betterdiscord/ui/solcord/panel.tsx"), "utf8");

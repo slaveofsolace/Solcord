@@ -26,10 +26,10 @@ const INSTALLER_MANIFEST_SCHEMA = 7;
 const BUILD_MANIFEST_SCHEMA = 2;
 const RELEASE_NONCLAIMS = Object.freeze([
     "This evidence assembly does not prove live Discord behavior or owner-profile installation.",
-    "This unsigned candidate has no authenticated Windows publisher identity.",
+    "This unsigned release has no authenticated Windows publisher identity.",
     "Merge-SHA packaging and publication remain separate release gates."
 ]);
-const CANDIDATE_PATTERN = /^v\d+\.\d+\.\d+-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$/;
+const CANDIDATE_PATTERN = /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/;
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const SAFE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -668,7 +668,7 @@ function writeJson(file, value) {
 }
 
 function assertCandidateLabel(candidateLabel, productVersion) {
-    if (!CANDIDATE_PATTERN.test(candidateLabel)) throw new Error("The candidate label must be an exact v-prefixed semantic prerelease label.");
+    if (!CANDIDATE_PATTERN.test(candidateLabel)) throw new Error("The release label must be an exact v-prefixed semantic version or prerelease label.");
     if (candidateLabel.slice(1).split("-")[0] !== productVersion) throw new Error("The candidate label does not match the installer product version.");
 }
 

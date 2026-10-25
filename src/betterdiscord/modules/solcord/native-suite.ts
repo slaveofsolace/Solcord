@@ -107,7 +107,7 @@ export interface SolcordSpeakingStoreShape {
     getSpeakers?(): unknown;
 }
 
-const SOLCORD_AMBIENT_MAX_PIXELS = 2_073_600;
+const SOLCORD_AMBIENT_MAX_PIXELS = 1_555_200;
 
 /**
  * Bounds the backing store independently from CSS size. A 4K Discord window
@@ -123,8 +123,29 @@ export function solcordAmbientPixelRatio(width: number, height: number, devicePi
 }
 
 export function solcordAmbientFrameInterval(effect: "field" | "work-field", pulse = false): number {
-    if (effect === "work-field") return pulse ? 34 : 84;
-    return 50;
+    if (effect === "work-field") return pulse ? 40 : 100;
+    return 60;
+}
+
+function solcordNodeBelongsToOwnedSurface(node: Node): boolean {
+    let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+    while (element) {
+        if (element.getAttributeNames().some(name => name.startsWith("data-solcord-"))) return true;
+        element = element.parentElement;
+    }
+    return false;
+}
+
+/** Avoids a feedback pass when a shared synchronizer only observes its own UI. */
+export function solcordDomMutationsNeedSync(records: readonly MutationRecord[]): boolean {
+    return records.some(record => {
+        // Discord can reuse a timestamp node and update only its datetime value.
+        // That native change must win even after Solcord decorated the element.
+        if (record.type === "attributes") return true;
+        if (solcordNodeBelongsToOwnedSurface(record.target)) return false;
+        const changed = [...record.addedNodes, ...record.removedNodes];
+        return changed.length === 0 || changed.some(node => !solcordNodeBelongsToOwnedSurface(node));
+    });
 }
 
 export interface SolcordChangeStoreShape {
@@ -1821,9 +1842,18 @@ export class SolcordNativeSuiteController {
             context.setTransform(ratio, 0, 0, ratio, 0, 0);
             populate();
         };
+        let paletteMode = "";
+        let paletteLight = false;
+        let paletteColors: string[] = [];
         const palette = (): string[] => {
             const mode = document.documentElement.dataset.solcordMode;
-            return solcordFlowPalette(color, mode === "solcord-light" || ((!mode || mode === "follow-discord") && Boolean(document.querySelector(".theme-light"))));
+            const light = mode === "solcord-light" || ((!mode || mode === "follow-discord") && (document.documentElement.classList.contains("theme-light") || document.body.classList.contains("theme-light")));
+            if (mode !== paletteMode || light !== paletteLight || !paletteColors.length) {
+                paletteMode = mode ?? "";
+                paletteLight = light;
+                paletteColors = solcordFlowPalette(color, light);
+            }
+            return paletteColors;
         };
         const point = (pair: FlowPair, opposite: boolean, previous: boolean, time: number): [number, number, number] => {
             const radius = previous ? pair.previousRadius : pair.radius;
@@ -1898,6 +1928,8 @@ export class SolcordNativeSuiteController {
         let pulse: Pulse | undefined;
         let pixelRatio = 1;
         let stopped = false;
+        type WorkCell = {nx: number; ny: number; x: number; y: number; grain: number; glyph: "+" | ":" | ".";};
+        const cells: WorkCell[] = [];
         const fract = (value: number): number => value - Math.floor(value);
         const seeded = (column: number, row: number): number => fract(Math.sin(column * 91.73 + row * 37.19 + 4.17) * 18_731.737);
         const ease = (value: number): number => {
@@ -1906,6 +1938,7 @@ export class SolcordNativeSuiteController {
         };
         const rgb = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
         const baseColor = rgb ? [Number.parseInt(rgb[1]!, 16), Number.parseInt(rgb[2]!, 16), Number.parseInt(rgb[3]!, 16)] : [159, 184, 255];
+        const baseFill = `rgb(${baseColor[0]},${baseColor[1]},${baseColor[2]})`;
         const resize = (): void => {
             pixelRatio = solcordAmbientPixelRatio(globalThis.innerWidth, globalThis.innerHeight, globalThis.devicePixelRatio || 1);
             const width = Math.max(1, Math.round(globalThis.innerWidth * pixelRatio));
@@ -1915,6 +1948,29 @@ export class SolcordNativeSuiteController {
             canvas.height = height;
             canvas.style.width = `${globalThis.innerWidth}px`;
             canvas.style.height = `${globalThis.innerHeight}px`;
+            const spacing = Math.max(18, 30 - Math.min(24, density) * 0.4);
+            const cellX = spacing * pixelRatio;
+            const cellY = (spacing + 4) * pixelRatio;
+            const columns = Math.ceil(width / cellX);
+            const rows = Math.ceil(height / cellY);
+            cells.length = 0;
+            for (let row = 1; row < rows; row++) {
+                for (let column = 1; column < columns; column++) {
+                    const grain = seeded(column, row);
+                    cells.push({
+                        nx: column / columns,
+                        ny: row / rows,
+                        x: column * cellX,
+                        y: row * cellY,
+                        grain,
+                        glyph: grain > 0.91 ? "+" : grain > 0.64 ? ":" : "."
+                    });
+                }
+            }
+            context.font = `${10.5 * pixelRatio}px "Fragment Mono",Consolas,monospace`;
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillStyle = baseFill;
         };
         const updatePointer: EventListener = (event): void => {
             const {clientX, clientY} = event as PointerEvent;
@@ -1931,31 +1987,19 @@ export class SolcordNativeSuiteController {
             const height = canvas.height;
             const aspect = width / height;
             const drift = timestamp * 0.000045 * motionScale;
-            // Keep the field expressive without evaluating thousands of glyphs
-            // every frame. Density still changes the scene, inside a safe band.
-            const spacing = Math.max(18, 30 - Math.min(24, density) * 0.4);
-            const cellX = spacing * pixelRatio;
-            const cellY = (spacing + 4) * pixelRatio;
-            const columns = Math.ceil(width / cellX);
-            const rows = Math.ceil(height / cellY);
             const pulseLife = pulse ? (timestamp - pulse.startedAt) / 1_850 : 2;
             if (pulseLife > 1) pulse = undefined;
             pointer.x += (pointerTarget.x - pointer.x) * 0.075;
             pointer.y += (pointerTarget.y - pointer.y) * 0.075;
             context.clearRect(0, 0, width, height);
-            context.font = `${10.5 * pixelRatio}px "Fragment Mono",Consolas,monospace`;
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-            for (let row = 1; row < rows; row++) {
-                for (let column = 1; column < columns; column++) {
-                    const nx = column / columns;
-                    const ny = row / rows;
+            context.fillStyle = baseFill;
+            for (const cell of cells) {
+                    const {nx, ny, x, y, grain, glyph} = cell;
                     const dx = (nx - pointer.x) * aspect;
                     const dy = ny - pointer.y;
                     const proximity = Math.max(0, 1 - Math.hypot(dx, dy) / 0.34);
                     const field = Math.sin(nx * 10.7 + ny * 3.25 + drift * 2.1) + Math.cos(ny * 16.2 - nx * 4.4 - drift * 1.35) * 0.58 + Math.sin((nx + ny * 0.78) * 26.4 + drift * 0.63) * 0.24 + proximity * proximity * 0.72;
                     const ridge = 1 - Math.abs(Math.sin(field * 2.13));
-                    const grain = seeded(column, row);
                     const base = ease((ridge - (0.885 + grain * 0.09)) / 0.08);
                     let wave = 0;
                     if (pulse && pulseLife >= 0 && pulseLife <= 1) {
@@ -1965,10 +2009,10 @@ export class SolcordNativeSuiteController {
                     const visibility = Math.max(base, wave * (0.45 + ridge * 0.55));
                     if (visibility < 0.035) continue;
                     const alpha = Math.min(0.82, 0.12 + visibility * 0.48 + wave * 0.26);
-                    context.fillStyle = `rgba(${baseColor[0]},${baseColor[1]},${baseColor[2]},${alpha})`;
-                    context.fillText(grain > 0.91 ? "+" : grain > 0.64 ? ":" : ".", column * cellX, row * cellY);
-                }
+                    context.globalAlpha = alpha;
+                    context.fillText(glyph, x, y);
             }
+            context.globalAlpha = 1;
         };
         resize();
         if (!document.hidden && (typeof document.hasFocus !== "function" || document.hasFocus())) draw(performance.now());
@@ -2111,7 +2155,9 @@ export class SolcordNativeSuiteController {
                     for (const synchronize of [...this.#domSyncCallbacks]) synchronize();
                 });
             };
-            const observer = this.#domSyncObserver = new MutationObserver(schedule);
+            const observer = this.#domSyncObserver = new MutationObserver(records => {
+                if (solcordDomMutationsNeedSync(records)) schedule();
+            });
             observer.observe(document.body, {childList: true, subtree: true, attributes: true, attributeFilter: ["datetime"]});
             this.#releaseDomSyncObserver = this.#scope.own(() => {
                 observer.disconnect();

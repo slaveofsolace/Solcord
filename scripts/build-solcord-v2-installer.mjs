@@ -99,7 +99,7 @@ try {
         buildManifestSha256: sourceBuildManifestHash,
         schemaVersion: 7,
         supportedDiscord: "Stable/PTB/Canary; exact installed target shown at runtime",
-        releaseNotes: "Unsigned Solcord V2 release candidate with hash-bound resources embedded in the branded executable. Install, Update, Repair, Roll Back, Uninstall, Verify, and Launch are separate explicit actions."
+        releaseNotes: "Solcord 2.0 Signal, an unsigned stable release with hash-bound resources embedded in the branded executable. Install, Update, Repair, Roll Back, Uninstall, Verify, and Launch are separate explicit actions."
     };
     const stagedInstallerManifest = path.join(inputRoot, "solcord-installer-manifest.json");
     fs.writeFileSync(stagedInstallerManifest, `${JSON.stringify(manifest, null, 2)}\n`, {encoding: "utf8", flag: "wx"});

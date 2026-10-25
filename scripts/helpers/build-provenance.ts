@@ -88,6 +88,13 @@ const CANDIDATE_SUFFIX = /^[0-9a-z]+(?:[.-][0-9a-z]+)*$/i;
 const BUILD_MODES = new Set<SolcordBuildMode>(["development", "diagnostic", "production", "release", "watch"]);
 const ALL_PACKAGE_MODULES = ["earlyRenderer", "editor", "editorHtml", "editorPreload", "main", "preload", "solcord"];
 
+function isReleaseLabelForVersion(label: string, version: string): boolean {
+    const stable = `v${version}`;
+    if (label === stable) return true;
+    const prefix = `${stable}-`;
+    return label.startsWith(prefix) && CANDIDATE_SUFFIX.test(label.slice(prefix.length));
+}
+
 function sha256(value: string | Buffer): string {
     return crypto.createHash("sha256").update(value).digest("hex");
 }
@@ -240,11 +247,9 @@ export function captureSolcordBuildProvenance(repoRootValue: string, options: Ca
 
     const source = captureStableSourceState(repoRoot);
     const modules = [...new Set(options.modules)].sort();
-    const candidatePrefix = `v${options.version}-`;
     if (!options.version
         || typeof options.candidateLabel !== "string"
-        || !options.candidateLabel.startsWith(candidatePrefix)
-        || !CANDIDATE_SUFFIX.test(options.candidateLabel.slice(candidatePrefix.length))
+        || !isReleaseLabelForVersion(options.candidateLabel, options.version)
         || options.candidateLabel.length > 128
         || modules.length === 0
         || modules.some(module => !/^[a-zA-Z][a-zA-Z0-9]*$/.test(module))) {
@@ -330,7 +335,6 @@ function validateProvenance(value: unknown): SolcordBuildProvenance {
     const modules = candidate.modules;
     const expectedLabel = source?.clean ? `${candidate.mode}-clean` : `${candidate.mode}-dirty.${source?.digest?.slice(0, 16)}`;
     const candidateVersion = typeof candidate.version === "string" ? candidate.version : "";
-    const candidatePrefix = `v${candidateVersion}-`;
     if (!exactKeys(candidate, ["schemaVersion", "kind", "product", "version", "candidateLabel", "mode", "buildLabel", "buildTimestamp", "modules", "source", "inputs"])
         || !source || !exactKeys(source, ["commit", "branch", "clean", "digest", "statusDigest"])
         || !inputs || !exactKeys(inputs, ["lockfile", "toolchain"])
@@ -342,8 +346,7 @@ function validateProvenance(value: unknown): SolcordBuildProvenance {
         || typeof candidate.version !== "string"
         || !candidate.version
         || typeof candidate.candidateLabel !== "string"
-        || !candidate.candidateLabel.startsWith(candidatePrefix)
-        || !CANDIDATE_SUFFIX.test(candidate.candidateLabel.slice(candidatePrefix.length))
+        || !isReleaseLabelForVersion(candidate.candidateLabel, candidateVersion)
         || candidate.candidateLabel.length > 128
         || !BUILD_MODES.has(candidate.mode)
         || !FULL_COMMIT.test(source.commit)

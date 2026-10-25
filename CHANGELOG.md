@@ -1,5 +1,12 @@
 # Solcord Changelog
 
+## 2.0.0 - Signal (2026-10-25)
+
+- Promoted the reviewed V2 line to the first stable Solcord release while retaining the unsigned Windows publisher warning and every rollback check.
+- Reduced the continuous ambient-render budget, cached field geometry and palette state, and stopped Solcord-owned DOM decorations from retriggering the shared client synchronizer.
+- Kept Fake Deafen beside Discord's ordinary Deafen control with direct per-call operation and complete teardown.
+- Removed public-path fixture residue and reran privacy, dependency, source, installer, and deterministic-package checks before publication.
+
 ## 2.0.0-rc.39 - Discord update recovery (2026-10-12)
 
 - Corrected the installer credit to `@slaveofsolace` while preserving the factual BetterDiscord fork attribution.

@@ -4,13 +4,13 @@
 
 A BetterDiscord fork for Windows, with a built-in Control Center, local privacy tools, full-shell themes, and reversible installation.
 
-**[Download for Windows](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.39)** · [Installation](docs/QUICK_START.md) · [User guide](docs/USER_GUIDE.md) · [Get help](SUPPORT.md)
+**[Download for Windows](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0)** · [Installation](docs/QUICK_START.md) · [User guide](docs/USER_GUIDE.md) · [Get help](SUPPORT.md)
 
 ## Install
 
 You need **Windows x64** and the official **Discord desktop app**. You do not need Git, Bun, .NET, plugin libraries, or a separate BetterDiscord installation.
 
-1. Download **SolcordInstaller.exe** and **SHA256SUMS.txt** from the [same release](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0-rc.39). [Check the download](docs/QUICK_START.md#check-the-download).
+1. Download **SolcordInstaller.exe** and **SHA256SUMS.txt** from the [same release](https://github.com/slaveofsolace/Solcord/releases/tag/v2.0.0). [Check the download](docs/QUICK_START.md#check-the-download).
 2. Save your drafts and leave any calls. The installer closes verified Discord processes before changing its shared core.
 3. Open the installer. Under **Version**, select your Discord installation, then choose **Install Solcord** or **Update Solcord**.
 4. Choose **Open Solcord**. On a fresh installation, First Setup opens when Discord is ready. You can complete it now or choose **Finish later**.
@@ -18,7 +18,7 @@ You need **Windows x64** and the official **Discord desktop app**. You do not ne
 Installation takes about one minute on a typical PC **after download**. Your existing Discord login, plugins, themes, and settings stay in place.
 
 > [!IMPORTANT]
-> The Windows download is **v2.0.0-rc.39**, an unsigned release candidate. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. [Candidate status](docs/STATUS.md)
+> **Solcord 2.0 — Signal** is a stable but unsigned release. Windows may show an unknown-publisher warning. Do not disable Windows security to install it. [Release status](docs/STATUS.md)
 
 If a Discord desktop update makes Solcord disappear, open the current installer and choose **Update Solcord**. If you are already on the same Solcord release, choose **Repair Solcord**. Both paths keep plugins, themes, settings, and private stores in place.
 
